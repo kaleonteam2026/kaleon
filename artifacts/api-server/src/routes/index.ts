@@ -15,6 +15,7 @@ import universitiesRouter from "./universities";
 import savedInternshipsRouter from "./saved-internships";
 import igetcRouter from "./igetc";
 import chatRouter from "./chat";
+import perplexityRouter from "./perplexity";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,6 @@ router.use(universitiesRouter);
 router.use(savedInternshipsRouter);
 router.use(igetcRouter);
 router.use(chatRouter);
+router.use(perplexityRouter);
 
 export default router;

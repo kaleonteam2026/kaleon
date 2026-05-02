@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ExternalLink, Search, Award, Briefcase, GraduationCap, BookOpen,
   Star, Loader2, Building2, Heart, Users, Stethoscope, Palette,
-  MapPin, ChevronRight, Info, Sparkles,
+  MapPin, ChevronRight, Info, Sparkles, Globe, RefreshCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +75,114 @@ const CC_FILTER_TYPES = [
   { key: "health_wellness",label: "Health & Wellness" },
   { key: "stem_research",  label: "STEM & Research" },
 ];
+
+// ─── Live Scholarship Search (Perplexity) ─────────────────────────────────────
+interface PplxResult {
+  answer: string;
+  citations: Array<{ title?: string; url: string }>;
+}
+
+function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
+  const { toast } = useToast();
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<PplxResult | null>(null);
+  const [open, setOpen] = useState(false);
+
+  const runSearch = async (overrideQuery?: string) => {
+    setLoading(true);
+    setResult(null);
+    try {
+      const r = await fetch("/api/perplexity/scholarships", {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileId, query: overrideQuery ?? query }),
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({ error: "Search failed" }));
+        throw new Error(err.error ?? "Search failed");
+      }
+      setResult(await r.json());
+      setOpen(true);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Search failed";
+      toast({ title: "Live search unavailable", description: msg, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-2xl p-4 mb-6">
+      <div className="flex items-start gap-3 mb-3">
+        <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
+          <Globe className="h-4 w-4 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+            Live Scholarship Search
+            <span className="text-[10px] uppercase tracking-wider bg-violet-200 text-violet-800 px-1.5 py-0.5 rounded-full font-bold">Beta</span>
+          </h3>
+          <p className="text-xs text-slate-600 mt-0.5">
+            Search the live web for currently-open scholarships matching your profile, with cited sources.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Input
+          placeholder='e.g. "STEM scholarships for transfer students" or leave blank for personalized results'
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !loading) void runSearch(); }}
+          className="bg-white"
+        />
+        <button
+          onClick={() => void runSearch()}
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+          {loading ? "Searching..." : "Search"}
+        </button>
+      </div>
+
+      {result && open && (
+        <div className="mt-4 bg-white border border-violet-200 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-violet-700 uppercase tracking-wide flex items-center gap-1">
+              <Sparkles className="h-3 w-3" /> Live Results
+            </p>
+            <button onClick={() => setOpen(false)} className="text-xs text-slate-400 hover:text-slate-600">Hide</button>
+          </div>
+          <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed text-sm">
+            {result.answer}
+          </div>
+          {result.citations.length > 0 && (
+            <div className="pt-3 border-t border-slate-100">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Sources</p>
+              <ul className="space-y-1.5">
+                {result.citations.slice(0, 8).map((c, i) => (
+                  <li key={i} className="text-xs">
+                    <a
+                      href={c.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-violet-600 hover:text-violet-800 hover:underline inline-flex items-center gap-1"
+                    >
+                      <span className="font-semibold text-slate-400">{i + 1}.</span>
+                      <span className="truncate max-w-[400px]">{c.title ?? c.url}</span>
+                      <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── CC Program Card ──────────────────────────────────────────────────────────
 function CCProgramCard({ program }: { program: CCOpportunityItem }) {
@@ -226,9 +334,12 @@ export default function Scholarships() {
         {/* ── Scholarships tab ── */}
         {tab === "scholarships" && (
           <>
+            {/* Live web search panel (Perplexity) */}
+            <LiveScholarshipSearch profileId={pid ?? undefined} />
+
             <div className="relative mb-6">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input className="pl-9" placeholder="Search scholarships…" value={search}
+              <Input className="pl-9" placeholder="Search saved scholarships…" value={search}
                 onChange={e => setSearch(e.target.value)} />
             </div>
             <div className="space-y-3 pb-12">

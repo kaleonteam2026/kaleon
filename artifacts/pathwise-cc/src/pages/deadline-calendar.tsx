@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useParams } from "wouter";
 import Nav from "@/components/nav";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
   CalendarDays, CheckCircle2, Clock, AlertCircle, ExternalLink,
   ChevronRight, Info, GraduationCap, DollarSign, FileText,
+  Globe, RefreshCcw, Loader2, Sparkles,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -72,10 +75,19 @@ function formatDateRange(d: Deadline, year: number): string {
   return `${MONTH_NAMES[d.month]} ${d.day}, ${y}`;
 }
 
+interface VerifyResult {
+  answer: string;
+  citations: Array<{ title?: string; url: string }>;
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DeadlineCalendar() {
   const { profileId } = useParams<{ profileId?: string }>();
   const pid = profileId ? parseInt(profileId) : undefined;
+  const { toast } = useToast();
+
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
 
   // Determine transfer cycle: current academic year starts August
   const now = new Date();
@@ -93,6 +105,32 @@ export default function DeadlineCalendar() {
   const past = sorted.filter(d => daysUntil(getDeadlineDate(d, cycleYear)) < -7);
 
   const nextCritical = upcoming.find(d => d.priority === "critical");
+
+  const verifyDeadlines = async () => {
+    setVerifying(true);
+    setVerifyResult(null);
+    try {
+      const payload = upcoming.slice(0, 10).map(d => ({
+        label: d.label,
+        date: formatDateRange(d, cycleYear),
+      }));
+      const r = await fetch("/api/perplexity/verify-deadlines", {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deadlines: payload }),
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({ error: "Verify failed" }));
+        throw new Error(err.error ?? "Verify failed");
+      }
+      setVerifyResult(await r.json());
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Live verify failed";
+      toast({ title: "Verification unavailable", description: msg, variant: "destructive" });
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -126,6 +164,59 @@ export default function DeadlineCalendar() {
             </a>
           </div>
         )}
+
+        {/* Live verification (Perplexity) */}
+        <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-2xl p-4 mb-6">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
+              <Globe className="h-4 w-4 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                Verify Dates Live
+                <span className="text-[10px] uppercase tracking-wider bg-violet-200 text-violet-800 px-1.5 py-0.5 rounded-full font-bold">Beta</span>
+              </h3>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Cross-check upcoming deadlines against current UC, CSU, and CSAC sources.
+              </p>
+            </div>
+            <button
+              onClick={() => void verifyDeadlines()}
+              disabled={verifying}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60 flex-shrink-0"
+            >
+              {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
+              {verifying ? "Verifying..." : "Verify"}
+            </button>
+          </div>
+          {verifyResult && (
+            <div className="bg-white border border-violet-200 rounded-xl p-3 mt-2 space-y-3">
+              <p className="text-[10px] font-bold text-violet-700 uppercase tracking-wide flex items-center gap-1">
+                <Sparkles className="h-3 w-3" /> Live Verification
+              </p>
+              <div className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
+                {verifyResult.answer}
+              </div>
+              {verifyResult.citations.length > 0 && (
+                <div className="pt-2 border-t border-slate-100">
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Sources</p>
+                  <ul className="space-y-1">
+                    {verifyResult.citations.slice(0, 6).map((c, i) => (
+                      <li key={i} className="text-xs">
+                        <a href={c.url} target="_blank" rel="noopener noreferrer"
+                          className="text-violet-600 hover:text-violet-800 hover:underline inline-flex items-center gap-1">
+                          <span className="font-semibold text-slate-400">{i + 1}.</span>
+                          <span className="truncate max-w-[360px]">{c.title ?? c.url}</span>
+                          <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Category filter legend */}
         <div className="flex flex-wrap gap-1.5 mb-6">
