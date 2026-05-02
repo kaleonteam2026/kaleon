@@ -94,6 +94,14 @@ export const insertCourseSchema = createInsertSchema(coursesTable).omit({ id: tr
 export const insertPathwaySchema = createInsertSchema(pathwaysTable).omit({ id: true, createdAt: true });
 export const insertGuidebookSchema = createInsertSchema(guidebooksTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAcademicRoadmapSchema = createInsertSchema(academicRoadmapsTable).omit({ id: true, createdAt: true, updatedAt: true });
+export const internshipSearchesTable = pgTable("internship_searches", {
+  id: serial("id").primaryKey(),
+  profileId: integer("profile_id").notNull().references(() => studentProfilesTable.id),
+  resultsJson: json("results_json").$type<Record<string, unknown>>(),
+  summary: text("summary"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertStudentProgressSchema = createInsertSchema(studentProgressTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProgressAnalysisSchema = createInsertSchema(progressAnalysesTable).omit({ id: true, createdAt: true });
 
@@ -107,6 +115,7 @@ export type Guidebook = typeof guidebooksTable.$inferSelect;
 export type InsertGuidebook = z.infer<typeof insertGuidebookSchema>;
 export type AcademicRoadmap = typeof academicRoadmapsTable.$inferSelect;
 export type InsertAcademicRoadmap = z.infer<typeof insertAcademicRoadmapSchema>;
+export type InternshipSearch = typeof internshipSearchesTable.$inferSelect;
 export type StudentProgress = typeof studentProgressTable.$inferSelect;
 export type InsertStudentProgress = z.infer<typeof insertStudentProgressSchema>;
 export type ProgressAnalysis = typeof progressAnalysesTable.$inferSelect;

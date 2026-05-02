@@ -674,6 +674,173 @@ End with this exact text:
   throw lastError ?? new Error("Failed to generate progress analysis");
 }
 
+// ─── Internship Matches ────────────────────────────────────────────────────────
+
+export interface InternshipMatch {
+  id: string;
+  title: string;
+  organization: string;
+  type: "federal" | "california_state" | "research" | "private" | "nonprofit";
+  category: string;
+  duration: string;
+  terms: string[];
+  stipend: string;
+  location: string;
+  eligibility: string[];
+  applicationDeadline: string;
+  applicationUrl: string;
+  whyMatches: string;
+  matchScore: number;
+  citizenshipRequired: boolean;
+  handshakeTip?: string;
+  source: string;
+}
+
+export interface InternshipMatchResult {
+  summary: string;
+  handshakeGuide: string;
+  internships: InternshipMatch[];
+}
+
+export async function generateInternshipMatches(
+  profile: Record<string, unknown>,
+  courses: Record<string, unknown>[],
+  selectedPathway: Record<string, unknown> | null,
+): Promise<InternshipMatchResult> {
+  const college = typeof profile.communityCollege === "string" ? profile.communityCollege : "a California community college";
+  const major = typeof profile.intendedMajor === "string" ? profile.intendedMajor : "undeclared";
+  const targetUniversity = selectedPathway ? String(selectedPathway.university ?? "UC/CSU") : "UC/CSU";
+  const gpa = typeof profile.currentGpa === "number" ? profile.currentGpa : null;
+  const city = typeof profile.city === "string" ? profile.city : null;
+  const financialNeed = typeof profile.financialNeed === "string" ? profile.financialNeed : null;
+  const completedCourseNames = courses
+    .filter((c) => c.status === "completed")
+    .map((c) => c.courseName)
+    .slice(0, 20)
+    .join(", ");
+
+  const prompt = `You are a California community college internship advisor. Generate a comprehensive, personalized internship match list for this student. Only include programs that are genuinely open to current community college students (NOT programs requiring 4-year enrollment unless explicitly noted as accepting CC students).
+
+Student Profile:
+- Community College: ${college}
+- Intended Major: ${major}
+- Target University for Transfer: ${targetUniversity}
+- GPA: ${gpa ?? "not specified"}
+- Location/City: ${city ?? "California"}
+- Financial Need Level: ${financialNeed ?? "not specified"}
+- Completed Courses: ${completedCourseNames || "none yet"}
+
+INTERNSHIP SOURCES YOU MUST DRAW FROM:
+
+═══ FEDERAL GOVERNMENT PROGRAMS (include only government-specific ones, not generic job boards) ═══
+These programs are explicitly designed for government service or government-adjacent research:
+
+• DOE Community College Internships (CCI): 10-week paid research at DOE national labs (Argonne, LBNL, Oak Ridge, SLAC, etc.); STEM majors; $600/week + travel; spring and summer terms; EXPLICITLY for CC students; usajobs.gov
+• NASA Community College Aerospace Scholars (NCAS): 2-phase program; online coursework + 5-day on-site at NASA center; STEM only; stipend provided; community college students only; nasa.gov/ncas
+• NIH Community College Summer Enrichment Program: research at NIH Bethesda; biomedical/health sciences; 8 weeks; $3,000 stipend + housing allowance; rising sophomores preferred; training.nih.gov
+• USDA APHIS Student Career Experience Program: government agriculture/science internships; GS pay scale; pathways.usda.gov
+• EPA Student Services Contractor Program: environmental science, policy, data; semester or summer; EPA.gov/careers
+• NSF Research Experiences for Undergraduates (REU): university-hosted summer research; many UC campuses; $600/week + housing; open to CC students who will transfer; nsf.gov/crssprgm/reu
+• Congressional Internships — CA delegation offices: work in DC or district offices; policy, research, constituent services; paid; check each CA congressmember's website (Nanette Barragán, Maxine Waters, Karen Bass, Ted Lieu, etc.)
+• CA Governor's Office Internship Program: Sacramento-based; policy, communications, operations; CalOSBA; gov.ca.gov/internships
+• CA State Legislature Internship — Jesse M. Unruh Institute (USC): Sacramento; paid $2,000/month; fall/spring/summer; open to any CA college student; unruh.usc.edu
+• CA State Senate / Assembly Fellowships: post-graduation but note for planning
+• CA Department of Public Health (CDPH) Internships: public health, epidemiology, data analysis; cdph.ca.gov
+• CA Department of Finance Student Assistant: budget analysis, economics; Sacramento; jobs.ca.gov
+• JPL (Jet Propulsion Laboratory) — NASA/Caltech: Pasadena; STEM; paid; summer and year-round; community college students explicitly welcomed; jpl.nasa.gov/edu/intern
+• FBI Honors Internship: law, cybersecurity, analytics, STEM; Washington DC; paid; US citizenship required; summer only; fbijobs.gov
+• State Department Student Intern Program: IR, political science, languages; Washington DC or overseas; unpaid but prestigious; careers.state.gov
+
+═══ CALIFORNIA-SPECIFIC PROGRAMS ═══
+• Silicon Valley Internship Program (SVIP): Bay Area tech internships for CC students; CS, engineering, business; paid; svip.org
+• Greenlining Leadership Academy: Oakland; social justice, policy, nonprofit management; paid fellowship; greenlining.org
+• California STEM Pathways (CSP): STEM community college students; multiple agency placements
+• San Jose/Silicon Valley's Year Up: tech and business; intensive + internship; paid stipend; yearup.org
+• MESA (Mathematics Engineering Science Achievement) Industry Internships: through MESA state network; STEM industries; paid; access through campus MESA center
+• JPMorgan Chase's HBCU/Community College programs (CA branches): business, finance, technology; on campus + remote
+• Deloitte Foundation Scholarship + Internship: accounting, finance, consulting; paid; open to CC students planning to transfer into business
+• CA Department of Education — EdCORP Student Internship: education policy and administration
+• Public Policy Institute of California (PPIC): research assistant positions; Sacramento/San Francisco; policy, economics, data
+• Bay Area Council Economic Institute: public policy, urban planning, economics; SF Bay Area
+• ACLU of California: legal, advocacy, communications; unpaid but highly competitive; summer; acluca.org
+• MALDEF (Mexican American Legal Defense): legal, policy; LA and SF offices; maldef.org
+• Dolores Huerta Foundation: community organizing, social justice; Bakersfield area; doloreshuerta.org
+
+═══ RESEARCH PROGRAMS ═══
+• UC LEADS (Latina/Latino Excellence and Achievement Dissertation Scholarship): STEM research at UC campuses; stipend; ucop.edu
+• UC CAMP (California Alliance for Minority Participation): STEM at multiple UC campuses; research stipend; ucop.edu
+• CCURI (Community College Undergraduate Research Initiative): CC-specific; lab research; multiple partner campuses
+• MARC-USTAR (NIH): biomedical research; 2-year program; stipend; at select CCCs
+• CSU Summer Undergraduate Research Program (SURP): science and engineering; stipend; varies by campus
+• UCLA Transfer Summer Institute: 4-week residential; ALL majors; academic prep + research exposure; transferring.ucla.edu
+• UC Berkeley SURF (Summer Undergraduate Research Fellowship): research in any field; competitive; $3,000; apply as prospective transfer
+• Amgen Scholars Program: biomedical/biochem research at top universities; paid; amgenscholars.com
+• UCSD Research Scholars Program: any STEM or social science; paid; ucsd.edu
+
+═══ HANDSHAKE GUIDANCE ═══
+Handshake is used by all 116 California community colleges. Provide specific search tips based on the student's major and college for finding local internships in their region.
+
+───────────────────────────────────────────────────────────────────
+Now generate a JSON response. Match programs to THIS STUDENT based on their major, GPA, location, and completed courses. For each match, explain specifically why it fits THEM (not a generic description).
+
+Return ONLY a JSON object with no markdown fences:
+{
+  "summary": "<2-3 sentence summary of the top opportunities for this specific student based on their profile>",
+  "handshakeGuide": "<2-3 sentences with specific Handshake search tips for this student's major, college, and location — include exact search terms to use>",
+  "internships": [
+    {
+      "id": "<unique short slug, e.g. 'doe-cci'>",
+      "title": "<official program name>",
+      "organization": "<organization name>",
+      "type": "<'federal' | 'california_state' | 'research' | 'private' | 'nonprofit'>",
+      "category": "<one of: STEM Research | Government & Policy | Healthcare | Business & Finance | Legal & Advocacy | Social Justice | Technology | Environment | Education | Creative & Media>",
+      "duration": "<e.g. '10 weeks' or 'Semester-long' or 'Academic year'>",
+      "terms": ["<Summer>" | "<Fall>" | "<Spring>" — include all available],
+      "stipend": "<e.g. '$600/week' or '$3,000 total' or 'Unpaid (academic credit available)' or 'Paid (GS-4 scale)'>",
+      "location": "<e.g. 'Remote' or 'Bay Area, CA' or 'Sacramento, CA' or 'Multiple CA locations' or 'Washington, DC'>",
+      "eligibility": ["<requirement 1>", "<requirement 2>"],
+      "applicationDeadline": "<e.g. 'February 2025' or 'Rolling' or 'October annually'>",
+      "applicationUrl": "<full URL to apply or learn more>",
+      "whyMatches": "<2-3 sentences explaining why THIS student is a good fit, citing their major, courses, GPA, or location specifically>",
+      "matchScore": <integer 60-99 — only include programs where score >= 60>,
+      "citizenshipRequired": <true|false>,
+      "handshakeTip": "<optional: if this employer typically posts on Handshake, add a one-sentence search tip>",
+      "source": "<where to find this — e.g. 'Apply at energy.gov/cci' or 'Search on Handshake: [search term]' or 'Direct application at URL'>"
+    }
+  ]
+}
+
+Rules:
+- Return 12-18 internships, sorted by matchScore descending
+- Only include programs genuinely open to current CC students
+- For federal programs: include ONLY government-agency or government-research programs, not private sector
+- Be realistic about eligibility — if citizenship is required, set citizenshipRequired: true
+- All URLs must be real, valid URLs to the actual program page
+- whyMatches must reference this student's specific profile details (their major: ${major}, their college: ${college})
+- Do not include programs the student clearly doesn't qualify for (e.g., don't recommend NIH biomedical for a business major)`;
+
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 6000,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: prompt }],
+      });
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+      const parsed = JSON.parse(cleaned) as InternshipMatchResult;
+      if (!Array.isArray(parsed.internships)) throw new Error("Invalid internship result structure");
+      return parsed;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+    }
+  }
+  throw lastError ?? new Error("Failed to generate internship matches");
+}
+
 // ─── Entry Feedback ───────────────────────────────────────────────────────────
 
 export interface EntryFeedbackResult {
