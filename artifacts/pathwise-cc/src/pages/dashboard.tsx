@@ -52,6 +52,7 @@ export default function Dashboard() {
             .then(r => r.json())
             .then((s: DashboardSummary) => setSummary(s));
         }
+        return undefined;
       })
       .catch(console.error)
       .finally(() => setLoading(false));
