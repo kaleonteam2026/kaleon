@@ -674,6 +674,140 @@ End with this exact text:
   throw lastError ?? new Error("Failed to generate progress analysis");
 }
 
+// ─── CC On-Campus Opportunities ───────────────────────────────────────────────
+
+export interface CCOpportunityItem {
+  name: string;
+  type: string;
+  description: string;
+  howToJoin: string;
+  website?: string;
+  majorsServed?: string[];
+}
+
+export interface CCOpportunitiesResult {
+  college: string;
+  summary: string;
+  programs: CCOpportunityItem[];
+}
+
+export async function generateCCOpportunities(
+  collegeName: string,
+  major: string,
+  city: string,
+): Promise<CCOpportunitiesResult> {
+  const prompt = `You are an expert on California Community Colleges. Generate a comprehensive list of on-campus programs, resources, and student organizations available at ${collegeName} (located in ${city}, California) that are relevant to a student studying ${major}.
+
+Focus EXCLUSIVELY on programs at ${collegeName} itself — not external programs or transfer-destination universities.
+
+CATEGORIES to cover (include as many as are real/likely at this specific college):
+
+1. HONORS & ACADEMIC EXCELLENCE
+   - Phi Theta Kappa (PTK) Honor Society (all California CCCs have this)
+   - College Honors Program (many CCCs have honors tracks)
+   - Dean's List / President's List
+
+2. EQUITY & SUPPORT PROGRAMS (California CC-specific)
+   - EOPS (Extended Opportunity Programs & Services) — for low-income students
+   - CalWORKs — for student parents receiving welfare
+   - DSPS (Disabled Students Programs & Services)
+   - CARE (Cooperative Agencies Resources for Education) — for single parents
+   - Financial Aid Office (FAFSA/Dream Act guidance)
+
+3. EQUITY COHORT PROGRAMS
+   - Umoja Community (Black student achievement)
+   - Puente Project (Latino/a student achievement)
+   - TRIO Student Support Services (if the college has a TRIO grant)
+   - Adelante (Latino student success program, at some CCCs)
+   - MESA (Mathematics Engineering Science Achievement) — for STEM students
+   - STEM Success Center
+
+4. ACADEMIC SUPPORT
+   - Learning/Tutoring Center
+   - Writing Center
+   - Math Center / STEM Tutoring
+   - Library Research & Instruction
+
+5. CAREER & TRANSFER RESOURCES
+   - Career Center (resume help, job boards, career fairs)
+   - Transfer Center (UC/CSU application support, counseling)
+   - Cooperative Education / Work Experience Program
+   - Job Placement Office
+
+6. STUDENT GOVERNMENT & LEADERSHIP
+   - Associated Students (ASCC / ASGC or campus equivalent)
+   - Student Trustee program
+   - Leadership classes / Student Leadership Academy
+
+7. MAJOR-RELEVANT CLUBS & ORGANIZATIONS (tailored to ${major})
+   - Professional clubs in the student's field
+   - Cultural student organizations relevant to the major
+   - Discipline-specific honor societies
+
+8. CULTURAL & COMMUNITY ORGANIZATIONS
+   - Black Student Union
+   - MEChA (Movimiento Estudiantil Chicano de Aztlán)
+   - LGBTQ+ Resource Center / QSA
+   - Veterans Resource Center (most CA CCCs have these)
+   - International Students Club
+
+9. HEALTH & WELLNESS
+   - Student Health Center
+   - Mental Health / Counseling Services
+   - Food Pantry / Basic Needs Center (most CA CCCs post-2020 have these)
+
+10. ARTS, ATHLETICS & RECREATION
+    - Campus athletics (if applicable to major)
+    - Theater / Performing Arts (if applicable)
+    - Fine Arts program events
+
+IMPORTANT:
+- Be specific to ${collegeName} where possible. If you know specific program names, use them. If unsure, use the standard California CC equivalent.
+- For "website", provide the likely URL pattern (e.g. https://www.smc.edu/student-life/eops or leave blank if unsure)
+- howToJoin should be practical: "Visit room A-101", "Apply at the EOPS office", "Sign up at the Activities office"
+- majorsServed: list which majors this is most relevant to (use ["All majors"] if broadly applicable)
+- type must be one of: honors, equity_support, equity_cohort, academic_support, career_transfer, student_gov, major_club, cultural_org, health_wellness, arts_athletics
+
+Return ONLY a JSON object (no markdown, no code fences):
+{
+  "college": "${collegeName}",
+  "summary": "<2-3 sentence overview of campus life and support resources at ${collegeName}, highlighting what makes this campus especially supportive for students studying ${major}>",
+  "programs": [
+    {
+      "name": "<program name>",
+      "type": "<type from the list above>",
+      "description": "<1-2 sentence description of what this program does and who it's for>",
+      "howToJoin": "<practical how-to-join or access instructions>",
+      "website": "<URL if known, otherwise omit>",
+      "majorsServed": ["<major1>", "<major2>"] or ["All majors"]
+    }
+  ]
+}
+
+Include 18-25 programs. Sort by relevance to ${major} first, then by importance to all students.`;
+
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 5000,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: prompt }],
+      });
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+      const parsed = JSON.parse(cleaned) as CCOpportunitiesResult;
+      if (!Array.isArray(parsed.programs)) throw new Error("Invalid CC opportunities structure");
+      return parsed;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+    }
+  }
+  throw lastError ?? new Error("Failed to generate CC opportunities");
+}
+
 // ─── Internship Matches ────────────────────────────────────────────────────────
 
 export interface InternshipMatch {

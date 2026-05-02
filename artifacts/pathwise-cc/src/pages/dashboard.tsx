@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   User, BookOpen, GraduationCap, Target, Award, Map,
-  ArrowRight, ChevronRight, AlertTriangle, Plus, TrendingUp
+  ArrowRight, ChevronRight, AlertTriangle, Plus, TrendingUp, Search,
 } from "lucide-react";
 
 interface Profile {
@@ -76,7 +76,7 @@ export default function Dashboard() {
             Welcome back{user?.firstName ? `, ${user.firstName}` : ""}!
           </h1>
           <p className="text-slate-500 mt-1 text-sm">
-            Your AI-powered transfer planning dashboard
+            Your AI-powered community college success hub
           </p>
         </div>
 
@@ -86,7 +86,7 @@ export default function Dashboard() {
             <Map className="h-16 w-16 text-indigo-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-slate-800 mb-2">Let's get started</h2>
             <p className="text-slate-500 mb-6 max-w-md mx-auto text-sm">
-              Create your student profile to unlock personalized university matches, AI pathways, and scholarship recommendations.
+              Create your student profile to unlock personalized transfer planning, AI pathways, internship matching, and scholarship recommendations.
             </p>
             <Button
               onClick={() => navigate("/profile")}
@@ -148,43 +148,65 @@ export default function Dashboard() {
               <div className="md:col-span-2 space-y-4">
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold">Your Transfer Journey</CardTitle>
+                    <CardTitle className="text-base font-semibold">Your CC Success Roadmap</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {[
                       {
                         icon: User,
                         label: "My Profile",
-                        desc: profile.intendedMajor ?? "Complete your student profile",
+                        desc: profile.intendedMajor
+                          ? `${profile.intendedMajor} at ${profile.communityCollege ?? "your CC"}`
+                          : "Complete your student profile",
                         href: `/profile/${profile.id}`,
                         done: (summary?.profileCompletionPercent ?? 0) > 50,
                       },
                       {
                         icon: BookOpen,
                         label: "My Courses",
-                        desc: summary?.totalCourses ? `${summary.completedCourses} completed, ${summary.inProgressCourses} in progress` : "Add your courses",
+                        desc: summary?.totalCourses
+                          ? `${summary.completedCourses} completed, ${summary.inProgressCourses} in progress`
+                          : "Add your CC courses",
                         href: `/courses/${profile.id}`,
                         done: (summary?.totalCourses ?? 0) > 0,
                       },
                       {
                         icon: GraduationCap,
-                        label: "University Matches",
-                        desc: summary?.topMatchUniversity ? `Top match: ${summary.topMatchUniversity} (${summary.topMatchScore}%)` : "See your university rankings",
+                        label: "Transfer Targets",
+                        desc: summary?.topMatchUniversity
+                          ? `Top match: ${summary.topMatchUniversity} (${summary.topMatchScore}% compatible)`
+                          : "See which UC/CSU schools fit your profile",
                         href: `/matches/${profile.id}`,
                         done: false,
                       },
                       {
                         icon: Target,
-                        label: "AI Pathways",
-                        desc: summary?.savedPathwaysCount ? `${summary.savedPathwaysCount} pathways generated` : "Generate your AI pathway reports",
+                        label: "AI Transfer Pathways",
+                        desc: summary?.savedPathwaysCount
+                          ? `${summary.savedPathwaysCount} pathways generated`
+                          : "Generate detailed AI pathway reports",
                         href: `/pathways/${profile.id}`,
                         done: (summary?.savedPathwaysCount ?? 0) > 0,
                       },
                       {
                         icon: Award,
-                        label: "Scholarships & Opportunities",
-                        desc: "40+ scholarships and internship programs",
+                        label: "Scholarships & CC Programs",
+                        desc: "Scholarships + on-campus programs at your community college",
                         href: `/scholarships/${profile.id}`,
+                        done: false,
+                      },
+                      {
+                        icon: TrendingUp,
+                        label: "My Progress",
+                        desc: "Log milestones and get AI feedback on your transfer readiness",
+                        href: `/progress/${profile.id}`,
+                        done: false,
+                      },
+                      {
+                        icon: Search,
+                        label: "Internship Finder",
+                        desc: "Federal, CA state, and research internships matched to your profile",
+                        href: `/internships/${profile.id}`,
                         done: false,
                       },
                     ].map((item) => (
@@ -207,7 +229,7 @@ export default function Dashboard() {
                 </Card>
               </div>
 
-              {/* Next actions + profile info */}
+              {/* Right sidebar */}
               <div className="space-y-4">
                 {/* Profile card */}
                 <Card>
@@ -268,7 +290,7 @@ export default function Dashboard() {
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
                   <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-700">
-                    All recommendations are AI-generated estimates. Verify requirements with your CC counselor.
+                    All AI recommendations are estimates. Verify requirements with your CC counselor and official sources.
                   </p>
                 </div>
               </div>

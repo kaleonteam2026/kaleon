@@ -2,7 +2,10 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
-import { Map, GraduationCap, Target, BookOpen, Award, ArrowRight, CheckCircle } from "lucide-react";
+import {
+  Map, GraduationCap, Target, BookOpen, Award, ArrowRight,
+  TrendingUp, Search, Building2, Users,
+} from "lucide-react";
 
 export default function Landing() {
   const { isAuthenticated, isLoading, login } = useAuth();
@@ -38,12 +41,12 @@ export default function Landing() {
           Built for California Community College Students
         </div>
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
-          Your AI-Powered
-          <span className="text-indigo-300 block">Transfer Advisor</span>
+          Your All-in-One
+          <span className="text-indigo-300 block">CC Success Platform</span>
         </h1>
         <p className="text-lg md:text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-          Pathwise CC analyzes your GPA, courses, goals, and finances to generate personalized
-          transfer pathways, scholarship matches, and a step-by-step guidebook — all powered by AI.
+          Pathwise CC helps you thrive at your community college — track progress, find internships,
+          plan your transfer, and discover scholarships. Everything in one place, powered by AI.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
@@ -64,45 +67,63 @@ export default function Landing() {
       <section className="px-6 md:px-12 py-16 bg-slate-900/50">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-12 text-white">
-            Everything you need to transfer successfully
+            Everything a CC student needs to succeed
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                icon: GraduationCap,
-                title: "25+ University Database",
-                description: "UC and CSU campuses with compatibility scoring based on your major, GPA, location, and career goals.",
+                icon: Building2,
+                title: "My CC Programs",
+                description: "Discover EOPS, Phi Theta Kappa, Umoja, Puente, MESA, TRIO, Transfer Center, and 20+ other programs specific to your own community college.",
                 color: "text-indigo-400",
               },
               {
                 icon: Target,
-                title: "AI Pathway Reports",
-                description: "Claude AI generates 3 detailed pathway reports — least, moderate, and most compatible — with next steps.",
+                title: "AI Transfer Pathways",
+                description: "Claude AI generates 3 detailed pathway reports — least, moderate, and most compatible — with GPA targets, next steps, and deadlines.",
                 color: "text-emerald-400",
               },
               {
-                icon: BookOpen,
-                title: "Personalized Guidebook",
-                description: "A complete Markdown guidebook with semester plans, deadlines, resume tips, and scholarship checklist.",
+                icon: Search,
+                title: "Internship Finder",
+                description: "AI-matched internships from DOE, NASA, NIH, CA state agencies, and nonprofits — all verified to accept current community college students.",
                 color: "text-amber-400",
               },
               {
                 icon: Award,
                 title: "40+ Scholarships",
-                description: "Curated scholarships for California CC students including Cal Grants, Jack Kent Cooke, and more.",
+                description: "Curated scholarships for California CC students: Cal Grants, Jack Kent Cooke, Dream.US, EOPS scholarships, and community foundation awards.",
                 color: "text-rose-400",
+              },
+              {
+                icon: TrendingUp,
+                title: "Progress Tracker",
+                description: "Log GPA milestones, certifications, leadership roles, and setbacks. Get instant AI feedback on your transfer readiness at every step.",
+                color: "text-sky-400",
+              },
+              {
+                icon: GraduationCap,
+                title: "Transfer Likelihood",
+                description: "AI scores your compatibility with 25+ UC/CSU/private California universities and generates personalized acceptance likelihood reports.",
+                color: "text-violet-400",
               },
               {
                 icon: BookOpen,
                 title: "Course Tracking",
-                description: "Log your completed and in-progress courses. Get a GPA summary and articulation guidance.",
-                color: "text-sky-400",
+                description: "Log completed and in-progress courses. Track your GPA, identify articulation gaps, and see what's left for transfer readiness.",
+                color: "text-teal-400",
               },
               {
                 icon: Map,
-                title: "Opportunity Finder",
-                description: "40+ internships, research programs, honors societies, and career prep resources matched to your profile.",
-                color: "text-violet-400",
+                title: "Academic Roadmap",
+                description: "AI-generated semester-by-semester plan with ASSIST.org articulation guidance, transfer deadlines, and impacted major advice.",
+                color: "text-orange-400",
+              },
+              {
+                icon: Users,
+                title: "Student Guidebook",
+                description: "A complete AI-written transfer guidebook with application timelines, essay tips, financial aid strategy, and a scholarship checklist.",
+                color: "text-pink-400",
               },
             ].map((feature) => (
               <div key={feature.title} className="bg-slate-800/60 border border-slate-700 rounded-xl p-6">
@@ -121,11 +142,11 @@ export default function Landing() {
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">How it works</h2>
           <div className="space-y-6">
             {[
-              { step: "1", title: "Create your student profile", desc: "Enter your GPA, major, career goal, financial situation, and geographic preferences." },
-              { step: "2", title: "Add your courses", desc: "Log completed and in-progress courses to track GPA and identify transfer-readiness." },
-              { step: "3", title: "See your university matches", desc: "Our scoring engine ranks 25+ UC/CSU/private universities by compatibility." },
-              { step: "4", title: "Generate AI pathways", desc: "Claude AI creates 3 detailed pathway reports with action plans and scholarship matches." },
-              { step: "5", title: "Download your guidebook", desc: "Get a complete transfer roadmap with semester plans, deadlines, and resume tips." },
+              { step: "1", title: "Create your student profile", desc: "Enter your GPA, major, career goal, financial situation, and your specific community college." },
+              { step: "2", title: "Discover your CC campus programs", desc: "AI surfaces EOPS, honors programs, equity cohorts, tutoring centers, and major-specific clubs at your own college." },
+              { step: "3", title: "Find internships matched to you", desc: "Get a personalized list of federal, state, and nonprofit internships verified for CC student eligibility." },
+              { step: "4", title: "Generate AI transfer pathways", desc: "Claude AI creates 3 detailed pathway reports with UC/CSU compatibility scores and semester action plans." },
+              { step: "5", title: "Track your progress", desc: "Log milestones, get AI feedback on each entry, and build a complete transfer readiness timeline." },
             ].map((item) => (
               <div key={item.step} className="flex gap-4">
                 <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
@@ -146,16 +167,16 @@ export default function Landing() {
         <div className="max-w-3xl mx-auto">
           <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-4 text-sm text-amber-200">
             <strong>Important disclaimer:</strong> Pathwise CC is an AI-powered planning tool, not an official academic advisor.
-            All recommendations, GPA targets, and scholarship information are estimates and may not reflect current requirements.
-            Always verify requirements with your community college counselor and each university's official transfer admissions page.
+            All recommendations, GPA targets, and program information are AI-generated estimates.
+            Always verify requirements with your community college counselor and each institution's official resources.
           </div>
         </div>
       </section>
 
       {/* CTA */}
       <section className="px-6 md:px-12 py-16 text-center">
-        <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to find your pathway?</h2>
-        <p className="text-slate-300 mb-8">Join thousands of California CC students planning their transfer journey.</p>
+        <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to take control of your CC journey?</h2>
+        <p className="text-slate-300 mb-8">Built exclusively for California's 2.1 million community college students.</p>
         <Button
           onClick={login}
           size="lg"
@@ -168,10 +189,10 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="px-6 md:px-12 py-6 border-t border-slate-800 text-center text-slate-500 text-xs">
-        <p>Pathwise CC — Not affiliated with UC, CSU, or any California institution. Data shown is estimated. Verify all information with official sources.</p>
-        <div className="flex justify-center gap-2 mt-2 text-slate-600">
-          {["UCLA", "UC Berkeley", "UCSD", "Cal State LA", "SJSU", "CSULB", "SFSU"].map(u => (
-            <span key={u}>{u}</span>
+        <p>Pathwise CC — Not affiliated with UC, CSU, or any California institution. Data shown is AI-generated. Verify all information with official sources.</p>
+        <div className="flex flex-wrap justify-center gap-2 mt-2 text-slate-600">
+          {["Santa Monica College", "De Anza", "Foothill", "Mt. SAC", "Pasadena City College", "LACC", "Diablo Valley"].map(c => (
+            <span key={c}>{c}</span>
           ))}
         </div>
       </footer>
