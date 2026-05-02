@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, studentProfilesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
 
@@ -46,6 +47,11 @@ router.get("/profiles/user/:userId", async (req, res) => {
     return;
   }
 
+  if (req.params.userId !== req.user.id) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
   try {
     const profiles = await db.select().from(studentProfilesTable)
       .where(eq(studentProfilesTable.userId, req.params.userId));
@@ -65,15 +71,10 @@ router.get("/profiles/:id", async (req, res) => {
 
   try {
     const id = parseInt(req.params.id);
-    const profiles = await db.select().from(studentProfilesTable)
-      .where(eq(studentProfilesTable.id, id));
+    const owner = await getOwnedProfile(id, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
-    if (profiles.length === 0) {
-      res.status(404).json({ error: "Profile not found" });
-      return;
-    }
-
-    res.json(profiles[0]);
+    res.json(owner.profile);
   } catch (err) {
     req.log.error({ err }, "Error fetching profile");
     res.status(500).json({ error: "Failed to fetch profile" });
@@ -98,15 +99,10 @@ router.patch("/profiles/:id", async (req, res) => {
       body.transferTimeline, body.geographicPreference,
     ];
 
-    // Get existing profile to merge completion
-    const existing = await db.select().from(studentProfilesTable)
-      .where(eq(studentProfilesTable.id, id));
-    if (existing.length === 0) {
-      res.status(404).json({ error: "Profile not found" });
-      return;
-    }
+    const owner = await getOwnedProfile(id, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
-    const merged = { ...existing[0], ...body };
+    const merged = { ...owner.profile, ...body };
     const allFields = [
       merged.fullName, merged.communityCollege, merged.currentGpa,
       merged.intendedMajor, merged.careerGoal, merged.financialSituation,
@@ -152,6 +148,9 @@ router.delete("/profiles/:id", async (req, res) => {
 
   try {
     const id = parseInt(req.params.id);
+    const owner = await getOwnedProfile(id, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     await db.delete(studentProfilesTable).where(eq(studentProfilesTable.id, id));
     res.status(204).send();
   } catch (err) {

@@ -1,10 +1,11 @@
 import { Router } from "express";
 import scholarships from "../data/scholarships.json" assert { type: "json" };
 import opportunities from "../data/opportunities.json" assert { type: "json" };
-import { db, studentProfilesTable, coursesTable, pathwaysTable, guidebooksTable } from "@workspace/db";
+import { db, coursesTable, guidebooksTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { generateGuidebook } from "../services/aiService.js";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { getOwnedPathway, getOwnedGuidebook, getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
 
@@ -37,27 +38,14 @@ router.post("/pathways/:pathwayId/generate-guidebook", async (req, res) => {
 
   try {
     const pathwayId = parseInt(req.params.pathwayId);
-    const pathways = await db.select().from(pathwaysTable)
-      .where(eq(pathwaysTable.id, pathwayId));
-
-    if (pathways.length === 0) {
-      res.status(404).json({ error: "Pathway not found" });
-      return;
-    }
+    const owner = await getOwnedPathway(pathwayId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Pathway not found" }); return; }
 
     const cap = incrementGlobalAi();
     if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
-    const pathway = pathways[0];
-    const profiles = await db.select().from(studentProfilesTable)
-      .where(eq(studentProfilesTable.id, pathway.profileId));
-
-    if (profiles.length === 0) {
-      res.status(404).json({ error: "Profile not found" });
-      return;
-    }
-
-    const profile = profiles[0];
+    const pathway = owner.pathway;
+    const profile = owner.profile;
     const courses = await db.select().from(coursesTable)
       .where(eq(coursesTable.profileId, pathway.profileId));
 
@@ -96,15 +84,10 @@ router.get("/guidebooks/:guidebookId", async (req, res) => {
 
   try {
     const guidebookId = parseInt(req.params.guidebookId);
-    const guidebooks = await db.select().from(guidebooksTable)
-      .where(eq(guidebooksTable.id, guidebookId));
+    const owner = await getOwnedGuidebook(guidebookId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Guidebook not found" }); return; }
 
-    if (guidebooks.length === 0) {
-      res.status(404).json({ error: "Guidebook not found" });
-      return;
-    }
-
-    res.json(guidebooks[0]);
+    res.json(owner.guidebook);
   } catch (err) {
     req.log.error({ err }, "Error fetching guidebook");
     res.status(500).json({ error: "Failed to fetch guidebook" });
@@ -120,6 +103,9 @@ router.delete("/guidebooks/:guidebookId", async (req, res) => {
 
   try {
     const guidebookId = parseInt(req.params.guidebookId);
+    const owner = await getOwnedGuidebook(guidebookId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Guidebook not found" }); return; }
+
     await db.delete(guidebooksTable).where(eq(guidebooksTable.id, guidebookId));
     res.status(204).send();
   } catch (err) {
@@ -137,6 +123,9 @@ router.get("/profiles/:profileId/guidebooks", async (req, res) => {
 
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const guidebooks = await db.select().from(guidebooksTable)
       .where(eq(guidebooksTable.profileId, profileId));
     res.json(guidebooks);

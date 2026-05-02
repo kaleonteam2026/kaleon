@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { db, studentProfilesTable, coursesTable } from "@workspace/db";
+import { db, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
 
@@ -54,12 +55,15 @@ router.post("/chat", async (req, res) => {
 
     let system = CHAT_SYSTEM;
     if (profileId) {
-      const [profile] = await db.select().from(studentProfilesTable).where(eq(studentProfilesTable.id, profileId));
-      if (profile) {
-        const courses = await db.select().from(coursesTable).where(eq(coursesTable.profileId, profileId));
-        const completed = courses.filter(c => c.status === "completed").length;
-        system += `\n\nStudent context: Name: ${profile.fullName ?? "unknown"}, College: ${profile.communityCollege ?? "CA community college"}, Major: ${profile.intendedMajor ?? "undecided"}, GPA: ${profile.currentGpa ?? "unknown"}, Career goal: ${profile.careerGoal ?? "not specified"}, Transfer timeline: ${profile.transferTimeline ?? "not set"}, Completed courses: ${completed}.`;
+      const owner = await getOwnedProfile(profileId, req.user.id);
+      if (!owner.ok) {
+        res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" });
+        return;
       }
+      const profile = owner.profile;
+      const courses = await db.select().from(coursesTable).where(eq(coursesTable.profileId, profileId));
+      const completed = courses.filter(c => c.status === "completed").length;
+      system += `\n\nStudent context: Name: ${profile.fullName ?? "unknown"}, College: ${profile.communityCollege ?? "CA community college"}, Major: ${profile.intendedMajor ?? "undecided"}, GPA: ${profile.currentGpa ?? "unknown"}, Career goal: ${profile.careerGoal ?? "not specified"}, Transfer timeline: ${profile.transferTimeline ?? "not set"}, Completed courses: ${completed}.`;
     }
 
     const response = await anthropic.messages.create({

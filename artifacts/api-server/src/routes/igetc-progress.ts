@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, igetcProgressTable, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
 
@@ -9,6 +10,9 @@ router.get("/profiles/:profileId/igetc", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const rows = await db.select().from(igetcProgressTable).where(eq(igetcProgressTable.profileId, profileId));
     res.json(rows.length > 0 ? rows[0] : { areas: {} });
   } catch (err) {
@@ -21,6 +25,9 @@ router.put("/profiles/:profileId/igetc", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const { areas } = req.body as { areas: Record<string, boolean> };
     const existing = await db.select().from(igetcProgressTable).where(eq(igetcProgressTable.profileId, profileId));
     if (existing.length === 0) {
@@ -41,6 +48,9 @@ router.post("/profiles/:profileId/igetc/analyze", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const courses = await db.select().from(coursesTable).where(eq(coursesTable.profileId, profileId));
     if (courses.length === 0) { res.json({ areas: {}, note: "No courses found. Add your courses first." }); return; }
 

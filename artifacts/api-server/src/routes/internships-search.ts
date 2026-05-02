@@ -1,10 +1,11 @@
 import { Router } from "express";
 import {
-  db, studentProfilesTable, coursesTable, pathwaysTable, internshipSearchesTable,
+  db, coursesTable, pathwaysTable, internshipSearchesTable,
 } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { generateInternshipMatches } from "../services/aiService.js";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
 
@@ -31,19 +32,18 @@ router.post("/profiles/:profileId/internships/search", async (req, res) => {
 
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
-    const [profiles, courses, pathways] = await Promise.all([
-      db.select().from(studentProfilesTable).where(eq(studentProfilesTable.id, profileId)),
+    const [courses, pathways] = await Promise.all([
       db.select().from(coursesTable).where(eq(coursesTable.profileId, profileId)),
       db.select().from(pathwaysTable).where(eq(pathwaysTable.profileId, profileId)),
     ]);
 
-    if (profiles.length === 0) { res.status(404).json({ error: "Profile not found" }); return; }
-
     const cap = incrementGlobalAi();
     if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
-    const profile = profiles[0];
+    const profile = owner.profile;
     const selectedPathway = pathways.find(p => p.isSelected === "true") ?? null;
 
     const result = await generateInternshipMatches(
@@ -70,6 +70,9 @@ router.get("/profiles/:profileId/internships/searches", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const searches = await db.select().from(internshipSearchesTable)
       .where(eq(internshipSearchesTable.profileId, profileId))
       .orderBy(desc(internshipSearchesTable.createdAt));

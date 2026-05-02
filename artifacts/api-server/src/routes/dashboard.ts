@@ -1,8 +1,9 @@
 import { Router } from "express";
 import universities from "../data/universities.json" assert { type: "json" };
-import { db, studentProfilesTable, coursesTable, pathwaysTable, guidebooksTable, studentProgressTable } from "@workspace/db";
+import { db, coursesTable, pathwaysTable, guidebooksTable, studentProgressTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { calculateCompatibility, interpretScore } from "../services/scoringService.js";
+import { getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
 
@@ -15,15 +16,10 @@ router.get("/dashboard-summary/:profileId", async (req, res) => {
 
   try {
     const profileId = parseInt(req.params.profileId);
-    const profiles = await db.select().from(studentProfilesTable)
-      .where(eq(studentProfilesTable.id, profileId));
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
-    if (profiles.length === 0) {
-      res.status(404).json({ error: "Profile not found" });
-      return;
-    }
-
-    const profile = profiles[0];
+    const profile = owner.profile;
     const [courses, pathways, guidebooks, progressEntries] = await Promise.all([
       db.select().from(coursesTable).where(eq(coursesTable.profileId, profileId)),
       db.select().from(pathwaysTable).where(eq(pathwaysTable.profileId, profileId)),

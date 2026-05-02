@@ -1,8 +1,7 @@
 import { Router } from "express";
-import { db, studentProfilesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
 import { tavilySearch } from "../lib/tavily";
 import { guardedTavilyCall, getQuotaInfo } from "../lib/tavily-guard";
+import { getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
 
@@ -24,17 +23,17 @@ router.post("/live/scholarships", async (req, res) => {
 
     let profileContext = "";
     if (profileId) {
-      const [profile] = await db.select().from(studentProfilesTable).where(eq(studentProfilesTable.id, profileId));
-      if (profile) {
-        const bits = [
-          profile.intendedMajor ? `intended major ${profile.intendedMajor}` : null,
-          profile.currentGpa ? `GPA ${profile.currentGpa}` : null,
-          profile.communityCollege ? `attending ${profile.communityCollege}` : null,
-          profile.financialSituation ? `financial situation: ${profile.financialSituation}` : null,
-          profile.careerGoal ? `career goal: ${profile.careerGoal}` : null,
-        ].filter(Boolean).join(", ");
-        if (bits) profileContext = ` for a California community college student with ${bits}`;
-      }
+      const owner = await getOwnedProfile(profileId, req.user.id);
+      if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+      const profile = owner.profile;
+      const bits = [
+        profile.intendedMajor ? `intended major ${profile.intendedMajor}` : null,
+        profile.currentGpa ? `GPA ${profile.currentGpa}` : null,
+        profile.communityCollege ? `attending ${profile.communityCollege}` : null,
+        profile.financialSituation ? `financial situation: ${profile.financialSituation}` : null,
+        profile.careerGoal ? `career goal: ${profile.careerGoal}` : null,
+      ].filter(Boolean).join(", ");
+      if (bits) profileContext = ` for a California community college student with ${bits}`;
     }
 
     const baseQuery = query?.trim() || "open scholarships for California community college transfer students";

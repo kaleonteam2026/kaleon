@@ -1,8 +1,7 @@
 import { Router } from "express";
 import scholarships from "../data/scholarships.json" assert { type: "json" };
 import opportunities from "../data/opportunities.json" assert { type: "json" };
-import { db, studentProfilesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
 
@@ -25,15 +24,10 @@ router.post("/profiles/:profileId/recommended-scholarships", async (req, res) =>
 
   try {
     const profileId = parseInt(req.params.profileId);
-    const profiles = await db.select().from(studentProfilesTable)
-      .where(eq(studentProfilesTable.id, profileId));
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
-    if (profiles.length === 0) {
-      res.status(404).json({ error: "Profile not found" });
-      return;
-    }
-
-    const profile = profiles[0];
+    const profile = owner.profile;
     const gpa = profile.currentGpa ?? 0;
     const isFirstGen = profile.isFirstGen === "yes";
     const interests = (profile.interests ?? []) as string[];
@@ -70,15 +64,10 @@ router.post("/profiles/:profileId/recommended-opportunities", async (req, res) =
 
   try {
     const profileId = parseInt(req.params.profileId);
-    const profiles = await db.select().from(studentProfilesTable)
-      .where(eq(studentProfilesTable.id, profileId));
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
-    if (profiles.length === 0) {
-      res.status(404).json({ error: "Profile not found" });
-      return;
-    }
-
-    const profile = profiles[0];
+    const profile = owner.profile;
     const careerGoal = (profile.careerGoal ?? "").toLowerCase();
     const intendedMajor = (profile.intendedMajor ?? "").toLowerCase();
     const interests = (profile.interests ?? []) as string[];

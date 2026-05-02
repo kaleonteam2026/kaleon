@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { db, coursesTable, studentProfilesTable } from "@workspace/db";
+import { db, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { generateTransferabilityAnalysis, generateCourseCatalog } from "../services/aiService.js";
+import { getOwnedProfile, getOwnedCourse } from "../lib/ownership";
 
 const router = Router();
 
@@ -22,6 +23,9 @@ router.get("/profiles/:profileId/courses", async (req, res) => {
 
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const courses = await db.select().from(coursesTable)
       .where(eq(coursesTable.profileId, profileId));
     res.json(courses);
@@ -40,6 +44,9 @@ router.post("/profiles/:profileId/courses", async (req, res) => {
 
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const body = req.body as Record<string, unknown>;
 
     const course = await db.insert(coursesTable).values({
@@ -68,6 +75,9 @@ router.patch("/courses/:courseId", async (req, res) => {
 
   try {
     const courseId = parseInt(req.params.courseId);
+    const owner = await getOwnedCourse(courseId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Course not found" }); return; }
+
     const body = req.body as Record<string, unknown>;
 
     const updated = await db.update(coursesTable)
@@ -98,6 +108,9 @@ router.delete("/courses/:courseId", async (req, res) => {
 
   try {
     const courseId = parseInt(req.params.courseId);
+    const owner = await getOwnedCourse(courseId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Course not found" }); return; }
+
     await db.delete(coursesTable).where(eq(coursesTable.id, courseId));
     res.status(204).send();
   } catch (err) {
@@ -115,6 +128,9 @@ router.get("/profiles/:profileId/gpa-summary", async (req, res) => {
 
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const courses = await db.select().from(coursesTable)
       .where(eq(coursesTable.profileId, profileId));
 
@@ -171,12 +187,10 @@ router.get("/profiles/:profileId/course-catalog", async (req, res) => {
   const profileId = parseInt(req.params.profileId);
 
   try {
-    const profiles = await db.select().from(studentProfilesTable).where(eq(studentProfilesTable.id, profileId));
-    if (!profiles.length) {
-      res.status(404).json({ error: "Profile not found" });
-      return;
-    }
-    const profile = profiles[0];
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
+    const profile = owner.profile;
 
     if (!profile.communityCollege) {
       res.status(400).json({ error: "Please complete your profile with your community college before loading the course catalog." });
@@ -215,21 +229,18 @@ router.post("/profiles/:profileId/transferability-analysis", async (req, res) =>
 
   const profileId = parseInt(req.params.profileId);
 
-  // Check cache
-  const cached = transferabilityCache.get(profileId);
-  if (cached && Date.now() - cached.cachedAt < TRANSFER_TTL) {
-    res.json(cached.data);
-    return;
-  }
-
   try {
-    // Fetch profile for community college name
-    const profiles = await db.select().from(studentProfilesTable).where(eq(studentProfilesTable.id, profileId));
-    if (!profiles.length) {
-      res.status(404).json({ error: "Profile not found" });
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
+    // Check cache (after ownership check to avoid leaking cached data to non-owners)
+    const cached = transferabilityCache.get(profileId);
+    if (cached && Date.now() - cached.cachedAt < TRANSFER_TTL) {
+      res.json(cached.data);
       return;
     }
-    const profile = profiles[0];
+
+    const profile = owner.profile;
 
     // Fetch all courses
     const courses = await db.select().from(coursesTable).where(eq(coursesTable.profileId, profileId));

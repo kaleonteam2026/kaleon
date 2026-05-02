@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, savedInternshipsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
+import { getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
 
@@ -8,6 +9,9 @@ router.get("/profiles/:profileId/saved-internships", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const rows = await db.select().from(savedInternshipsTable).where(eq(savedInternshipsTable.profileId, profileId));
     res.json(rows);
   } catch (err) {
@@ -20,6 +24,9 @@ router.post("/profiles/:profileId/saved-internships", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const { internshipSlug, internshipData } = req.body as { internshipSlug: string; internshipData: Record<string, unknown> };
     const existing = await db.select().from(savedInternshipsTable)
       .where(and(eq(savedInternshipsTable.profileId, profileId), eq(savedInternshipsTable.internshipSlug, internshipSlug)));
@@ -36,6 +43,9 @@ router.delete("/profiles/:profileId/saved-internships/:slug", async (req, res) =
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const internshipSlug = req.params.slug;
     await db.delete(savedInternshipsTable)
       .where(and(eq(savedInternshipsTable.profileId, profileId), eq(savedInternshipsTable.internshipSlug, internshipSlug)));

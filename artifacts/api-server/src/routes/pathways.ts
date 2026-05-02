@@ -2,11 +2,12 @@ import { Router } from "express";
 import universities from "../data/universities.json" assert { type: "json" };
 import scholarships from "../data/scholarships.json" assert { type: "json" };
 import opportunities from "../data/opportunities.json" assert { type: "json" };
-import { db, studentProfilesTable, coursesTable, pathwaysTable } from "@workspace/db";
+import { db, coursesTable, pathwaysTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { generatePathways } from "../services/aiService.js";
 import { calculateCompatibility, interpretScore } from "../services/scoringService.js";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { getOwnedProfile, getOwnedPathway } from "../lib/ownership";
 
 const router = Router();
 
@@ -40,13 +41,8 @@ router.post("/profiles/:profileId/generate-pathways", async (req, res) => {
 
   try {
     const profileId = parseInt(req.params.profileId);
-    const profiles = await db.select().from(studentProfilesTable)
-      .where(eq(studentProfilesTable.id, profileId));
-
-    if (profiles.length === 0) {
-      res.status(404).json({ error: "Profile not found" });
-      return;
-    }
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
     const cap = incrementGlobalAi();
     if (!cap.allowed) {
@@ -54,7 +50,7 @@ router.post("/profiles/:profileId/generate-pathways", async (req, res) => {
       return;
     }
 
-    const profile = profiles[0];
+    const profile = owner.profile;
     const courses = await db.select().from(coursesTable)
       .where(eq(coursesTable.profileId, profileId));
 
@@ -114,6 +110,9 @@ router.get("/profiles/:profileId/pathways", async (req, res) => {
 
   try {
     const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
+
     const pathways = await db.select().from(pathwaysTable)
       .where(eq(pathwaysTable.profileId, profileId));
     res.json(pathways);
@@ -132,15 +131,10 @@ router.get("/pathways/:pathwayId", async (req, res) => {
 
   try {
     const pathwayId = parseInt(req.params.pathwayId);
-    const pathways = await db.select().from(pathwaysTable)
-      .where(eq(pathwaysTable.id, pathwayId));
+    const owner = await getOwnedPathway(pathwayId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Pathway not found" }); return; }
 
-    if (pathways.length === 0) {
-      res.status(404).json({ error: "Pathway not found" });
-      return;
-    }
-
-    res.json(pathways[0]);
+    res.json(owner.pathway);
   } catch (err) {
     req.log.error({ err }, "Error fetching pathway");
     res.status(500).json({ error: "Failed to fetch pathway" });
@@ -156,18 +150,12 @@ router.post("/pathways/:pathwayId/select", async (req, res) => {
 
   try {
     const pathwayId = parseInt(req.params.pathwayId);
-
-    const pathway = await db.select().from(pathwaysTable)
-      .where(eq(pathwaysTable.id, pathwayId));
-
-    if (pathway.length === 0) {
-      res.status(404).json({ error: "Pathway not found" });
-      return;
-    }
+    const owner = await getOwnedPathway(pathwayId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Pathway not found" }); return; }
 
     await db.update(pathwaysTable)
       .set({ isSelected: "false" })
-      .where(eq(pathwaysTable.profileId, pathway[0].profileId));
+      .where(eq(pathwaysTable.profileId, owner.pathway.profileId));
 
     const updated = await db.update(pathwaysTable)
       .set({ isSelected: "true" })

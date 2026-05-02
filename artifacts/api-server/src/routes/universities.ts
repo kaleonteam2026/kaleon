@@ -1,8 +1,7 @@
 import { Router } from "express";
 import universities from "../data/universities.json" assert { type: "json" };
 import { generateCampusOpportunities, generateCCOpportunities } from "../services/aiService.js";
-import { db, studentProfilesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
 
@@ -60,10 +59,10 @@ router.get("/profiles/:profileId/cc-campus-opportunities", async (req, res) => {
 
   try {
     const profileId = parseInt(req.params.profileId);
-    const profiles = await db.select().from(studentProfilesTable).where(eq(studentProfilesTable.id, profileId));
-    if (profiles.length === 0) { res.status(404).json({ error: "Profile not found" }); return; }
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
-    const profile = profiles[0];
+    const profile = owner.profile;
     const collegeName = profile.communityCollege ?? "a California community college";
     const major = profile.intendedMajor ?? "General Studies";
     const city = "California";
