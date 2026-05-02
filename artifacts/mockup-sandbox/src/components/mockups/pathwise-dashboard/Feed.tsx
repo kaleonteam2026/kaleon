@@ -137,8 +137,8 @@ export function Feed() {
                     </div>
                     <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                       <div 
-                        className={\`h-full \${item.color} rounded-full\`}
-                        style={{ width: \`\${(item.current / item.max) * 100}%\` }}
+                        className={`h-full ${item.color} rounded-full`}
+                        style={{ width: `${(item.current / item.max) * 100}%` }}
                       ></div>
                     </div>
                   </div>

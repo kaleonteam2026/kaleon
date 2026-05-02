@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, studentProfilesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { tavilySearch } from "../lib/tavily";
+import { guardedTavilyCall } from "../lib/tavily-guard";
 
 const router = Router();
 
@@ -28,14 +29,20 @@ router.post("/live/scholarships", async (req, res) => {
     const baseQuery = query?.trim() || "open scholarships for California community college transfer students";
     const userQuery = `${baseQuery}${profileContext}. Currently open with deadlines in the next 6 months. Include award amount, deadline date, eligibility, and the official application URL for each.`;
 
-    const result = await tavilySearch({
-      query: userQuery,
-      searchDepth: "advanced",
-      includeAnswer: "advanced",
-      maxResults: 8,
+    const guarded = await guardedTavilyCall({
+      req,
+      endpoint: "scholarships",
+      cacheKey: `${baseQuery}|${profileId ?? "anon"}`,
+      call: () => tavilySearch({
+        query: userQuery,
+        searchDepth: "advanced",
+        includeAnswer: "advanced",
+        maxResults: 8,
+      }),
     });
 
-    res.json(result);
+    if (!guarded.ok) { res.status(guarded.status).json({ error: guarded.error }); return; }
+    res.json(guarded.result);
   } catch (err) {
     req.log.error({ err }, "Tavily scholarship search failed");
     const message = err instanceof Error ? err.message : "Failed to search scholarships";
@@ -54,14 +61,20 @@ router.post("/live/verify-deadlines", async (req, res) => {
     const list = deadlines.slice(0, 14).map((d, i) => `${i + 1}. ${d.label} — listed as ${d.date}`).join("\n");
     const userQuery = `California UC and CSU transfer cycle deadlines for the current cycle. For each of these listed dates, state whether they are still accurate per official UCOP, CSU, CSAC, or studentaid.gov sources, and note any changes:\n\n${list}`;
 
-    const result = await tavilySearch({
-      query: userQuery,
-      searchDepth: "advanced",
-      includeAnswer: "advanced",
-      maxResults: 8,
+    const guarded = await guardedTavilyCall({
+      req,
+      endpoint: "verify-deadlines",
+      cacheKey: list,
+      call: () => tavilySearch({
+        query: userQuery,
+        searchDepth: "advanced",
+        includeAnswer: "advanced",
+        maxResults: 8,
+      }),
     });
 
-    res.json(result);
+    if (!guarded.ok) { res.status(guarded.status).json({ error: guarded.error }); return; }
+    res.json(guarded.result);
   } catch (err) {
     req.log.error({ err }, "Tavily deadline verify failed");
     const message = err instanceof Error ? err.message : "Failed to verify deadlines";

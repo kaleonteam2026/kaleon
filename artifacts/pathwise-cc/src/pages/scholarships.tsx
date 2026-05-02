@@ -90,6 +90,7 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
   const [open, setOpen] = useState(false);
 
   const runSearch = async (overrideQuery?: string) => {
+    if (loading) return;
     setLoading(true);
     setResult(null);
     try {
@@ -145,6 +146,9 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
           {loading ? "Searching..." : "Search"}
         </button>
       </div>
+      <p className="text-[10px] text-slate-500 mt-2 italic">
+        Each search uses one live web-search credit. Repeat searches within 24 hours are served from cache for free.
+      </p>
 
       {result && open && (
         <div className="mt-4 bg-white border border-violet-200 rounded-xl p-4 space-y-3">

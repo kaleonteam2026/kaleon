@@ -107,6 +107,7 @@ export default function DeadlineCalendar() {
   const nextCritical = upcoming.find(d => d.priority === "critical");
 
   const verifyDeadlines = async () => {
+    if (verifying) return;
     setVerifying(true);
     setVerifyResult(null);
     try {
@@ -189,6 +190,9 @@ export default function DeadlineCalendar() {
               {verifying ? "Verifying..." : "Verify"}
             </button>
           </div>
+          <p className="text-[10px] text-slate-500 italic mt-1">
+            Uses one live web-search credit. Cached for 24 hours.
+          </p>
           {verifyResult && (
             <div className="bg-white border border-violet-200 rounded-xl p-3 mt-2 space-y-3">
               <p className="text-[10px] font-bold text-violet-700 uppercase tracking-wide flex items-center gap-1">
