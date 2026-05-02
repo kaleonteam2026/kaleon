@@ -3,22 +3,20 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, BookOpen, GraduationCap, Target, Map, Award, LogOut, Menu, X, User
+  LayoutDashboard, BookOpen, Target, Map, Award, LogOut, Menu, X, User
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-interface NavLink {
-  href: string;
-  label: string;
-  icon: React.ElementType;
-  profileRequired?: boolean;
+const PROFILE_ID_KEY = "pathwise_active_profile_id";
+
+export function storeProfileId(id: number) {
+  localStorage.setItem(PROFILE_ID_KEY, String(id));
 }
 
-const navLinks: NavLink[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/profile", label: "My Profile", icon: User },
-  { href: "/scholarships", label: "Scholarships", icon: Award },
-];
+function getStoredProfileId(): number | null {
+  const v = localStorage.getItem(PROFILE_ID_KEY);
+  return v ? parseInt(v) : null;
+}
 
 interface Props {
   profileId?: number;
@@ -28,16 +26,39 @@ export default function Nav({ profileId }: Props) {
   const [location] = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [resolvedId, setResolvedId] = useState<number | null>(profileId ?? null);
 
-  const profileLinks: NavLink[] = profileId ? [
-    { href: `/courses/${profileId}`, label: "My Courses", icon: BookOpen },
-    { href: `/matches/${profileId}`, label: "University Matches", icon: GraduationCap },
-    { href: `/pathways/${profileId}`, label: "AI Pathways", icon: Target },
-  ] : [];
+  useEffect(() => {
+    if (profileId) {
+      storeProfileId(profileId);
+      setResolvedId(profileId);
+    } else {
+      const stored = getStoredProfileId();
+      if (stored) setResolvedId(stored);
+    }
+  }, [profileId]);
 
-  const allLinks = [...navLinks, ...profileLinks];
+  const staticLinks = [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/profile", label: "My Profile", icon: User },
+    { href: resolvedId ? `/scholarships/${resolvedId}` : "/scholarships", label: "Scholarships & Opportunities", icon: Award },
+  ];
+
+  const profileLinks = resolvedId
+    ? [
+        { href: `/courses/${resolvedId}`, label: "My Courses", icon: BookOpen },
+        { href: `/pathways/${resolvedId}`, label: "Pathway", icon: Target },
+      ]
+    : [];
+
+  const allLinks = [...staticLinks, ...profileLinks];
 
   if (!isAuthenticated) return null;
+
+  const isActive = (href: string) => {
+    const base = href.split("/").slice(0, 2).join("/");
+    return location.startsWith(base);
+  };
 
   return (
     <>
@@ -52,7 +73,7 @@ export default function Nav({ profileId }: Props) {
             <Link key={link.href} href={link.href}>
               <span className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                location.startsWith(link.href.split("/").slice(0, 2).join("/"))
+                isActive(link.href)
                   ? "bg-indigo-50 text-indigo-700"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               )}>
@@ -88,7 +109,7 @@ export default function Nav({ profileId }: Props) {
               <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
                 <span className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium",
-                  location.startsWith(link.href.split("/").slice(0, 2).join("/"))
+                  isActive(link.href)
                     ? "bg-indigo-50 text-indigo-700"
                     : "text-slate-600"
                 )}>

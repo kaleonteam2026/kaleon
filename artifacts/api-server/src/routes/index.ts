@@ -8,6 +8,7 @@ import pathwaysRouter from "./pathways";
 import guidebooksRouter from "./guidebooks";
 import opportunitiesRouter from "./opportunities";
 import dashboardRouter from "./dashboard";
+import universitiesRouter from "./universities";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(pathwaysRouter);
 router.use(guidebooksRouter);
 router.use(opportunitiesRouter);
 router.use(dashboardRouter);
+router.use(universitiesRouter);
 
 export default router;

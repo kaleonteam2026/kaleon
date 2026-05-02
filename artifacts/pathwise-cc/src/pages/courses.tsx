@@ -262,8 +262,8 @@ export default function Courses() {
 
         {/* Continue button */}
         <div className="py-8 text-right">
-          <Button onClick={() => navigate(`/matches/${pid}`)} className="bg-indigo-600 hover:bg-indigo-700">
-            View University Matches <ArrowRight className="ml-2 h-4 w-4" />
+          <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-indigo-600 hover:bg-indigo-700">
+            View My Pathway <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
 

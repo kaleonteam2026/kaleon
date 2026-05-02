@@ -24,8 +24,24 @@ interface PathwayResult {
   scholarshipOptions: string[];
   internshipRecommendations: string[];
   extracurricularRecommendations: string[];
+  campusOpportunities: CampusOpportunityItem[];
   risks: string[];
   nextSteps: string[];
+}
+
+export interface CampusOpportunityItem {
+  name: string;
+  type: "club" | "research" | "internship" | "honor_society" | "program" | "leadership" | "community";
+  description: string;
+  admitProfileNote: string;
+}
+
+export interface CampusOpportunitiesResult {
+  university: string;
+  summary: string;
+  opportunities: CampusOpportunityItem[];
+  admitProfileInsights: string[];
+  sources: string[];
 }
 
 export async function generatePathways(
@@ -65,8 +81,16 @@ Return ONLY a JSON object with this exact structure:
       "courseGaps": ["list of missing or recommended courses"],
       "transferTimeline": "estimated timeline e.g. Fall 2026",
       "scholarshipOptions": ["relevant scholarship names from the dataset"],
-      "internshipRecommendations": ["specific internship recommendations"],
-      "extracurricularRecommendations": ["clubs, activities, or programs to join"],
+      "internshipRecommendations": ["specific internship or career opportunities at this university"],
+      "extracurricularRecommendations": ["clubs, activities, or campus programs to strengthen the application"],
+      "campusOpportunities": [
+        {
+          "name": "Name of club, program, or organization",
+          "type": "club|research|internship|honor_society|program|leadership|community",
+          "description": "What it is and why it matters for this student",
+          "admitProfileNote": "What admitted/successful students typically do in this area — based on publicly known admission context for this university"
+        }
+      ],
       "risks": ["specific risk factors the student should know about"],
       "nextSteps": ["numbered, actionable next steps"]
     },
@@ -75,7 +99,9 @@ Return ONLY a JSON object with this exact structure:
   ]
 }
 
-The three pathways must be DISTINCT universities representing different tiers of compatibility. Choose universities from the provided dataset. Do not invent requirements. If data is missing, note it must be verified. Do not include any text outside the JSON object.`;
+For campusOpportunities, provide 4-6 specific, real-sounding opportunities at the actual named university. Base these on publicly known information about that university's clubs, research centers, honor societies, and programs. For each opportunity, include an admitProfileNote describing what successful transfer applicants or admitted students typically pursue at that type of institution (e.g., STEM research, leadership in student government, volunteering). These should feel grounded and actionable.
+
+The three pathways must be DISTINCT universities representing different tiers of compatibility. Choose universities from the provided dataset. Do not invent admissions requirements. Do not include any text outside the JSON object.`;
 
   let lastError: Error | null = null;
 
@@ -89,7 +115,6 @@ The three pathways must be DISTINCT universities representing different tiers of
       });
 
       const text = response.content[0].type === "text" ? response.content[0].text : "";
-      // Strip any accidental markdown fences
       const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
       const parsed = JSON.parse(cleaned) as { pathways: PathwayResult[] };
 
@@ -104,6 +129,76 @@ The three pathways must be DISTINCT universities representing different tiers of
   }
 
   throw lastError ?? new Error("Failed to generate pathways after 3 attempts");
+}
+
+export async function generateCampusOpportunities(
+  universityName: string,
+  system: string,
+  location: string
+): Promise<CampusOpportunitiesResult> {
+  const prompt = `You are a knowledgeable advisor for California community college transfer students. Using your public knowledge about ${universityName} (${system}, located in ${location}), generate a comprehensive list of campus opportunities that a transfer student should know about.
+
+Return ONLY a JSON object with this exact structure (no markdown, no preamble):
+{
+  "university": "${universityName}",
+  "summary": "2-3 sentence overview of what makes this university's campus life relevant for transfer students",
+  "opportunities": [
+    {
+      "name": "Exact name of club, program, research center, or organization",
+      "type": "club|research|internship|honor_society|program|leadership|community",
+      "description": "What it is, what the student does, and why it matters for career or academic growth",
+      "admitProfileNote": "What successful applicants or admitted students in this field/interest area at this university typically have on their profiles — based on publicly known information about this institution's culture and priorities"
+    }
+  ],
+  "admitProfileInsights": [
+    "Key insight 1 about what transfer applicants to this university who succeed typically demonstrate (academics, activities, essays, etc.)",
+    "Key insight 2...",
+    "Key insight 3..."
+  ],
+  "sources": [
+    "university.edu/clubs",
+    "university.edu/research",
+    "Any other relevant official URLs (can be approximate)"
+  ]
+}
+
+Include 8-12 specific, real opportunities at ${universityName}. These should include a mix of:
+- Academic clubs and honor societies relevant to common majors
+- Research programs and labs (especially ones open to undergrads/transfers)
+- Internship pipelines or career programs specific to this campus
+- Leadership and community organizations
+- Programs specifically designed for transfer students if they exist
+
+For admitProfileNote, draw on publicly known characteristics of successful students at this type of institution — what GPA ranges, activities, and experiences are associated with success there.
+
+Respond with only the JSON object, no explanation.`;
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 4096,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+      const parsed = JSON.parse(cleaned) as CampusOpportunitiesResult;
+
+      if (!parsed.opportunities || !Array.isArray(parsed.opportunities)) {
+        throw new Error("Invalid campus opportunities structure");
+      }
+      return parsed;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+    }
+  }
+
+  throw lastError ?? new Error("Failed to generate campus opportunities");
 }
 
 export async function generateGuidebook(
@@ -132,8 +227,8 @@ The guidebook MUST include these sections with clear Markdown headings:
 ## Transfer Checklist
 ## Application Deadline Checklist
 ## Scholarship Checklist
+## Campus Opportunities & Extracurriculars
 ## Career Preparation Roadmap
-## Extracurricular Recommendations
 ## Resume-Building Suggestions
 ## Monthly Action Plan (table format)
 ## Risk Alerts
