@@ -85,6 +85,7 @@ export default function Pathways() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [selecting, setSelecting] = useState<number | null>(null);
   const [generatingGuidebook, setGeneratingGuidebook] = useState<number | null>(null);
+  const [generatingRoadmap, setGeneratingRoadmap] = useState<number | null>(null);
   const pid = parseInt(profileId);
 
   const loadPathways = () => {
@@ -145,6 +146,25 @@ export default function Pathways() {
       toast({ title: "Error generating guidebook", variant: "destructive" });
     } finally {
       setGeneratingGuidebook(null);
+    }
+  };
+
+  const generateRoadmap = async (pathwayId: number) => {
+    setGeneratingRoadmap(pathwayId);
+    try {
+      const r = await fetch(`/api/pathways/${pathwayId}/generate-roadmap`, { method: "POST", credentials: "include" });
+      if (r.status === 429) {
+        toast({ title: "Rate limit reached", description: "You can generate up to 5 roadmaps per hour.", variant: "destructive" });
+        return;
+      }
+      if (!r.ok) throw new Error();
+      const roadmap = await r.json() as { id: number };
+      toast({ title: "Academic Roadmap ready!", description: "Your full academic planner has been created." });
+      navigate(`/roadmap/${roadmap.id}`);
+    } catch {
+      toast({ title: "Error generating roadmap", variant: "destructive" });
+    } finally {
+      setGeneratingRoadmap(null);
     }
   };
 
@@ -387,18 +407,32 @@ export default function Pathways() {
                       {isSelected ? "Selected" : "Select This Pathway"}
                     </Button>
                     {isSelected && (
-                      <Button
-                        size="sm"
-                        onClick={() => generateGuidebook(pathway.id)}
-                        disabled={generatingGuidebook === pathway.id}
-                        className="bg-emerald-600 hover:bg-emerald-700"
-                      >
-                        {generatingGuidebook === pathway.id ? (
-                          <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />Generating Guidebook…</>
-                        ) : (
-                          <><Sparkles className="h-3.5 w-3.5 mr-1" />Generate Guidebook</>
-                        )}
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => generateGuidebook(pathway.id)}
+                          disabled={generatingGuidebook === pathway.id || generatingRoadmap === pathway.id}
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                        >
+                          {generatingGuidebook === pathway.id ? (
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />Generating…</>
+                          ) : (
+                            <><Sparkles className="h-3.5 w-3.5 mr-1" />Generate Guidebook</>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => generateRoadmap(pathway.id)}
+                          disabled={generatingRoadmap === pathway.id || generatingGuidebook === pathway.id}
+                          className="bg-violet-600 hover:bg-violet-700"
+                        >
+                          {generatingRoadmap === pathway.id ? (
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />Generating…</>
+                          ) : (
+                            <><GraduationCap className="h-3.5 w-3.5 mr-1" />Academic Roadmap</>
+                          )}
+                        </Button>
+                      </>
                     )}
                   </div>
                 </Card>

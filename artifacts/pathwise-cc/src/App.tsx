@@ -10,6 +10,7 @@ import Courses from "@/pages/courses";
 import Matches from "@/pages/matches";
 import Pathways from "@/pages/pathways";
 import Guidebook from "@/pages/guidebook";
+import Roadmap from "@/pages/roadmap";
 import Scholarships from "@/pages/scholarships";
 import { AuthProvider } from "@/contexts/auth-context";
 import ProtectedRoute from "@/components/protected-route";
@@ -55,6 +56,11 @@ function Router() {
       <Route path="/guidebook/:guidebookId">
         <ProtectedRoute>
           <Guidebook />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/roadmap/:roadmapId">
+        <ProtectedRoute>
+          <Roadmap />
         </ProtectedRoute>
       </Route>
       <Route path="/scholarships/:profileId?">

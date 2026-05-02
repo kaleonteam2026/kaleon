@@ -4,12 +4,12 @@ import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, Download, Loader2, BookOpen, AlertTriangle,
+  ArrowLeft, Download, Loader2, MapPin, AlertTriangle,
   CheckSquare, Square, CheckCircle2,
 } from "lucide-react";
 import { MarkdownContent } from "@/components/markdown-renderer";
 
-interface Guidebook {
+interface AcademicRoadmap {
   id: number;
   title?: string;
   contentMarkdown?: string;
@@ -17,54 +17,53 @@ interface Guidebook {
   createdAt?: string;
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-export default function Guidebook() {
-  const { guidebookId } = useParams<{ guidebookId: string }>();
+export default function Roadmap() {
+  const { roadmapId } = useParams<{ roadmapId: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [guidebook, setGuidebook] = useState<Guidebook | null>(null);
+  const [roadmap, setRoadmap] = useState<AcademicRoadmap | null>(null);
   const [loading, setLoading] = useState(true);
   const [, setCurrentSection] = useState("");
-  const gid = parseInt(guidebookId);
+  const rid = parseInt(roadmapId);
 
   useEffect(() => {
-    fetch(`/api/guidebooks/${gid}`, { credentials: "include" })
+    fetch(`/api/roadmaps/${rid}`, { credentials: "include" })
       .then(r => r.json())
-      .then((g: Guidebook) => setGuidebook(g))
-      .catch(() => toast({ title: "Error loading guidebook", variant: "destructive" }))
+      .then((r: AcademicRoadmap) => setRoadmap(r))
+      .catch(() => toast({ title: "Error loading roadmap", variant: "destructive" }))
       .finally(() => setLoading(false));
-  }, [gid]);
+  }, [rid]);
 
   const downloadMarkdown = () => {
-    if (!guidebook?.contentMarkdown) return;
-    const blob = new Blob([guidebook.contentMarkdown], { type: "text/markdown;charset=utf-8" });
+    if (!roadmap?.contentMarkdown) return;
+    const blob = new Blob([roadmap.contentMarkdown], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `pathwise-guidebook-${guidebook.id}.md`;
+    a.download = `pathwise-roadmap-${roadmap.id}.md`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Guidebook downloaded!" });
+    toast({ title: "Roadmap downloaded!" });
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-          <p className="text-sm text-slate-500">Loading your guidebook…</p>
+          <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+          <p className="text-sm text-slate-500">Loading your academic roadmap…</p>
         </div>
       </div>
     );
   }
 
-  if (!guidebook) {
+  if (!roadmap) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">Guidebook not found.</p>
-          <Button variant="outline" onClick={() => window.history.back()} className="mt-4">Go Back</Button>
+          <MapPin className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500">Roadmap not found.</p>
+          <Button variant="outline" onClick={() => navigate("/")} className="mt-4">Go Home</Button>
         </div>
       </div>
     );
@@ -72,7 +71,7 @@ export default function Guidebook() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <Nav profileId={guidebook.profileId} />
+      <Nav profileId={roadmap.profileId} />
       <main className="pt-14 px-4 md:px-8 max-w-3xl mx-auto">
 
         {/* Header */}
@@ -84,10 +83,15 @@ export default function Guidebook() {
             >
               <ArrowLeft className="h-4 w-4" /> Back to Pathways
             </button>
-            <h1 className="text-xl font-bold text-slate-900">{guidebook.title ?? "Your Transfer Guidebook"}</h1>
-            {guidebook.createdAt && (
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-semibold bg-violet-100 text-violet-700 px-2.5 py-0.5 rounded-full border border-violet-200">
+                Academic Roadmap & Planner
+              </span>
+            </div>
+            <h1 className="text-xl font-bold text-slate-900">{roadmap.title ?? "Your Academic Roadmap"}</h1>
+            {roadmap.createdAt && (
               <p className="text-xs text-slate-400 mt-1">
-                Generated {new Date(guidebook.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                Generated {new Date(roadmap.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
             )}
           </div>
@@ -100,7 +104,7 @@ export default function Guidebook() {
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5 flex gap-2.5">
           <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-amber-700 leading-relaxed">
-            This guidebook is AI-generated and is <strong>not a substitute</strong> for official academic advising.
+            This roadmap is AI-generated and is <strong>not a substitute</strong> for official academic advising.
             Verify all requirements with your counselor and each university's official admissions page.
           </p>
         </div>
@@ -113,10 +117,10 @@ export default function Guidebook() {
           <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" /> Note</span>
         </div>
 
-        {/* Guidebook content */}
+        {/* Content */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-6 md:px-10 py-8 mb-12">
           <MarkdownContent
-            markdown={guidebook.contentMarkdown ?? "No content available."}
+            markdown={roadmap.contentMarkdown ?? "No content available."}
             setSection={setCurrentSection}
           />
         </div>
@@ -124,7 +128,7 @@ export default function Guidebook() {
         {/* Footer */}
         <div className="text-center pb-12">
           <Button onClick={downloadMarkdown} variant="outline">
-            <Download className="h-4 w-4 mr-2" /> Download Guidebook
+            <Download className="h-4 w-4 mr-2" /> Download Roadmap
           </Button>
           <p className="text-xs text-slate-400 mt-3">Pathwise CC · AI-generated · Always verify with official sources</p>
         </div>

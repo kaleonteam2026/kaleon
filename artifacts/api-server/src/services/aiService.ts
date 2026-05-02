@@ -354,6 +354,166 @@ End with this exact text on its own line:
   return response.content[0].type === "text" ? response.content[0].text : "";
 }
 
+// ─── Academic Roadmap ─────────────────────────────────────────────────────────
+
+export async function generateAcademicRoadmap(
+  profile: Record<string, unknown>,
+  selectedPathway: Record<string, unknown>,
+  courses: Record<string, unknown>[],
+  scholarships: Record<string, unknown>[],
+  opportunities: Record<string, unknown>[]
+): Promise<string> {
+  const communityCollege = typeof profile.communityCollege === "string" ? profile.communityCollege : "your community college";
+
+  const prompt = `Create a detailed Academic Roadmap & Planner in Markdown for the selected pathway below. This document is the student's complete action plan — covering both their time at community college and their full journey at the university through career launch.
+
+Student Profile: ${JSON.stringify(profile, null, 2)}
+Selected Pathway: ${JSON.stringify(selectedPathway, null, 2)}
+Course History: ${JSON.stringify(courses.slice(0, 20), null, 2)}
+Recommended Scholarships: ${JSON.stringify(scholarships.slice(0, 10), null, 2)}
+Recommended Opportunities: ${JSON.stringify(opportunities.slice(0, 8), null, 2)}
+
+FORMATTING RULES — follow these exactly, no exceptions:
+1. Use # only for the document title (once).
+2. Use ## for every major section heading — these are the only section separators.
+3. Use ### for sub-headings within a section.
+4. ALL checklist items must use EXACTLY this format: "- [ ] Item text" (unchecked) or "- [x] Item text" (checked). Never use dashes, asterisks, or numbered lists for checklist items.
+5. For regular bullet lists (non-checklist), use "- Item" with no checkbox.
+6. For numbered steps, use "1. Step" format.
+7. Tables must have a header row with | Col | Col | format and a separator row like | --- | --- |.
+8. Do NOT mix list formats within the same section. Pick one and be consistent.
+9. Do NOT use bold (**) for entire list items — only use bold for key terms within prose.
+10. Leave one blank line between sections, between paragraphs, and before/after tables and lists.
+
+The Academic Roadmap MUST include these sections in this exact order:
+
+# Pathwise CC Academic Roadmap — [Student Name]
+
+## Executive Summary
+
+## Student Profile Snapshot
+
+## Selected Pathway Overview
+
+## Semester-by-Semester Academic Plan
+(use a Markdown table with columns: Semester | Course | Units | Notes)
+
+## Transfer Requirements Checklist
+(use - [ ] format for every item)
+
+## Application Deadline Checklist
+(use - [ ] format for every item, include specific months where known)
+
+## Scholarship Checklist — California & Nationwide
+Generate a comprehensive scholarship checklist covering BOTH:
+1. California-specific scholarships: Cal Grant A/B/C, California Community Foundation, Golden State Scholars, Cal State San Marcos Transfer Merit Award, UC Transfer Scholarships, CSU systemwide scholarships, California Hispanic Scholarship Fund, any regional California scholarships relevant to the student's profile and geographic area
+2. Nationwide scholarships: Jack Kent Cooke Transfer Scholarship, Gates Scholarship, Dell Scholars Program, Phi Theta Kappa scholarships, any national scholarships specific to the student's intended major and career field, first-generation student scholarships if applicable
+(use - [ ] format for every item, note the award amount range and deadline month where known)
+
+## Community College On-Site Opportunities
+Generate a detailed list of opportunities available RIGHT NOW at ${communityCollege} that the student should pursue before transferring. Be specific to this exact California community college and include:
+- **Honors Program**: Transfer Alliance Program (TAP) or Honors to Honors agreements with UC/CSU — name the specific program at ${communityCollege} and what it provides
+- **EOPS / CARE**: Extended Opportunity Programs and Services — eligibility, benefits, and how to apply
+- **TRIO / Student Support Services**: Federal TRIO programs available at ${communityCollege}
+- **Transfer Center**: Name the transfer center director or program, services available, transfer admission guarantee (TAG) programs accessible
+- **CalWORKs / DSPS / Veterans**: Any applicable student support programs
+- **Research / Internship pipelines**: Any articulated programs, STEM pipelines, or community college-based internship programs in the student's field
+- **Student government and leadership**: How to get involved and why it matters for transfer applications
+- **Field-specific clubs and organizations**: Name actual clubs at ${communityCollege} relevant to the student's intended major
+- **Tutoring and academic support**: Specific learning resources to use now
+(bullet list with brief description for each item)
+
+## University On-Site Opportunities
+(bullet list with brief description for each item — clubs, research programs, internship pipelines, honor societies, and leadership programs specific to the target California university in the selected pathway)
+
+## Career Preparation Roadmap
+Write 8-12 numbered steps that are highly specific to the student's career goal and field. Cover: skill-building at the CC level before transfer, portfolio or project work to start now, certifications to pursue, job-shadowing or informational interviews in the field, and how to position themselves as a serious candidate before they even step on the university campus.
+
+## University Year-by-Year Success Roadmap
+Write a detailed numbered plan organized into four phases for AFTER the student arrives at the university:
+
+### First Semester at University
+- Meeting with a departmental advisor within week 1
+- Identifying the 2-3 faculty members whose research aligns with the student's interests and attending their office hours
+- Joining exactly which student organizations, clubs, and honor societies in their field (name them specifically for this university)
+- Academic adjustment strategies for upper-division coursework
+- Setting a GPA floor and understanding the major's grade requirements for advanced courses
+
+### First Full Year
+- Applying for undergraduate research positions (name specific research centers or labs at this university)
+- Attending the career center and identifying field-specific internship pipelines
+- Building the first version of their professional portfolio specific to their field
+- Identifying which professors to build relationships with for future letters of recommendation
+- Academic honors to target (Dean's List, departmental honors programs at this university)
+
+### Second Year (Junior Standing)
+- Securing a meaningful internship or research position relevant to the career goal
+- Taking on leadership roles in student organizations
+- Attending at least one professional conference or industry event in their field
+- Beginning to build an industry network in California for their career field
+- Identifying whether graduate school is part of their plan and beginning to prepare
+
+### Final Year
+- Capstone project, thesis, or senior research — how to make it outstanding and field-relevant
+- Full job search or graduate school application campaign
+- Leveraging faculty relationships for strong letters of recommendation
+- Transitioning from student to professional
+
+## Field-Specific Excellence Plan
+Write a detailed plan for this student's exact field and career goal:
+
+### Professional Associations & Certifications
+- The 2-4 most important professional associations in this field (name them: APA, ACM/IEEE, CFA, ABA, NASW, etc.)
+- Field-specific certifications to pursue (CompTIA, Six Sigma, LCSW path, CPA, etc.)
+- Any California-specific licensing requirements for their career path
+
+### Portfolio & Research Excellence
+- What a strong portfolio looks like in this specific field
+- How to use the university's resources to build it
+- Specific undergraduate competitions or grants in this field
+
+### Academic Distinction
+- Academic honors worth pursuing at this university for this major
+- How to graduate with distinction or departmental recognition
+- Whether an honors thesis adds value for their career goal
+
+## Professional Networking Strategy
+Write 8-10 numbered steps for building a professional network in this field in California.
+
+## Internship & Research Roadmap
+(use a Markdown table with columns: Phase | Opportunity Type | Target / Where to Find It | How to Secure It — cover summer after first year, summer after second year, during-school research, and post-graduation)
+
+## Graduate School & Career Launch Plan
+State clearly whether graduate school is recommended, optional, or unnecessary for this career goal. Then write numbered steps covering exam prep timeline if applicable, the three faculty relationships to build for LoRs, employer recruitment pipelines from this university, and first-90-days career acceleration strategy.
+
+## Resume-Building Suggestions
+(bullet list — field-specific and career-goal-specific, not generic)
+
+## Monthly Action Plan
+(use a Markdown table with columns: Month | Action Items | Priority)
+
+## Risk Alerts
+(bullet list of specific risks with brief explanation)
+
+## Advisor Meeting Checklist
+(use - [ ] format for every item)
+
+## Verification Reminders
+(use - [ ] format for every item)
+
+End with this exact text on its own line:
+> This academic roadmap was generated by Pathwise CC and is not a substitute for official academic advising. Verify all requirements with your community college counselor and the official transfer admissions page for your target university.`;
+
+  const response = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 8192,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  return response.content[0].type === "text" ? response.content[0].text : "";
+}
+
 // ─── Course Catalog ───────────────────────────────────────────────────────────
 
 export interface CatalogCourse {
