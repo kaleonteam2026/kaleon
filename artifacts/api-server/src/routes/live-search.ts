@@ -1,28 +1,11 @@
 import { Router } from "express";
 import { db, studentProfilesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { perplexitySearch } from "../lib/perplexity";
+import { tavilySearch } from "../lib/tavily";
 
 const router = Router();
 
-const SCHOLARSHIP_SYSTEM = `You are a California community college transfer scholarship researcher.
-Find currently-open scholarships available to California community college students who are planning to transfer.
-For each scholarship, return:
-- Name of the scholarship
-- Award amount (USD)
-- Application deadline (date)
-- One-line eligibility summary
-- Direct application URL
-
-Format your response as a Markdown list. Prioritize scholarships with deadlines in the next 6 months.
-Only include scholarships you can verify from your search results. Do not invent any.`;
-
-const DEADLINE_SYSTEM = `You are a California UC and CSU transfer deadlines fact-checker.
-Verify whether the listed transfer admission, financial aid, and TAG deadlines are still accurate for the current cycle.
-For each item, briefly state whether it is confirmed, has changed, or you could not verify, and cite the source.
-Be concise — one short bullet per item. Do not repeat the question.`;
-
-router.post("/perplexity/scholarships", async (req, res) => {
+router.post("/live/scholarships", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const { profileId, query } = req.body as { profileId?: number; query?: string };
@@ -42,25 +25,25 @@ router.post("/perplexity/scholarships", async (req, res) => {
       }
     }
 
-    const userQuery = (query?.trim() || "transfer scholarships") +
-      profileContext +
-      ". Focus on scholarships with deadlines in the next 6 months that are open right now in 2026.";
+    const baseQuery = query?.trim() || "open scholarships for California community college transfer students";
+    const userQuery = `${baseQuery}${profileContext}. Currently open with deadlines in the next 6 months. Include award amount, deadline date, eligibility, and the official application URL for each.`;
 
-    const result = await perplexitySearch({
+    const result = await tavilySearch({
       query: userQuery,
-      systemPrompt: SCHOLARSHIP_SYSTEM,
-      maxTokens: 1200,
+      searchDepth: "advanced",
+      includeAnswer: "advanced",
+      maxResults: 8,
     });
 
     res.json(result);
   } catch (err) {
-    req.log.error({ err }, "Perplexity scholarship search failed");
+    req.log.error({ err }, "Tavily scholarship search failed");
     const message = err instanceof Error ? err.message : "Failed to search scholarships";
     res.status(500).json({ error: message });
   }
 });
 
-router.post("/perplexity/verify-deadlines", async (req, res) => {
+router.post("/live/verify-deadlines", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const { deadlines } = req.body as { deadlines: Array<{ label: string; date: string }> };
@@ -69,17 +52,18 @@ router.post("/perplexity/verify-deadlines", async (req, res) => {
     }
 
     const list = deadlines.slice(0, 14).map((d, i) => `${i + 1}. ${d.label} — listed as ${d.date}`).join("\n");
-    const userQuery = `Please verify the following California UC/CSU transfer cycle deadlines for accuracy. For each, say "confirmed", "changed to <date>", or "could not verify", and cite an official source (UCOP, CSU, CSAC, or studentaid.gov):\n\n${list}`;
+    const userQuery = `California UC and CSU transfer cycle deadlines for the current cycle. For each of these listed dates, state whether they are still accurate per official UCOP, CSU, CSAC, or studentaid.gov sources, and note any changes:\n\n${list}`;
 
-    const result = await perplexitySearch({
+    const result = await tavilySearch({
       query: userQuery,
-      systemPrompt: DEADLINE_SYSTEM,
-      maxTokens: 900,
+      searchDepth: "advanced",
+      includeAnswer: "advanced",
+      maxResults: 8,
     });
 
     res.json(result);
   } catch (err) {
-    req.log.error({ err }, "Perplexity deadline verify failed");
+    req.log.error({ err }, "Tavily deadline verify failed");
     const message = err instanceof Error ? err.message : "Failed to verify deadlines";
     res.status(500).json({ error: message });
   }

@@ -93,7 +93,7 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
     setLoading(true);
     setResult(null);
     try {
-      const r = await fetch("/api/perplexity/scholarships", {
+      const r = await fetch("/api/live/scholarships", {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profileId, query: overrideQuery ?? query }),

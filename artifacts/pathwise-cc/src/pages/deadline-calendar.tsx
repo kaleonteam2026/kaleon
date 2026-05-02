@@ -114,7 +114,7 @@ export default function DeadlineCalendar() {
         label: d.label,
         date: formatDateRange(d, cycleYear),
       }));
-      const r = await fetch("/api/perplexity/verify-deadlines", {
+      const r = await fetch("/api/live/verify-deadlines", {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deadlines: payload }),
