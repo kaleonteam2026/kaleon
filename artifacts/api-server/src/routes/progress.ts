@@ -60,10 +60,6 @@ router.post("/profiles/:profileId/progress/entry-feedback", async (req, res) => 
     res.status(429).json({ error: "Rate limit exceeded. Please try again later." });
     return;
   }
-  {
-    const cap = incrementGlobalAi();
-    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
-  }
   try {
     const profileId = parseInt(req.params.profileId);
     const { entryId } = req.body as { entryId: number };
@@ -78,6 +74,11 @@ router.post("/profiles/:profileId/progress/entry-feedback", async (req, res) => 
 
     const entry = entries.find(e => e.id === entryId);
     if (!entry) { res.status(404).json({ error: "Entry not found" }); return; }
+
+    {
+      const cap = incrementGlobalAi();
+      if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
+    }
 
     const selectedPathway = pathways.find(p => p.isSelected === "true") ?? null;
     const pathwayReport = selectedPathway ? (selectedPathway.reportJson as Record<string, unknown>) : null;
@@ -157,13 +158,13 @@ router.delete("/progress/:entryId", async (req, res) => {
 // POST /api/profiles/:profileId/progress/analyze — generate AI progress analysis
 router.post("/profiles/:profileId/progress/analyze", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
-  {
-    const cap = incrementGlobalAi();
-    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
-  }
   if (!checkRateLimit(req.user.id)) {
     res.status(429).json({ error: "Rate limit exceeded. You can generate up to 5 analyses per hour." });
     return;
+  }
+  {
+    const cap = incrementGlobalAi();
+    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
   }
 
   try {

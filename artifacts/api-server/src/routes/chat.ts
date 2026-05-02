@@ -40,13 +40,17 @@ router.post("/chat", async (req, res) => {
     res.status(429).json({ error: `Chat rate limit reached (${CHAT_PER_USER_HOURLY}/hour). Please wait.` });
     return;
   }
-  const cap = incrementGlobalAi();
-  if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
   try {
     const { profileId, messages } = req.body as {
       profileId?: number;
       messages: Array<{ role: "user" | "assistant"; content: string }>;
     };
+    if (!Array.isArray(messages) || messages.length === 0) {
+      res.status(400).json({ error: "messages required" });
+      return;
+    }
+    const cap = incrementGlobalAi();
+    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
     let system = CHAT_SYSTEM;
     if (profileId) {

@@ -38,12 +38,6 @@ router.post("/profiles/:profileId/generate-pathways", async (req, res) => {
     return;
   }
 
-  const cap = incrementGlobalAi();
-  if (!cap.allowed) {
-    res.status(429).json({ error: globalCapMessage(cap.cap) });
-    return;
-  }
-
   try {
     const profileId = parseInt(req.params.profileId);
     const profiles = await db.select().from(studentProfilesTable)
@@ -51,6 +45,12 @@ router.post("/profiles/:profileId/generate-pathways", async (req, res) => {
 
     if (profiles.length === 0) {
       res.status(404).json({ error: "Profile not found" });
+      return;
+    }
+
+    const cap = incrementGlobalAi();
+    if (!cap.allowed) {
+      res.status(429).json({ error: globalCapMessage(cap.cap) });
       return;
     }
 

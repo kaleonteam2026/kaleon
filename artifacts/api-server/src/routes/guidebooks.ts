@@ -34,8 +34,6 @@ router.post("/pathways/:pathwayId/generate-guidebook", async (req, res) => {
     res.status(429).json({ error: `Rate limit exceeded. You can generate up to ${PER_USER_HOURLY} guidebooks per hour.` });
     return;
   }
-  const cap = incrementGlobalAi();
-  if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
   try {
     const pathwayId = parseInt(req.params.pathwayId);
@@ -46,6 +44,9 @@ router.post("/pathways/:pathwayId/generate-guidebook", async (req, res) => {
       res.status(404).json({ error: "Pathway not found" });
       return;
     }
+
+    const cap = incrementGlobalAi();
+    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
     const pathway = pathways[0];
     const profiles = await db.select().from(studentProfilesTable)

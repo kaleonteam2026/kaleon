@@ -28,8 +28,6 @@ router.post("/profiles/:profileId/internships/search", async (req, res) => {
     res.status(429).json({ error: "Rate limit reached. Up to 5 searches per hour." });
     return;
   }
-  const cap = incrementGlobalAi();
-  if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
   try {
     const profileId = parseInt(req.params.profileId);
@@ -41,6 +39,9 @@ router.post("/profiles/:profileId/internships/search", async (req, res) => {
     ]);
 
     if (profiles.length === 0) { res.status(404).json({ error: "Profile not found" }); return; }
+
+    const cap = incrementGlobalAi();
+    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
     const profile = profiles[0];
     const selectedPathway = pathways.find(p => p.isSelected === "true") ?? null;

@@ -164,6 +164,7 @@ router.get("/callback", async (req: Request, res: Response) => {
   const claimEmail = (claims as Record<string, unknown>).email;
   if (isAllowlistEnabled() && !isEmailAllowed(typeof claimEmail === "string" ? claimEmail : null)) {
     req.log.warn({ email: claimEmail }, "Sign-in blocked by allowlist");
+    await clearSession(res, getSessionId(req));
     res.status(403).type("html").send(`<!doctype html>
 <html><head><meta charset="utf-8"><title>Private Beta — DYP</title>
 <style>
