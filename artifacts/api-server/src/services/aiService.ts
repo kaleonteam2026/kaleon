@@ -514,6 +514,166 @@ End with this exact text on its own line:
   return response.content[0].type === "text" ? response.content[0].text : "";
 }
 
+// ─── Progress Analysis ────────────────────────────────────────────────────────
+
+export interface ProgressEntry {
+  id: number;
+  entryType: string;
+  title: string;
+  description?: string | null;
+  entryDate?: string | null;
+  numericValue?: number | null;
+}
+
+export async function generateProgressAnalysis(
+  profile: Record<string, unknown>,
+  courses: Record<string, unknown>[],
+  selectedPathway: Record<string, unknown> | null,
+  progressEntries: ProgressEntry[],
+  scholarships: Record<string, unknown>[],
+  opportunities: Record<string, unknown>[]
+): Promise<{ markdown: string; overallScore: number; summary: string }> {
+  const college = typeof profile.communityCollege === "string" ? profile.communityCollege : "your community college";
+  const major = typeof profile.intendedMajor === "string" ? profile.intendedMajor : "your major";
+  const targetUniversity = selectedPathway ? (selectedPathway.university ?? "target university") : "no pathway selected yet";
+
+  const gpaEntries = progressEntries.filter(e => e.entryType === "gpa_update").sort((a, b) => (a.entryDate ?? "").localeCompare(b.entryDate ?? ""));
+  const latestGpa = gpaEntries.length > 0 ? gpaEntries[gpaEntries.length - 1].numericValue : null;
+
+  const prompt = `You are a student success advisor reviewing a California community college student's live academic progress. Analyze everything below and produce a comprehensive, honest, and encouraging progress assessment.
+
+Student Profile:
+${JSON.stringify(profile, null, 2)}
+
+Target Pathway: ${JSON.stringify(selectedPathway ?? {}, null, 2)}
+
+All Courses (completed, in-progress, planned):
+${JSON.stringify(courses.slice(0, 25), null, 2)}
+
+Progress Log (all student updates — certifications, GPA updates, opportunities, milestones, achievements, setbacks, notes):
+${JSON.stringify(progressEntries, null, 2)}
+
+Latest GPA on record: ${latestGpa ?? profile.currentGpa ?? "not yet logged"}
+Total progress entries: ${progressEntries.length}
+Community College: ${college}
+Intended Major: ${major}
+Target University: ${String(targetUniversity)}
+
+Scholarship data (for context): ${JSON.stringify(scholarships.slice(0, 8), null, 2)}
+Opportunities data (for context): ${JSON.stringify(opportunities.slice(0, 6), null, 2)}
+
+FORMATTING RULES — follow these exactly:
+1. Use # only for the document title (once).
+2. Use ## for every major section heading.
+3. Use ### for sub-headings.
+4. ALL checklist items: "- [ ] Item" (unchecked) or "- [x] Item" (checked, for completed items from the progress log).
+5. Regular bullet lists: "- Item".
+6. Numbered steps: "1. Step".
+7. Tables: header row with | Col | format and separator row | --- |.
+8. Leave one blank line between sections.
+9. Do NOT use bold (**) for entire list items.
+
+Return a JSON object with exactly this structure (no markdown fences, no preamble):
+{
+  "overallScore": <integer 0-100 representing overall trajectory strength>,
+  "summary": "<2-sentence plain text summary of where the student stands right now>",
+  "markdown": "<the full progress analysis in markdown — see section requirements below>"
+}
+
+The markdown field must contain these sections in this exact order:
+
+# Progress Assessment — [Student Name]
+(subtitle line: "As of [today's date in Month DD, YYYY format] · Target: [university name] · Major: [major]")
+
+## Overall Trajectory Score
+Show the score as a large visual: "**[score]/100**" followed by a one-line status label: 🟢 On Track / 🟡 Needs Attention / 🔴 At Risk (choose based on score ≥75 / ≥50 / <50). Then write 2-3 sentences explaining what the score reflects specifically about this student's logged progress.
+
+## What You've Accomplished
+A genuine, specific acknowledgment of every achievement logged in the progress entries. Reference actual entries by name. If GPA updates show an upward trend, call it out. If certifications were earned, name them. If opportunities were joined, validate why they matter for the student's specific career goal. Be specific, not generic.
+
+## Academic Standing
+Analyze the student's GPA trajectory from the progress log:
+- Current/latest GPA: what it means for their target university's requirements
+- GPA trend (if multiple GPA entries exist): improving / declining / stable
+- Course completion status: which courses strengthen the application, which gaps remain
+- IGETC completion status based on courses logged
+- Whether they are on pace to meet the GPA target for ${String(targetUniversity)}
+
+## Transfer Readiness Checklist
+Based on the student's actual progress entries and courses, generate a checklist of transfer requirements with realistic checked/unchecked status:
+(use - [x] for items clearly completed based on progress log, - [ ] for items not yet done)
+
+## Opportunity & Enrichment Status
+Assess the student's extracurricular and experiential profile:
+- List every opportunity entry from the progress log and evaluate its strength for the target university
+- Identify which opportunity types are missing relative to the roadmap recommendations (research, leadership, internship, honors, etc.)
+- Give a specific opportunity gap score: Strong / Moderate / Needs Work, with explanation
+
+## Certification & Credential Progress
+- List every certification logged and assess its value for this student's career goal
+- Identify the highest-priority certifications still missing for their field
+- Note any California-specific credentials relevant to their career path that haven't been started
+
+## Roadmap Comparison
+Compare current status to the original roadmap goals. Use a Markdown table:
+| Goal Area | Target | Current Status | Gap |
+| --- | --- | --- | --- |
+(include rows for: GPA, Transfer Timeline, IGETC Completion, Major Prereqs, Opportunities, Certifications, Scholarship Applications)
+
+## Updated Priority Action Items
+Based on EVERYTHING in the progress log, generate 8-12 highly specific numbered action items that are precisely calibrated to where the student is RIGHT NOW. These must be different from generic advice — they must respond directly to what's been logged, what's missing, and what's urgent given the transfer timeline.
+
+## Momentum & Risk Assessment
+
+### Positive Momentum
+- List 3-5 specific positive trends or strengths from the progress log
+
+### Risk Flags
+- List any genuine risks: GPA concerns, missing prerequisites, timeline pressure, opportunity gaps
+- For each risk, give a clear mitigation step
+
+## Scholarship Opportunity Match
+Based on the student's logged achievements and current profile, list 5-8 scholarships they are now better positioned to apply for, with a brief reason why each is a good match given their current credentials.
+
+## Next 30 / 60 / 90 Days
+Use a Markdown table with columns: Timeframe | Action | Priority | Why It Matters Now
+(Give 3-4 actions per timeframe, specific to this student's current situation)
+
+End with this exact text:
+> This progress assessment was generated by Pathwise CC based on your logged updates. It is not a substitute for official academic advising. Continue logging updates to keep your assessment current.`;
+
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 8192,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+      const parsed = JSON.parse(cleaned) as { overallScore: number; summary: string; markdown: string };
+
+      if (typeof parsed.markdown !== "string" || typeof parsed.overallScore !== "number") {
+        throw new Error("Invalid progress analysis structure");
+      }
+
+      return {
+        markdown: parsed.markdown,
+        overallScore: Math.max(0, Math.min(100, Math.round(parsed.overallScore))),
+        summary: parsed.summary ?? "",
+      };
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+    }
+  }
+
+  throw lastError ?? new Error("Failed to generate progress analysis");
+}
+
 // ─── Course Catalog ───────────────────────────────────────────────────────────
 
 export interface CatalogCourse {

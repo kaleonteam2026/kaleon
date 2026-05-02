@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, BookOpen, Target, Map, Award, LogOut, Menu, X, User
+  LayoutDashboard, BookOpen, Target, Map, Award, LogOut, Menu, X, User, TrendingUp
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -48,6 +48,7 @@ export default function Nav({ profileId }: Props) {
     ? [
         { href: `/courses/${resolvedId}`, label: "My Courses", icon: BookOpen },
         { href: `/pathways/${resolvedId}`, label: "Pathway", icon: Target },
+        { href: `/progress/${resolvedId}`, label: "My Progress", icon: TrendingUp },
       ]
     : [];
 
