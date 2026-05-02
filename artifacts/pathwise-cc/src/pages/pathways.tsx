@@ -193,7 +193,7 @@ export default function Pathways() {
             <Target className="h-12 w-12 text-slate-300 mx-auto mb-3" />
             <h2 className="text-lg font-semibold text-slate-800">No pathways yet</h2>
             <p className="text-slate-500 text-sm mt-1 max-w-md mx-auto">
-              Click "Generate Pathways" to receive 3 personalized transfer pathway reports — a stretch school, a match school, and a safety school — each with campus opportunities and next steps.
+              Click "Generate Pathways" to receive 3 personalized California transfer pathway reports — a stretch school, a match school, and a safety school — each with university on-site opportunities and next steps.
             </p>
             <Button onClick={generatePathways} className="mt-6 bg-indigo-600 hover:bg-indigo-700">
               <Sparkles className="mr-2 h-4 w-4" /> Generate Pathways
@@ -273,12 +273,12 @@ export default function Pathways() {
                         </div>
                       )}
 
-                      {/* Campus Opportunities */}
+                      {/* University On-Site Opportunities */}
                       {report.campusOpportunities && report.campusOpportunities.length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-3">
                             <Building2 className="h-3.5 w-3.5 text-indigo-500" />
-                            Campus Opportunities & Extracurriculars
+                            University On-Site Opportunities
                           </h4>
                           <div className="space-y-2">
                             {report.campusOpportunities.map((opp, i) => {

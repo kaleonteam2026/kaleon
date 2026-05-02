@@ -130,7 +130,7 @@ export default function Scholarships() {
       const data = await r.json() as CampusOpportunitiesResult;
       setCampusOpps(data);
     } catch {
-      toast({ title: "Could not load campus opportunities", variant: "destructive" });
+      toast({ title: "Could not load university on-site opportunities", variant: "destructive" });
     } finally {
       setCampusLoading(false);
     }
@@ -183,7 +183,7 @@ export default function Scholarships() {
             className={cn("px-4 py-1.5 rounded-md text-sm font-medium transition-colors", tab === "opportunities" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600")}
           >
             <Building2 className="inline h-3.5 w-3.5 mr-1" />
-            Campus Opportunities
+            University On-Site Opportunities
           </button>
         </div>
 
@@ -258,15 +258,15 @@ export default function Scholarships() {
             {!selectedUniId && (
               <div className="text-center py-16">
                 <Building2 className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm">Select a university above to explore campus opportunities and admission insights.</p>
+                <p className="text-slate-500 text-sm">Select a California university above to explore on-site opportunities and admission insights.</p>
               </div>
             )}
 
             {campusLoading && (
               <div className="text-center py-16">
                 <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mx-auto mb-3" />
-                <p className="text-slate-600 font-medium">Loading campus opportunities…</p>
-                <p className="text-slate-400 text-sm mt-1">AI is compiling real programs and admission insights for this school.</p>
+                <p className="text-slate-600 font-medium">Loading university on-site opportunities…</p>
+                <p className="text-slate-400 text-sm mt-1">AI is compiling real programs and admission insights for this California school.</p>
               </div>
             )}
 

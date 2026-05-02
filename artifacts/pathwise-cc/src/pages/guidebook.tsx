@@ -28,7 +28,7 @@ function getSectionTheme(text: string) {
   if (t.includes("semester") || t.includes("academic"))  return { border: "border-violet-400", bg: "bg-violet-50", heading: "text-violet-800" };
   if (t.includes("transfer") || t.includes("checklist") || t.includes("deadline")) return { border: "border-emerald-400", bg: "bg-emerald-50", heading: "text-emerald-800" };
   if (t.includes("scholarship"))                          return { border: "border-amber-400",  bg: "bg-amber-50",  heading: "text-amber-800" };
-  if (t.includes("extracurricular") || t.includes("campus") || t.includes("opportunit")) return { border: "border-teal-400", bg: "bg-teal-50", heading: "text-teal-800" };
+  if (t.includes("on-site") || t.includes("opportunit") || t.includes("extracurricular")) return { border: "border-teal-400", bg: "bg-teal-50", heading: "text-teal-800" };
   if (t.includes("career")   || t.includes("resume"))    return { border: "border-orange-400", bg: "bg-orange-50", heading: "text-orange-800" };
   if (t.includes("action")   || t.includes("monthly"))   return { border: "border-cyan-400",   bg: "bg-cyan-50",   heading: "text-cyan-800" };
   if (t.includes("risk")     || t.includes("alert"))     return { border: "border-rose-400",   bg: "bg-rose-50",   heading: "text-rose-800" };
