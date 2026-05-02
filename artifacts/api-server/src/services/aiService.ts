@@ -674,6 +674,117 @@ End with this exact text:
   throw lastError ?? new Error("Failed to generate progress analysis");
 }
 
+// ─── Entry Feedback ───────────────────────────────────────────────────────────
+
+export interface EntryFeedbackResult {
+  aligned: boolean;
+  alignmentScore: number;
+  currentAdmissionChance: number;
+  admissionImpactDelta: number;
+  severity: "positive" | "caution" | "concern";
+  heading: string;
+  feedback: string;
+  reconciliationSteps: string[];
+  nextAlignedActions: string[];
+  guidebookCheck: string;
+}
+
+export async function generateEntryFeedback(
+  entry: ProgressEntry,
+  profile: Record<string, unknown>,
+  pathway: Record<string, unknown> | null,
+  guidebookMarkdown: string | null,
+  recentGpaEntries: ProgressEntry[]
+): Promise<EntryFeedbackResult> {
+  const college = typeof profile.communityCollege === "string" ? profile.communityCollege : "the student's college";
+  const major = typeof profile.intendedMajor === "string" ? profile.intendedMajor : "their major";
+  const targetUniversity = pathway ? String(pathway.university ?? "target university") : "no pathway selected";
+  const profileGpa = typeof profile.currentGpa === "number" ? profile.currentGpa : null;
+  const gpaHistory = recentGpaEntries.map(e => `${e.entryDate ?? "unknown date"}: ${e.numericValue?.toFixed(2) ?? "?"}`).join(", ");
+
+  const prompt = `You are a California community college transfer advisor AI. A student just logged a new progress update. Analyze it against their selected pathway guidebook and profile to determine:
+1. Whether this entry aligns with their guidebook recommendations
+2. The updated impact on their admission chances to their target university
+3. Specific, California-focused advice (reconciliation for setbacks, validation for positives)
+
+Student Profile:
+- Community College: ${college}
+- Intended Major: ${major}
+- Target University: ${targetUniversity}
+- Profile GPA: ${profileGpa ?? "not specified"}
+- Recent GPA history: ${gpaHistory || "none logged yet"}
+
+New Progress Entry:
+- Type: ${entry.entryType}
+- Title: ${entry.title}
+- Description: ${entry.description ?? "none"}
+- Date: ${entry.entryDate ?? "today"}
+- Value: ${entry.numericValue != null ? entry.numericValue.toFixed(2) : "N/A"}
+
+Selected Pathway Summary:
+${JSON.stringify(pathway ?? {}, null, 2)}
+
+Guidebook Content (the student's personalized academic guidebook — use this to check alignment):
+${guidebookMarkdown ? guidebookMarkdown.slice(0, 4000) : "No guidebook generated yet. Base analysis on the pathway and major."}
+
+CALIFORNIA-SPECIFIC KNOWLEDGE you must apply when entry_type is "setback" or GPA is below the target university's typical minimum:
+- Academic Renewal Petition: most CA community colleges allow petitioning to exclude up to 24 units of substandard work (D/F) from GPA if circumstances were present. Strongly advise this when appropriate.
+- Grade Forgiveness / Repeat Policy: California Ed Code 55042 allows students to repeat a course and the new grade replaces the old one in GPA calculation at CCCs.
+- Substandard Work Notation (SWN): petition to have a grade noted as substandard but still replaced.
+- UC/CSU Trend Policy: UC and CSU admissions weigh upward GPA trends heavily — a student going from 2.8 to 3.5 demonstrates recovery.
+- EOPS (Extended Opportunity Programs and Services): provides academic support and appeals assistance.
+- Puente Project / UMOJA: structured programs with counseling support that strengthen applications.
+- Honors/TAP (Transfer Admission Guarantee): honors coursework can compensate for a lower base GPA at several UCs.
+- Personal Insight Questions (PIQs): for UC apps, students can contextualize setbacks directly.
+- Supplemental Academic Instruction (SAI/SI): tutoring programs that aid grade improvement.
+- TAG (Transfer Admission Guarantee): if GPA meets TAG minimums, guarantees admission to 6 UC campuses regardless of competition.
+
+Return ONLY a JSON object with no markdown fences:
+{
+  "aligned": <boolean — does this entry align with the guidebook's recommendations for this student?>,
+  "alignmentScore": <integer 0-100 — how well this entry fits the guidebook plan>,
+  "currentAdmissionChance": <integer 0-100 — estimated % chance of admission to target university given everything known>,
+  "admissionImpactDelta": <integer -15 to +15 — how much this single entry changes the estimated admission chance>,
+  "severity": <"positive" | "caution" | "concern" — overall tone of this entry's impact>,
+  "heading": <string — 6-10 word headline summarizing the assessment>,
+  "feedback": <string — 2-4 sentences of specific, honest, encouraging analysis referencing the guidebook and CA context>,
+  "reconciliationSteps": <array of 2-5 strings — ONLY for setback/bad GPA entries. Each step is a specific, actionable CA-specific remediation step. Empty array for positive entries.>,
+  "nextAlignedActions": <array of 2-4 strings — specific next steps that ARE in the guidebook, to keep momentum>,
+  "guidebookCheck": <string — one sentence saying specifically whether this entry matches or deviates from the guidebook recommendation>
+}`;
+
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1500,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: prompt }],
+      });
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+      const parsed = JSON.parse(cleaned) as EntryFeedbackResult;
+      return {
+        aligned: Boolean(parsed.aligned),
+        alignmentScore: Math.max(0, Math.min(100, Math.round(parsed.alignmentScore ?? 50))),
+        currentAdmissionChance: Math.max(0, Math.min(100, Math.round(parsed.currentAdmissionChance ?? 50))),
+        admissionImpactDelta: Math.max(-15, Math.min(15, Math.round(parsed.admissionImpactDelta ?? 0))),
+        severity: parsed.severity ?? "caution",
+        heading: parsed.heading ?? "Entry analyzed",
+        feedback: parsed.feedback ?? "",
+        reconciliationSteps: Array.isArray(parsed.reconciliationSteps) ? parsed.reconciliationSteps : [],
+        nextAlignedActions: Array.isArray(parsed.nextAlignedActions) ? parsed.nextAlignedActions : [],
+        guidebookCheck: parsed.guidebookCheck ?? "",
+      };
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < 2) await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+    }
+  }
+  throw lastError ?? new Error("Failed to generate entry feedback");
+}
+
 // ─── Course Catalog ───────────────────────────────────────────────────────────
 
 export interface CatalogCourse {

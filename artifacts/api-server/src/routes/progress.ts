@@ -3,10 +3,10 @@ import scholarships from "../data/scholarships.json" assert { type: "json" };
 import opportunities from "../data/opportunities.json" assert { type: "json" };
 import {
   db, studentProfilesTable, coursesTable, pathwaysTable,
-  studentProgressTable, progressAnalysesTable,
+  studentProgressTable, progressAnalysesTable, guidebooksTable,
 } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
-import { generateProgressAnalysis } from "../services/aiService.js";
+import { generateProgressAnalysis, generateEntryFeedback } from "../services/aiService.js";
 
 const router = Router();
 
@@ -49,6 +49,71 @@ router.post("/profiles/:profileId/progress", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Error logging progress entry");
     res.status(500).json({ error: "Failed to log progress entry" });
+  }
+});
+
+// POST /api/profiles/:profileId/progress/entry-feedback — instant AI feedback on a logged entry
+router.post("/profiles/:profileId/progress/entry-feedback", async (req, res) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const profileId = parseInt(req.params.profileId);
+    const { entryId } = req.body as { entryId: number };
+
+    const [entries, profiles, pathways] = await Promise.all([
+      db.select().from(studentProgressTable).where(eq(studentProgressTable.profileId, profileId)).orderBy(desc(studentProgressTable.createdAt)),
+      db.select().from(studentProfilesTable).where(eq(studentProfilesTable.id, profileId)),
+      db.select().from(pathwaysTable).where(eq(pathwaysTable.profileId, profileId)),
+    ]);
+
+    if (profiles.length === 0) { res.status(404).json({ error: "Profile not found" }); return; }
+
+    const entry = entries.find(e => e.id === entryId);
+    if (!entry) { res.status(404).json({ error: "Entry not found" }); return; }
+
+    const selectedPathway = pathways.find(p => p.isSelected === "true") ?? null;
+    const pathwayReport = selectedPathway ? (selectedPathway.reportJson as Record<string, unknown>) : null;
+
+    // Pull guidebook for this pathway
+    let guidebookMarkdown: string | null = null;
+    if (selectedPathway) {
+      const guidebooks = await db.select().from(guidebooksTable)
+        .where(eq(guidebooksTable.pathwayId, selectedPathway.id))
+        .orderBy(desc(guidebooksTable.createdAt))
+        .limit(1);
+      if (guidebooks.length > 0) guidebookMarkdown = guidebooks[0].contentMarkdown ?? null;
+    }
+
+    // Collect GPA history for context
+    const gpaEntries = entries
+      .filter(e => e.entryType === "gpa_update" && e.numericValue != null)
+      .map(e => ({
+        id: e.id,
+        entryType: e.entryType,
+        title: e.title,
+        description: e.description,
+        entryDate: e.entryDate,
+        numericValue: e.numericValue,
+      }));
+
+    const result = await generateEntryFeedback(
+      {
+        id: entry.id,
+        entryType: entry.entryType,
+        title: entry.title,
+        description: entry.description,
+        entryDate: entry.entryDate,
+        numericValue: entry.numericValue,
+      },
+      profiles[0] as unknown as Record<string, unknown>,
+      pathwayReport,
+      guidebookMarkdown,
+      gpaEntries,
+    );
+
+    res.json(result);
+  } catch (err) {
+    req.log.error({ err }, "Error generating entry feedback");
+    res.status(500).json({ error: "Failed to generate feedback. Please try again." });
   }
 });
 
@@ -132,6 +197,20 @@ router.post("/profiles/:profileId/progress/analyze", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Error generating progress analysis");
     res.status(500).json({ error: "Failed to generate progress analysis. Please try again." });
+  }
+});
+
+// GET /api/profiles/:profileId/progress/selected-pathway — check if pathway is selected
+router.get("/profiles/:profileId/progress/selected-pathway", async (req, res) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const profileId = parseInt(req.params.profileId);
+    const pathways = await db.select().from(pathwaysTable).where(eq(pathwaysTable.profileId, profileId));
+    const selected = pathways.find(p => p.isSelected === "true") ?? null;
+    res.json({ hasSelectedPathway: selected !== null, pathway: selected ? (selected.reportJson as Record<string, unknown>) : null });
+  } catch (err) {
+    req.log.error({ err }, "Error checking selected pathway");
+    res.status(500).json({ error: "Failed to check pathway" });
   }
 });
 
