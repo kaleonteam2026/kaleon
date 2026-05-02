@@ -4,18 +4,34 @@ import type { TavilyResult } from "./tavily";
 
 const COOLDOWN_MS = 10_000;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const DAILY_CAP = Number(process.env["TAVILY_DAILY_CAP"] ?? 50);
+
+function resolveDailyCap(): number {
+  const raw = process.env["TAVILY_DAILY_CAP"];
+  if (raw === undefined) return 50;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    logger.warn({ raw }, "Invalid TAVILY_DAILY_CAP; falling back to 50");
+    return 50;
+  }
+  return Math.floor(parsed);
+}
+const DAILY_CAP = resolveDailyCap();
 
 const lastCallByUser = new Map<string, number>();
 const cache = new Map<string, { at: number; result: TavilyResult }>();
 let dailyCount = 0;
-let dailyWindowStart = Date.now();
+let currentDayKey = calendarDayKey(Date.now());
+
+function calendarDayKey(ts: number): string {
+  // UTC calendar day so reset is deterministic across server restarts.
+  return new Date(ts).toISOString().slice(0, 10);
+}
 
 function rolloverDailyWindow() {
-  const now = Date.now();
-  if (now - dailyWindowStart >= 24 * 60 * 60 * 1000) {
+  const today = calendarDayKey(Date.now());
+  if (today !== currentDayKey) {
     dailyCount = 0;
-    dailyWindowStart = now;
+    currentDayKey = today;
   }
 }
 

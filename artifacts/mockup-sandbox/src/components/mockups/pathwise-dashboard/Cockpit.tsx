@@ -70,7 +70,6 @@ export function Cockpit() {
   return (
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900 font-sans selection:bg-slate-300">
       <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .font-sans { font-family: 'Inter', sans-serif; }
       `}} />

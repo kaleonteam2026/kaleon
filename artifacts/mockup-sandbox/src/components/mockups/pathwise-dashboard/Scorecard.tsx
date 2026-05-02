@@ -69,7 +69,6 @@ export function Scorecard() {
   return (
     <div className="min-h-screen bg-neutral-50" style={{ fontFamily: "'Inter', sans-serif" }}>
       <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap');
         .font-outfit { font-family: 'Outfit', sans-serif; }
       `}} />
       
