@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, coursesTable, studentProfilesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { generateTransferabilityAnalysis } from "../services/aiService.js";
+import { generateTransferabilityAnalysis, generateCourseCatalog } from "../services/aiService.js";
 
 const router = Router();
 
@@ -154,6 +154,51 @@ router.get("/profiles/:profileId/gpa-summary", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Error calculating GPA summary");
     res.status(500).json({ error: "Failed to calculate GPA summary" });
+  }
+});
+
+// GET /api/profiles/:profileId/course-catalog
+// Cached per (college, major) pair — 24 hrs since catalogs rarely change
+const catalogCache = new Map<string, { data: unknown; cachedAt: number }>();
+const CATALOG_TTL = 24 * 60 * 60 * 1000;
+
+router.get("/profiles/:profileId/course-catalog", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const profileId = parseInt(req.params.profileId);
+
+  try {
+    const profiles = await db.select().from(studentProfilesTable).where(eq(studentProfilesTable.id, profileId));
+    if (!profiles.length) {
+      res.status(404).json({ error: "Profile not found" });
+      return;
+    }
+    const profile = profiles[0];
+
+    if (!profile.communityCollege) {
+      res.status(400).json({ error: "Please complete your profile with your community college before loading the course catalog." });
+      return;
+    }
+
+    const college = profile.communityCollege;
+    const major = profile.intendedMajor ?? "General Education";
+    const cacheKey = `${college}::${major}`;
+
+    const cached = catalogCache.get(cacheKey);
+    if (cached && Date.now() - cached.cachedAt < CATALOG_TTL) {
+      res.json(cached.data);
+      return;
+    }
+
+    const catalog = await generateCourseCatalog(college, major);
+    catalogCache.set(cacheKey, { data: catalog, cachedAt: Date.now() });
+    res.json(catalog);
+  } catch (err) {
+    req.log.error({ err }, "Error generating course catalog");
+    res.status(500).json({ error: "Failed to generate course catalog" });
   }
 });
 

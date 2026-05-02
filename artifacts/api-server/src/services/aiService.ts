@@ -286,6 +286,95 @@ End with this exact text on its own line:
   return response.content[0].type === "text" ? response.content[0].text : "";
 }
 
+// ─── Course Catalog ───────────────────────────────────────────────────────────
+
+export interface CatalogCourse {
+  courseCode: string;
+  courseName: string;
+  units: number;
+  description: string;
+  category: string;
+  igetcArea?: string;
+  csuGEArea?: string;
+  transferable: boolean;
+}
+
+export interface CourseCatalog {
+  college: string;
+  major: string;
+  categories: string[];
+  courses: CatalogCourse[];
+}
+
+export async function generateCourseCatalog(
+  college: string,
+  major: string
+): Promise<CourseCatalog> {
+  const prompt = `You are an expert on California community college course catalogs. Generate an accurate, comprehensive list of courses offered at ${college} that are relevant to a student pursuing ${major}.
+
+Include:
+1. All core major/program courses for ${major} at ${college}
+2. All IGETC-applicable GE courses offered at ${college} (English composition, critical thinking, math, arts/humanities, social sciences, natural sciences, language)
+3. Common electives and prerequisite courses related to ${major}
+
+Use the ACTUAL course codes and unit counts from ${college}'s current catalog. If you are uncertain about a specific course code at this college, use the standard California CCC numbering convention for that subject.
+
+Return ONLY a JSON object with this exact structure (no markdown, no preamble):
+{
+  "college": "${college}",
+  "major": "${major}",
+  "categories": ["Major Requirements", "IGETC / GE Requirements", "Electives & Prerequisites"],
+  "courses": [
+    {
+      "courseCode": "PSYCH 1",
+      "courseName": "Introduction to Psychology",
+      "units": 3,
+      "description": "Brief one-sentence description from catalog.",
+      "category": "Major Requirements",
+      "igetcArea": "Area 4",
+      "csuGEArea": "D9",
+      "transferable": true
+    }
+  ]
+}
+
+Rules:
+- "category" must be one of: "Major Requirements", "IGETC / GE Requirements", "Electives & Prerequisites"
+- Include 40-80 courses total to give the student comprehensive coverage
+- "units" must be a number (e.g. 3, 4, 5) matching the actual catalog unit count
+- "transferable" is true if the course transfers to UC/CSU systems
+- "igetcArea" and "csuGEArea" should only be set when the course genuinely satisfies that requirement
+- For GE courses, accurately tag IGETC areas: Area 1A (English Comp), Area 1B (Critical Thinking), Area 2 (Math), Area 3A/3B (Arts/Humanities), Area 4 (Social Sciences), Area 5A/5B (Science), Area 6 (Language)
+- Use the college's actual department prefixes (e.g. PSYCH, ENGL, MATH, BIO, HIST, ART, etc.)
+
+Respond with only the JSON object.`;
+
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 8192,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+      const parsed = JSON.parse(cleaned) as CourseCatalog;
+
+      if (!parsed.courses || !Array.isArray(parsed.courses)) {
+        throw new Error("Invalid course catalog structure");
+      }
+      return parsed;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+  throw lastError ?? new Error("Failed to generate course catalog");
+}
+
 // ─── Transferability Analysis ────────────────────────────────────────────────
 
 export interface CourseTransferResult {
