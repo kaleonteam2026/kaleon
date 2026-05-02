@@ -50,7 +50,7 @@ router.post("/chat", async (req, res) => {
       res.status(400).json({ error: "messages required" });
       return;
     }
-    const cap = incrementGlobalAi();
+    const cap = await incrementGlobalAi();
     if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
     let system = CHAT_SYSTEM;

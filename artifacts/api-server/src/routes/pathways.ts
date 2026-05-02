@@ -44,7 +44,7 @@ router.post("/profiles/:profileId/generate-pathways", async (req, res) => {
     const owner = await getOwnedProfile(profileId, req.user.id);
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
-    const cap = incrementGlobalAi();
+    const cap = await incrementGlobalAi();
     if (!cap.allowed) {
       res.status(429).json({ error: globalCapMessage(cap.cap) });
       return;

@@ -41,7 +41,7 @@ router.post("/pathways/:pathwayId/generate-roadmap", async (req, res) => {
     const owner = await getOwnedPathway(pathwayId, req.user.id);
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Pathway not found" }); return; }
 
-    const cap = incrementGlobalAi();
+    const cap = await incrementGlobalAi();
     if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
     const pathway = owner.pathway;

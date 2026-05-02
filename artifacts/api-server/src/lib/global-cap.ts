@@ -1,3 +1,6 @@
+import { db, aiDailyUsage } from "@workspace/db";
+import { eq, sql } from "drizzle-orm";
+
 const DEFAULT_CAP = 200;
 
 function todayKey(): string {
@@ -11,20 +14,30 @@ function getCap(): number {
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_CAP;
 }
 
-const counter = { day: todayKey(), count: 0 };
-
-export function incrementGlobalAi(): { allowed: boolean; cap: number; used: number } {
+export async function incrementGlobalAi(): Promise<{ allowed: boolean; cap: number; used: number }> {
   const day = todayKey();
   const cap = getCap();
-  if (counter.day !== day) {
-    counter.day = day;
-    counter.count = 0;
+
+  const updated = await db
+    .insert(aiDailyUsage)
+    .values({ day, count: 1 })
+    .onConflictDoUpdate({
+      target: aiDailyUsage.day,
+      set: { count: sql`${aiDailyUsage.count} + 1` },
+      setWhere: sql`${aiDailyUsage.count} < ${cap}`,
+    })
+    .returning({ count: aiDailyUsage.count });
+
+  if (updated.length > 0) {
+    return { allowed: true, cap, used: updated[0]!.count };
   }
-  if (counter.count >= cap) {
-    return { allowed: false, cap, used: counter.count };
-  }
-  counter.count++;
-  return { allowed: true, cap, used: counter.count };
+
+  const current = await db
+    .select({ count: aiDailyUsage.count })
+    .from(aiDailyUsage)
+    .where(eq(aiDailyUsage.day, day));
+  const used = current[0]?.count ?? cap;
+  return { allowed: false, cap, used };
 }
 
 export function globalCapMessage(cap: number): string {

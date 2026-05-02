@@ -40,7 +40,7 @@ router.post("/profiles/:profileId/internships/search", async (req, res) => {
       db.select().from(pathwaysTable).where(eq(pathwaysTable.profileId, profileId)),
     ]);
 
-    const cap = incrementGlobalAi();
+    const cap = await incrementGlobalAi();
     if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
     const profile = owner.profile;
