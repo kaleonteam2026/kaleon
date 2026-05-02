@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams } from "wouter";
 import Nav from "@/components/nav";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ExternalLink, Search, Award, Briefcase, GraduationCap, BookOpen, Star, Loader2, Building2 } from "lucide-react";
+import { ExternalLink, Search, Award, Briefcase, GraduationCap, BookOpen, Star, Loader2, Building2, ChevronDown, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 interface Scholarship {
@@ -67,6 +66,134 @@ const OPP_ICONS: Record<string, React.ElementType> = {
   leadership: Star,
   community: Star,
 };
+
+// ─── Searchable university picker ─────────────────────────────────────────────
+function UniversityPicker({
+  universities,
+  value,
+  onChange,
+}: {
+  universities: University[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selected = universities.find(u => u.id === value);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return q ? universities.filter(u => u.name.toLowerCase().includes(q) || u.system.toLowerCase().includes(q)) : universities;
+  }, [universities, search]);
+
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 50);
+  }, [open]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const pick = (id: string) => {
+    onChange(id);
+    setOpen(false);
+    setSearch("");
+  };
+
+  const SYSTEM_BADGE: Record<string, string> = {
+    UC: "bg-blue-100 text-blue-700",
+    CSU: "bg-green-100 text-green-700",
+    Private: "bg-purple-100 text-purple-700",
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className={cn(
+          "w-full flex items-center justify-between gap-2 px-3 py-2 text-sm rounded-md border bg-white shadow-sm transition",
+          open ? "border-indigo-400 ring-1 ring-indigo-300" : "border-slate-200 hover:border-slate-300"
+        )}
+      >
+        <span className={selected ? "text-slate-900 font-medium truncate" : "text-slate-400"}>
+          {selected ? selected.name : "Choose a university…"}
+        </span>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {selected && (
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); pick(""); }}
+              className="text-slate-300 hover:text-slate-500 p-0.5"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", open && "rotate-180")} />
+        </div>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+          {/* Search input */}
+          <div className="p-2 border-b border-slate-100">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search universities…"
+                className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:bg-white"
+              />
+            </div>
+          </div>
+
+          {/* Scrollable list */}
+          <div className="overflow-y-auto max-h-64 py-1">
+            {filtered.length === 0 ? (
+              <p className="text-center text-xs text-slate-400 py-6">No universities match.</p>
+            ) : (
+              filtered.map(u => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => pick(u.id)}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-indigo-50 transition",
+                    u.id === value && "bg-indigo-50"
+                  )}
+                >
+                  <span className={cn("text-xs font-medium px-1.5 py-0.5 rounded flex-shrink-0", SYSTEM_BADGE[u.system] ?? "bg-slate-100 text-slate-600")}>
+                    {u.system}
+                  </span>
+                  <span className="flex-1 truncate font-medium text-slate-800">{u.name}</span>
+                  {u.id === value && <Check className="h-3.5 w-3.5 text-indigo-500 flex-shrink-0" />}
+                </button>
+              ))
+            )}
+          </div>
+          <div className="px-3 py-1.5 border-t border-slate-100 text-xs text-slate-400 text-center">
+            {filtered.length} of {universities.length} universities
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const OPP_COLORS: Record<string, string> = {
   internship: "bg-blue-100 text-blue-700",
@@ -241,16 +368,11 @@ export default function Scholarships() {
                 <div className="flex-1 space-y-1.5">
                   <label className="text-sm font-medium text-slate-700">Select a University</label>
                   <p className="text-xs text-slate-400">Pick a school to see specific campus clubs, research programs, internships, and extracurriculars — plus insights into what admitted students typically pursue.</p>
-                  <Select value={selectedUniId} onValueChange={handleUniChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Choose a university…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {universities.map(u => (
-                        <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <UniversityPicker
+                    universities={universities}
+                    value={selectedUniId}
+                    onChange={handleUniChange}
+                  />
                 </div>
               </div>
             </div>
