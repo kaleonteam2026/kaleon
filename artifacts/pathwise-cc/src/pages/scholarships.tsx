@@ -10,6 +10,7 @@ import {
   MapPin, ChevronRight, Info, Sparkles, Globe, RefreshCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLiveQuota } from "@/hooks/use-live-quota";
 
 interface Scholarship {
   id: string;
@@ -88,6 +89,13 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PplxResult | null>(null);
   const [open, setOpen] = useState(false);
+  const { quota, refresh: refreshQuota } = useLiveQuota();
+
+  const onCooldown = (quota?.cooldownSecondsLeft ?? 0) > 0;
+  const noneLeft = quota ? quota.remainingToday <= 0 : false;
+  // Only block on `loading` — cached repeats are served for free even when
+  // cooldown is active or the daily cap is reached, so let the server decide.
+  const disabled = loading;
 
   const runSearch = async (overrideQuery?: string) => {
     if (loading) return;
@@ -110,6 +118,7 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
       toast({ title: "Live search unavailable", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
+      void refreshQuota();
     }
   };
 
@@ -139,16 +148,31 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
         />
         <button
           onClick={() => void runSearch()}
-          disabled={loading}
+          disabled={disabled}
           className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           {loading ? "Searching..." : "Search"}
         </button>
       </div>
-      <p className="text-[10px] text-slate-500 mt-2 italic">
-        Each search uses one live web-search credit. Repeat searches within 24 hours are served from cache for free.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+        <p className="text-[10px] text-slate-500 italic">
+          Each search uses one live web-search credit. Repeat searches within 24 hours are served from cache for free.
+        </p>
+        {quota && (
+          <p
+            className={cn(
+              "text-[10px] font-semibold",
+              noneLeft ? "text-red-600" : onCooldown ? "text-amber-600" : "text-violet-700",
+            )}
+            data-testid="live-quota-scholarships"
+          >
+            {onCooldown
+              ? `Cooldown: ${quota.cooldownSecondsLeft}s`
+              : `${quota.remainingToday} of ${quota.dailyCap} live searches left today`}
+          </p>
+        )}
+      </div>
 
       {result && open && (
         <div className="mt-4 bg-white border border-violet-200 rounded-xl p-4 space-y-3">

@@ -2,9 +2,20 @@ import { Router } from "express";
 import { db, studentProfilesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { tavilySearch } from "../lib/tavily";
-import { guardedTavilyCall } from "../lib/tavily-guard";
+import { guardedTavilyCall, getQuotaInfo } from "../lib/tavily-guard";
 
 const router = Router();
+
+router.get("/live/quota", async (req, res) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const quota = await getQuotaInfo(req);
+    res.json(quota);
+  } catch (err) {
+    req.log.error({ err }, "Failed to load live-search quota");
+    res.status(500).json({ error: "Failed to load quota" });
+  }
+});
 
 router.post("/live/scholarships", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }

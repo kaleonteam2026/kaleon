@@ -130,6 +130,43 @@ async function reserveSlot(userId: string, dayKey: string): Promise<ReserveOk | 
   });
 }
 
+export type QuotaInfo = {
+  remainingToday: number;
+  cooldownSecondsLeft: number;
+  dailyCap: number;
+};
+
+/**
+ * Returns the user's current live-search quota state without reserving a slot.
+ * Safe to call frequently from the UI.
+ */
+export async function getQuotaInfo(req: Request): Promise<QuotaInfo> {
+  const userId = String((req.user as { id?: number | string } | undefined)?.id ?? "anon");
+  const dayKey = calendarDayKey(Date.now());
+
+  const [userRows, dayRows] = await Promise.all([
+    db
+      .select({ lastCallAt: liveSearchUsageTable.lastCallAt })
+      .from(liveSearchUsageTable)
+      .where(and(eq(liveSearchUsageTable.kind, KIND_USER), eq(liveSearchUsageTable.key, userId)))
+      .limit(1),
+    db
+      .select({ count: liveSearchUsageTable.count })
+      .from(liveSearchUsageTable)
+      .where(and(eq(liveSearchUsageTable.kind, KIND_DAY), eq(liveSearchUsageTable.key, dayKey)))
+      .limit(1),
+  ]);
+
+  const last = userRows[0]?.lastCallAt ? new Date(userRows[0].lastCallAt).getTime() : 0;
+  const sinceLast = Date.now() - last;
+  const cooldownSecondsLeft = sinceLast < COOLDOWN_MS ? Math.ceil((COOLDOWN_MS - sinceLast) / 1000) : 0;
+
+  const used = dayRows[0]?.count ?? 0;
+  const remainingToday = Math.max(0, DAILY_CAP - used);
+
+  return { remainingToday, cooldownSecondsLeft, dailyCap: DAILY_CAP };
+}
+
 export type GuardResult =
   | { ok: true; result: TavilyResult }
   | { ok: false; status: number; error: string };

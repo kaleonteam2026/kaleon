@@ -3,6 +3,7 @@ import { useParams } from "wouter";
 import Nav from "@/components/nav";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useLiveQuota } from "@/hooks/use-live-quota";
 import {
   CalendarDays, CheckCircle2, Clock, AlertCircle, ExternalLink,
   ChevronRight, Info, GraduationCap, DollarSign, FileText,
@@ -88,6 +89,12 @@ export default function DeadlineCalendar() {
 
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
+  const { quota, refresh: refreshQuota } = useLiveQuota();
+  const onCooldown = (quota?.cooldownSecondsLeft ?? 0) > 0;
+  const noneLeft = quota ? quota.remainingToday <= 0 : false;
+  // Only block on `verifying` — cached repeats are still served when cooldown
+  // is active or the daily cap is reached, so let the server decide.
+  const verifyDisabled = verifying;
 
   // Determine transfer cycle: current academic year starts August
   const now = new Date();
@@ -130,6 +137,7 @@ export default function DeadlineCalendar() {
       toast({ title: "Verification unavailable", description: msg, variant: "destructive" });
     } finally {
       setVerifying(false);
+      void refreshQuota();
     }
   };
 
@@ -183,16 +191,31 @@ export default function DeadlineCalendar() {
             </div>
             <button
               onClick={() => void verifyDeadlines()}
-              disabled={verifying}
+              disabled={verifyDisabled}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60 flex-shrink-0"
             >
               {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
               {verifying ? "Verifying..." : "Verify"}
             </button>
           </div>
-          <p className="text-[10px] text-slate-500 italic mt-1">
-            Uses one live web-search credit. Cached for 24 hours.
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
+            <p className="text-[10px] text-slate-500 italic">
+              Uses one live web-search credit. Cached for 24 hours.
+            </p>
+            {quota && (
+              <p
+                className={cn(
+                  "text-[10px] font-semibold",
+                  noneLeft ? "text-red-600" : onCooldown ? "text-amber-600" : "text-violet-700",
+                )}
+                data-testid="live-quota-deadlines"
+              >
+                {onCooldown
+                  ? `Cooldown: ${quota.cooldownSecondsLeft}s`
+                  : `${quota.remainingToday} of ${quota.dailyCap} live searches left today`}
+              </p>
+            )}
+          </div>
           {verifyResult && (
             <div className="bg-white border border-violet-200 rounded-xl p-3 mt-2 space-y-3">
               <p className="text-[10px] font-bold text-violet-700 uppercase tracking-wide flex items-center gap-1">
