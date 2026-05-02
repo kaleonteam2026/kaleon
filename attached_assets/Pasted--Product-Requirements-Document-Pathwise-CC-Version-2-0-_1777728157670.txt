@@ -1,0 +1,955 @@
+# Product Requirements Document — Pathwise CC
+### Version 2.0 | Replit-Optimized Build
+
+---
+
+## 1. Product Overview
+
+### One-Sentence Description
+
+**Pathwise CC is an AI-powered academic, transfer, scholarship, and career pathway advisor that helps community college students plan from enrollment to university transfer and early career preparation.**
+
+### Problem Statement
+
+Community college students often struggle to identify the right courses, realistic university targets, scholarship opportunities, and how academic choices connect to long-term careers. Official counseling resources are limited, fragmented, and hard to personalize. Pathwise CC provides structured, personalized roadmaps while reminding students to verify decisions with official counselors and university websites.
+
+### Target Users
+
+| User Type | Description |
+|---|---|
+| Transfer students | Students planning to transfer to a 4-year university |
+| First-generation students | Students unfamiliar with transfer systems and application planning |
+| Low-income students | Students needing scholarship, aid, and affordable pathways |
+| Career-focused students | Students who want internships, research, and early career momentum |
+| Exploratory students | Students unsure of major, university, or career direction |
+
+### MVP Scope
+
+1. Student profile intake
+2. Academic and coursework input
+3. Goal and preference intake
+4. Curated university dataset (25–40 schools)
+5. Curated scholarship and opportunity dataset
+6. Pathway compatibility scoring
+7. AI-generated pathway reports (three tiers)
+8. Three-way pathway comparison view
+9. Final guidebook generation (Markdown)
+10. Saved profiles and pathway history
+
+### Non-MVP Features — Deferred
+
+| Deferred Feature | Reason |
+|---|---|
+| Live university database scraping | Legal risk, reliability concerns |
+| Real-time degree audit | Requires official articulation data partnerships |
+| ASSIST.org-style course validation | Deferred until structured imports exist |
+| Full financial aid award prediction | Requires FAFSA/CADAA and institutional data |
+| Automated scholarship application counts | Often unavailable or unreliable |
+| AI acting as official counselor | Legal and ethical risk |
+| Automated portal login to colleges | Security and compliance concerns |
+| Full career outcome prediction | Requires labor market and alumni data integrations |
+| PDF export | Phase 2 — use Markdown export in MVP |
+| Google OAuth login | Phase 2 |
+
+---
+
+## 2. User Personas
+
+**Maya** — Transfer student aiming for a UC or CSU in psychology. Needs a course plan, GPA target, and campus comparison. Pain point: unsure which classes count.
+
+**Daniel** — First-gen student targeting a software engineering career. Needs step-by-step guidance on transfer, internships, and deadlines. Pain point: doesn't know what to ask counselors.
+
+**Ana** — Low-income student seeking scholarships and minimal debt. Pain point: overwhelmed by financial aid deadlines.
+
+**Omar** — Career-focused business/poli-sci student building an internship profile. Pain point: can't connect coursework to career momentum.
+
+**Sarah** — Exploratory student considering healthcare, law, or tech. Pain point: afraid of choosing the wrong major.
+
+---
+
+## 3. Updated Tech Stack for Replit
+
+This stack is chosen specifically for Replit's environment, developer ergonomics, and zero-friction deployment.
+
+| Layer | Technology | Reason |
+|---|---|---|
+| **Monorepo structure** | Single Replit project | Simpler than separate frontend/backend repos |
+| **Frontend** | React 18 + Vite | Fast HMR, standard, Replit-compatible |
+| **Styling** | Tailwind CSS v3 | Utility-first, no build config needed |
+| **Component library** | shadcn/ui (Radix primitives) | Accessible, copy-paste components, no extra deps |
+| **Backend** | Node.js + Express 5 | Lightweight, easy to extend |
+| **Database** | PostgreSQL via Neon (Replit-native) | Persistent, free tier, serverless-friendly |
+| **ORM** | Drizzle ORM | Lightweight, TypeScript-native, great with Neon |
+| **Auth** | Replit Auth (OpenID Connect) | Zero-config for Replit environment |
+| **AI** | Anthropic Claude API (`claude-sonnet-4-20250514`) | Best-in-class reasoning, structured output |
+| **Session store** | connect-pg-simple (PostgreSQL sessions) | Persistent sessions, pairs with Neon |
+| **File export** | Markdown download (client-side blob) | No extra dependencies for MVP |
+| **Environment** | Replit Secrets | Never hardcode keys |
+| **Deployment** | Replit Autoscale Deployments | One-click, handles scaling |
+
+### Why Claude over OpenAI for this Product
+
+- Claude's long context window handles large student profiles + full university datasets in a single prompt
+- Better instruction-following for structured JSON output
+- Safer for student-facing advice (lower hallucination rate on structured tasks)
+- Anthropic's model is updated to `claude-sonnet-4-20250514` — use this exact string
+
+### Environment Variables (Replit Secrets)
+
+```env
+# Required
+ANTHROPIC_API_KEY=
+DATABASE_URL=               # Neon PostgreSQL connection string
+SESSION_SECRET=             # Random 32+ character string
+REPL_ID=                    # Auto-set by Replit
+REPLIT_DOMAINS=             # Auto-set by Replit
+
+# Optional future
+COLLEGE_SCORECARD_API_KEY=
+EMAIL_SERVICE_API_KEY=
+```
+
+---
+
+## 4. Project Structure
+
+```
+pathwise-cc/
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── ui/              # shadcn/ui components
+│   │   │   ├── layout/          # Header, Sidebar, Footer
+│   │   │   ├── forms/           # ProfileForm, CourseForm, GoalsForm
+│   │   │   ├── cards/           # UniversityCard, PathwayCard, OpportunityCard
+│   │   │   └── guidebook/       # GuidebookViewer, GuidebookExport
+│   │   ├── pages/
+│   │   │   ├── Landing.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Profile.jsx
+│   │   │   ├── Courses.jsx
+│   │   │   ├── Goals.jsx
+│   │   │   ├── Matches.jsx
+│   │   │   ├── Pathways.jsx
+│   │   │   ├── Guidebook.jsx
+│   │   │   └── SavedPlans.jsx
+│   │   ├── hooks/
+│   │   │   ├── useProfile.js
+│   │   │   ├── usePathways.js
+│   │   │   └── useGuidebook.js
+│   │   ├── lib/
+│   │   │   ├── api.js           # Fetch wrapper
+│   │   │   └── utils.js
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── index.html
+│   └── vite.config.js
+│
+├── server/
+│   ├── index.js               # Express entry point
+│   ├── replitAuth.js          # Replit OIDC middleware
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── profiles.js
+│   │   ├── courses.js
+│   │   ├── matches.js
+│   │   ├── pathways.js
+│   │   ├── guidebooks.js
+│   │   └── opportunities.js
+│   ├── services/
+│   │   ├── scoringService.js
+│   │   ├── aiService.js         # Claude API calls
+│   │   └── matchService.js
+│   └── data/
+│       ├── universities.json
+│       ├── scholarships.json
+│       └── opportunities.json
+│
+├── db/
+│   ├── schema.js              # Drizzle schema
+│   ├── migrations/            # Auto-generated by Drizzle Kit
+│   └── seed.js                # Seed script for datasets
+│
+├── .env
+├── .replit                    # Replit run config
+├── replit.nix                 # Nix packages if needed
+├── drizzle.config.js
+├── package.json               # Single package.json at root
+└── README.md
+```
+
+### Key `.replit` Configuration
+
+```toml
+run = "npm run dev"
+entrypoint = "server/index.js"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = ["sh", "-c", "npm run build && npm start"]
+deploymentTarget = "autoscale"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+```
+
+### `package.json` Scripts
+
+```json
+{
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "node --watch server/index.js",
+    "client:dev": "vite client/",
+    "build": "vite build client/ --outDir ../dist",
+    "start": "NODE_ENV=production node server/index.js",
+    "db:push": "drizzle-kit push",
+    "db:seed": "node db/seed.js",
+    "db:studio": "drizzle-kit studio"
+  }
+}
+```
+
+---
+
+## 5. Database Schema (Drizzle + PostgreSQL)
+
+```js
+// db/schema.js
+import { pgTable, text, real, json, timestamp, serial } from "drizzle-orm/pg-core";
+
+export const sessions = pgTable("sessions", {
+  sid: text("sid").primaryKey(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire").notNull()
+});
+
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),           // Replit user ID
+  email: text("email"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  profileImageUrl: text("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const studentProfiles = pgTable("student_profiles", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  fullName: text("full_name"),
+  communityCollege: text("community_college"),
+  currentGpa: real("current_gpa"),
+  intendedMajor: text("intended_major"),
+  careerGoal: text("career_goal"),
+  financialSituation: text("financial_situation"),
+  transferTimeline: text("transfer_timeline"),
+  geographicPreference: text("geographic_preference"),
+  targetUniversities: json("target_universities"),
+  longTermAspirations: text("long_term_aspirations"),
+  isFirstGen: text("is_first_gen"),
+  interests: json("interests"),             // extracurriculars, research, internships
+  completionPercent: real("completion_percent").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const courses = pgTable("courses", {
+  id: serial("id").primaryKey(),
+  profileId: text("profile_id").notNull(),
+  courseCode: text("course_code"),
+  courseName: text("course_name").notNull(),
+  units: real("units"),
+  grade: text("grade"),
+  status: text("status"),                  // completed | in_progress | planned
+  term: text("term"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const pathways = pgTable("pathways", {
+  id: serial("id").primaryKey(),
+  profileId: text("profile_id").notNull(),
+  universityId: text("university_id"),
+  compatibilityScore: real("compatibility_score"),
+  pathwayType: text("pathway_type"),        // least | moderate | most
+  reportJson: json("report_json"),
+  isSelected: text("is_selected").default("false"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const guidebooks = pgTable("guidebooks", {
+  id: serial("id").primaryKey(),
+  pathwayId: text("pathway_id").notNull(),
+  profileId: text("profile_id").notNull(),
+  contentMarkdown: text("content_markdown"),
+  title: text("title"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+```
+
+---
+
+## 6. Authentication — Replit Auth
+
+Use Replit's built-in OpenID Connect. No password hashing, no JWT setup, no third-party auth service.
+
+```js
+// server/replitAuth.js — standard Replit OIDC pattern
+import { setupAuth, requireAuth } from "./replitAuth.js";
+
+// In server/index.js
+setupAuth(app);
+
+// On protected routes
+app.get("/api/profiles", requireAuth, profilesRouter);
+```
+
+All protected API routes must use the `requireAuth` middleware. The frontend reads `/api/auth/user` to determine login state.
+
+---
+
+## 7. AI Integration — Claude API
+
+### Model
+
+Always use: `claude-sonnet-4-20250514`
+
+### aiService.js Pattern
+
+```js
+// server/services/aiService.js
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+export async function generatePathways(profileData, universities, scholarships, opportunities) {
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 4000,
+    system: SYSTEM_PROMPT,
+    messages: [
+      {
+        role: "user",
+        content: buildPathwayPrompt(profileData, universities, scholarships, opportunities)
+      }
+    ]
+  });
+  return parsePathwayResponse(response.content[0].text);
+}
+
+export async function generateGuidebook(profile, selectedPathway, courses, scholarships, opportunities) {
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 6000,
+    system: SYSTEM_PROMPT,
+    messages: [
+      {
+        role: "user",
+        content: buildGuidebookPrompt(profile, selectedPathway, courses, scholarships, opportunities)
+      }
+    ]
+  });
+  return response.content[0].text;
+}
+```
+
+### System Prompt
+
+```text
+You are Pathwise CC, an AI-powered academic, transfer, scholarship, and career planning 
+assistant for community college students in California.
+
+You help students understand possible transfer and career pathways using the student profile 
+and the application's curated dataset.
+
+You are NOT an official academic counselor, admissions officer, financial aid officer, or 
+legal advisor. Never guarantee admission, transfer eligibility, scholarship awards, financial 
+aid, or employment outcomes.
+
+When requirements are uncertain, clearly state that the student must verify with their 
+community college counselor and the university's official transfer admissions page.
+
+Your tone is encouraging, direct, realistic, and nonjudgmental. Always explain why a pathway 
+is recommended, what risks exist, and what the student's clear next steps are.
+
+When returning pathway data, respond ONLY with valid JSON — no markdown fences, 
+no preamble, no explanation outside the JSON structure.
+```
+
+### Pathway Generation Prompt (returns structured JSON)
+
+```text
+Generate exactly three transfer pathways for this community college student.
+
+Student Profile:
+{{student_profile_json}}
+
+Completed and In-Progress Courses:
+{{courses_json}}
+
+Available Universities (curated dataset):
+{{universities_json}}
+
+Available Scholarships:
+{{scholarships_json}}
+
+Available Opportunities:
+{{opportunities_json}}
+
+Return ONLY a JSON object with this exact structure:
+{
+  "pathways": [
+    {
+      "type": "least_compatible",
+      "university": "University Name",
+      "compatibilityScore": 0-100,
+      "whyItFits": "...",
+      "concerns": "...",
+      "gpaTarget": 0.0,
+      "courseGaps": ["..."],
+      "transferTimeline": "...",
+      "scholarshipOptions": ["..."],
+      "internshipRecommendations": ["..."],
+      "extracurricularRecommendations": ["..."],
+      "risks": ["..."],
+      "nextSteps": ["..."]
+    },
+    { "type": "moderately_compatible", ... },
+    { "type": "most_compatible", ... }
+  ]
+}
+
+Do not invent requirements. If data is missing, note it must be verified.
+Do not include any text outside the JSON object.
+```
+
+### Guidebook Generation Prompt
+
+```text
+Create a detailed pathway guidebook in Markdown for the selected pathway below.
+
+Student Profile: {{student_profile_json}}
+Selected Pathway: {{pathway_json}}
+Course History: {{courses_json}}
+Recommended Scholarships: {{scholarships_json}}
+Recommended Opportunities: {{opportunities_json}}
+
+The guidebook MUST include these sections with clear Markdown headings:
+
+# Pathwise CC Guidebook — [Student Name]
+
+## Executive Summary
+## Student Profile Snapshot
+## Selected Pathway Overview
+## Semester-by-Semester Academic Plan (table format)
+## Transfer Checklist
+## Application Deadline Checklist
+## Scholarship Checklist
+## Career Preparation Roadmap
+## Extracurricular Recommendations
+## Resume-Building Suggestions
+## Monthly Action Plan (table format)
+## Risk Alerts
+## Advisor Meeting Checklist
+## Verification Reminders
+
+Include tables where useful. Be realistic and transparent.
+End with this exact disclaimer:
+> This guidebook was generated by Pathwise CC and is not a substitute for official academic 
+> advising. Verify all requirements with your community college counselor and the official 
+> transfer admissions page for your target university.
+```
+
+---
+
+## 8. Compatibility Scoring Service
+
+```js
+// server/services/scoringService.js
+
+export function calculateCompatibility(student, university, requirements) {
+  const scores = {
+    majorAlignment:   scoreMajorAlignment(student.intendedMajor, university.majors),
+    gpaFit:           scoreGpaFit(student.currentGpa, requirements.recommendedGpa, requirements.minGpaEstimate),
+    coursework:       scoreCoursework(student.completedCourses, requirements.requiredCourses),
+    costFit:          scoreCostFit(student.financialSituation, university.costCategory),
+    locationFit:      scoreLocationFit(student.geographicPreference, university.location),
+    careerFit:        scoreCareerFit(student.careerGoal, university.careerTags),
+    experienceAccess: university.experienceAccessScore ?? 70,
+    timeFit:          scoreTimeFit(student.transferTimeline, requirements.estimatedTerms),
+    supportFit:       university.supportScore ?? 70
+  };
+
+  const weighted = (
+    scores.majorAlignment   * 0.200 +
+    scores.gpaFit           * 0.150 +
+    scores.coursework       * 0.150 +
+    scores.costFit          * 0.100 +
+    scores.locationFit      * 0.100 +
+    scores.careerFit        * 0.150 +
+    scores.experienceAccess * 0.075 +
+    scores.timeFit          * 0.050 +
+    scores.supportFit       * 0.025
+  );
+
+  return { total: Math.round(weighted), breakdown: scores };
+}
+
+function scoreGpaFit(studentGpa, recommendedGpa, minGpa) {
+  if (!studentGpa || !recommendedGpa) return 60;
+  if (studentGpa >= recommendedGpa) return 100;
+  if (studentGpa >= minGpa) return Math.round(70 + ((studentGpa - minGpa) / (recommendedGpa - minGpa)) * 30);
+  if (studentGpa >= minGpa - 0.3) return Math.round(40 + ((studentGpa - (minGpa - 0.3)) / 0.3) * 30);
+  return 20;
+}
+
+// Score interpretation
+export function interpretScore(score) {
+  if (score >= 85) return { label: "Strong Fit", color: "green" };
+  if (score >= 70) return { label: "Good Fit", color: "blue" };
+  if (score >= 55) return { label: "Moderate Fit", color: "yellow" };
+  if (score >= 40) return { label: "Weak Fit", color: "orange" };
+  return { label: "Poor Fit", color: "red" };
+}
+```
+
+---
+
+## 9. Curated Seed Dataset Guidelines
+
+The MVP should ship with manually curated JSON data, not live scraping.
+
+### universities.json — Minimum 25 records
+
+```json
+[
+  {
+    "id": "ucla",
+    "name": "UCLA",
+    "system": "UC",
+    "location": "Los Angeles, CA",
+    "costCategory": "high",
+    "transferFriendliness": 72,
+    "supportScore": 80,
+    "experienceAccessScore": 90,
+    "majors": ["psychology", "political science", "computer science", "sociology", "economics"],
+    "careerTags": ["research", "law", "tech", "public policy", "business"],
+    "gpaRangeMin": 3.5,
+    "gpaRangeRecommended": 3.8,
+    "honorsAvailable": true,
+    "researchAvailable": true,
+    "internshipAccess": "high",
+    "officialTransferUrl": "https://admission.ucla.edu/apply/transfer",
+    "notes": "Highly competitive. TAG not available for most majors.",
+    "sourceDate": "2025-01"
+  }
+]
+```
+
+Seed dataset must cover:
+- 10 UC campuses
+- 10 CSU campuses
+- 5 private/regional universities (e.g., LMU, USF, Chapman, SCU, USD)
+
+### scholarships.json — Minimum 40 records
+
+Each record must include `eligibilityTags`, `minGpa`, `amount`, `deadline`, `sourceUrl`, and `sourceDate`.
+
+Include: Cal Grant, Dream Act scholarships, Jack Kent Cooke, Phi Theta Kappa, MALDEF, HSF, Flicker of Hope, and major-specific awards.
+
+### opportunities.json — Minimum 40 records
+
+Types: internship, research, apprenticeship, honors program, leadership program, campus org, career prep.
+
+---
+
+## 10. User Interface Requirements
+
+### Design Principles for Replit Build
+
+- Use shadcn/ui components throughout — do not build custom components from scratch
+- Tailwind CSS only — no custom CSS files
+- Mobile-first responsive layout
+- All forms use controlled React state — no HTML `<form>` submit behavior
+- Loading skeletons for all AI-generation steps (not spinners)
+- Optimistic UI where possible
+
+### Page Inventory
+
+| Page | Route | Key Components |
+|---|---|---|
+| Landing | `/` | Hero, FeatureCards, ExamplePathwayPreview, CTA, Disclaimer |
+| Dashboard | `/dashboard` | ProfileCompletion, SavedPathways, NextActionBanner |
+| Profile | `/profile` | Multi-step ProfileForm (5 steps), ProgressBar |
+| Courses | `/courses` | CourseTable, AddCourseModal, GPAEstimator |
+| Goals | `/goals` | GoalsForm, InterestToggles |
+| Matches | `/matches` | UniversityCard list, CompatibilityBadge, FilterBar |
+| Pathways | `/pathways` | PathwayComparisonTable, SelectPathwayButton |
+| Guidebook | `/guidebook/:id` | MarkdownRenderer, ExportButton, SaveButton |
+| Saved Plans | `/saved` | PastPathwaysList, GuidebookHistory |
+
+### Pathway Comparison View — Required Columns
+
+| Category | Least Compatible | Moderate | Most Compatible |
+|---|---|---|---|
+| University | | | |
+| Score | | | |
+| GPA Required | | | |
+| Course Gaps | | | |
+| Cost Fit | | | |
+| Career Alignment | | | |
+| Timeline | | | |
+| Risk Level | | | |
+| Next Step | | | |
+
+---
+
+## 11. API Routes
+
+### Authentication
+
+```
+GET  /api/auth/user           → current user or 401
+GET  /api/login               → redirect to Replit OIDC
+GET  /api/logout              → clear session, redirect
+GET  /api/callback            → OIDC callback handler
+```
+
+### Student Profiles
+
+```
+POST   /api/profiles                      → create profile
+GET    /api/profiles/:id                  → get profile
+PATCH  /api/profiles/:id                  → update profile fields
+GET    /api/profiles/user/:userId         → get all profiles for user
+DELETE /api/profiles/:id                  → delete profile
+```
+
+### Courses
+
+```
+POST   /api/profiles/:profileId/courses   → add course
+PATCH  /api/courses/:courseId             → update course
+DELETE /api/courses/:courseId             → delete course
+GET    /api/profiles/:profileId/courses   → list courses
+```
+
+### Matches and Pathways
+
+```
+POST   /api/profiles/:profileId/generate-matches    → score universities
+GET    /api/profiles/:profileId/matches             → get cached matches
+POST   /api/profiles/:profileId/generate-pathways   → call Claude API
+GET    /api/pathways/:pathwayId                     → get single pathway
+POST   /api/pathways/:pathwayId/select              → mark as selected
+```
+
+### Guidebooks
+
+```
+POST   /api/pathways/:pathwayId/generate-guidebook  → call Claude API
+GET    /api/guidebooks/:guidebookId                 → get guidebook
+GET    /api/profiles/:profileId/guidebooks          → list guidebooks
+DELETE /api/guidebooks/:guidebookId                 → delete guidebook
+```
+
+### Opportunities
+
+```
+GET    /api/scholarships                                      → all
+GET    /api/opportunities                                     → all
+POST   /api/profiles/:profileId/recommended-scholarships      → filtered list
+POST   /api/profiles/:profileId/recommended-opportunities     → filtered list
+```
+
+---
+
+## 12. Build Phases
+
+### Phase 1 — Project Scaffold and Auth (Days 1–2)
+
+**Goal:** Running Replit project with authenticated user session.
+
+Deliverables:
+- `.replit` config running both client and server
+- Neon PostgreSQL connected via `DATABASE_URL`
+- Drizzle schema pushed and migrated
+- Replit Auth working (`/api/auth/user` returns user)
+- Landing page with "Start My Pathway" CTA
+- Protected dashboard route redirecting unauthenticated users
+
+Acceptance:
+- [ ] `npm run dev` starts both frontend and backend
+- [ ] Unauthenticated user sees landing page only
+- [ ] Authenticated user reaches `/dashboard`
+
+---
+
+### Phase 2 — Profile and Coursework (Days 3–5)
+
+**Goal:** Students can create a profile and log courses.
+
+Deliverables:
+- 5-step profile intake form with progress indicator
+- GPA validation (0.0–4.0)
+- Draft save between steps
+- Coursework CRUD table (add, edit, delete)
+- Completed unit counter + GPA estimator
+- Profile completion percentage on dashboard
+
+Acceptance:
+- [ ] Profile saves correctly to PostgreSQL
+- [ ] Courses persist across sessions
+- [ ] GPA estimator calculates from entered grades
+- [ ] Incomplete drafts are recoverable
+
+---
+
+### Phase 3 — Scoring and University Matches (Days 6–8)
+
+**Goal:** Deterministic compatibility scoring against curated dataset.
+
+Deliverables:
+- `universities.json`, `scholarships.json`, `opportunities.json` seeded
+- `scoringService.js` implementing all 9 weighted factors
+- `/generate-matches` endpoint returning ranked university list
+- University recommendation cards (score, fit label, why it fits, concerns)
+- Filter by system (UC/CSU/private) and cost
+
+Acceptance:
+- [ ] Scoring function returns 0–100 score with breakdown
+- [ ] Results ranked from highest to lowest compatibility
+- [ ] Each card shows score, fit label, top 3 pros, top 2 concerns
+- [ ] Dataset covers 25+ universities
+
+---
+
+### Phase 4 — AI Pathway Reports (Days 9–11)
+
+**Goal:** Claude generates three structured pathway reports.
+
+Deliverables:
+- Claude API call in `aiService.js` with structured JSON output
+- Retry logic (max 2 retries on malformed JSON)
+- JSON parsing with fallback error state
+- Pathway comparison table (3 columns, all required rows)
+- "Select Pathway" button that persists choice to DB
+- Loading skeleton during generation (estimated 8–15 seconds)
+
+Acceptance:
+- [ ] Claude returns valid three-pathway JSON on first or second attempt
+- [ ] Each pathway contains all 10 required fields
+- [ ] Comparison table renders all 3 pathways side by side
+- [ ] Selected pathway persists after page refresh
+
+---
+
+### Phase 5 — Guidebook Generation (Days 12–14)
+
+**Goal:** Selected pathway generates a full Markdown guidebook.
+
+Deliverables:
+- Guidebook prompt with all 14 required sections
+- Rendered Markdown viewer (use `react-markdown` or `marked`)
+- Client-side Markdown download (Blob URL)
+- Guidebook saved to DB and accessible from Saved Plans
+- Disclaimer displayed at top and bottom
+
+Acceptance:
+- [ ] Guidebook renders all 14 sections
+- [ ] Download button exports `.md` file
+- [ ] Saved guidebooks appear on `/saved` page
+- [ ] Disclaimer is visible and cannot be removed
+
+---
+
+### Phase 6 — Polish and Deployment (Days 15–17)
+
+**Goal:** Production-ready MVP.
+
+Deliverables:
+- Error boundaries on all AI-generation pages
+- Empty states for zero courses, zero matches, zero pathways
+- Rate limiting on AI endpoints (max 5 requests per user per hour)
+- Mobile responsiveness validated on 375px viewport
+- Seed data validated for accuracy
+- `README.md` with setup instructions
+- Replit Autoscale Deployment live
+
+Acceptance:
+- [ ] App loads correctly on mobile
+- [ ] All error states show helpful messages (not blank screens)
+- [ ] Rate limit returns 429 with clear user-facing message
+- [ ] Deployment URL is stable and accessible
+- [ ] All pages pass basic accessibility (keyboard nav, aria labels)
+
+---
+
+## 13. AI Behavior Requirements
+
+### The AI Must Always
+
+- Explain why each pathway fits or does not fit
+- Include a disclaimer that data must be verified
+- Name specific next steps (not generic advice)
+- Flag risks clearly (GPA gap, missing prereqs, timeline compression)
+- Label all GPA ranges as estimates
+
+### The AI Must Never
+
+- Guarantee admission to any university
+- Guarantee scholarship awards
+- Invent course requirements
+- Fabricate application deadlines
+- Claim to have accessed live data
+- Provide legal, medical, or financial advice as professional guidance
+
+### Uncertainty Handling
+
+When data is incomplete, the AI must include:
+
+> "This recommendation is based on the app's current curated dataset. Please verify this requirement directly with your community college counselor and the university's official transfer admissions page."
+
+### Risk Flags the AI Must Surface
+
+- GPA below the minimum estimate for the target university
+- Missing required prerequisites
+- Transfer timeline shorter than typical (less than 4 semesters)
+- Scholarship deadlines within 60 days
+- High-cost university with unresolved financial aid questions
+- Weak extracurricular alignment to career goal
+
+---
+
+## 14. Safety, Ethics, and Data
+
+### Disclaimer — Required on Every AI-Generated Page
+
+> "This tool is not a replacement for an official academic counselor, transfer counselor, admissions officer, or financial aid advisor. Always verify requirements with your community college and your target university."
+
+### Data Handling
+
+- Collect only user-entered data — never connect to official student records
+- Hash passwords if added later — Replit Auth eliminates this for MVP
+- Allow full data deletion: profile, courses, pathways, guidebooks, account
+- No public profile sharing by default
+- Show consent message before first AI generation: *"Your profile data will be processed by an AI model to generate pathway recommendations."*
+
+### Bias Reduction
+
+- Never discourage students solely on GPA — always show improvement pathways
+- Do not make assumptions based on name, income background, or demographics
+- Show support resources alongside every risk alert
+- Present all pathway tiers as viable with different tradeoffs
+
+### Seed Data Integrity
+
+Every university, scholarship, and opportunity record must include:
+- `sourceUrl` — official page
+- `sourceDate` — when data was verified (YYYY-MM)
+- `isEstimate: true/false` — flag estimated vs. confirmed values
+
+---
+
+## 15. Success Metrics
+
+| Metric | MVP Target |
+|---|---|
+| Profile completion rate | 70%+ |
+| Pathway generation rate | 60%+ of completed profiles |
+| Guidebook generation rate | 30%+ of pathway users |
+| Return usage within 14 days | 25%+ |
+| User satisfaction (self-reported) | 4/5+ |
+| AI malformed JSON rate | Under 3% of requests |
+| Time from signup to first pathway | Under 12 minutes |
+| Error-free sessions | 90%+ |
+
+---
+
+## 16. Acceptance Criteria — Full MVP
+
+### Authentication
+- [ ] User can log in via Replit Auth
+- [ ] Unauthenticated requests to protected routes return 401
+- [ ] User session persists across browser refreshes
+
+### Profile
+- [ ] User can create, update, and delete a student profile
+- [ ] GPA validates between 0.0 and 4.0
+- [ ] Incomplete drafts save automatically between steps
+- [ ] Profile completion percentage updates in real time
+
+### Courses
+- [ ] User can add, edit, and delete courses
+- [ ] Completed units display correctly
+- [ ] GPA estimator calculates from letter grades
+
+### University Matches
+- [ ] App generates ranked compatibility scores for 25+ universities
+- [ ] Each result shows score, fit label, pros, concerns, and GPA target
+- [ ] Results can be filtered by university system and cost
+
+### Pathways
+- [ ] Claude generates exactly three pathway types
+- [ ] Each pathway includes all 10 required fields
+- [ ] Pathway comparison table renders all 3 pathways side by side
+- [ ] User can select a pathway and it persists
+
+### Guidebook
+- [ ] Guidebook generates all 14 required sections
+- [ ] Guidebook renders in Markdown
+- [ ] User can download as `.md` file
+- [ ] Guidebook saves to DB and reopens from Saved Plans
+
+### Safety
+- [ ] All AI pages show the required disclaimer
+- [ ] AI never guarantees admission or scholarships
+- [ ] Risk alerts appear when GPA is below university minimum
+
+### Technical
+- [ ] App runs on Replit without manual setup beyond adding Secrets
+- [ ] PostgreSQL via Neon persists data between Replit restarts
+- [ ] AI endpoints are rate-limited
+- [ ] App is functional on 375px mobile viewport
+- [ ] All error states show user-friendly messages
+
+---
+
+## 17. Risks and Mitigations
+
+| Risk | Mitigation |
+|---|---|
+| Claude returns malformed JSON | Add retry logic (max 2), fallback to error state with "Try again" |
+| Slow AI generation (10–20s) | Full-screen loading skeleton with step-by-step progress messages |
+| Neon connection drops | Add connection pooling; catch DB errors and return 503 |
+| Seed data becomes outdated | Source dates on every record; prompt users to verify with official sources |
+| Scoring feels generic | Weight career goal and GPA heavily; surface breakdown in UI |
+| Students misuse as official counseling | Mandatory disclaimer, consent gate before AI generation |
+| Replit cold starts | Use Autoscale Deployments; avoid Always-On reliance |
+
+---
+
+## 18. Future Roadmap (Post-MVP)
+
+| Feature | Phase |
+|---|---|
+| PDF guidebook export | v1.1 |
+| Google OAuth login | v1.1 |
+| College Scorecard API integration | v1.2 |
+| ASSIST.org articulation lookup | v1.2 |
+| Scholarship deadline calendar export | v1.2 |
+| Counselor sharing mode (read-only link) | v1.3 |
+| Community college course catalog import | v1.3 |
+| Multi-profile support (transfer + career tracks) | v2.0 |
+| Live scholarship database | v2.0 |
+| Labor market outcome data (BLS/O*NET) | v2.0 |
+| Native mobile app | v3.0 |
+
+---
+
+*Pathwise CC v2.0 PRD — Replit-Optimized Build*
+*Last updated: May 2026*
