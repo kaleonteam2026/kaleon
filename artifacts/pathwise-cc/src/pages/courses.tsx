@@ -524,8 +524,8 @@ function CatalogModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full sm:max-w-xl sm:mx-4 sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col"
-        style={{ maxHeight: "85vh" }}>
+      <div className="relative bg-white w-full sm:max-w-xl sm:mx-4 sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col overflow-hidden"
+        style={{ height: "85vh" }}>
 
         {catalogLoading && (
           <div className="flex flex-col items-center justify-center py-16 px-6 gap-4">
