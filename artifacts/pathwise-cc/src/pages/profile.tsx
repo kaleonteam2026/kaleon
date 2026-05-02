@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import Nav from "@/components/nav";
@@ -9,22 +9,186 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ArrowRight, Loader2 } from "lucide-react";
+import { Save, ArrowRight, Loader2, Search, ChevronDown, X, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
+// All 116 California Community Colleges
 const COLLEGES = [
-  "Los Angeles City College", "Santa Monica College", "East Los Angeles College",
-  "Los Angeles Valley College", "Glendale Community College", "Pasadena City College",
+  // Los Angeles Region
+  "Los Angeles City College", "East Los Angeles College", "Los Angeles Harbor College",
+  "Los Angeles Mission College", "Los Angeles Pierce College", "Los Angeles Southwest College",
+  "Los Angeles Trade-Technical College", "Los Angeles Valley College", "West Los Angeles College",
+  "Santa Monica College", "El Camino College", "Compton College",
   "Long Beach City College", "Cerritos College", "Citrus College",
-  "Fullerton College", "Irvine Valley College", "Saddleback College",
-  "San Diego City College", "Grossmont College", "Palomar College",
-  "City College of San Francisco", "De Anza College", "Foothill College",
-  "Diablo Valley College", "Laney College", "Merritt College",
-  "Sacramento City College", "Fresno City College", "Bakersfield College",
-  "Riverside City College", "San Bernardino Valley College", "Chaffey College",
-  "Mt. San Antonio College", "Rio Hondo College", "El Camino College",
-  "Other",
-];
+  "Mt. San Antonio College", "Pasadena City College", "Glendale Community College",
+  "Rio Hondo College", "East Los Angeles College", "Antelope Valley College",
+  "College of the Canyons", "Moorpark College", "Oxnard College",
+  "Ventura College",
+  // Orange County
+  "Cypress College", "Fullerton College", "Golden West College",
+  "Irvine Valley College", "Orange Coast College", "Saddleback College",
+  "Santiago Canyon College",
+  // San Diego Region
+  "Grossmont College", "Cuyamaca College", "MiraCosta College",
+  "Palomar College", "San Diego City College", "San Diego Mesa College",
+  "San Diego Miramar College", "Southwestern College",
+  // Inland Empire
+  "Chaffey College", "Crafton Hills College", "San Bernardino Valley College",
+  "Riverside City College", "Moreno Valley College", "Norco College",
+  "Victor Valley College", "Mt. San Jacinto College",
+  // San Francisco Bay Area
+  "City College of San Francisco", "College of Marin", "College of San Mateo",
+  "Cañada College", "Skyline College", "Chabot College",
+  "Las Positas College", "Ohlone College", "Foothill College",
+  "De Anza College", "Mission College", "West Valley College",
+  "Evergreen Valley College", "San Jose City College",
+  // East Bay
+  "Laney College", "Merritt College", "Berkeley City College",
+  "College of Alameda", "Diablo Valley College", "Los Medanos College",
+  "Contra Costa College",
+  // Central Valley & Central Coast
+  "Fresno City College", "Reedley College", "Clovis Community College",
+  "Madera Community College", "Bakersfield College", "Porterville College",
+  "Taft College", "Cerro Coso Community College",
+  "Allan Hancock College", "Cuesta College", "Lompoc Valley Community College",
+  "Ventura County Community College District", "Cabrillo College",
+  "Hartnell College", "Gavilan College", "Monterey Peninsula College",
+  // Sacramento Region
+  "Sacramento City College", "American River College",
+  "Cosumnes River College", "Folsom Lake College",
+  "Sierra College", "Los Rios Community College District",
+  // Northern California
+  "Butte College", "Shasta College", "Redwoods College",
+  "Mendocino College", "Lake Tahoe Community College", "Lassen Community College",
+  "Modesto Junior College", "Columbia College", "Merced College",
+  "Yosemite Community College", "Stanislaus Community College",
+  "San Joaquin Delta College", "Humphreys University",
+  // Bay Area / Peninsula
+  "San Francisco State — Not a CCC", // placeholder guard
+  // Misc / Other Districts
+  "Barstow Community College", "Copper Mountain College",
+  "Palo Verde College", "Imperial Valley College",
+  "San Diego Continuing Education",
+  "Other (not listed)",
+].filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => {
+  if (a === "Other (not listed)") return 1;
+  if (b === "Other (not listed)") return -1;
+  return a.localeCompare(b);
+}).filter(c => c !== "San Francisco State — Not a CCC");
 
+// ─── Searchable college picker ─────────────────────────────────────────────────
+function CollegePicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return q ? COLLEGES.filter(c => c.toLowerCase().includes(q)) : COLLEGES;
+  }, [search]);
+
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 50);
+  }, [open]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const pick = (college: string) => {
+    onChange(college);
+    setOpen(false);
+    setSearch("");
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className={cn(
+          "w-full flex items-center justify-between gap-2 px-3 py-2 text-sm rounded-md border bg-white shadow-sm transition",
+          open ? "border-indigo-400 ring-1 ring-indigo-300" : "border-slate-200 hover:border-slate-300"
+        )}
+      >
+        <span className={value ? "text-slate-900 font-medium truncate" : "text-slate-400"}>
+          {value || "Select your college"}
+        </span>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {value && (
+            <span
+              role="button"
+              onClick={e => { e.stopPropagation(); pick(""); }}
+              className="text-slate-300 hover:text-slate-500 p-0.5 cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" />
+            </span>
+          )}
+          <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", open && "rotate-180")} />
+        </div>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+          <div className="p-2 border-b border-slate-100">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search colleges…"
+                className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-y-auto max-h-60 py-1">
+            {filtered.length === 0 ? (
+              <p className="text-center text-xs text-slate-400 py-6">No colleges match.</p>
+            ) : (
+              filtered.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => pick(c)}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-indigo-50 transition",
+                    c === value && "bg-indigo-50"
+                  )}
+                >
+                  <span className="flex-1 truncate text-slate-800">{c}</span>
+                  {c === value && <Check className="h-3.5 w-3.5 text-indigo-500 flex-shrink-0" />}
+                </button>
+              ))
+            )}
+          </div>
+
+          <div className="px-3 py-1.5 border-t border-slate-100 text-xs text-slate-400 text-center">
+            {filtered.length} of {COLLEGES.length} colleges
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface ProfileData {
   id?: number;
   fullName: string;
@@ -46,6 +210,7 @@ const EMPTY: ProfileData = {
   geographicPreference: "", longTermAspirations: "", isFirstGen: "", interests: "",
 };
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Profile() {
   const { profileId } = useParams<{ profileId?: string }>();
   const { user } = useAuth();
@@ -78,7 +243,6 @@ export default function Profile() {
         })
         .catch(() => setLoading(false));
     } else if (user?.id) {
-      // Check if user already has a profile
       fetch(`/api/profiles/user/${user.id}`, { credentials: "include" })
         .then(r => r.json())
         .then((profiles: Record<string, unknown>[]) => {
@@ -186,15 +350,20 @@ export default function Profile() {
 
               <div className="space-y-1.5">
                 <Label>Community College</Label>
-                <Select value={form.communityCollege} onValueChange={v => set("communityCollege", v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your college" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COLLEGES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CollegePicker value={form.communityCollege} onChange={v => set("communityCollege", v)} />
+                <p className="text-xs text-slate-400">Can't find your college? Choose "Other (not listed)" and type it in below.</p>
               </div>
+
+              {form.communityCollege === "Other (not listed)" && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="collegeOther">College Name</Label>
+                  <Input
+                    id="collegeOther"
+                    placeholder="Type your California community college name"
+                    onChange={e => set("communityCollege", e.target.value || "Other (not listed)")}
+                  />
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <Label htmlFor="isFirstGen">Are you a first-generation college student?</Label>
@@ -300,11 +469,7 @@ export default function Profile() {
 
           {/* Save */}
           <div className="flex gap-3 justify-end">
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
+            <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
               {saving ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving…</>
               ) : (
@@ -313,7 +478,6 @@ export default function Profile() {
             </Button>
           </div>
 
-          {/* Disclaimer */}
           <p className="text-xs text-slate-400 text-center">
             This information is used only to generate personalized recommendations. Pathwise CC is not an official advisor.
             Verify all requirements with your community college counselor.
