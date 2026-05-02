@@ -170,27 +170,28 @@ export default function Pathways() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-900 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f4f4f5] pwc-font-sans" style={{ fontFamily: "Inter, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: `.pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }` }} />
       <Nav profileId={pid} />
-      <main className="pt-14 px-4 md:px-8 max-w-4xl mx-auto">
-        <div className="py-8 flex items-start justify-between">
+      <main className="pt-14 pb-20 md:pb-8 px-4 md:px-6 max-w-4xl mx-auto">
+        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 border-b-2 border-slate-900 pb-4 mb-6 mt-4 md:mt-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">My Pathway</h1>
-            <p className="text-slate-500 text-sm mt-1">
-              AI analyzes your profile to generate 3 personalized transfer pathway reports — stretch, match, and safety schools.
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">My Pathway</h1>
+            <p className="text-slate-600 text-sm mt-1">
+              AI generates 3 personalized transfer pathways — stretch, match, and safety schools. Pick one as your <strong>primary</strong>.
             </p>
           </div>
           <Button
             onClick={generatePathways}
             disabled={generating}
-            className="bg-indigo-600 hover:bg-indigo-700"
+            className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 pwc-font-mono uppercase tracking-wider text-xs font-bold rounded-none"
           >
             {generating ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating…</>
@@ -198,7 +199,7 @@ export default function Pathways() {
               <><Sparkles className="mr-2 h-4 w-4" />{pathways.length > 0 ? "Regenerate" : "Generate Pathways"}</>
             )}
           </Button>
-        </div>
+        </header>
 
         {generating && (
           <div className="text-center py-16">
@@ -215,7 +216,7 @@ export default function Pathways() {
             <p className="text-slate-500 text-sm mt-1 max-w-md mx-auto">
               Click "Generate Pathways" to receive 3 personalized California transfer pathway reports — a stretch school, a match school, and a safety school — each with university on-site opportunities and next steps.
             </p>
-            <Button onClick={generatePathways} className="mt-6 bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={generatePathways} className="mt-6 bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
               <Sparkles className="mr-2 h-4 w-4" /> Generate Pathways
             </Button>
           </div>
@@ -232,7 +233,10 @@ export default function Pathways() {
               const isSelected = pathway.isSelected === "true";
 
               return (
-                <Card key={pathway.id} className={cn("transition-all", isSelected ? "ring-2 ring-indigo-500" : "")}>
+                <Card key={pathway.id} className={cn(
+                  "transition-all border-2 border-slate-900 rounded-none shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]",
+                  isSelected && "ring-4 ring-slate-900 ring-offset-2"
+                )}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div>
@@ -241,8 +245,8 @@ export default function Pathways() {
                             {meta.label} School
                           </span>
                           {isSelected && (
-                            <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200 flex items-center gap-1">
-                              <CheckCircle className="h-3 w-3" /> Selected
+                            <span className="text-xs bg-slate-900 text-white px-2 py-0.5 border-2 border-slate-900 flex items-center gap-1 pwc-font-mono uppercase tracking-wider font-bold">
+                              <CheckCircle className="h-3 w-3" /> Primary
                             </span>
                           )}
                         </div>
@@ -401,10 +405,15 @@ export default function Pathways() {
                       variant={isSelected ? "outline" : "default"}
                       onClick={() => selectPathway(pathway.id)}
                       disabled={selecting === pathway.id || isSelected}
-                      className={isSelected ? "border-indigo-300 text-indigo-600" : "bg-indigo-600 hover:bg-indigo-700"}
+                      className={cn(
+                        "border-2 rounded-none pwc-font-mono uppercase tracking-wider text-xs font-bold",
+                        isSelected
+                          ? "border-slate-900 text-slate-900 bg-white"
+                          : "border-slate-900 bg-slate-900 hover:bg-slate-700 text-white"
+                      )}
                     >
                       {selecting === pathway.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
-                      {isSelected ? "Selected" : "Select This Pathway"}
+                      {isSelected ? "Primary Pathway" : "Make Primary"}
                     </Button>
                     {isSelected && (
                       <>

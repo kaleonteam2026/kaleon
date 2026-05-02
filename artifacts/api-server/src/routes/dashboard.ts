@@ -59,10 +59,35 @@ router.get("/dashboard-summary/:profileId", async (req, res) => {
       geographicPreference: profile.geographicPreference,
     };
 
+    // ── Top Match = SAFETY school from the most recent pathway batch ─────────
+    // ── Chosen Transfer School = the user's SELECTED (primary) pathway ───────
     let topMatchUniversity: string | null = null;
     let topMatchScore: number | null = null;
+    let chosenTransferSchool: string | null = null;
+    let chosenTransferScore: number | null = null;
 
-    if (profile.intendedMajor || profile.careerGoal) {
+    type RJ = { university?: string; compatibilityScore?: number } | null;
+    const sortedPathways = [...pathways].sort(
+      (a, b) => (b.createdAt?.getTime?.() ?? 0) - (a.createdAt?.getTime?.() ?? 0)
+    );
+
+    const safetyPathway = sortedPathways.find(p => p.pathwayType === "most_compatible");
+    if (safetyPathway) {
+      const rj = safetyPathway.reportJson as RJ;
+      topMatchUniversity = rj?.university ?? safetyPathway.universityId ?? null;
+      topMatchScore = rj?.compatibilityScore ?? safetyPathway.compatibilityScore ?? null;
+    }
+
+    const selectedPathway = sortedPathways.find(p => p.isSelected === "true");
+    if (selectedPathway) {
+      const rj = selectedPathway.reportJson as RJ;
+      chosenTransferSchool = rj?.university ?? selectedPathway.universityId ?? null;
+      chosenTransferScore = rj?.compatibilityScore ?? selectedPathway.compatibilityScore ?? null;
+    }
+
+    // Fallback: if no pathways exist yet, fall back to the universities heuristic
+    // for the Top Match field so the dashboard still has something useful to show.
+    if (!topMatchUniversity && (profile.intendedMajor || profile.careerGoal)) {
       const best = (universities as typeof universities)
         .map(uni => ({
           name: uni.name,
@@ -108,6 +133,8 @@ router.get("/dashboard-summary/:profileId", async (req, res) => {
       guidebooksCount: guidebooks.length,
       topMatchUniversity,
       topMatchScore,
+      chosenTransferSchool,
+      chosenTransferScore,
       nextActions,
       readinessScore,
       readinessLabel,

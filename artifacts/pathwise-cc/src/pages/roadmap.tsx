@@ -40,7 +40,7 @@ export default function Roadmap() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `pathwise-roadmap-${roadmap.id}.md`;
+    a.download = `dyp-roadmap-${roadmap.id}.md`;
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: "Roadmap downloaded!" });
@@ -48,9 +48,9 @@ export default function Roadmap() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-slate-900" />
           <p className="text-sm text-slate-500">Loading your academic roadmap…</p>
         </div>
       </div>
@@ -59,7 +59,7 @@ export default function Roadmap() {
 
   if (!roadmap) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
         <div className="text-center">
           <MapPin className="h-12 w-12 text-slate-300 mx-auto mb-3" />
           <p className="text-slate-500">Roadmap not found.</p>
@@ -70,7 +70,8 @@ export default function Roadmap() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={roadmap.profileId} />
       <main className="pt-14 px-4 md:px-8 max-w-3xl mx-auto">
 
@@ -88,7 +89,7 @@ export default function Roadmap() {
                 Academic Roadmap & Planner
               </span>
             </div>
-            <h1 className="text-xl font-bold text-slate-900">{roadmap.title ?? "Your Academic Roadmap"}</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900 uppercase tracking-tight">{roadmap.title ?? "Your Academic Roadmap"}</h1>
             {roadmap.createdAt && (
               <p className="text-xs text-slate-400 mt-1">
                 Generated {new Date(roadmap.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
@@ -130,7 +131,7 @@ export default function Roadmap() {
           <Button onClick={downloadMarkdown} variant="outline">
             <Download className="h-4 w-4 mr-2" /> Download Roadmap
           </Button>
-          <p className="text-xs text-slate-400 mt-3">Pathwise CC · AI-generated · Always verify with official sources</p>
+          <p className="text-xs text-slate-400 mt-3">DYP · AI-generated · Always verify with official sources</p>
         </div>
       </main>
     </div>

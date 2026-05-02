@@ -46,6 +46,8 @@ interface DashboardSummary {
   guidebooksCount: number;
   topMatchUniversity: string | null;
   topMatchScore: number | null;
+  chosenTransferSchool: string | null;
+  chosenTransferScore: number | null;
   nextActions: string[];
   readinessScore: number;
   readinessLabel: string;
@@ -122,8 +124,10 @@ export default function Dashboard() {
       },
       {
         title: "Transfer Targets", icon: Target,
-        status: summary?.topMatchUniversity ? "Active" : "Not Started",
-        metric: summary?.topMatchUniversity ? `${summary.topMatchScore ?? 0}% Match` : "Explore",
+        status: summary?.chosenTransferSchool ? "Active" : summary?.topMatchUniversity ? "Action Needed" : "Not Started",
+        metric: summary?.chosenTransferSchool
+          ? `Chosen: ${summary.chosenTransferSchool.split(",")[0].slice(0, 18)}`
+          : summary?.topMatchUniversity ? "Pick Primary" : "Explore",
         href: `/matches/${profile.id}`,
       },
       {
@@ -244,9 +248,28 @@ export default function Dashboard() {
                   <div className="font-medium">{profile.careerGoal ?? "—"}</div>
                 </div>
                 <div>
-                  <div className="text-xs pwc-font-mono text-slate-500 mb-1">Top Match</div>
+                  <div className="text-xs pwc-font-mono text-slate-500 mb-1 flex items-center gap-1.5">
+                    Chosen School
+                    <span className="pwc-font-mono text-[9px] bg-slate-900 text-white px-1 py-0.5 tracking-widest">PRIMARY</span>
+                  </div>
                   <div className="font-medium flex items-center gap-2">
-                    {summary?.topMatchUniversity ?? "Run a match"}
+                    {summary?.chosenTransferSchool ?? (
+                      <span className="text-slate-400 italic text-sm">Pick a primary on Pathway</span>
+                    )}
+                    {summary?.chosenTransferScore != null && (
+                      <span className="bg-slate-900 text-white text-xs px-1.5 py-0.5 rounded pwc-font-mono">
+                        {summary.chosenTransferScore}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs pwc-font-mono text-slate-500 mb-1 flex items-center gap-1.5">
+                    Top Match
+                    <span className="pwc-font-mono text-[9px] bg-emerald-600 text-white px-1 py-0.5 tracking-widest">SAFETY</span>
+                  </div>
+                  <div className="font-medium flex items-center gap-2">
+                    {summary?.topMatchUniversity ?? "Generate pathways"}
                     {summary?.topMatchScore != null && (
                       <span className="bg-slate-900 text-white text-xs px-1.5 py-0.5 rounded pwc-font-mono">
                         {summary.topMatchScore}

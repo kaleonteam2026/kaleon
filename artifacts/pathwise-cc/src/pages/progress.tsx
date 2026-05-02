@@ -298,7 +298,7 @@ function PathwayLockScreen({ profileId }: { profileId: number }) {
       </p>
       <p className="text-sm text-slate-400 mb-8">Go to your Pathway tab, review your university matches, and select the one you're targeting.</p>
       <Link href={`/pathways/${profileId}`}>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+        <Button className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none gap-2">
           <Target className="h-4 w-4" />
           Go to My Pathway
           <ArrowRight className="h-4 w-4" />
@@ -457,7 +457,7 @@ export default function ProgressTracker() {
     const blob = new Blob([activeAnalysis.contentMarkdown], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url;
-    a.download = `pathwise-progress-${activeAnalysis.id}.md`; a.click();
+    a.download = `dyp-progress-${activeAnalysis.id}.md`; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -470,7 +470,8 @@ export default function ProgressTracker() {
 
   if (pathwayLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
         <Nav profileId={pid} />
         <div className="pt-14 flex items-center justify-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
@@ -480,7 +481,7 @@ export default function ProgressTracker() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f4f4f5]">
       <Nav profileId={pid} />
       <main className="pt-14 px-4 md:px-8 max-w-4xl mx-auto">
 
@@ -488,7 +489,7 @@ export default function ProgressTracker() {
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="h-5 w-5 text-indigo-600" />
-            <h1 className="text-2xl font-bold text-slate-900">My Progress Tracker</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">My Progress Tracker</h1>
             {pathwayInfo?.hasSelectedPathway && (
               <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
@@ -522,7 +523,7 @@ export default function ProgressTracker() {
                   <p className="text-xs text-slate-500 mt-0.5">Opportunities</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
-                  <p className="text-2xl font-bold text-violet-600">{achievementCount}</p>
+                  <p className="text-2xl font-bold text-slate-900">{achievementCount}</p>
                   <p className="text-xs text-slate-500 mt-0.5">Achievements</p>
                 </div>
               </div>
@@ -643,7 +644,7 @@ export default function ProgressTracker() {
                     </div>
 
                     <div className="flex items-center gap-3 flex-wrap">
-                      <Button onClick={handleLogEntry} disabled={saving || !title.trim()} className="bg-indigo-600 hover:bg-indigo-700">
+                      <Button onClick={handleLogEntry} disabled={saving || !title.trim()} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
                         {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : <><Plus className="h-4 w-4 mr-2" />Log & Analyze</>}
                       </Button>
                       <p className="text-xs text-slate-400 flex items-center gap-1">
@@ -724,7 +725,7 @@ export default function ProgressTracker() {
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3 items-center">
-                    <Button onClick={handleGenerateAnalysis} disabled={generating} className="bg-indigo-600 hover:bg-indigo-700">
+                    <Button onClick={handleGenerateAnalysis} disabled={generating} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
                       {generating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Analyzing your journey…</> : <><Sparkles className="h-4 w-4 mr-2" />{analyses.length > 0 ? "Regenerate Assessment" : "Generate My Assessment"}</>}
                     </Button>
                     <p className="text-xs text-slate-400">Up to 5 assessments per hour</p>
@@ -785,7 +786,7 @@ export default function ProgressTracker() {
         )}
 
         <p className="text-xs text-slate-400 text-center pb-10">
-          Pathwise CC Progress Tracker · AI assessments are not a substitute for official academic advising
+          DYP Progress Tracker · AI assessments are not a substitute for official academic advising
         </p>
       </main>
     </div>

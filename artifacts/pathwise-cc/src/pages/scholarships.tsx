@@ -125,7 +125,7 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
   return (
     <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-2xl p-4 mb-6">
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center flex-shrink-0">
           <Globe className="h-4 w-4 text-white" />
         </div>
         <div className="flex-1 min-w-0">
@@ -149,7 +149,7 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
         <button
           onClick={() => void runSearch()}
           disabled={disabled}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           {loading ? "Searching..." : "Search"}
@@ -195,7 +195,7 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
                       href={c.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-violet-600 hover:text-violet-800 hover:underline inline-flex items-center gap-1"
+                      className="text-slate-900 hover:text-violet-800 hover:underline inline-flex items-center gap-1"
                     >
                       <span className="font-semibold text-slate-400">{i + 1}.</span>
                       <span className="truncate max-w-[400px]">{c.title ?? c.url}</span>
@@ -319,19 +319,20 @@ export default function Scholarships() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-900 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={pid ?? undefined} />
       <main className="pt-14 px-4 md:px-8 max-w-5xl mx-auto">
-        <div className="py-8">
-          <h1 className="text-2xl font-bold text-slate-900">Scholarships & CC Programs</h1>
-          <p className="text-slate-500 text-sm mt-1">
+        <div className="py-6 border-b-2 border-slate-900 mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">Scholarships & CC Programs</h1>
+          <p className="text-slate-600 text-sm mt-1">
             {pid
               ? "Personalized scholarship recommendations + on-campus programs at your community college."
               : "Browse scholarships and community college campus resources."}{" "}
@@ -491,7 +492,7 @@ export default function Scholarships() {
 
         <p className="text-xs text-slate-400 text-center pb-8">
           Program availability varies by campus. Always confirm with your college's student services office.
-          Pathwise CC is not affiliated with any institution or scholarship program.
+          DYP is not affiliated with any institution or scholarship program.
         </p>
       </main>
     </div>

@@ -70,7 +70,7 @@ const SECTIONS = [
   {
     id: "scholarships",
     icon: BookOpen,
-    color: "text-violet-600",
+    color: "text-slate-900",
     bg: "bg-violet-50",
     border: "border-violet-200",
     title: "Scholarships Available to Undocumented / AB 540 Students",
@@ -108,13 +108,14 @@ function ResourceLink({ r }: { r: Resource }) {
 
 export default function DreamAct() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav />
       <main className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto">
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <Heart className="h-5 w-5 text-rose-500" />
-            <h1 className="text-2xl font-bold text-slate-900">AB 540 & Dream Act Guide</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">AB 540 & Dream Act Guide</h1>
           </div>
           <p className="text-slate-500 text-sm max-w-xl">
             California's community college system is one of the most accessible in the country for undocumented and mixed-status students. Here's what you need to know.
@@ -196,7 +197,7 @@ export default function DreamAct() {
         </div>
 
         <p className="text-xs text-slate-400 text-center mt-6 pb-4">
-          Pathwise CC · AB 540 & Dream Act Guide · Information current as of early 2025 · Always verify with official sources
+          DYP · AB 540 & Dream Act Guide · Information current as of early 2025 · Always verify with official sources
         </p>
       </main>
     </div>

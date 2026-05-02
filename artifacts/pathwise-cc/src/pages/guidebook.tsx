@@ -41,7 +41,7 @@ export default function Guidebook() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `pathwise-guidebook-${guidebook.id}.md`;
+    a.download = `dyp-guidebook-${guidebook.id}.md`;
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: "Guidebook downloaded!" });
@@ -49,7 +49,7 @@ export default function Guidebook() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
           <p className="text-sm text-slate-500">Loading your guidebook…</p>
@@ -60,7 +60,7 @@ export default function Guidebook() {
 
   if (!guidebook) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
         <div className="text-center">
           <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
           <p className="text-slate-500">Guidebook not found.</p>
@@ -71,7 +71,8 @@ export default function Guidebook() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={guidebook.profileId} />
       <main className="pt-14 px-4 md:px-8 max-w-3xl mx-auto">
 
@@ -84,7 +85,7 @@ export default function Guidebook() {
             >
               <ArrowLeft className="h-4 w-4" /> Back to Pathways
             </button>
-            <h1 className="text-xl font-bold text-slate-900">{guidebook.title ?? "Your Transfer Guidebook"}</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900 uppercase tracking-tight">{guidebook.title ?? "Your Transfer Guidebook"}</h1>
             {guidebook.createdAt && (
               <p className="text-xs text-slate-400 mt-1">
                 Generated {new Date(guidebook.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
@@ -126,7 +127,7 @@ export default function Guidebook() {
           <Button onClick={downloadMarkdown} variant="outline">
             <Download className="h-4 w-4 mr-2" /> Download Guidebook
           </Button>
-          <p className="text-xs text-slate-400 mt-3">Pathwise CC · AI-generated · Always verify with official sources</p>
+          <p className="text-xs text-slate-400 mt-3">DYP · AI-generated · Always verify with official sources</p>
         </div>
       </main>
     </div>

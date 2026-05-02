@@ -72,9 +72,9 @@ export default function Matches() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-slate-900" />
           <p className="text-sm text-slate-500">Calculating your university matches…</p>
         </div>
       </div>
@@ -82,12 +82,13 @@ export default function Matches() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={pid} />
       <main className="pt-14 px-4 md:px-8 max-w-5xl mx-auto">
-        <div className="py-8">
-          <h1 className="text-2xl font-bold text-slate-900">University Matches</h1>
-          <p className="text-slate-500 text-sm mt-1">
+        <div className="py-6 border-b-2 border-slate-900 mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">University Matches</h1>
+          <p className="text-slate-600 text-sm mt-1">
             {matches.length} universities ranked by compatibility with your profile. Scores are AI estimates — always verify requirements.
           </p>
         </div>
@@ -168,7 +169,7 @@ export default function Matches() {
                     {/* Tags */}
                     <div className="flex flex-wrap gap-1 mt-2">
                       {match.majors.slice(0, 4).map(m => (
-                        <span key={m} className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">{m}</span>
+                        <span key={m} className="text-xs bg-indigo-50 text-slate-900 px-2 py-0.5 rounded-full">{m}</span>
                       ))}
                     </div>
                   </div>
@@ -196,7 +197,7 @@ export default function Matches() {
             They are not guarantees of admission. GPA ranges and requirements change — always verify with official sources.
           </div>
           <div className="text-right">
-            <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
               Generate AI Pathways <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

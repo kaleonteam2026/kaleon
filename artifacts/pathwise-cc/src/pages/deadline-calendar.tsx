@@ -142,13 +142,14 @@ export default function DeadlineCalendar() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={pid} />
       <main className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto">
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <CalendarDays className="h-5 w-5 text-indigo-600" />
-            <h1 className="text-2xl font-bold text-slate-900">Transfer Deadline Calendar</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">Transfer Deadline Calendar</h1>
           </div>
           <p className="text-slate-500 text-sm">
             Key dates for the <strong>{cycleYear}–{nextCycleYear} transfer cycle</strong>. Verify exact dates with each institution — deadlines may shift.
@@ -177,7 +178,7 @@ export default function DeadlineCalendar() {
         {/* Live verification (Perplexity) */}
         <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-2xl p-4 mb-6">
           <div className="flex items-start gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center flex-shrink-0">
               <Globe className="h-4 w-4 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -192,7 +193,7 @@ export default function DeadlineCalendar() {
             <button
               onClick={() => void verifyDeadlines()}
               disabled={verifyDisabled}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60 flex-shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 text-white text-xs font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60 flex-shrink-0"
             >
               {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
               {verifying ? "Verifying..." : "Verify"}
@@ -231,7 +232,7 @@ export default function DeadlineCalendar() {
                     {verifyResult.citations.slice(0, 6).map((c, i) => (
                       <li key={i} className="text-xs">
                         <a href={c.url} target="_blank" rel="noopener noreferrer"
-                          className="text-violet-600 hover:text-violet-800 hover:underline inline-flex items-center gap-1">
+                          className="text-slate-900 hover:text-violet-800 hover:underline inline-flex items-center gap-1">
                           <span className="font-semibold text-slate-400">{i + 1}.</span>
                           <span className="truncate max-w-[360px]">{c.title ?? c.url}</span>
                           <ExternalLink className="h-3 w-3 flex-shrink-0" />
@@ -340,7 +341,7 @@ export default function DeadlineCalendar() {
         </div>
 
         <p className="text-xs text-slate-400 text-center mt-6 pb-4">
-          Pathwise CC Transfer Calendar · {cycleYear}–{nextCycleYear} cycle · Verify all dates officially
+          DYP Transfer Calendar · {cycleYear}–{nextCycleYear} cycle · Verify all dates officially
         </p>
       </main>
     </div>

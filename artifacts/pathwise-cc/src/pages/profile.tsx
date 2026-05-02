@@ -315,19 +315,20 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-900 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={form.id} />
       <main className="pt-14 px-4 md:px-8 max-w-3xl mx-auto">
-        <div className="py-8">
-          <h1 className="text-2xl font-bold text-slate-900">Student Profile</h1>
-          <p className="text-slate-500 text-sm mt-1">Complete your profile to get personalized transfer pathway recommendations.</p>
+        <div className="py-6 border-b-2 border-slate-900 mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">Student Profile</h1>
+          <p className="text-slate-600 text-sm mt-1">Complete your profile to get personalized transfer pathway recommendations.</p>
         </div>
 
         <div className="space-y-6 pb-12">
@@ -469,7 +470,7 @@ export default function Profile() {
 
           {/* Save */}
           <div className="flex gap-3 justify-end">
-            <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
               {saving ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving…</>
               ) : (
@@ -479,7 +480,7 @@ export default function Profile() {
           </div>
 
           <p className="text-xs text-slate-400 text-center">
-            This information is used only to generate personalized recommendations. Pathwise CC is not an official advisor.
+            This information is used only to generate personalized recommendations. DYP is not an official advisor.
             Verify all requirements with your community college counselor.
           </p>
         </div>

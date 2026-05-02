@@ -156,20 +156,21 @@ export default function IgetcTracker() {
   const doneRequired = REQUIRED_KEYS.filter(k => areas[k]).length;
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+    <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-900 border-t-transparent" />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={pid} />
       <main className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto">
         {/* Header */}
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <BookOpen className="h-5 w-5 text-indigo-600" />
-            <h1 className="text-2xl font-bold text-slate-900">IGETC Tracker</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">IGETC Tracker</h1>
           </div>
           <p className="text-slate-500 text-sm max-w-xl">
             IGETC is a set of general education courses completed at your CC that satisfies GE requirements at all UC campuses (and most CSUs). Track your progress here.
@@ -202,7 +203,7 @@ export default function IgetcTracker() {
             {analyzing ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Analyzing courses…</> : <><Sparkles className="h-4 w-4 mr-2" />AI: Analyze My Courses</>}
           </Button>
           {dirty && (
-            <Button onClick={save} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={save} disabled={saving} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
               {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : <><Save className="h-4 w-4 mr-2" />Save Progress</>}
             </Button>
           )}

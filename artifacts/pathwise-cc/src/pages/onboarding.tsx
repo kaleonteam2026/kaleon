@@ -32,7 +32,7 @@ interface FormData {
 }
 
 const STEPS = [
-  { title: "Welcome to Pathwise CC", subtitle: "Let's personalize your transfer journey", icon: Map },
+  { title: "Welcome to DYP", subtitle: "Let's personalize your transfer journey", icon: Map },
   { title: "Your College & Major", subtitle: "Tell us where you are and where you want to go", icon: GraduationCap },
   { title: "Academic Standing", subtitle: "Help us match you to the right opportunities", icon: BookOpen },
   { title: "Your Background", subtitle: "A few more details to personalize your experience", icon: User },
@@ -101,7 +101,7 @@ export default function Onboarding() {
         {/* Logo */}
         <div className="flex items-center gap-2 justify-center mb-8">
           <Map className="h-6 w-6 text-indigo-600" />
-          <span className="text-xl font-bold text-indigo-700">Pathwise CC</span>
+          <span className="text-xl font-bold text-slate-900 uppercase tracking-tight" style={{ fontFamily: "Inter, sans-serif" }}>DYP</span>
         </div>
 
         {/* Progress bar */}
