@@ -285,3 +285,141 @@ End with this exact text on its own line:
 
   return response.content[0].type === "text" ? response.content[0].text : "";
 }
+
+// ─── Transferability Analysis ────────────────────────────────────────────────
+
+export interface CourseTransferResult {
+  courseCode?: string;
+  courseName: string;
+  units: number;
+  status: "transferable" | "likely" | "uncertain" | "unlikely";
+  igetcArea?: string;
+  csuGEArea?: string;
+  assistNote: string;
+}
+
+export interface UniversityMatch {
+  university: string;
+  system: string;
+  matchScore: number;
+  matchReason: string;
+  transferableCount: number;
+  totalCourses: number;
+}
+
+export interface IgetcSummary {
+  area1AEnglish: boolean;
+  area1BCriticalThinking: boolean;
+  area2Math: boolean;
+  area3Arts: boolean;
+  area4Social: boolean;
+  area5Science: boolean;
+  area6Language: boolean;
+  completedAreas: string[];
+  missingAreas: string[];
+}
+
+export interface TransferabilityAnalysisResult {
+  communityCollege: string;
+  summary: string;
+  bestMatches: UniversityMatch[];
+  courseAnalysis: CourseTransferResult[];
+  igetcSummary: IgetcSummary;
+  totalTransferableUnits: number;
+  recommendations: string[];
+}
+
+export async function generateTransferabilityAnalysis(
+  courses: Record<string, unknown>[],
+  communityCollege: string
+): Promise<TransferabilityAnalysisResult> {
+  const courseList = courses.map(c =>
+    `- ${c.courseCode ? c.courseCode + " " : ""}${c.courseName} (${c.units ?? 3} units, ${c.status ?? "completed"}${c.grade ? ", grade " + c.grade : ""})`
+  ).join("\n");
+
+  const prompt = `You are an expert California community college articulation advisor with deep knowledge of ASSIST.org articulation agreements, IGETC (Intersegmental General Education Transfer Curriculum), and CSU GE-Breadth requirements.
+
+A student from ${communityCollege} has submitted the following courses:
+
+${courseList}
+
+Analyze each course's transferability to California 4-year universities (UC and CSU systems, plus major California privates) using your knowledge of ASSIST.org articulation agreements and California transfer requirements.
+
+Return ONLY a JSON object with this exact structure (no markdown, no preamble):
+{
+  "communityCollege": "${communityCollege}",
+  "summary": "2-3 sentence overall assessment of this student's course list for California transfer purposes",
+  "bestMatches": [
+    {
+      "university": "Full university name",
+      "system": "UC | CSU | Private",
+      "matchScore": 85,
+      "matchReason": "Specific reason why this university's articulation agreements best match these courses",
+      "transferableCount": 8,
+      "totalCourses": 10
+    }
+  ],
+  "courseAnalysis": [
+    {
+      "courseCode": "ENGL 101",
+      "courseName": "English Composition",
+      "units": 3,
+      "status": "transferable",
+      "igetcArea": "Area 1A",
+      "csuGEArea": "A2",
+      "assistNote": "Accepted at all UC and CSU campuses as an English Composition equivalent. Satisfies IGETC Area 1A."
+    }
+  ],
+  "igetcSummary": {
+    "area1AEnglish": true,
+    "area1BCriticalThinking": false,
+    "area2Math": false,
+    "area3Arts": false,
+    "area4Social": true,
+    "area5Science": false,
+    "area6Language": false,
+    "completedAreas": ["Area 1A - English Communication (English Composition)"],
+    "missingAreas": ["Area 1B - Critical Thinking", "Area 2 - Mathematical Concepts and Quantitative Reasoning", "Area 3 - Arts and Humanities", "Area 5 - Physical and Biological Sciences", "Area 6 - Languages Other Than English"]
+  },
+  "totalTransferableUnits": 18,
+  "recommendations": [
+    "Specific actionable recommendation 1",
+    "Specific actionable recommendation 2"
+  ]
+}
+
+Rules:
+- "status" must be exactly one of: "transferable" (confirmed ASSIST equivalent), "likely" (strong match, verify on assist.org), "uncertain" (may transfer but course title is ambiguous), "unlikely" (vocational/remedial courses that typically don't transfer)
+- "igetcArea" and "csuGEArea" should only be set if you are confident the course satisfies that requirement
+- List 3-5 best university matches, ordered by matchScore descending
+- "totalTransferableUnits" should count only courses with status "transferable" or "likely"
+- Give 3-5 specific, actionable recommendations focused on completing IGETC and strengthening the transfer application
+- assistNote should reference ASSIST.org patterns and explain WHY the course does or doesn't transfer
+
+Respond with only the JSON object.`;
+
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 4096,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+      const parsed = JSON.parse(cleaned) as TransferabilityAnalysisResult;
+
+      if (!parsed.courseAnalysis || !Array.isArray(parsed.courseAnalysis)) {
+        throw new Error("Invalid transferability analysis structure");
+      }
+      return parsed;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+  throw lastError ?? new Error("Failed to generate transferability analysis");
+}

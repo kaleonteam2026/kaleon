@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { db, coursesTable } from "@workspace/db";
+import { db, coursesTable, studentProfilesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { generateTransferabilityAnalysis } from "../services/aiService.js";
 
 const router = Router();
 
@@ -153,6 +154,61 @@ router.get("/profiles/:profileId/gpa-summary", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Error calculating GPA summary");
     res.status(500).json({ error: "Failed to calculate GPA summary" });
+  }
+});
+
+// POST /api/profiles/:profileId/transferability-analysis
+// Rate-limit: one AI call per profile per 10 minutes
+const transferabilityCache = new Map<number, { data: unknown; cachedAt: number }>();
+const TRANSFER_TTL = 10 * 60 * 1000;
+
+router.post("/profiles/:profileId/transferability-analysis", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const profileId = parseInt(req.params.profileId);
+
+  // Check cache
+  const cached = transferabilityCache.get(profileId);
+  if (cached && Date.now() - cached.cachedAt < TRANSFER_TTL) {
+    res.json(cached.data);
+    return;
+  }
+
+  try {
+    // Fetch profile for community college name
+    const profiles = await db.select().from(studentProfilesTable).where(eq(studentProfilesTable.id, profileId));
+    if (!profiles.length) {
+      res.status(404).json({ error: "Profile not found" });
+      return;
+    }
+    const profile = profiles[0];
+
+    // Fetch all courses
+    const courses = await db.select().from(coursesTable).where(eq(coursesTable.profileId, profileId));
+    if (courses.length === 0) {
+      res.status(400).json({ error: "No courses found. Add your courses before running the analysis." });
+      return;
+    }
+
+    const communityCollege = profile.communityCollege ?? "a California community college";
+    const coursesData = courses.map(c => ({
+      courseCode: c.courseCode,
+      courseName: c.courseName,
+      units: c.units ?? 3,
+      grade: c.grade,
+      status: c.status,
+      term: c.term,
+    }));
+
+    const result = await generateTransferabilityAnalysis(coursesData, communityCollege);
+    transferabilityCache.set(profileId, { data: result, cachedAt: Date.now() });
+    res.json(result);
+  } catch (err) {
+    req.log.error({ err }, "Error generating transferability analysis");
+    res.status(500).json({ error: "Failed to generate transferability analysis" });
   }
 });
 
