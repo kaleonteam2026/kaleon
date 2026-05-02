@@ -716,7 +716,7 @@ export default function Courses() {
         pid={pid}
       />
 
-      <main className="pt-14 px-4 md:px-8 max-w-4xl mx-auto">
+      <main className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-4xl mx-auto">
 
         {/* Header */}
         <div className="py-6 border-b-2 border-slate-900 mb-6 flex items-start justify-between gap-4">

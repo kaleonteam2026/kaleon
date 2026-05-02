@@ -12,6 +12,7 @@ import {
   ISSUER_URL,
   type SessionData,
 } from "../lib/auth";
+import { isEmailAllowed, isAllowlistEnabled } from "../lib/access-control";
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 
@@ -157,6 +158,27 @@ router.get("/callback", async (req: Request, res: Response) => {
   const claims = tokens.claims();
   if (!claims) {
     res.redirect("/api/login");
+    return;
+  }
+
+  const claimEmail = (claims as Record<string, unknown>).email;
+  if (isAllowlistEnabled() && !isEmailAllowed(typeof claimEmail === "string" ? claimEmail : null)) {
+    req.log.warn({ email: claimEmail }, "Sign-in blocked by allowlist");
+    res.status(403).type("html").send(`<!doctype html>
+<html><head><meta charset="utf-8"><title>Private Beta — DYP</title>
+<style>
+body{font-family:Inter,system-ui,sans-serif;background:#f4f4f5;color:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px}
+.card{max-width:480px;background:#fff;border:2px solid #0f172a;box-shadow:6px 6px 0 0 #0f172a;padding:32px}
+h1{margin:0 0 8px;text-transform:uppercase;letter-spacing:-.02em;font-size:24px}
+p{color:#475569;line-height:1.5;font-size:14px}
+.tag{font-family:'JetBrains Mono',monospace;font-size:10px;background:#0f172a;color:#fff;padding:4px 8px;letter-spacing:.15em;display:inline-block;margin-bottom:16px}
+a{display:inline-block;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#0f172a;border:2px solid #0f172a;padding:8px 14px;text-decoration:none}
+a:hover{background:#0f172a;color:#fff}
+</style></head>
+<body><div class="card"><span class="tag">// PRIVATE BETA</span>
+<h1>Access not enabled</h1>
+<p>DYP is currently invite-only. Your account isn't on the allowlist yet. If you think this is a mistake, contact the app owner to be added.</p>
+<a href="/api/logout">Sign out</a></div></body></html>`);
     return;
   }
 

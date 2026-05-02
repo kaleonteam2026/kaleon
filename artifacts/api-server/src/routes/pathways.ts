@@ -6,10 +6,12 @@ import { db, studentProfilesTable, coursesTable, pathwaysTable } from "@workspac
 import { eq } from "drizzle-orm";
 import { generatePathways } from "../services/aiService.js";
 import { calculateCompatibility, interpretScore } from "../services/scoringService.js";
+import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 
 const router = Router();
 
-// Simple in-memory rate limiter: max 5 AI requests per user per hour
+// Per-user hourly cap (lowered from 5 to 3 for the most expensive endpoint)
+const PER_USER_HOURLY = 3;
 const rateLimiter = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(userId: string): boolean {
@@ -19,7 +21,7 @@ function checkRateLimit(userId: string): boolean {
     rateLimiter.set(userId, { count: 1, resetAt: now + 3600000 });
     return true;
   }
-  if (entry.count >= 5) return false;
+  if (entry.count >= PER_USER_HOURLY) return false;
   entry.count++;
   return true;
 }
@@ -32,7 +34,13 @@ router.post("/profiles/:profileId/generate-pathways", async (req, res) => {
   }
 
   if (!checkRateLimit(req.user.id)) {
-    res.status(429).json({ error: "Rate limit exceeded. You can generate up to 5 pathway sets per hour. Please try again later." });
+    res.status(429).json({ error: `Rate limit exceeded. You can generate up to ${PER_USER_HOURLY} pathway sets per hour. Please try again later.` });
+    return;
+  }
+
+  const cap = incrementGlobalAi();
+  if (!cap.allowed) {
+    res.status(429).json({ error: globalCapMessage(cap.cap) });
     return;
   }
 

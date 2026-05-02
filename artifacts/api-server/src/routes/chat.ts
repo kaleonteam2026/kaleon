@@ -2,8 +2,24 @@ import { Router } from "express";
 import { db, studentProfilesTable, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 
 const router = Router();
+
+// Per-user chat throttle: 20 messages/hour
+const CHAT_PER_USER_HOURLY = 20;
+const chatLimiter = new Map<string, { count: number; resetAt: number }>();
+function checkChatLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = chatLimiter.get(userId);
+  if (!entry || entry.resetAt < now) {
+    chatLimiter.set(userId, { count: 1, resetAt: now + 3600000 });
+    return true;
+  }
+  if (entry.count >= CHAT_PER_USER_HOURLY) return false;
+  entry.count++;
+  return true;
+}
 
 const CHAT_SYSTEM = `You are Pathwise, a friendly and knowledgeable California community college transfer advisor. You help CC students with:
 - Transfer planning (UC, CSU, CA private universities)
@@ -20,6 +36,12 @@ Do NOT make guarantees about admission, financial aid, or outcomes. Keep respons
 
 router.post("/chat", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!checkChatLimit(req.user.id)) {
+    res.status(429).json({ error: `Chat rate limit reached (${CHAT_PER_USER_HOURLY}/hour). Please wait.` });
+    return;
+  }
+  const cap = incrementGlobalAi();
+  if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
   try {
     const { profileId, messages } = req.body as {
       profileId?: number;

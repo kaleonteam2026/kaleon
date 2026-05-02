@@ -325,7 +325,7 @@ export default function Profile() {
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
       <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={form.id} />
-      <main className="pt-14 px-4 md:px-8 max-w-3xl mx-auto">
+      <main className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto">
         <div className="py-6 border-b-2 border-slate-900 mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">Student Profile</h1>
           <p className="text-slate-600 text-sm mt-1">Complete your profile to get personalized transfer pathway recommendations.</p>

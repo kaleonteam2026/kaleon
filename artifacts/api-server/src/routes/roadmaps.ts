@@ -4,9 +4,11 @@ import opportunities from "../data/opportunities.json" assert { type: "json" };
 import { db, studentProfilesTable, coursesTable, pathwaysTable, academicRoadmapsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { generateAcademicRoadmap } from "../services/aiService.js";
+import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 
 const router = Router();
 
+const PER_USER_HOURLY = 3;
 const rateLimiter = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(userId: string): boolean {
@@ -16,7 +18,7 @@ function checkRateLimit(userId: string): boolean {
     rateLimiter.set(userId, { count: 1, resetAt: now + 3600000 });
     return true;
   }
-  if (entry.count >= 5) return false;
+  if (entry.count >= PER_USER_HOURLY) return false;
   entry.count++;
   return true;
 }
@@ -29,9 +31,11 @@ router.post("/pathways/:pathwayId/generate-roadmap", async (req, res) => {
   }
 
   if (!checkRateLimit(req.user.id)) {
-    res.status(429).json({ error: "Rate limit exceeded. You can generate up to 5 roadmaps per hour." });
+    res.status(429).json({ error: `Rate limit exceeded. You can generate up to ${PER_USER_HOURLY} roadmaps per hour.` });
     return;
   }
+  const cap = incrementGlobalAi();
+  if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
   try {
     const pathwayId = parseInt(req.params.pathwayId);

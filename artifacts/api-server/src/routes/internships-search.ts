@@ -4,6 +4,7 @@ import {
 } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { generateInternshipMatches } from "../services/aiService.js";
+import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 
 const router = Router();
 
@@ -27,6 +28,8 @@ router.post("/profiles/:profileId/internships/search", async (req, res) => {
     res.status(429).json({ error: "Rate limit reached. Up to 5 searches per hour." });
     return;
   }
+  const cap = incrementGlobalAi();
+  if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
 
   try {
     const profileId = parseInt(req.params.profileId);

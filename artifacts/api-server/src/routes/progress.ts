@@ -7,6 +7,7 @@ import {
 } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { generateProgressAnalysis, generateEntryFeedback } from "../services/aiService.js";
+import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 
 const router = Router();
 
@@ -55,6 +56,14 @@ router.post("/profiles/:profileId/progress", async (req, res) => {
 // POST /api/profiles/:profileId/progress/entry-feedback — instant AI feedback on a logged entry
 router.post("/profiles/:profileId/progress/entry-feedback", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!checkRateLimit(req.user.id)) {
+    res.status(429).json({ error: "Rate limit exceeded. Please try again later." });
+    return;
+  }
+  {
+    const cap = incrementGlobalAi();
+    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
+  }
   try {
     const profileId = parseInt(req.params.profileId);
     const { entryId } = req.body as { entryId: number };
@@ -148,6 +157,10 @@ router.delete("/progress/:entryId", async (req, res) => {
 // POST /api/profiles/:profileId/progress/analyze — generate AI progress analysis
 router.post("/profiles/:profileId/progress/analyze", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  {
+    const cap = incrementGlobalAi();
+    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
+  }
   if (!checkRateLimit(req.user.id)) {
     res.status(429).json({ error: "Rate limit exceeded. You can generate up to 5 analyses per hour." });
     return;

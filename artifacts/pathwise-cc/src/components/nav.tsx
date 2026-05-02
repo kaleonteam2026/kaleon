@@ -79,16 +79,20 @@ export default function Nav({ profileId }: Props) {
       {/* ── Desktop nav ── */}
       <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 bg-white border-b-2 border-slate-900 px-6 h-14 items-center justify-between">
         {Brand}
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex items-center gap-1 flex-nowrap overflow-x-auto min-w-0">
           {allLinks.map((link) => (
             <Link key={link.href} href={link.href}>
-              <span className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs pwc-font-mono uppercase tracking-wider font-bold transition-colors border-2",
-                isActive(link.href)
-                  ? "bg-slate-900 text-white border-slate-900"
-                  : "border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-              )}>
-                <link.icon className="h-3.5 w-3.5" />{link.label}
+              <span
+                title={link.label}
+                className={cn(
+                  "flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-xs pwc-font-mono uppercase tracking-wider font-bold transition-colors border-2 whitespace-nowrap",
+                  isActive(link.href)
+                    ? "bg-slate-900 text-white border-slate-900"
+                    : "border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                )}
+              >
+                <link.icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden lg:inline">{link.label}</span>
               </span>
             </Link>
           ))}
