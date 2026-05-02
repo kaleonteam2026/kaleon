@@ -8,7 +8,7 @@ import {
   Search, Loader2, ExternalLink, MapPin, Clock, DollarSign,
   ChevronDown, ChevronUp, Star, Shield, Beaker, Building2,
   Heart, Landmark, Info, Sparkles, GraduationCap, RefreshCcw,
-  CalendarDays, BookOpen, CheckCircle2, AlertCircle,
+  CalendarDays, BookOpen, CheckCircle2, AlertCircle, Bookmark,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -244,6 +244,7 @@ export default function InternshipsPage() {
   const [generating, setGenerating] = useState(false);
   const [filterType, setFilterType] = useState<InternshipType | "all">("all");
   const [sortBy, setSortBy] = useState<"score" | "deadline">("score");
+  const [savedSlugs, setSavedSlugs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch(`/api/profiles/${pid}/internships/searches`, { credentials: "include" })
@@ -255,6 +256,37 @@ export default function InternshipsPage() {
       .catch(() => {})
       .finally(() => setLoadingSearches(false));
   }, [pid]);
+
+  useEffect(() => {
+    fetch(`/api/profiles/${pid}/saved-internships`, { credentials: "include" })
+      .then(r => r.json())
+      .then((rows: Array<{ internshipSlug: string }>) => {
+        setSavedSlugs(new Set(rows.map(r => r.internshipSlug)));
+      })
+      .catch(() => {});
+  }, [pid]);
+
+  const toggleSave = async (internship: InternshipMatch) => {
+    const slug = internship.id;
+    const isSaved = savedSlugs.has(slug);
+    try {
+      if (isSaved) {
+        await fetch(`/api/profiles/${pid}/saved-internships/${encodeURIComponent(slug)}`, { method: "DELETE", credentials: "include" });
+        setSavedSlugs(prev => { const s = new Set(prev); s.delete(slug); return s; });
+        toast({ title: "Removed from saved internships" });
+      } else {
+        await fetch(`/api/profiles/${pid}/saved-internships`, {
+          method: "POST", credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ internshipSlug: slug, internshipData: internship as unknown as Record<string, unknown> }),
+        });
+        setSavedSlugs(prev => new Set([...prev, slug]));
+        toast({ title: "Internship saved!" });
+      }
+    } catch {
+      toast({ title: "Action failed", variant: "destructive" });
+    }
+  };
 
   const handleSearch = async () => {
     setGenerating(true);
@@ -467,8 +499,30 @@ export default function InternshipsPage() {
                 ) : (
                   <div className="grid sm:grid-cols-2 gap-4">
                     {sorted.map(internship => (
-                      <InternshipCard key={internship.id} internship={internship} />
+                      <div key={internship.id} className="relative">
+                        <button
+                          onClick={() => void toggleSave(internship)}
+                          title={savedSlugs.has(internship.id) ? "Remove from saved" : "Save internship"}
+                          className={cn(
+                            "absolute top-3 right-3 z-10 p-1.5 rounded-full shadow-sm border transition-all",
+                            savedSlugs.has(internship.id)
+                              ? "bg-indigo-600 border-indigo-600"
+                              : "bg-white/90 border-slate-200 hover:border-indigo-300"
+                          )}
+                        >
+                          <Bookmark className={cn("h-3.5 w-3.5", savedSlugs.has(internship.id) ? "fill-white text-white" : "text-slate-400")} />
+                        </button>
+                        <InternshipCard internship={internship} />
+                      </div>
                     ))}
+                  </div>
+                )}
+
+                {/* Saved count badge */}
+                {savedSlugs.size > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-slate-500 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
+                    <Bookmark className="h-3.5 w-3.5 text-indigo-500 fill-indigo-500" />
+                    <span><strong>{savedSlugs.size}</strong> internship{savedSlugs.size !== 1 ? "s" : ""} saved — tap the bookmark icon on any card to save or unsave</span>
                   </div>
                 )}
 

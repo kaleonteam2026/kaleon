@@ -747,6 +747,31 @@ export default function Courses() {
           </div>
         )}
 
+        {/* 60-Unit Transfer Progress */}
+        {gpa && (
+          <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 mb-5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                <GraduationCap className="h-4 w-4 text-indigo-600" />
+                Units Toward Transfer
+              </span>
+              <span className={`text-sm font-bold ${gpa.totalUnits >= 60 ? "text-emerald-600" : "text-indigo-600"}`}>
+                {gpa.totalUnits} / 60
+              </span>
+            </div>
+            <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${gpa.totalUnits >= 60 ? "bg-emerald-500" : "bg-indigo-500"}`}
+                style={{ width: `${Math.min(100, (gpa.totalUnits / 60) * 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-400 mt-1.5 flex justify-between">
+              <span>{gpa.totalUnits >= 60 ? "✓ 60-unit minimum met! Great progress." : `${(60 - gpa.totalUnits).toFixed(1)} more units to reach transfer minimum`}</span>
+              <span>Min: 60 semester units</span>
+            </p>
+          </div>
+        )}
+
         {/* Empty state */}
         {courses.length === 0 ? (
           <div className="text-center py-16">

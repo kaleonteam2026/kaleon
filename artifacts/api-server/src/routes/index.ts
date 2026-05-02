@@ -12,6 +12,9 @@ import internshipsSearchRouter from "./internships-search";
 import opportunitiesRouter from "./opportunities";
 import dashboardRouter from "./dashboard";
 import universitiesRouter from "./universities";
+import savedInternshipsRouter from "./saved-internships";
+import igetcRouter from "./igetc";
+import chatRouter from "./chat";
 
 const router: IRouter = Router();
 
@@ -28,5 +31,8 @@ router.use(internshipsSearchRouter);
 router.use(opportunitiesRouter);
 router.use(dashboardRouter);
 router.use(universitiesRouter);
+router.use(savedInternshipsRouter);
+router.use(igetcRouter);
+router.use(chatRouter);
 
 export default router;

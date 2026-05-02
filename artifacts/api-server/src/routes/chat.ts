@@ -1,0 +1,54 @@
+import { Router } from "express";
+import { db, studentProfilesTable, coursesTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
+import { anthropic } from "@workspace/integrations-anthropic-ai";
+
+const router = Router();
+
+const CHAT_SYSTEM = `You are Pathwise, a friendly and knowledgeable California community college transfer advisor. You help CC students with:
+- Transfer planning (UC, CSU, CA private universities)
+- IGETC and GE requirements
+- TAG/TAP eligibility and filing
+- Financial aid (FAFSA, California Dream Act, Cal Grants)
+- Scholarship finding (including Dream Act scholarships)
+- Major and career guidance
+- Internship and research opportunities
+- Campus programs (EOPS, Umoja, Puente, TRIO, MESA, Phi Theta Kappa)
+
+Be concise, practical, and encouraging. Give specific actionable advice. Always recommend verifying with the student's CC counselor and assist.org for official articulation.
+Do NOT make guarantees about admission, financial aid, or outcomes. Keep responses under 200 words unless a detailed explanation is needed.`;
+
+router.post("/chat", async (req, res) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const { profileId, messages } = req.body as {
+      profileId?: number;
+      messages: Array<{ role: "user" | "assistant"; content: string }>;
+    };
+
+    let system = CHAT_SYSTEM;
+    if (profileId) {
+      const [profile] = await db.select().from(studentProfilesTable).where(eq(studentProfilesTable.id, profileId));
+      if (profile) {
+        const courses = await db.select().from(coursesTable).where(eq(coursesTable.profileId, profileId));
+        const completed = courses.filter(c => c.status === "completed").length;
+        system += `\n\nStudent context: Name: ${profile.fullName ?? "unknown"}, College: ${profile.communityCollege ?? "CA community college"}, Major: ${profile.intendedMajor ?? "undecided"}, GPA: ${profile.currentGpa ?? "unknown"}, Career goal: ${profile.careerGoal ?? "not specified"}, Transfer timeline: ${profile.transferTimeline ?? "not set"}, Completed courses: ${completed}.`;
+      }
+    }
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 512,
+      system,
+      messages: messages.slice(-10),
+    });
+
+    const text = response.content[0].type === "text" ? response.content[0].text : "I'm sorry, I couldn't generate a response right now.";
+    res.json({ message: text });
+  } catch (err) {
+    req.log.error({ err }, "Error generating chat response");
+    res.status(500).json({ error: "Failed to generate response" });
+  }
+});
+
+export default router;

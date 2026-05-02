@@ -102,6 +102,21 @@ export const internshipSearchesTable = pgTable("internship_searches", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const savedInternshipsTable = pgTable("saved_internships", {
+  id: serial("id").primaryKey(),
+  profileId: integer("profile_id").notNull().references(() => studentProfilesTable.id),
+  internshipSlug: text("internship_slug").notNull(),
+  internshipData: json("internship_data").$type<Record<string, unknown>>().notNull(),
+  savedAt: timestamp("saved_at").defaultNow().notNull(),
+});
+
+export const igetcProgressTable = pgTable("igetc_progress", {
+  id: serial("id").primaryKey(),
+  profileId: integer("profile_id").notNull().references(() => studentProfilesTable.id).unique(),
+  areas: json("areas").$type<Record<string, boolean>>().notNull().default({}),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const insertStudentProgressSchema = createInsertSchema(studentProgressTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProgressAnalysisSchema = createInsertSchema(progressAnalysesTable).omit({ id: true, createdAt: true });
 
@@ -117,6 +132,8 @@ export type AcademicRoadmap = typeof academicRoadmapsTable.$inferSelect;
 export type InsertAcademicRoadmap = z.infer<typeof insertAcademicRoadmapSchema>;
 export type InternshipSearch = typeof internshipSearchesTable.$inferSelect;
 export type StudentProgress = typeof studentProgressTable.$inferSelect;
+export type SavedInternship = typeof savedInternshipsTable.$inferSelect;
+export type IgetcProgress = typeof igetcProgressTable.$inferSelect;
 export type InsertStudentProgress = z.infer<typeof insertStudentProgressSchema>;
 export type ProgressAnalysis = typeof progressAnalysesTable.$inferSelect;
 export type InsertProgressAnalysis = z.infer<typeof insertProgressAnalysisSchema>;
