@@ -96,7 +96,40 @@ function splitIntoChunks(md: string): Chunk[] {
 }
 
 // ─── Styled table renderer ────────────────────────────────────────────────────
-function MarkdownTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
+// Two-column tables with label/value pairs render as a card grid; wider tables
+// render as a standard striped data table.
+
+function KeyValueCard({ rows }: { rows: string[][] }) {
+  // Status/score badges for specific fields
+  const scoreBadge = (val: string) => {
+    const m = val.match(/^(\d+)\s*[/\/]\s*100/);
+    if (!m) return null;
+    const n = parseInt(m[1]);
+    const color = n >= 85 ? "bg-emerald-100 text-emerald-700" : n >= 70 ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700";
+    return <span className={cn("ml-2 text-xs font-semibold px-2 py-0.5 rounded-full", color)}>{n}/100</span>;
+  };
+
+  return (
+    <div className="my-5 rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      {rows.map(([label, value], i) => (
+        <div key={i} className={cn(
+          "flex items-start gap-3 px-4 py-3 border-b border-slate-100 last:border-0",
+          i % 2 === 0 ? "bg-white" : "bg-slate-50/60"
+        )}>
+          <span className="w-44 flex-shrink-0 text-xs font-semibold text-slate-500 uppercase tracking-wide pt-0.5">
+            {label}
+          </span>
+          <span className="flex-1 text-sm text-slate-800 leading-snug">
+            {value}
+            {scoreBadge(value ?? "")}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DataTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
     <div className="overflow-x-auto my-5 rounded-xl border border-slate-200 shadow-sm">
       <table className="min-w-full text-sm">
@@ -113,7 +146,7 @@ function MarkdownTable({ headers, rows }: { headers: string[]; rows: string[][] 
               {row.map((cell, ci) => (
                 <td key={ci} className={cn(
                   "px-4 py-3 align-top border-t border-slate-100 text-slate-700",
-                  ci === 0 ? "font-medium text-slate-800 whitespace-nowrap" : ""
+                  ci === 0 ? "font-semibold text-slate-800 whitespace-nowrap" : ""
                 )}>
                   {cell}
                 </td>
@@ -124,6 +157,14 @@ function MarkdownTable({ headers, rows }: { headers: string[]; rows: string[][] 
       </table>
     </div>
   );
+}
+
+function MarkdownTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
+  // Two-column tables where headers suggest key/value pairs → card layout
+  const isKeyValue = headers.length === 2 &&
+    /^(field|label|item|property|attribute|key|category)$/i.test(headers[0].trim());
+  if (isKeyValue) return <KeyValueCard rows={rows} />;
+  return <DataTable headers={headers} rows={rows} />;
 }
 
 // ─── ReactMarkdown custom components (prose only — tables handled above) ──────
