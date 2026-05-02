@@ -160,10 +160,8 @@ function DataTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
 }
 
 function MarkdownTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
-  // Two-column tables where headers suggest key/value pairs → card layout
-  const isKeyValue = headers.length === 2 &&
-    /^(field|label|item|property|attribute|key|category)$/i.test(headers[0].trim());
-  if (isKeyValue) return <KeyValueCard rows={rows} />;
+  // Any two-column table → card layout
+  if (headers.length === 2) return <KeyValueCard rows={rows} />;
   return <DataTable headers={headers} rows={rows} />;
 }
 
