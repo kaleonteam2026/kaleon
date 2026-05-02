@@ -702,55 +702,186 @@ export async function generateEntryFeedback(
   const profileGpa = typeof profile.currentGpa === "number" ? profile.currentGpa : null;
   const gpaHistory = recentGpaEntries.map(e => `${e.entryDate ?? "unknown date"}: ${e.numericValue?.toFixed(2) ?? "?"}`).join(", ");
 
-  const prompt = `You are a California community college transfer advisor AI. A student just logged a new progress update. Analyze it against their selected pathway guidebook and profile to determine:
-1. Whether this entry aligns with their guidebook recommendations
-2. The updated impact on their admission chances to their target university
-3. Specific, California-focused advice (reconciliation for setbacks, validation for positives)
+  const prompt = `You are a California community college transfer advisor AI with deep expertise in every aspect of the CCC-to-UC/CSU transfer system. A student just logged a progress update. Analyze it against their guidebook, profile, and the California-specific knowledge base below to give precise, actionable feedback.
 
 Student Profile:
 - Community College: ${college}
 - Intended Major: ${major}
 - Target University: ${targetUniversity}
 - Profile GPA: ${profileGpa ?? "not specified"}
-- Recent GPA history: ${gpaHistory || "none logged yet"}
+- GPA history: ${gpaHistory || "none logged yet"}
 
 New Progress Entry:
 - Type: ${entry.entryType}
 - Title: ${entry.title}
 - Description: ${entry.description ?? "none"}
 - Date: ${entry.entryDate ?? "today"}
-- Value: ${entry.numericValue != null ? entry.numericValue.toFixed(2) : "N/A"}
+- Numeric value: ${entry.numericValue != null ? entry.numericValue.toFixed(2) : "N/A"}
 
-Selected Pathway Summary:
+Selected Pathway:
 ${JSON.stringify(pathway ?? {}, null, 2)}
 
-Guidebook Content (the student's personalized academic guidebook — use this to check alignment):
-${guidebookMarkdown ? guidebookMarkdown.slice(0, 4000) : "No guidebook generated yet. Base analysis on the pathway and major."}
+Guidebook Content (use this to check alignment — reference specific sections by name):
+${guidebookMarkdown ? guidebookMarkdown.slice(0, 5000) : "No guidebook yet. Base analysis on the pathway and major."}
 
-CALIFORNIA-SPECIFIC KNOWLEDGE you must apply when entry_type is "setback" or GPA is below the target university's typical minimum:
-- Academic Renewal Petition: most CA community colleges allow petitioning to exclude up to 24 units of substandard work (D/F) from GPA if circumstances were present. Strongly advise this when appropriate.
-- Grade Forgiveness / Repeat Policy: California Ed Code 55042 allows students to repeat a course and the new grade replaces the old one in GPA calculation at CCCs.
-- Substandard Work Notation (SWN): petition to have a grade noted as substandard but still replaced.
-- UC/CSU Trend Policy: UC and CSU admissions weigh upward GPA trends heavily — a student going from 2.8 to 3.5 demonstrates recovery.
-- EOPS (Extended Opportunity Programs and Services): provides academic support and appeals assistance.
-- Puente Project / UMOJA: structured programs with counseling support that strengthen applications.
-- Honors/TAP (Transfer Admission Guarantee): honors coursework can compensate for a lower base GPA at several UCs.
-- Personal Insight Questions (PIQs): for UC apps, students can contextualize setbacks directly.
-- Supplemental Academic Instruction (SAI/SI): tutoring programs that aid grade improvement.
-- TAG (Transfer Admission Guarantee): if GPA meets TAG minimums, guarantees admission to 6 UC campuses regardless of competition.
+══════════════════════════════════════════════════════════════
+CALIFORNIA-SPECIFIC KNOWLEDGE BASE — apply the relevant section based on entry_type
+══════════════════════════════════════════════════════════════
 
-Return ONLY a JSON object with no markdown fences:
+─── CERTIFICATIONS (entry_type: "certification") ───────────────
+• Strong Workforce Program: all 116 CCCs offer industry-backed stackable credentials, often free with enrollment. These credentials are tied to CA's high-demand sectors and can be earned alongside a transfer degree.
+• By major — recommend or evaluate these specific credentials:
+  - Computer Science / IT: CompTIA A+, Network+, Security+; AWS Cloud Practitioner / Solutions Architect; Google Cloud; Salesforce Admin; GitHub Foundations; Microsoft Azure Fundamentals
+  - Business / Accounting: QuickBooks ProAdvisor; Salesforce Admin; Google Analytics; CA Real Estate Salesperson License (pre-licensing coursework); CPA exam eligibility tracking (120 units)
+  - Health Sciences / Nursing: CNA (Certified Nursing Assistant, state-required), EMT-Basic (CA EMSA), Phlebotomy Technician (CA DHS), Medical Interpreter (CA-approved), BLS/CPR (AHA), HIPAA certification
+  - Education: CA Children's Center Permit (Associate Teacher level available with 12 ECE units), CPR/First Aid, Mandated Reporter Training
+  - Engineering / Architecture: SOLIDWORKS (CSWA), AutoCAD (Autodesk Certified), OSHA 10/30, FE Exam eligibility (PE pathway)
+  - Environmental Science: HAZWOPER (OSHA 40-hour), CA Pesticide Application License, Environmental Compliance Inspection (CWEA)
+  - Culinary / Hospitality: ServSafe Food Manager (CA required), TIPS alcohol certification, CA Food Handler Card
+  - Criminal Justice: FEMA NIMS certifications, CA POST-approved basic aid training
+• If the certification does NOT appear in the guidebook: name the specific certs the guidebook or major recommends instead, and explain why those are better positioned for the target university.
+• Some UC/CSU departments grant course credit for industry certifications (e.g., AWS certs at CSU; CISCO Academy at many CCCs).
+• Phi Theta Kappa academic honor society recognizes academic excellence — if a student earned a certificate through PTK or an affiliated program, note the Jack Kent Cooke connection.
+
+─── OPPORTUNITIES (entry_type: "opportunity") ─────────────────
+• California STEM Pipeline programs (recommend by major):
+  - MESA (Mathematics Engineering Science Achievement): state-funded at 120+ CCCs; STEM pipeline to UC/CSU; annual MESA Day competition; strong Transfer Alliance connections; mention if not yet joined
+  - NSF REU (Research Experiences for Undergraduates): UC campuses host summer REU sites — apply as a sophomore/junior; comp sci, biology, chemistry, physics especially
+  - UCLA Transfer Summer Institute: 4-week residential for CCC students transferring to UCLA in any major
+  - UC Berkeley Summer Research Program (SURF): research mentorship for transfer-bound students
+  - UCSD Research Scholars Program: strong for STEM and social sciences
+  - CSU STEM Student Research Symposium: poster presentation, builds faculty relationships
+  - MBRS-RISE / MARC-USTAR: NIH-funded at select CCCs for biomedical research students
+• California identity-based programs (strongly recommend if relevant to student background):
+  - Puente Project: English composition focus + counseling; primarily serves first-gen Latinx students; UC/CSU readers recognize Puente essays; available at 70+ CCCs
+  - UMOJA Community: African American student support; cohort counseling; strong transfer outcomes; available at 50+ CCCs
+  - EOPS/CARE: eligibility requires financial need + educational disadvantage; benefits include priority registration, book grants, counseling, emergency funds — must be in this program if eligible
+  - Dreamer Resource Centers: AB 540 undocumented students; Dream Act scholarships; campus-specific legal resources
+• Transfer-specific programs:
+  - Honors Transfer Program: honors-designated courses flag academic readiness for UC; can compensate for lower base GPA; TAP (Transfer Alliance Program) at UCLA/UCI/UCSD/UCSB requires honors completion
+  - Transfer Alliance Program (TAP): guaranteed admission to participating UCs for honors students; know campus-specific TAP requirements
+  - Transfer Center at their CC: workshops, counselor access, TAG applications — if student hasn't visited, this is priority
+• Internships — California-specific:
+  - CA Governor's Office Fellow Program (grad-level but note for future)
+  - CA Legislative Internship: semester-long paid program in Sacramento
+  - Silicon Valley Internship Program (SVIP): Bay Area tech internships for CC students
+  - CA Environmental Internship Program: state agency placements
+  - JPL (Jet Propulsion Laboratory, Pasadena): community college internships for STEM students
+  - Google STEP / Microsoft Explore: explicitly recruit CC transfer students
+• If the opportunity is NOT in the guidebook: name the specific programs the guidebook recommends for this student's major and pathway, and explain what they're missing.
+
+─── MILESTONES (entry_type: "milestone") ──────────────────────
+• IGETC (Intersegmental General Education Transfer Curriculum):
+  - Fully certified IGETC = UC waives all lower-division GE requirements at the university — major benefit
+  - Must be certified by the CC Registrar before the transfer date
+  - Certification deadline: request in spring semester, before fall transfer
+  - STEM exception: UCLA, UC Berkeley, UCSD Engineering/CS/Physical Sciences often prefer major-prep over IGETC — check if their pathway uses IGETC or CSU GE Breadth
+  - Partial IGETC: some campuses accept it; others do not — know the target university's policy
+  - Area 1B (Critical Thinking) and Area 2 (Math) are most commonly missing — flag if incomplete
+• TAG (Transfer Admission Guarantee):
+  - Participating UC campuses: Davis, Irvine, Merced, Riverside, Santa Barbara, Santa Cruz (NOT Berkeley or UCLA)
+  - GPA minimums: UC Merced 2.4, UC Riverside/Santa Cruz 2.8, UC Davis/Irvine/Santa Barbara 3.2+ (varies by major)
+  - Apply in September–October of the CC year before transfer
+  - Requires 30 UC-transferable units at time of applying
+  - Guarantees admission regardless of applicant pool size
+  - Completing TAG = one of the most impactful milestones a student can achieve
+• ADT (Associate Degree for Transfer, SB 1440):
+  - Guarantees admission to a CSU in a similar major (priority consideration)
+  - Requires 60 CSU-transferable units, C or better in major prep, 2.0+ GPA
+  - Impacted CSUs still prioritize ADT applicants
+  - ADT does NOT guarantee a specific campus — apply broadly
+• Application deadlines (flag if milestone relates to timing):
+  - UC application: November 1–30 only (no exceptions, no late submissions)
+  - CSU application: October 1 – December 15 (some campuses close early when impacted)
+  - TAG: September–October prior year
+  - Cal Grant FAFSA/Dream Act priority deadline: March 2 each year
+• ASSIST.org articulation:
+  - All CA CC-to-UC/CSU course equivalencies are published on ASSIST.org
+  - If a milestone is completing a specific course, confirm ASSIST shows it as equivalent to the requirement at the target university
+  - Flag if the completed course does NOT articulate — student may need to substitute
+• Priority Registration: most CCCs grant priority registration after completing 30+ transferable units — huge advantage for securing required courses
+
+─── ACHIEVEMENTS (entry_type: "achievement") ──────────────────
+• Phi Theta Kappa (PTK):
+  - Top academic honor society for 2-year college students (GPA 3.5+, invited)
+  - All-California Academic Team: $1,500 stipend + statewide recognition
+  - Jack Kent Cooke Transfer Scholarship ($40,000/yr): PTK membership is a strong signal
+  - UC/CSU application honors section: list PTK chapter and year
+  - Transfer readers recognize PTK as sustained academic excellence
+• Dean's List / President's List:
+  - Document in every application's honors/awards section
+  - Repeated semesters on Dean's List = strong upward narrative
+  - Use in UC PIQ Prompt 5 (leadership/community) or Prompt 4 (creativity/talent)
+• Research / Poster Presentations:
+  - CSUPERB (CSU Program for Education and Research in Biotechnology) annual symposium — strong for biology/biochemistry/biotech
+  - Community College Undergraduate Research Initiative (CCURI)
+  - STEM poster presentations documented in applications signal readiness for university research
+• Competition wins:
+  - MESA Day: state competition win is a major differentiator for STEM transfers
+  - Science Olympiad: note division and placement
+  - DECA / FBLA (business competitions): recognized by CSU/UC business schools
+  - ISGF (International Student Game Festival) for game design students
+• Athletic achievements (CCCAA):
+  - CA community college athletics (CCCAA) is the largest 2-year athletic association in the US
+  - CCCAA All-Conference / All-State = legitimate transfer credential; note in "extracurricular activities"
+  - Athletic scholarships at 4-year universities: CC coaches have direct pipelines
+• Letters of Recommendation trigger:
+  - Significant achievements should prompt the student to request a LoR from the awarding faculty member immediately — faculty letters are most powerful when recent
+  - Note if guidebook recommends a minimum number of LoRs for the target major
+
+─── SETBACKS (entry_type: "setback") ──────────────────────────
+• GPA — same as GPA_UPDATE if the setback is grade-related:
+  - Academic Renewal Petition: exclude up to 24 units of D/F from GPA with documented circumstances
+  - CA Ed Code 55042 Grade Repeat: retake course, new grade replaces old in CCC GPA calculation (not UC GPA)
+  - UC GPA recalculation: UC calculates its own GPA (grades 10-11-12 + CC) — some D/F courses excluded if retaken
+  - Upward trend: a 2.7→3.5 trajectory is often more compelling to UC readers than a flat 3.2
+• W (Withdrawal) grades:
+  - UC policy: 2 W's acceptable; 3+ W's require explanation (use PIQ prompt 8 — additional information)
+  - Late Withdrawal Petition: available at most CCCs for documented extenuating circumstances (medical, job loss, family emergency)
+  - EW (Excused Withdrawal): COVID-era policy still available at some CCCs; removes W from transcript and doesn't impact GPA
+  - W does NOT affect GPA calculation, but affects unit completion rate (pace)
+• Academic Probation:
+  - SSSP (Student Success and Support Program): mandatory counseling, create a student education plan
+  - PACE (Probation Academic Challenge Exit): structured 1-semester intensive at many CCCs
+  - Academic Dismissal Appeal: if dismissed, appeal with documented circumstances + plan of action
+  - Most CCCs: one semester probation before dismissal — immediate intervention required
+• Dropped required prerequisite:
+  - Check ASSIST.org for alternate equivalent courses
+  - UC Scout (online CA-accredited courses) and California Virtual Campus: fill prerequisite gaps online
+  - Summer session at any CCC: fastest way to clear a missed prerequisite
+  - Some UCs allow "in progress" prerequisites at time of application if completed by June
+• Missing a milestone (timeline setback):
+  - Spring admission: UC Berkeley, UCLA, UCSD, UCSB, UCD all accept spring transfer applicants
+  - CSU spring admission: broadly available at most campuses
+  - An extra semester can be used strategically: complete TAG, improve GPA, add research or internship
+
+─── GPA UPDATE (entry_type: "gpa_update") ──────────────────────
+• Compare the logged GPA against the target university's stated minimum for this major (check pathway report)
+• If below minimum: Academic Renewal Petition, Ed Code 55042 repeat policy, upward trend narrative
+• If meeting minimum: validate and flag which TAG campus GPA tiers this qualifies for
+• If above 3.5: flag PTK eligibility (if not yet member), TAG qualification, honors program eligibility
+• Trend analysis: is this GPA going up, down, or stable compared to previous GPA entries?
+• STEM majors: UC Berkeley EECS and UCLA CS effective GPA minimums are 3.7+; flag if gap exists and suggest alternate pathways (UCSD, UCD, UCSB CS programs often more accessible)
+
+─── NOTE (entry_type: "note") ────────────────────────────────
+• Identify any action items embedded in the note (e.g., "met with counselor" → flag any follow-up items)
+• If the note mentions a concern, classify it and apply the relevant section above
+• Validate or redirect based on what the guidebook says about this topic
+
+══════════════════════════════════════════════════════════════
+OUTPUT FORMAT — return ONLY a JSON object, no markdown fences:
+══════════════════════════════════════════════════════════════
 {
-  "aligned": <boolean — does this entry align with the guidebook's recommendations for this student?>,
-  "alignmentScore": <integer 0-100 — how well this entry fits the guidebook plan>,
-  "currentAdmissionChance": <integer 0-100 — estimated % chance of admission to target university given everything known>,
-  "admissionImpactDelta": <integer -15 to +15 — how much this single entry changes the estimated admission chance>,
-  "severity": <"positive" | "caution" | "concern" — overall tone of this entry's impact>,
-  "heading": <string — 6-10 word headline summarizing the assessment>,
-  "feedback": <string — 2-4 sentences of specific, honest, encouraging analysis referencing the guidebook and CA context>,
-  "reconciliationSteps": <array of 2-5 strings — ONLY for setback/bad GPA entries. Each step is a specific, actionable CA-specific remediation step. Empty array for positive entries.>,
-  "nextAlignedActions": <array of 2-4 strings — specific next steps that ARE in the guidebook, to keep momentum>,
-  "guidebookCheck": <string — one sentence saying specifically whether this entry matches or deviates from the guidebook recommendation>
+  "aligned": <boolean — does this entry align with the guidebook's specific recommendations?>,
+  "alignmentScore": <integer 0-100 — how well this entry fits the guidebook plan for this student>,
+  "currentAdmissionChance": <integer 0-100 — estimated % admission chance to target university considering everything known>,
+  "admissionImpactDelta": <integer -15 to +15 — how much this single entry shifts the estimated chance>,
+  "severity": <"positive" | "caution" | "concern">,
+  "heading": <string — 6-10 word headline that is specific to THIS entry, not generic>,
+  "feedback": <string — 2-4 sentences: reference the guidebook by name, cite the specific CA program or policy that applies, be honest and precise>,
+  "reconciliationSteps": <array of 2-5 strings — for concern/caution entries: specific actionable steps drawn from the CA knowledge base above. For positive aligned entries: 1-2 "ways to maximize this" steps. Never leave empty — always give concrete CA-specific next actions relevant to the entry type.>,
+  "nextAlignedActions": <array of 2-4 strings — next steps explicitly from the guidebook that keep the student on track>,
+  "guidebookCheck": <string — one sentence citing a specific guidebook section or recommendation and whether this entry matches or diverges from it>
 }`;
 
   let lastError: Error | null = null;

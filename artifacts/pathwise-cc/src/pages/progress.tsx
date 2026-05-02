@@ -173,22 +173,30 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
       {/* Main feedback */}
       <p className="text-sm text-slate-700 leading-relaxed">{feedback.feedback}</p>
 
-      {/* Reconciliation steps (for setbacks) */}
-      {feedback.reconciliationSteps.length > 0 && (
-        <div className="bg-white/80 rounded-xl border border-rose-200 p-4">
-          <p className="text-xs font-bold text-rose-700 uppercase tracking-wide mb-2 flex items-center gap-1">
-            <RefreshCcw className="h-3 w-3" /> California Reconciliation Options
-          </p>
-          <ul className="space-y-2">
-            {feedback.reconciliationSteps.map((step, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                <ChevronRight className="h-3.5 w-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
-                {step}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Action steps — label and color changes based on severity */}
+      {feedback.reconciliationSteps.length > 0 && (() => {
+        const stepConfig = feedback.severity === "positive"
+          ? { label: "Ways to Maximize This", border: "border-emerald-200", labelColor: "text-emerald-700", arrowColor: "text-emerald-500", icon: TrendingUp }
+          : feedback.severity === "caution"
+          ? { label: "Alignment Suggestions", border: "border-amber-200", labelColor: "text-amber-700", arrowColor: "text-amber-500", icon: Info }
+          : { label: "California Reconciliation Options", border: "border-rose-200", labelColor: "text-rose-700", arrowColor: "text-rose-400", icon: RefreshCcw };
+        const StepIcon = stepConfig.icon;
+        return (
+          <div className={cn("bg-white/80 rounded-xl border p-4", stepConfig.border)}>
+            <p className={cn("text-xs font-bold uppercase tracking-wide mb-2 flex items-center gap-1", stepConfig.labelColor)}>
+              <StepIcon className="h-3 w-3" /> {stepConfig.label}
+            </p>
+            <ul className="space-y-2">
+              {feedback.reconciliationSteps.map((step, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                  <ChevronRight className={cn("h-3.5 w-3.5 flex-shrink-0 mt-0.5", stepConfig.arrowColor)} />
+                  {step}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
 
       {/* Next aligned actions */}
       {feedback.nextAlignedActions.length > 0 && (
