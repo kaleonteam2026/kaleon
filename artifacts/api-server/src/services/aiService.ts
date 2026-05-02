@@ -256,10 +256,78 @@ The guidebook MUST include these sections in this exact order:
 (bullet list with brief description for each item — clubs, research programs, internship pipelines, honor societies, and leadership programs specific to this California university)
 
 ## Career Preparation Roadmap
-(numbered steps)
+Write 8-12 numbered steps that are highly specific to the student's career goal and field. Cover: skill-building at the CC level before transfer, portfolio or project work to start now, certifications to pursue, job-shadowing or informational interviews in the field, and how to position themselves as a serious candidate before they even step on the university campus.
+
+## University Year-by-Year Success Roadmap
+This is a critical section. Write a detailed numbered plan organized into four phases that the student must execute AFTER they arrive at the university. Be specific to their intended major and career goal at the selected university:
+
+### First Semester at University
+- Meeting with a departmental advisor within week 1
+- Identifying the 2-3 faculty members whose research aligns with the student's interests and attending their office hours
+- Joining exactly which student organizations, clubs, and honor societies in their field (name them specifically for this university)
+- Academic adjustment strategies for upper-division coursework
+- Setting a GPA floor and understanding the major's grade requirements for advanced courses
+
+### First Full Year
+- Applying for undergraduate research positions (name specific research centers or labs at this university)
+- Attending the career center and identifying field-specific internship pipelines
+- Building the first version of their professional portfolio or GitHub/LinkedIn/research profile specific to their field
+- Identifying which professors to build relationships with for future letters of recommendation
+- Academic honors to target (Dean's List, departmental honors programs — name any that exist at this university)
+
+### Second Year (Junior Standing)
+- Securing a meaningful internship, co-op, or research position directly relevant to the career goal
+- Taking on leadership roles in student organizations or lab settings
+- Attending at least one professional conference or industry event in their field
+- Beginning to build an industry network: LinkedIn strategy, informational interviews, alumni outreach through the university's alumni network
+- Identifying whether graduate school is part of their plan and beginning to prepare accordingly
+
+### Final Year
+- Capstone project, thesis, or senior research — how to make it outstanding and field-relevant
+- Full job search or graduate school application campaign with specific timeline
+- Leveraging faculty relationships for strong letters of recommendation
+- Transitioning from student to professional: professional associations to join, certifications to complete, first job strategy
+
+## Field-Specific Excellence Plan
+Write a detailed, specific plan for how this student excels in their exact field (use the student's intended major and career goal from the profile and selected pathway above). Include:
+
+### Professional Associations & Certifications
+- The 2-4 most important professional associations in this student's field and what membership provides (name the actual organizations, e.g., APA for psychology, ACM/IEEE for CS, ABA for law pre-law, CFA Institute for finance)
+- Field-specific certifications or credentials to pursue during or immediately after university (be specific: CompTIA for tech, Six Sigma for business operations, LCSW licensure path for social work, etc.)
+- Any California-specific licensing requirements for their career path
+
+### Portfolio & Research Excellence
+- What a strong portfolio looks like for this specific field (code projects, clinical hours, published papers, design work, business plans, etc.)
+- How to use the university's resources to build it (research centers, labs, studios, clinics, accelerators)
+- Specific competitions, grants, or recognition programs in this field for undergraduates
+
+### Academic Distinction
+- The specific academic honors worth pursuing at this university for this major
+- How to graduate with distinction, honors, or departmental recognition
+- Whether an honors thesis adds value for their specific career goal
+
+## Professional Networking Strategy
+Write 8-10 numbered steps specific to building a professional network in this student's field:
+- Faculty mentorship: how to approach it, what to ask, how to maintain the relationship
+- Industry networking specific to this field in California (which cities, events, meetups, industry associations have presence in California for this career)
+- Alumni network strategy: how to use this university's alumni network in this field
+- LinkedIn and professional presence: what a strong profile looks like for this specific career
+- Informational interview guide: who to contact, how to ask, what to learn
+- Professional conferences and events in this field relevant to a California-based student
+
+## Internship & Research Roadmap
+Use a Markdown table with columns: Phase | Opportunity Type | Target / Where to Find It | How to Secure It
+Cover at minimum: summer after first year, summer after second year, possible co-op or part-time during school, research during school, post-graduation. Make entries specific to the student's field and the California job market.
+
+## Graduate School & Career Launch Plan
+First, clearly state whether graduate school is recommended, optional, or not necessary for this student's specific career goal. Then write a numbered plan covering:
+- If graduate school: timeline for GRE/professional exam prep, when to start applications, what programs in California are strongest for this field, how to build the ideal application profile during undergrad
+- Letters of recommendation strategy: which 3 faculty relationships to build and why, what to ask them to speak to, when to ask
+- First job strategy: where in California this career field is concentrated, what employers actively recruit from this university, how to approach the job search 6 months before graduation
+- First 90 days as a professional: what distinguishes those who accelerate vs. stagnate in this field's early career
 
 ## Resume-Building Suggestions
-(bullet list)
+(bullet list — make entries specific to this student's field and career goal, not generic)
 
 ## Monthly Action Plan
 (use a Markdown table with columns: Month | Action Items | Priority)

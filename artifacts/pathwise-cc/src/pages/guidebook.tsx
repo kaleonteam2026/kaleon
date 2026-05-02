@@ -29,9 +29,14 @@ function getSectionTheme(text: string) {
   if (t.includes("transfer") || t.includes("checklist") || t.includes("deadline")) return { border: "border-emerald-400", bg: "bg-emerald-50", heading: "text-emerald-800" };
   if (t.includes("scholarship"))                          return { border: "border-amber-400",  bg: "bg-amber-50",  heading: "text-amber-800" };
   if (t.includes("on-site") || t.includes("opportunit") || t.includes("extracurricular")) return { border: "border-teal-400", bg: "bg-teal-50", heading: "text-teal-800" };
-  if (t.includes("career")   || t.includes("resume"))    return { border: "border-orange-400", bg: "bg-orange-50", heading: "text-orange-800" };
-  if (t.includes("action")   || t.includes("monthly"))   return { border: "border-cyan-400",   bg: "bg-cyan-50",   heading: "text-cyan-800" };
-  if (t.includes("risk")     || t.includes("alert"))     return { border: "border-rose-400",   bg: "bg-rose-50",   heading: "text-rose-800" };
+  if (t.includes("career preparation") || t.includes("resume")) return { border: "border-orange-400", bg: "bg-orange-50", heading: "text-orange-800" };
+  if (t.includes("university year")   || t.includes("success roadmap"))             return { border: "border-violet-500", bg: "bg-violet-50",  heading: "text-violet-900" };
+  if (t.includes("field-specific")    || t.includes("excellence"))                  return { border: "border-fuchsia-400", bg: "bg-fuchsia-50", heading: "text-fuchsia-800" };
+  if (t.includes("networking")        || t.includes("professional network"))        return { border: "border-sky-400",    bg: "bg-sky-50",    heading: "text-sky-800" };
+  if (t.includes("internship")        || t.includes("research roadmap"))            return { border: "border-teal-500",   bg: "bg-teal-50",   heading: "text-teal-900" };
+  if (t.includes("graduate school")   || t.includes("career launch"))               return { border: "border-indigo-500", bg: "bg-indigo-50", heading: "text-indigo-900" };
+  if (t.includes("action")            || t.includes("monthly"))                     return { border: "border-cyan-400",   bg: "bg-cyan-50",   heading: "text-cyan-800" };
+  if (t.includes("risk")              || t.includes("alert"))                       return { border: "border-rose-400",   bg: "bg-rose-50",   heading: "text-rose-800" };
   if (t.includes("advisor")  || t.includes("meeting") || t.includes("verification")) return { border: "border-purple-400", bg: "bg-purple-50", heading: "text-purple-800" };
   return { border: "border-slate-300", bg: "bg-white", heading: "text-slate-800" };
 }
