@@ -9,6 +9,9 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 const KIND_USER = "user";
 const KIND_DAY = "day";
+const KIND_DEEP_DIVE_USER = "deep-dive-user";
+
+const DEEP_DIVE_COOLDOWN_MS = 60_000;
 
 function resolveDailyCap(): number {
   const raw = process.env["TAVILY_DAILY_CAP"];
@@ -81,7 +84,11 @@ type ReserveDenied = { ok: false; status: number; error: string };
  * with row-level locks. This avoids the check-then-write race that would
  * otherwise let concurrent requests bypass the cap.
  */
-async function reserveSlot(userId: string, dayKey: string): Promise<ReserveOk | ReserveDenied> {
+async function reserveSlot(
+  userId: string,
+  dayKey: string,
+  skipCooldown: boolean,
+): Promise<ReserveOk | ReserveDenied> {
   return db.transaction(async (tx) => {
     // Ensure both rows exist so we can lock them in a deterministic order.
     await tx
@@ -101,7 +108,7 @@ async function reserveSlot(userId: string, dayKey: string): Promise<ReserveOk | 
 
     const last = userRows[0]?.lastCallAt ? new Date(userRows[0].lastCallAt).getTime() : 0;
     const sinceLast = Date.now() - last;
-    if (sinceLast < COOLDOWN_MS) {
+    if (!skipCooldown && sinceLast < COOLDOWN_MS) {
       const wait = Math.ceil((COOLDOWN_MS - sinceLast) / 1000);
       return { ok: false, status: 429, error: `Please wait ${wait}s before searching again.` };
     }
@@ -170,6 +177,48 @@ export async function getQuotaInfo(req: Request): Promise<QuotaInfo> {
   return { remainingToday, cooldownSecondsLeft, dailyCap: DAILY_CAP };
 }
 
+export type DeepDiveReservation =
+  | { ok: true }
+  | { ok: false; status: number; error: string };
+
+/**
+ * Durable per-user cooldown for the deep-dive endpoint. A single deep-dive
+ * request fans out into multiple paid Tavily calls, so we gate the whole
+ * fanout (cache miss or hit) with one reservation. This prevents an
+ * authenticated user from looping over distinct cache keys
+ * (e.g. ever-changing intendedMajor values) to drain the shared daily cap.
+ */
+export async function reserveDeepDiveSlot(req: Request): Promise<DeepDiveReservation> {
+  const userId = String((req.user as { id?: number | string } | undefined)?.id ?? "anon");
+  return db.transaction(async (tx) => {
+    await tx
+      .insert(liveSearchUsageTable)
+      .values({ kind: KIND_DEEP_DIVE_USER, key: userId, lastCallAt: new Date(0), count: 0 })
+      .onConflictDoNothing({ target: [liveSearchUsageTable.kind, liveSearchUsageTable.key] });
+
+    const rows = await tx
+      .select({ lastCallAt: liveSearchUsageTable.lastCallAt })
+      .from(liveSearchUsageTable)
+      .where(and(eq(liveSearchUsageTable.kind, KIND_DEEP_DIVE_USER), eq(liveSearchUsageTable.key, userId)))
+      .for("update")
+      .limit(1);
+
+    const last = rows[0]?.lastCallAt ? new Date(rows[0].lastCallAt).getTime() : 0;
+    const sinceLast = Date.now() - last;
+    if (sinceLast < DEEP_DIVE_COOLDOWN_MS) {
+      const wait = Math.ceil((DEEP_DIVE_COOLDOWN_MS - sinceLast) / 1000);
+      return { ok: false, status: 429, error: `Please wait ${wait}s before requesting another deep dive.` };
+    }
+
+    await tx
+      .update(liveSearchUsageTable)
+      .set({ lastCallAt: new Date(), count: sql`${liveSearchUsageTable.count} + 1`, updatedAt: new Date() })
+      .where(and(eq(liveSearchUsageTable.kind, KIND_DEEP_DIVE_USER), eq(liveSearchUsageTable.key, userId)));
+
+    return { ok: true };
+  });
+}
+
 export type GuardResult =
   | { ok: true; result: TavilyResult }
   | { ok: false; status: number; error: string };
@@ -179,8 +228,15 @@ export async function guardedTavilyCall(opts: {
   endpoint: string;
   cacheKey: string;
   call: () => Promise<TavilyResult>;
+  /**
+   * Skip the per-user 10s cooldown for trusted batched flows (e.g. deep-dive
+   * which fans out into multiple section queries from a single user action).
+   * The persisted global daily cap and the cache always still apply, which
+   * are the critical denial-of-wallet protections.
+   */
+  skipCooldown?: boolean;
 }): Promise<GuardResult> {
-  const { req, endpoint, cacheKey, call } = opts;
+  const { req, endpoint, cacheKey, call, skipCooldown = false } = opts;
   const userId = String((req.user as { id?: number | string } | undefined)?.id ?? "anon");
   const normalizedQuery = normalizeQuery(cacheKey);
 
@@ -191,7 +247,7 @@ export async function guardedTavilyCall(opts: {
   }
 
   const dayKey = calendarDayKey(Date.now());
-  const reservation = await reserveSlot(userId, dayKey);
+  const reservation = await reserveSlot(userId, dayKey, skipCooldown);
   if (!reservation.ok) {
     if (reservation.error.startsWith("Daily")) {
       logger.warn(

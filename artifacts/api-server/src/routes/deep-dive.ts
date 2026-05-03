@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import universities from "../data/universities.json" assert { type: "json" };
 import { db, universityDeepDivesTable, type DeepDiveReport } from "@workspace/db";
 import { tavilySearch } from "../lib/tavily";
+import { guardedTavilyCall, reserveDeepDiveSlot } from "../lib/tavily-guard";
 import { getOwnedProfile } from "../lib/ownership";
 import { checkAiCapAvailable, enforceAiCap, getGlobalAiUsage, getUserAiUsage } from "../lib/global-cap";
 import { synthesizeDeepDive, type DeepDiveSectionInput } from "../services/aiService.js";
@@ -96,6 +97,17 @@ router.post("/universities/:uniId/deep-dive", async (req, res) => {
       return;
     }
 
+    // Durable per-user deep-dive cooldown (gates the entire 5-section fanout).
+    // Without this, an attacker can churn cache keys (e.g. by patching
+    // intendedMajor to unique values) and rapidly drain the shared Tavily
+    // daily cap. We reserve only after a cache miss so cached responses
+    // remain free.
+    const ddSlot = await reserveDeepDiveSlot(req);
+    if (!ddSlot.ok) {
+      res.status(ddSlot.status).json({ error: ddSlot.error });
+      return;
+    }
+
     // Pre-flight check (no increment yet) so we don't waste research effort if
     // either the per-user or global cap is already exhausted. Final consumption
     // happens just before the (expensive) synthesis call so failed source-
@@ -114,21 +126,41 @@ router.post("/universities/:uniId/deep-dive", async (req, res) => {
       { key: "news", title: "Recent News", query: `${uni.name} recent campus news in the last 12 months — admissions changes, policy changes, notable events.`, topic: "news", days: 365 },
     ];
 
-    const tavilyResults = await Promise.all(
-      queries.map((q) =>
-        tavilySearch({
-          query: q.query,
-          searchDepth: "advanced",
-          includeAnswer: "advanced",
-          maxResults: 6,
-          topic: q.topic,
-          days: q.days,
-        }).catch((err: unknown) => {
-          req.log.warn({ err, key: q.key }, "Tavily section search failed");
-          return { answer: "", citations: [] };
-        }),
-      ),
-    );
+    // Route every section query through the durable Tavily guard so the
+    // persisted global daily cap and shared cache apply. The per-Tavily-call
+    // cooldown is skipped because the whole 5-section fanout is already
+    // gated by reserveDeepDiveSlot above; running sequentially also lets us
+    // stop early if the global daily cap is hit mid-request.
+    const tavilyResults: Array<{ answer: string; citations: { title?: string; url: string; snippet?: string }[] }> = [];
+    for (const q of queries) {
+      const cacheKey = `deep-dive:${uniId}:${majorKey}:${q.key}:${q.query}`;
+      const guarded = await guardedTavilyCall({
+        req,
+        endpoint: `deep-dive:${q.key}`,
+        cacheKey,
+        skipCooldown: true,
+        // Soften only the upstream Tavily call — DB / cache / quota-guard
+        // failures still propagate so we surface infra issues instead of
+        // silently emitting a partial report.
+        call: () =>
+          tavilySearch({
+            query: q.query,
+            searchDepth: "advanced",
+            includeAnswer: "advanced",
+            maxResults: 6,
+            topic: q.topic,
+            days: q.days,
+          }).catch((err: unknown) => {
+            req.log.warn({ err, key: q.key }, "Tavily section search failed");
+            return { answer: "", citations: [] };
+          }),
+      });
+      if (!guarded.ok) {
+        res.status(guarded.status).json({ error: guarded.error });
+        return;
+      }
+      tavilyResults.push(guarded.result);
+    }
 
     const sectionInputs: DeepDiveSectionInput[] = queries.map((q, i) => ({
       key: q.key,
