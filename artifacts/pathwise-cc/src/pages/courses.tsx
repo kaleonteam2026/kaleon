@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import {
   Plus, Trash2, Loader2, ArrowRight, BookOpen, FlaskConical,
   CheckCircle2, AlertCircle, HelpCircle, XCircle, Star,
@@ -507,6 +508,8 @@ function CatalogModal({
 }) {
   const [selected, setSelected] = useState<CatalogCourse | null>(null);
   const [saving, setSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(dialogRef, open, onClose);
 
   if (!open) return null;
 
@@ -523,9 +526,20 @@ function CatalogModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full sm:max-w-xl sm:mx-4 sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col overflow-hidden"
+      <div
+        aria-hidden="true"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="catalog-modal-title"
+        tabIndex={-1}
+        className="relative bg-white w-full sm:max-w-xl sm:mx-4 sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col overflow-hidden focus:outline-none"
         style={{ height: "85vh" }}>
+        <h2 id="catalog-modal-title" className="sr-only">Add a course from your college&apos;s catalog</h2>
 
         {catalogLoading && (
           <div className="flex flex-col items-center justify-center py-16 px-6 gap-4">
@@ -716,7 +730,7 @@ export default function Courses() {
         pid={pid}
       />
 
-      <main className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-4xl mx-auto">
+      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-4xl mx-auto">
 
         {/* Header */}
         <div className="py-6 border-b-2 border-slate-900 mb-6 flex items-start justify-between gap-4">

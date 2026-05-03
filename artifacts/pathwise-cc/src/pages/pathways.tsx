@@ -180,7 +180,7 @@ export default function Pathways() {
     <div className="min-h-screen bg-[#f4f4f5] pwc-font-sans" style={{ fontFamily: "Inter, sans-serif" }}>
       <style dangerouslySetInnerHTML={{ __html: `.pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }` }} />
       <Nav profileId={pid} />
-      <main className="pt-14 pb-20 md:pb-8 px-4 md:px-6 max-w-4xl mx-auto">
+      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-6 max-w-4xl mx-auto">
         <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 border-b-2 border-slate-900 pb-4 mb-6 mt-4 md:mt-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">My Pathway</h1>

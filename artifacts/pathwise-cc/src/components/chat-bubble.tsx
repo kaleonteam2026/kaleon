@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { MessageCircle, X, Send, Loader2, Bot, User, MessagesSquare, Mic, Trophy, Sparkles, RotateCcw } from "lucide-react";
 
 type Mode = "ask" | "interview";
@@ -103,6 +104,8 @@ function SummaryCard({ text, onRestart }: { text: string; onRestart: () => void 
 
 export default function ChatBubble({ profileId }: { profileId?: number }) {
   const [open, setOpen] = useState(false);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(dialogRef, open, () => setOpen(false));
   const [mode, setMode] = useState<Mode>("ask");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -145,7 +148,6 @@ export default function ChatBubble({ profileId }: { profileId?: number }) {
     };
     window.addEventListener("dyp:start-interview", handler);
     return () => window.removeEventListener("dyp:start-interview", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pid]);
 
   const persistAsk = (msgs: Message[]) => {
@@ -263,7 +265,13 @@ export default function ChatBubble({ profileId }: { profileId?: number }) {
   return (
     <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end gap-2 pwc-font-sans" style={{ fontFamily: "Inter, sans-serif" }}>
       {open && (
-        <div className="bg-white border-2 border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] flex flex-col overflow-hidden"
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="DYP advisor chat"
+          tabIndex={-1}
+          className="bg-white border-2 border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] flex flex-col overflow-hidden focus:outline-none"
           style={{ width: "min(90vw, 380px)", height: "min(75vh, 560px)" }}>
           {/* Header */}
           <div className="bg-slate-900 px-4 py-3 flex items-center justify-between flex-shrink-0 border-b-2 border-slate-900">
@@ -306,7 +314,7 @@ export default function ChatBubble({ profileId }: { profileId?: number }) {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-[#f4f4f5]">
+          <div aria-live="polite" aria-atomic="false" aria-label="Conversation" className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-[#f4f4f5]">
             {/* Empty / setup states */}
             {mode === "ask" && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center px-4 pb-4">
@@ -341,8 +349,9 @@ export default function ChatBubble({ profileId }: { profileId?: number }) {
                   <p className="text-xs text-slate-600 leading-relaxed mb-3">
                     Pick a target — a scholarship name, an honors program, or any opportunity you're prepping for. I'll ask 5 tailored questions, score each answer, and give you a closing summary.
                   </p>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-slate-700">Target</label>
+                  <label htmlFor="dyp-interview-target" className="text-[10px] uppercase tracking-widest font-bold text-slate-700">Target</label>
                   <input
+                    id="dyp-interview-target"
                     ref={targetInputRef}
                     value={pendingTarget}
                     onChange={e => setPendingTarget(e.target.value)}
@@ -397,12 +406,13 @@ export default function ChatBubble({ profileId }: { profileId?: number }) {
               );
             })}
             {loading && (
-              <div className="flex gap-2">
+              <div className="flex gap-2" role="status" aria-label="Advisor is responding">
                 <div className="w-6 h-6 bg-white border-2 border-slate-900 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Bot className="h-3.5 w-3.5 text-slate-900" />
+                  <Bot className="h-3.5 w-3.5 text-slate-900" aria-hidden="true" />
                 </div>
                 <div className="bg-white border-2 border-slate-900 px-3 py-2.5">
-                  <Loader2 className="h-3.5 w-3.5 text-slate-900 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 text-slate-900 animate-spin" aria-hidden="true" />
+                  <span className="sr-only">Loading response…</span>
                 </div>
               </div>
             )}
@@ -417,6 +427,7 @@ export default function ChatBubble({ profileId }: { profileId?: number }) {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKey}
+                aria-label={mode === "interview" ? "Your interview answer" : "Ask the DYP advisor a question"}
                 placeholder={mode === "interview" ? "Type your answer…" : "Ask about transfer, IGETC, TAG…"}
                 disabled={loading}
                 className="flex-1 text-xs px-3 py-2 border-2 border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-50"

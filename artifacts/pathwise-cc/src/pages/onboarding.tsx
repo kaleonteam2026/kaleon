@@ -143,8 +143,9 @@ export default function Onboarding() {
                   ))}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Your name</label>
+                  <label htmlFor="ob-fullname" className="block text-sm font-medium text-slate-700 mb-1.5">Your name</label>
                   <input
+                    id="ob-fullname"
                     value={form.fullName}
                     onChange={e => set("fullName", e.target.value)}
                     placeholder="Full name"
@@ -158,8 +159,9 @@ export default function Onboarding() {
             {step === 1 && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Your California Community College <span className="text-red-500">*</span></label>
+                  <label htmlFor="ob-cc" className="block text-sm font-medium text-slate-700 mb-1.5">Your California Community College <span className="text-red-500">*</span></label>
                   <input
+                    id="ob-cc"
                     value={form.communityCollege}
                     onChange={e => set("communityCollege", e.target.value)}
                     placeholder="e.g. De Anza College, City College of SF, Santa Monica College..."
@@ -168,8 +170,9 @@ export default function Onboarding() {
                   <p className="text-xs text-slate-400 mt-1">Type the name of your California CC</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Intended major <span className="text-red-500">*</span></label>
+                  <label htmlFor="ob-major" className="block text-sm font-medium text-slate-700 mb-1.5">Intended major <span className="text-red-500">*</span></label>
                   <input
+                    id="ob-major"
                     value={form.intendedMajor}
                     onChange={e => set("intendedMajor", e.target.value)}
                     placeholder="e.g. Computer Science, Business, Psychology, Biology..."
@@ -177,8 +180,9 @@ export default function Onboarding() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Career goal <span className="text-slate-400 font-normal">(optional)</span></label>
+                  <label htmlFor="ob-career" className="block text-sm font-medium text-slate-700 mb-1.5">Career goal <span className="text-slate-400 font-normal">(optional)</span></label>
                   <input
+                    id="ob-career"
                     value={form.careerGoal}
                     onChange={e => set("careerGoal", e.target.value)}
                     placeholder="e.g. Software engineer, nurse, environmental scientist..."
@@ -190,8 +194,8 @@ export default function Onboarding() {
 
             {step === 2 && (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Current GPA <span className="text-red-500">*</span></label>
+                <div role="group" aria-labelledby="ob-gpa-label">
+                  <div id="ob-gpa-label" className="block text-sm font-medium text-slate-700 mb-2">Current GPA <span className="text-red-500">*</span></div>
                   <div className="grid grid-cols-2 gap-2">
                     {GPA_RANGES.map(g => (
                       <button key={g} onClick={() => set("currentGpa", g)}
@@ -203,8 +207,8 @@ export default function Onboarding() {
                     ))}
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">When do you plan to transfer?</label>
+                <div role="group" aria-labelledby="ob-timeline-label">
+                  <div id="ob-timeline-label" className="block text-sm font-medium text-slate-700 mb-2">When do you plan to transfer?</div>
                   <div className="grid grid-cols-2 gap-2">
                     {TRANSFER_TIMELINES.map(t => (
                       <button key={t} onClick={() => set("transferTimeline", t)}
@@ -221,8 +225,8 @@ export default function Onboarding() {
 
             {step === 3 && (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Financial situation</label>
+                <div role="group" aria-labelledby="ob-finance-label">
+                  <div id="ob-finance-label" className="block text-sm font-medium text-slate-700 mb-2">Financial situation</div>
                   <div className="space-y-2">
                     {FINANCIAL_OPTIONS.map(f => (
                       <button key={f} onClick={() => set("financialSituation", f)}
@@ -234,8 +238,8 @@ export default function Onboarding() {
                     ))}
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Are you a first-generation college student?</label>
+                <div role="group" aria-labelledby="ob-firstgen-label">
+                  <div id="ob-firstgen-label" className="block text-sm font-medium text-slate-700 mb-2">Are you a first-generation college student?</div>
                   <div className="flex gap-2">
                     {["Yes", "No", "Not sure"].map(v => (
                       <button key={v} onClick={() => set("isFirstGen", v)}

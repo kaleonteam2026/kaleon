@@ -27,7 +27,7 @@ export function PageShell({
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900 pwc-font-sans">
       <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
       <Nav profileId={profileId} />
-      <main className="pt-14 pb-20 md:pb-8">
+      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none">
         <div className={cn("mx-auto p-4 md:p-6", widthClass)}>
           <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 border-b-2 border-slate-900 pb-4 mb-6">
             <div>

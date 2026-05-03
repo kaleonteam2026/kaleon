@@ -164,7 +164,7 @@ export default function TagChecker() {
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
       <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={pid} />
-      <main className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto">
+      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-3xl mx-auto">
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <GraduationCap className="h-5 w-5 text-indigo-600" />

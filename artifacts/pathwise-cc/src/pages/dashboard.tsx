@@ -169,7 +169,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-[#f4f4f5]">
         <Nav profileId={undefined} />
-        <main className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto">
+        <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto focus:outline-none">
           <div className="py-16 text-center">
             <Map className="h-16 w-16 text-slate-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-slate-800 mb-2">Let's get started</h2>
@@ -198,7 +198,7 @@ export default function Dashboard() {
       <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
       <Nav profileId={profile.id} />
 
-      <main className="pt-14 pb-20 md:pb-8">
+      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none">
         <div className="max-w-[1280px] mx-auto p-4 md:p-6 grid grid-cols-12 gap-4 md:gap-6">
 
           {/* Header */}

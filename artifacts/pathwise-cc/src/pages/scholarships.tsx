@@ -180,7 +180,7 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
             <p className="text-xs font-bold text-violet-700 uppercase tracking-wide flex items-center gap-1">
               <Sparkles className="h-3 w-3" /> Live Results
             </p>
-            <button onClick={() => setOpen(false)} className="text-xs text-slate-400 hover:text-slate-600">Hide</button>
+            <button onClick={() => setOpen(false)} className="text-xs text-slate-700 hover:text-slate-900 underline focus:outline-none focus:ring-2 focus:ring-violet-500 px-1">Hide</button>
           </div>
           <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed text-sm">
             {result.answer}
@@ -248,8 +248,9 @@ function CCProgramCard({ program }: { program: CCOpportunityItem }) {
           </div>
           {program.website && (
             <a href={program.website} target="_blank" rel="noopener noreferrer"
-              className="text-indigo-500 hover:text-indigo-700 flex-shrink-0 mt-0.5">
-              <ExternalLink className="h-4 w-4" />
+              aria-label={`Open ${program.name} in a new tab`}
+              className="text-indigo-700 hover:text-indigo-900 flex-shrink-0 mt-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 p-1">
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
           )}
         </div>
@@ -329,7 +330,7 @@ export default function Scholarships() {
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
       <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={pid ?? undefined} />
-      <main className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-5xl mx-auto">
+      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-5xl mx-auto">
         <div className="py-6 border-b-2 border-slate-900 mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">Scholarships & CC Programs</h1>
           <p className="text-slate-600 text-sm mt-1">
@@ -341,21 +342,25 @@ export default function Scholarships() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 mb-6 bg-slate-100 rounded-lg p-1 w-fit">
+        <div role="tablist" aria-label="Opportunity categories" className="flex gap-1 mb-6 bg-slate-100 rounded-lg p-1 w-fit">
           <button
+            role="tab"
+            aria-selected={tab === "scholarships"}
             onClick={() => setTab("scholarships")}
-            className={cn("px-4 py-1.5 rounded-md text-sm font-medium transition-colors",
-              tab === "scholarships" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-800")}
+            className={cn("px-4 py-2 rounded-md text-sm font-medium transition-colors min-h-[40px] focus:outline-none focus:ring-2 focus:ring-indigo-500",
+              tab === "scholarships" ? "bg-white text-indigo-800 shadow-sm" : "text-slate-700 hover:text-slate-900")}
           >
-            <Award className="inline h-3.5 w-3.5 mr-1.5" />
+            <Award className="inline h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
             Scholarships ({filteredScholarships.length})
           </button>
           <button
+            role="tab"
+            aria-selected={tab === "cc_programs"}
             onClick={handleCCTab}
-            className={cn("px-4 py-1.5 rounded-md text-sm font-medium transition-colors",
-              tab === "cc_programs" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-800")}
+            className={cn("px-4 py-2 rounded-md text-sm font-medium transition-colors min-h-[40px] focus:outline-none focus:ring-2 focus:ring-indigo-500",
+              tab === "cc_programs" ? "bg-white text-indigo-800 shadow-sm" : "text-slate-700 hover:text-slate-900")}
           >
-            <Building2 className="inline h-3.5 w-3.5 mr-1.5" />
+            <Building2 className="inline h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
             My CC Programs
           </button>
         </div>
@@ -396,8 +401,9 @@ export default function Scholarships() {
                       </div>
                       <div className="flex flex-col items-end gap-2 flex-shrink-0">
                         <a href={s.sourceUrl} target="_blank" rel="noopener noreferrer"
-                          className="text-indigo-500 hover:text-indigo-700">
-                          <ExternalLink className="h-4 w-4" />
+                          aria-label={`Open ${s.name} in a new tab`}
+                          className="text-indigo-700 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 p-1">
+                          <ExternalLink className="h-4 w-4" aria-hidden="true" />
                         </a>
                         <button
                           onClick={() => window.dispatchEvent(new CustomEvent("dyp:start-interview", { detail: { target: s.name } }))}

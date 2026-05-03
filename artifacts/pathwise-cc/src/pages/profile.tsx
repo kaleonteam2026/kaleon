@@ -117,30 +117,35 @@ function CollegePicker({
 
   return (
     <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
+      <div
         className={cn(
-          "w-full flex items-center justify-between gap-2 px-3 py-2 text-sm rounded-md border bg-white shadow-sm transition",
-          open ? "border-indigo-400 ring-1 ring-indigo-300" : "border-slate-200 hover:border-slate-300"
+          "w-full flex items-stretch rounded-md border bg-white shadow-sm transition",
+          open ? "border-indigo-500 ring-1 ring-indigo-400" : "border-slate-300 hover:border-slate-400"
         )}
       >
-        <span className={value ? "text-slate-900 font-medium truncate" : "text-slate-400"}>
-          {value || "Select your college"}
-        </span>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {value && (
-            <span
-              role="button"
-              onClick={e => { e.stopPropagation(); pick(""); }}
-              className="text-slate-300 hover:text-slate-500 p-0.5 cursor-pointer"
-            >
-              <X className="h-3.5 w-3.5" />
-            </span>
-          )}
-          <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", open && "rotate-180")} />
-        </div>
-      </button>
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          className="flex-1 flex items-center justify-between gap-2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md"
+        >
+          <span className={value ? "text-slate-900 font-medium truncate" : "text-slate-600"}>
+            {value || "Select your college"}
+          </span>
+          <ChevronDown className={cn("h-4 w-4 text-slate-600 transition-transform flex-shrink-0", open && "rotate-180")} aria-hidden="true" />
+        </button>
+        {value && (
+          <button
+            type="button"
+            aria-label="Clear college selection"
+            onClick={() => pick("")}
+            className="px-2 text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md border-l border-slate-200"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        )}
+      </div>
 
       {open && (
         <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
@@ -325,7 +330,7 @@ export default function Profile() {
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
       <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={form.id} />
-      <main className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto">
+      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto focus:outline-none">
         <div className="py-6 border-b-2 border-slate-900 mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">Student Profile</h1>
           <p className="text-slate-600 text-sm mt-1">Complete your profile to get personalized transfer pathway recommendations.</p>
