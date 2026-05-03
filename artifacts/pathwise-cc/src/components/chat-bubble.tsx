@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { MessageCircle, X, Send, Loader2, Bot, User, MessagesSquare, Mic, Trophy, Sparkles, RotateCcw } from "lucide-react";
 
 type Mode = "ask" | "interview";
@@ -105,6 +106,7 @@ function SummaryCard({ text, onRestart }: { text: string; onRestart: () => void 
 export default function ChatBubble({ userId }: { userId?: string }) {
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const reducedMotion = useReducedMotion();
   useFocusTrap(dialogRef, open, () => setOpen(false));
   const [mode, setMode] = useState<Mode>("ask");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -451,7 +453,10 @@ export default function ChatBubble({ userId }: { userId?: string }) {
         onClick={() => setOpen(!open)}
         aria-label={open ? "Close chat" : "Open chat"}
         className={cn(
-          "border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] flex items-center justify-center transition-all duration-200 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]",
+          "border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] flex items-center justify-center",
+          reducedMotion
+            ? ""
+            : "transition-all duration-200 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]",
           open ? "bg-white text-slate-900" : "bg-slate-900 text-white"
         )}
         style={{ width: 52, height: 52 }}

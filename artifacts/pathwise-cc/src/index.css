@@ -391,3 +391,26 @@
     inset: -1px;
   }
 }
+/* WCAG 2.3.3 — Honor OS-level prefers-reduced-motion.
+   Disables transforms/animations and shortens transitions to a near-instant
+   opacity-only swap. Uses !important to override inline styles set by
+   components (e.g. SVG stroke-dashoffset transitions on radar/score rings). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+    /* Neutralize tailwindcss-animate enter/exit transforms so animate-in /
+       slide-in-from-* / zoom-in-* utilities collapse to opacity-only. */
+    --tw-enter-translate-x: 0 !important;
+    --tw-enter-translate-y: 0 !important;
+    --tw-enter-scale: 1 !important;
+    --tw-enter-rotate: 0 !important;
+    --tw-exit-translate-x: 0 !important;
+    --tw-exit-translate-y: 0 !important;
+    --tw-exit-scale: 1 !important;
+    --tw-exit-rotate: 0 !important;
+  }
+}

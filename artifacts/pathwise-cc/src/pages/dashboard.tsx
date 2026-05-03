@@ -2,6 +2,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import Nav from "@/components/nav";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Button } from "@/components/ui/button";
 import {
   AlertCircle,
@@ -80,6 +81,7 @@ function estimatedTransferTerm(totalUnits: number): string {
 export default function Dashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const reducedMotion = useReducedMotion();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -322,7 +324,7 @@ export default function Dashboard() {
                       cx="50" cy="50" r="45" fill="none"
                       stroke={accent.stroke} strokeWidth="10"
                       strokeDasharray={dashOffset}
-                      className="transition-all duration-1000 ease-out"
+                      className={reducedMotion ? "" : "transition-all duration-1000 ease-out"}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">

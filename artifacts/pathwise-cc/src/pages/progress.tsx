@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "wouter";
 import Nav from "@/components/nav";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,6 +75,7 @@ const ENTRY_TYPES: Record<EntryType, { label: string; icon: React.ElementType; c
 
 // ─── Score ring ───────────────────────────────────────────────────────────────
 function ScoreRing({ score }: { score: number }) {
+  const reducedMotion = useReducedMotion();
   const radius = 36;
   const circ = 2 * Math.PI * radius;
   const offset = circ - (score / 100) * circ;
@@ -87,7 +89,7 @@ function ScoreRing({ score }: { score: number }) {
           <circle cx="48" cy="48" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="8" />
           <circle cx="48" cy="48" r={radius} fill="none" stroke={color} strokeWidth="8"
             strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-            style={{ transition: "stroke-dashoffset 0.8s ease" }} />
+            style={reducedMotion ? undefined : { transition: "stroke-dashoffset 0.8s ease" }} />
         </svg>
         <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-slate-800">{score}</span>
       </div>
@@ -126,6 +128,7 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
   onDismiss: () => void;
   entryTitle: string;
 }) {
+  const reducedMotion = useReducedMotion();
   const severityConfig = {
     positive: { bg: "bg-emerald-50", border: "border-emerald-300", icon: CheckCheck, iconColor: "text-emerald-600", label: "Aligned with Guidebook", labelBg: "bg-emerald-100 text-emerald-700" },
     caution:  { bg: "bg-amber-50",   border: "border-amber-300",   icon: Info,       iconColor: "text-amber-600",   label: "Review Recommended",    labelBg: "bg-amber-100 text-amber-700" },
@@ -135,7 +138,7 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
   const Icon = cfg.icon;
 
   return (
-    <div className={cn("rounded-2xl border-2 p-5 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300", cfg.bg, cfg.border)}>
+    <div className={cn("rounded-2xl border-2 p-5 space-y-4 animate-in fade-in duration-300", reducedMotion ? "" : "slide-in-from-bottom-2", cfg.bg, cfg.border)}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
