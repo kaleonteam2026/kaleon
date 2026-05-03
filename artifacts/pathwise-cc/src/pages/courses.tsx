@@ -424,6 +424,7 @@ interface CourseDetailFormProps {
 }
 
 function CourseDetailForm({ course, onSave, onBack, saving }: CourseDetailFormProps) {
+  const { t } = useTranslation();
   const [status, setStatus] = useState("completed");
   const [grade, setGrade] = useState("");
   const [term, setTerm] = useState("");
@@ -457,9 +458,9 @@ function CourseDetailForm({ course, onSave, onBack, saving }: CourseDetailFormPr
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="planned">Planned</SelectItem>
+              <SelectItem value="completed">{t("pages.courses.statusCompleted")}</SelectItem>
+              <SelectItem value="in_progress">{t("pages.courses.statusInProgress")}</SelectItem>
+              <SelectItem value="planned">{t("pages.courses.statusPlanned")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -676,9 +677,9 @@ export default function Courses() {
       await fetch(`/api/courses/${courseId}`, { method: "DELETE", credentials: "include" });
       setCourses(prev => prev.filter(c => c.id !== courseId));
       setAnalysis(null);
-      toast({ title: "Course removed" });
+      toast({ title: t("pages.courses.toastCourseRemoved") });
     } catch {
-      toast({ title: "Error removing course", variant: "destructive" });
+      toast({ title: t("pages.courses.toastErrorRemoving"), variant: "destructive" });
     }
   };
 
@@ -698,7 +699,7 @@ export default function Courses() {
       setAnalysis(data);
       setTimeout(() => document.getElementById("transfer-results")?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch (err) {
-      toast({ title: err instanceof Error ? err.message : "Analysis failed", variant: "destructive" });
+      toast({ title: err instanceof Error ? err.message : t("pages.courses.analysisFailed"), variant: "destructive" });
     } finally {
       setAnalyzing(false);
     }

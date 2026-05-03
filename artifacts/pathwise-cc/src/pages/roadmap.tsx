@@ -34,7 +34,7 @@ export default function Roadmap() {
     fetch(`/api/roadmaps/${rid}`, { credentials: "include" })
       .then(r => r.json())
       .then((r: AcademicRoadmap) => setRoadmap(r))
-      .catch(() => toast({ title: "Error loading roadmap", variant: "destructive" }))
+      .catch(() => toast({ title: t("pages.roadmap.errorLoading"), variant: "destructive" }))
       .finally(() => setLoading(false));
   }, [rid]);
 
@@ -47,16 +47,16 @@ export default function Roadmap() {
       });
       const json = await res.json();
       if (!res.ok) {
-        toast({ title: json.error ?? "Could not generate infographic", variant: "destructive" });
+        toast({ title: json.error ?? t("pages.roadmap.couldNotGenerate"), variant: "destructive" });
         return;
       }
       setInfographicReady({ pngUrl: json.pngUrl, pdfUrl: json.pdfUrl, cached: !!json.cached });
       toast({
-        title: json.cached ? "Infographic ready (cached)" : "Infographic generated!",
-        description: json.cached ? "Re-downloads are free." : "Future downloads of this version are free.",
+        title: json.cached ? t("pages.roadmap.infographicReadyCached") : t("pages.roadmap.infographicGenerated"),
+        description: json.cached ? t("pages.roadmap.infographicCachedDesc") : t("pages.roadmap.infographicNewDesc"),
       });
     } catch {
-      toast({ title: "Network error generating infographic", variant: "destructive" });
+      toast({ title: t("pages.roadmap.networkErrorInfographic"), variant: "destructive" });
     } finally {
       setInfographicLoading(false);
     }
@@ -82,7 +82,7 @@ export default function Roadmap() {
     a.download = `dyp-roadmap-${roadmap.id}.md`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Roadmap downloaded!" });
+    toast({ title: t("pages.roadmap.roadmapDownloaded") });
   };
 
   if (loading) {
@@ -90,7 +90,7 @@ export default function Roadmap() {
       <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-slate-900" />
-          <p className="text-sm text-slate-500">Loading your academic roadmap…</p>
+          <p className="text-sm text-slate-500">{t("pages.roadmap.loadingRoadmap")}</p>
         </div>
       </div>
     );
@@ -101,7 +101,7 @@ export default function Roadmap() {
       <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
         <div className="text-center">
           <MapPin className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">Roadmap not found.</p>
+          <p className="text-slate-500">{t("pages.roadmap.notFound")}</p>
           <Button variant="outline" onClick={() => navigate("/")} className="mt-4">{t("pages.roadmap.goHome")}</Button>
         </div>
       </div>
@@ -121,22 +121,22 @@ export default function Roadmap() {
               onClick={() => window.history.back()}
               className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-3 transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" /> Back to Pathways
+              <ArrowLeft className="h-4 w-4" /> {t("pages.roadmap.backToPathways")}
             </button>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-semibold bg-violet-100 text-violet-700 px-2.5 py-0.5 rounded-full border border-violet-200">
-                Academic Roadmap & Planner
+                {t("pages.roadmap.academicRoadmapPlanner")}
               </span>
             </div>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-900 uppercase tracking-tight">{roadmap.title ?? "Your Academic Roadmap"}</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900 uppercase tracking-tight">{roadmap.title ?? t("pages.roadmap.defaultTitle")}</h1>
             {roadmap.createdAt && (
               <p className="text-xs text-slate-400 mt-1">
-                Generated {new Date(roadmap.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                {t("pages.roadmap.generated", { date: new Date(roadmap.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }) })}
               </p>
             )}
           </div>
           <Button onClick={downloadMarkdown} variant="outline" size="sm" className="flex-shrink-0">
-            <Download className="h-4 w-4 mr-2" /> Download
+            <Download className="h-4 w-4 mr-2" /> {t("common.download")}
           </Button>
         </div>
 
@@ -148,9 +148,9 @@ export default function Roadmap() {
                 <Sparkles className="h-4 w-4 text-violet-100" />
                 <span className="text-xs font-semibold uppercase tracking-wide text-violet-100">{t("pages.roadmap.shareableInfographic")}</span>
               </div>
-              <h2 className="text-lg font-bold">One-page visual roadmap</h2>
+              <h2 className="text-lg font-bold">{t("pages.roadmap.onePageVisual")}</h2>
               <p className="text-xs text-violet-100 mt-1 max-w-md leading-relaxed">
-                Generate a printable PNG/PDF with your terms, IGETC progress, and key deadlines. Cached per roadmap version &mdash; re-downloads are free.
+                {t("pages.roadmap.onePageDesc")}
               </p>
             </div>
             {!infographicReady ? (
@@ -161,9 +161,9 @@ export default function Roadmap() {
                 className="bg-white text-indigo-700 hover:bg-violet-50"
               >
                 {infographicLoading ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("common.generating")}</>
                 ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" /> Generate Infographic</>
+                  <><Sparkles className="h-4 w-4 mr-2" /> {t("pages.roadmap.generateInfographic")}</>
                 )}
               </Button>
             ) : (
@@ -175,7 +175,7 @@ export default function Roadmap() {
                   <FileText className="h-4 w-4 mr-2" /> PDF
                 </Button>
                 <Button onClick={generateInfographic} disabled={infographicLoading} size="sm" variant="outline" className="border-white/40 text-white hover:bg-white/10 bg-transparent">
-                  {infographicLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
+                  {infographicLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.refresh")}
                 </Button>
               </div>
             )}
@@ -186,17 +186,16 @@ export default function Roadmap() {
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5 flex gap-2.5">
           <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-amber-700 leading-relaxed">
-            This roadmap is AI-generated and is <strong>not a substitute</strong> for official academic advising.
-            Verify all requirements with your counselor and each university's official admissions page.
+            {t("pages.roadmap.disclaimer")}
           </p>
         </div>
 
         {/* Legend */}
         <div className="flex flex-wrap gap-5 mb-5 px-1 text-xs text-slate-500">
-          <span className="flex items-center gap-1.5"><Square className="h-3.5 w-3.5 text-slate-300" /> Pending</span>
-          <span className="flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5 text-emerald-500" /> Done</span>
-          <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" /> Action step</span>
-          <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" /> Note</span>
+          <span className="flex items-center gap-1.5"><Square className="h-3.5 w-3.5 text-slate-300" /> {t("common.pending")}</span>
+          <span className="flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5 text-emerald-500" /> {t("common.done")}</span>
+          <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" /> {t("pages.roadmap.legendActionStep")}</span>
+          <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" /> {t("pages.roadmap.legendNote")}</span>
         </div>
 
         {/* Content */}
@@ -210,9 +209,9 @@ export default function Roadmap() {
         {/* Footer */}
         <div className="text-center pb-12">
           <Button onClick={downloadMarkdown} variant="outline">
-            <Download className="h-4 w-4 mr-2" /> Download Roadmap
+            <Download className="h-4 w-4 mr-2" /> {t("pages.roadmap.downloadRoadmap")}
           </Button>
-          <p className="text-xs text-slate-400 mt-3">DYP · AI-generated · Always verify with official sources</p>
+          <p className="text-xs text-slate-400 mt-3">{t("common.verifyFooter")}</p>
         </div>
       </main>
     </div>

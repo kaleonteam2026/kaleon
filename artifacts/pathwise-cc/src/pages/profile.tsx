@@ -133,7 +133,7 @@ function CollegePicker({
           className="flex-1 flex items-center justify-between gap-2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md"
         >
           <span className={value ? "text-slate-900 font-medium truncate" : "text-slate-600"}>
-            {value || "Select your college"}
+            {value || t("pages.profile.selectCollege")}
           </span>
           <ChevronDown className={cn("h-4 w-4 text-slate-600 transition-transform flex-shrink-0", open && "rotate-180")} aria-hidden="true" />
         </button>
@@ -167,7 +167,7 @@ function CollegePicker({
 
           <div className="overflow-y-auto max-h-60 py-1">
             {filtered.length === 0 ? (
-              <p className="text-center text-xs text-slate-400 py-6">No colleges match.</p>
+              <p className="text-center text-xs text-slate-400 py-6">{t("pages.profile.noCollegesMatch")}</p>
             ) : (
               filtered.map(c => (
                 <button
@@ -187,7 +187,7 @@ function CollegePicker({
           </div>
 
           <div className="px-3 py-1.5 border-t border-slate-100 text-xs text-slate-400 text-center">
-            {filtered.length} of {COLLEGES.length} colleges
+            {filtered.length} {t("pages.profile.ofColleges", { total: COLLEGES.length })}
           </div>
         </div>
       )}
@@ -229,7 +229,7 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
             <Bell className="h-4 w-4" /> Deadline Reminders
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-xs text-slate-500">Loading…</CardContent>
+        <CardContent className="text-xs text-slate-500">{t("common.loading")}</CardContent>
       </Card>
     );
   }
@@ -247,7 +247,7 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
       const updated = (await r.json()) as ReminderPrefs;
       setPrefs(updated);
     } catch {
-      toast({ title: "Couldn't save reminder preferences", variant: "destructive" });
+      toast({ title: t("pages.profile.toastSaveError"), variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -257,7 +257,7 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
     const has = prefs.leadDays.includes(n);
     const next = has ? prefs.leadDays.filter((x) => x !== n) : [...prefs.leadDays, n];
     if (next.length === 0) {
-      toast({ title: "Pick at least one lead time" });
+      toast({ title: t("pages.profile.toastPickLead") });
       return;
     }
     void update({ leadDays: next });
@@ -278,7 +278,7 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
           : "No new reminders right now",
       });
     } catch {
-      toast({ title: "Couldn't refresh reminders", variant: "destructive" });
+      toast({ title: t("pages.profile.toastRefreshError"), variant: "destructive" });
     } finally {
       setRunning(false);
     }
@@ -501,10 +501,10 @@ export default function Profile() {
         setForm(f => ({ ...f, id: saved.id as number }));
       }
 
-      toast({ title: "Profile saved!", description: "Your profile has been updated." });
+      toast({ title: t("pages.profile.toastProfileSaved"), description: t("pages.profile.toastProfileSavedDesc") });
       navigate(`/courses/${saved.id}`);
     } catch {
-      toast({ title: "Error saving profile", variant: "destructive" });
+      toast({ title: t("pages.profile.toastProfileError"), variant: "destructive" });
     } finally {
       setSaving(false);
     }

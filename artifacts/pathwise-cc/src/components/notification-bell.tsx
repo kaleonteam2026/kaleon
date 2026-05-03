@@ -50,7 +50,6 @@ export default function NotificationBell({ profileId }: Props) {
     void load();
     const i = setInterval(() => void load(), 60_000);
     return () => clearInterval(i);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileId]);
 
   useEffect(() => {

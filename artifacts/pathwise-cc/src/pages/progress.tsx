@@ -76,6 +76,7 @@ const ENTRY_TYPES: Record<EntryType, { label: string; icon: React.ElementType; c
 
 // ─── Score ring ───────────────────────────────────────────────────────────────
 function ScoreRing({ score }: { score: number }) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const radius = 36;
   const circ = 2 * Math.PI * radius;
@@ -95,7 +96,7 @@ function ScoreRing({ score }: { score: number }) {
         <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-slate-800">{score}</span>
       </div>
       <div>
-        <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-0.5">Trajectory Score</p>
+        <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-0.5">{t("pages.progress.trajectoryScore")}</p>
         <p className={cn("text-lg font-bold", labelColor)}>{label}</p>
         <p className="text-xs text-slate-600 mt-0.5">out of 100 points</p>
       </div>
@@ -129,6 +130,7 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
   onDismiss: () => void;
   entryTitle: string;
 }) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const severityConfig = {
     positive: { bg: "bg-emerald-50", border: "border-emerald-300", icon: CheckCheck, iconColor: "text-emerald-600", label: "Aligned with Guidebook", labelBg: "bg-emerald-100 text-emerald-700" },
@@ -159,7 +161,7 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
 
       {/* Alignment score */}
       <div className="flex items-center gap-2 text-sm">
-        <span className="text-slate-600 text-xs">Guidebook alignment:</span>
+        <span className="text-slate-600 text-xs">{t("pages.progress.guidebookAlignment")}</span>
         <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden max-w-32">
           <div
             className={cn("h-full rounded-full transition-all duration-700",
@@ -228,6 +230,7 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
 
 // ─── Timeline entry card ──────────────────────────────────────────────────────
 function EntryCard({ entry, onDelete }: { entry: ProgressEntry; onDelete: (id: number) => void }) {
+  const { t } = useTranslation();
   const cfg = ENTRY_TYPES[entry.entryType] ?? ENTRY_TYPES.note;
   const Icon = cfg.icon;
   const [deleting, setDeleting] = useState(false);
@@ -242,7 +245,7 @@ function EntryCard({ entry, onDelete }: { entry: ProgressEntry; onDelete: (id: n
             <span className={cn("text-xs font-semibold px-1.5 py-0.5 rounded-full border", cfg.bg, cfg.color, cfg.border)}>{cfg.label}</span>
             <p className="mt-1 text-sm font-semibold text-slate-800 leading-tight">{entry.title}</p>
             {entry.numericValue != null && (
-              <p className="text-xs text-slate-600 mt-0.5">GPA: <strong className="text-slate-800">{entry.numericValue.toFixed(2)}</strong></p>
+              <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.gpaLabel")} <strong className="text-slate-800">{entry.numericValue.toFixed(2)}</strong></p>
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -301,7 +304,7 @@ function PathwayLockScreen({ profileId }: { profileId: number }) {
       <p className="text-slate-600 max-w-md leading-relaxed mb-2">
         The Progress Tracker is activated once you've committed to a transfer pathway. Your AI advisor needs to know your target university and guidebook before it can evaluate your updates and predict your admission chances.
       </p>
-      <p className="text-sm text-slate-600 mb-8">Go to your Pathway tab, review your university matches, and select the one you're targeting.</p>
+      <p className="text-sm text-slate-600 mb-8">{t("pages.progress.goToPathway")}</p>
       <Link href={`/pathways/${profileId}`}>
         <Button className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none gap-2">
           <Target className="h-4 w-4" />
@@ -518,19 +521,19 @@ export default function ProgressTracker() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                 <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
                   <p className="text-2xl font-bold text-blue-600">{latestGpa != null ? latestGpa.toFixed(2) : "—"}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">Latest GPA</p>
+                  <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.latestGpa")}</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
                   <p className="text-2xl font-bold text-amber-600">{certCount}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">Certifications</p>
+                  <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.certifications")}</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
                   <p className="text-2xl font-bold text-teal-600">{oppCount}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">Opportunities</p>
+                  <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.opportunities")}</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
                   <p className="text-2xl font-bold text-slate-900">{achievementCount}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">Achievements</p>
+                  <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.achievements")}</p>
                 </div>
               </div>
             )}
@@ -571,8 +574,8 @@ export default function ProgressTracker() {
                       <div className="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-5 flex items-center gap-3 animate-in fade-in duration-200">
                         <Loader2 className="h-6 w-6 animate-spin text-indigo-500 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-semibold text-indigo-800">Checking against your guidebook…</p>
-                          <p className="text-xs text-indigo-500 mt-0.5">Analyzing alignment and predicting admission impact for "{pendingFeedback.entryTitle}"</p>
+                          <p className="text-sm font-semibold text-indigo-800">{t("pages.progress.checkingGuidebook")}</p>
+                          <p className="text-xs text-indigo-500 mt-0.5">{t("pages.progress.analyzingAlignment", { title: pendingFeedback.entryTitle })}</p>
                         </div>
                       </div>
                     ) : pendingFeedback.data ? (
@@ -590,12 +593,12 @@ export default function ProgressTracker() {
                   <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-6">
                     <div>
                       <h2 className="text-base font-bold text-slate-900 mb-1">{t("pages.progress.logUpdate")}</h2>
-                      <p className="text-xs text-slate-600">Every entry is checked against your <strong className="text-slate-600">{String(pathwayInfo?.pathway?.university ?? "selected university")}</strong> guidebook in real time.</p>
+                      <p className="text-xs text-slate-600">{t("pages.progress.everyEntryChecked")}</p>
                     </div>
 
                     {/* Entry type grid */}
                     <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-slate-700">What are you logging?</Label>
+                      <Label className="text-sm font-semibold text-slate-700">{t("pages.progress.whatLogging")}</Label>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                         {(Object.entries(ENTRY_TYPES) as [EntryType, typeof ENTRY_TYPES[EntryType]][]).map(([type, cfg]) => {
                           const Icon = cfg.icon;
@@ -616,10 +619,10 @@ export default function ProgressTracker() {
 
                     {entryType === "gpa_update" && (
                       <div className="space-y-1.5">
-                        <Label htmlFor="gpaValue">GPA Value</Label>
+                        <Label htmlFor="gpaValue">{t("pages.progress.gpaValue")}</Label>
                         <Input id="gpaValue" type="number" min="0" max="4" step="0.01"
                           value={numericValue} onChange={e => setNumericValue(e.target.value)}
-                          placeholder="e.g. 3.75" className="max-w-xs" />
+                          placeholder={t("pages.progress.gpaPlaceholder")} className="max-w-xs" />
                         <p className="text-xs text-slate-600">0.00 – 4.00. The AI will compare this against your pathway's GPA requirements.</p>
                       </div>
                     )}
@@ -639,13 +642,13 @@ export default function ProgressTracker() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="entryDesc">Details <span className="text-slate-600 font-normal">(optional)</span></Label>
+                      <Label htmlFor="entryDesc">{t("pages.progress.detailsLabel")} <span className="text-slate-600 font-normal">{t("pages.progress.optional")}</span></Label>
                       <Textarea id="entryDesc" rows={3} value={description} onChange={e => setDescription(e.target.value)}
-                        placeholder="Add context — the AI uses this to give you more precise guidebook alignment feedback…" />
+                        placeholder={t("pages.progress.detailsPlaceholder")} />
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="entryDate">Date</Label>
+                      <Label htmlFor="entryDate">{t("pages.progress.dateLabel")}</Label>
                       <Input id="entryDate" type="date" value={entryDate} onChange={e => setEntryDate(e.target.value)} className="max-w-xs" />
                     </div>
 
@@ -693,7 +696,7 @@ export default function ProgressTracker() {
                   <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-10 text-center">
                     <Activity className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                     <p className="text-slate-600 font-medium">{t("pages.progress.noUpdates")}</p>
-                    <p className="text-slate-600 text-sm mt-1">Use the Log Update tab to start tracking your progress.</p>
+                    <p className="text-slate-600 text-sm mt-1">{t("pages.progress.useLogTab")}</p>
                     <Button variant="outline" size="sm" onClick={() => setTab("log")} className="mt-4">
                       <Plus className="h-3.5 w-3.5 mr-1" />Log Your First Update
                     </Button>
@@ -734,14 +737,14 @@ export default function ProgressTracker() {
                     <Button onClick={handleGenerateAnalysis} disabled={generating} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
                       {generating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Analyzing your journey…</> : <><Sparkles className="h-4 w-4 mr-2" />{analyses.length > 0 ? "Regenerate Assessment" : "Generate My Assessment"}</>}
                     </Button>
-                    <p className="text-xs text-slate-600">Up to 5 assessments per hour</p>
+                    <p className="text-xs text-slate-600">{t("pages.progress.rateLimit")}</p>
                   </div>
                   {generating && (
                     <div className="mt-4 bg-white/70 rounded-xl p-4 flex items-center gap-3 border border-indigo-100">
                       <Loader2 className="h-5 w-5 animate-spin text-indigo-500 flex-shrink-0" />
                       <div>
-                        <p className="text-sm font-medium text-slate-700">Analyzing your full journey…</p>
-                        <p className="text-xs text-slate-600">Reviewing courses, guidebook, and {entries.length} logged updates. This takes 20–40 seconds.</p>
+                        <p className="text-sm font-medium text-slate-700">{t("pages.progress.analyzingJourney")}</p>
+                        <p className="text-xs text-slate-600">{t("pages.progress.reviewingCourses", { count: entries.length })}</p>
                       </div>
                     </div>
                   )}
@@ -753,7 +756,7 @@ export default function ProgressTracker() {
                   <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-10 text-center">
                     <BarChart3 className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                     <p className="text-slate-600 font-medium">{t("pages.progress.noAssessments")}</p>
-                    <p className="text-slate-600 text-sm mt-1">Generate your first AI progress assessment above.</p>
+                    <p className="text-slate-600 text-sm mt-1">{t("pages.progress.generateFirst")}</p>
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-[220px_1fr] gap-5 items-start">
