@@ -20,6 +20,7 @@ import TagChecker from "@/pages/tag-checker";
 import IgetcTracker from "@/pages/igetc";
 import ExportsPage from "@/pages/exports";
 import Onboarding from "@/pages/onboarding";
+import Welcome from "@/pages/welcome";
 import ChatBubble from "@/components/chat-bubble";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
 import ProtectedRoute from "@/components/protected-route";
@@ -44,6 +45,15 @@ function Router() {
     <>
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/welcome/first-gen">
+          <Welcome persona="first-gen" />
+        </Route>
+        <Route path="/welcome/ab540">
+          <Welcome persona="ab540" />
+        </Route>
+        <Route path="/welcome/returning">
+          <Welcome persona="returning" />
+        </Route>
         <Route path="/dashboard">
           <ProtectedRoute>
             <Dashboard />

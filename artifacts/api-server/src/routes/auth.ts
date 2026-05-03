@@ -2,6 +2,7 @@ import * as oidc from "openid-client";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { GetCurrentAuthUserResponse } from "@workspace/api-zod";
 import { db, usersTable } from "@workspace/db";
+import { sql } from "drizzle-orm";
 import {
   clearSession,
   getOidcConfig,
@@ -52,7 +53,18 @@ function getSafeReturnTo(value: unknown): string {
   return value;
 }
 
-async function upsertUser(claims: Record<string, unknown>) {
+interface AttributionData {
+  persona?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+}
+
+async function upsertUser(
+  claims: Record<string, unknown>,
+  attribution: AttributionData = {},
+) {
   const userData = {
     id: claims.sub as string,
     email: (claims.email as string) || null,
@@ -61,20 +73,52 @@ async function upsertUser(claims: Record<string, unknown>) {
     profileImageUrl: (claims.profile_image_url || claims.picture) as
       | string
       | null,
+    persona: attribution.persona ?? null,
+    utmSource: attribution.utmSource ?? null,
+    utmMedium: attribution.utmMedium ?? null,
+    utmCampaign: attribution.utmCampaign ?? null,
+    utmContent: attribution.utmContent ?? null,
   };
 
+  // For attribution columns, only set on first insert; preserve original values on update
+  // so a returning user's first-touch attribution isn't overwritten by later visits.
   const [user] = await db
     .insert(usersTable)
     .values(userData)
     .onConflictDoUpdate({
       target: usersTable.id,
       set: {
-        ...userData,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profileImageUrl: userData.profileImageUrl,
+        persona: sql`coalesce(${usersTable.persona}, ${userData.persona})`,
+        utmSource: sql`coalesce(${usersTable.utmSource}, ${userData.utmSource})`,
+        utmMedium: sql`coalesce(${usersTable.utmMedium}, ${userData.utmMedium})`,
+        utmCampaign: sql`coalesce(${usersTable.utmCampaign}, ${userData.utmCampaign})`,
+        utmContent: sql`coalesce(${usersTable.utmContent}, ${userData.utmContent})`,
         updatedAt: new Date(),
       },
     })
     .returning();
   return user;
+}
+
+const ATTRIBUTION_COOKIES = {
+  persona: "attr_persona",
+  utm_source: "attr_utm_source",
+  utm_medium: "attr_utm_medium",
+  utm_campaign: "attr_utm_campaign",
+  utm_content: "attr_utm_content",
+} as const;
+
+function sanitizeAttributionValue(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim().slice(0, 128);
+  if (!trimmed) return null;
+  // allow only safe URL-token characters
+  if (!/^[\w.\-:+/]+$/.test(trimmed)) return null;
+  return trimmed;
 }
 
 router.get("/auth/user", (req: Request, res: Response) => {
@@ -112,6 +156,13 @@ router.get("/login", async (req: Request, res: Response) => {
   setOidcCookie(res, "nonce", nonce);
   setOidcCookie(res, "state", state);
   setOidcCookie(res, "return_to", returnTo);
+
+  // Capture attribution params from the login URL so we can persist them on the
+  // user record after the OIDC round-trip completes.
+  for (const [param, cookie] of Object.entries(ATTRIBUTION_COOKIES)) {
+    const value = sanitizeAttributionValue(req.query[param]);
+    if (value) setOidcCookie(res, cookie, value);
+  }
 
   res.redirect(redirectTo.href);
 });
@@ -155,6 +206,17 @@ router.get("/callback", async (req: Request, res: Response) => {
   res.clearCookie("state", { path: "/" });
   res.clearCookie("return_to", { path: "/" });
 
+  const attribution: AttributionData = {
+    persona: sanitizeAttributionValue(req.cookies?.[ATTRIBUTION_COOKIES.persona]),
+    utmSource: sanitizeAttributionValue(req.cookies?.[ATTRIBUTION_COOKIES.utm_source]),
+    utmMedium: sanitizeAttributionValue(req.cookies?.[ATTRIBUTION_COOKIES.utm_medium]),
+    utmCampaign: sanitizeAttributionValue(req.cookies?.[ATTRIBUTION_COOKIES.utm_campaign]),
+    utmContent: sanitizeAttributionValue(req.cookies?.[ATTRIBUTION_COOKIES.utm_content]),
+  };
+  for (const cookieName of Object.values(ATTRIBUTION_COOKIES)) {
+    res.clearCookie(cookieName, { path: "/" });
+  }
+
   const claims = tokens.claims();
   if (!claims) {
     res.redirect("/api/login");
@@ -185,6 +247,7 @@ a:hover{background:#0f172a;color:#fff}
 
   const dbUser = await upsertUser(
     claims as unknown as Record<string, unknown>,
+    attribution,
   );
 
   const now = Math.floor(Date.now() / 1000);
