@@ -31,7 +31,7 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg data-[state=closed]:duration-150 data-[state=open]:duration-150 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 motion-reduce:data-[state=open]:slide-in-from-top-0 motion-reduce:data-[state=open]:slide-in-from-bottom-0 motion-reduce:data-[state=open]:slide-in-from-left-0 motion-reduce:data-[state=open]:slide-in-from-right-0 motion-reduce:data-[state=closed]:slide-out-to-top-0 motion-reduce:data-[state=closed]:slide-out-to-bottom-0 motion-reduce:data-[state=closed]:slide-out-to-left-0 motion-reduce:data-[state=closed]:slide-out-to-right-0",
+  "fixed z-50 gap-4 bg-background p-6 shadow-lg data-[state=closed]:duration-150 data-[state=open]:duration-150 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 motion-reduce:animate-none motion-reduce:data-[state=open]:slide-in-from-top-0 motion-reduce:data-[state=open]:slide-in-from-bottom-0 motion-reduce:data-[state=open]:slide-in-from-left-0 motion-reduce:data-[state=open]:slide-in-from-right-0 motion-reduce:data-[state=closed]:slide-out-to-top-0 motion-reduce:data-[state=closed]:slide-out-to-bottom-0 motion-reduce:data-[state=closed]:slide-out-to-left-0 motion-reduce:data-[state=closed]:slide-out-to-right-0",
   {
     variants: {
       side: {

@@ -234,7 +234,7 @@ export default function Nav({ profileId }: Props) {
                 <motion.span
                   layoutId="pwc-bottom-tab-pill"
                   className="absolute inset-0 bg-slate-900"
-                  transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  transition={{ duration: DUR.fast, ease: EASE_OUT }}
                   aria-hidden="true"
                 />
               )}
