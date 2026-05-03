@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { PageMotion } from "@/components/page-motion";
 import {
   Plus, Trash2, Loader2, ArrowRight, BookOpen, FlaskConical,
   CheckCircle2, AlertCircle, HelpCircle, XCircle, Star,
@@ -742,7 +743,7 @@ export default function Courses() {
       <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-4xl mx-auto">
 
         {/* Header */}
-        <div className="py-6 border-b-2 border-slate-900 mb-6 flex items-start justify-between gap-4">
+        <PageMotion className="py-6 border-b-2 border-slate-900 mb-6 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.courses.title")}</h1>
             <p className="text-slate-600 text-sm mt-1">
@@ -752,7 +753,7 @@ export default function Courses() {
           <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none flex-shrink-0">
             <Plus className="h-4 w-4 mr-2" /> Add Course
           </Button>
-        </div>
+        </PageMotion>
 
         {/* GPA Summary */}
         {gpa && gpa.courseCount > 0 && (

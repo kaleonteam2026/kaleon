@@ -105,7 +105,6 @@ export default function ShareRoadmap() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 md:px-8 py-6">
-        <PageMotion>
         <section className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 mb-5">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{data.studentName}</h1>
           <p className="text-base text-slate-700 mt-1">→ {data.targetSchool}</p>
@@ -115,6 +114,7 @@ export default function ShareRoadmap() {
           )}
         </section>
 
+        <PageMotion>
         {data.hasInfographic ? (
           <section className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-5">
             <div className="bg-slate-100 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
