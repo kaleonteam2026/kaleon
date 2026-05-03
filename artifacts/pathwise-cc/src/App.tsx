@@ -58,8 +58,8 @@ function Router() {
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={transitionKey}
-          initial={false}
-          animate={false}
+          initial={animateRoutes ? { opacity: 0 } : false}
+          animate={animateRoutes ? { opacity: 1 } : undefined}
           exit={animateRoutes ? { opacity: 0 } : undefined}
           transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
         >

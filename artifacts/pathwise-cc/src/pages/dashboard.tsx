@@ -467,7 +467,8 @@ export default function Dashboard() {
               <motion.div
                 className="flex-grow flex flex-col"
                 initial={motionEnabled ? "hidden" : false}
-                animate={motionEnabled ? "show" : undefined}
+                whileInView={motionEnabled ? "show" : undefined}
+                viewport={{ once: true, margin: "-50px" }}
                 variants={containerVariants}
               >
                 {roadmapItems.map((item) => (

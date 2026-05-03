@@ -92,7 +92,8 @@ function ExportGrid({
     <motion.div
       className="grid grid-cols-1 md:grid-cols-3 gap-5"
       initial={motionOn ? "hidden" : false}
-      animate={motionOn ? "show" : undefined}
+      whileInView={motionOn ? "show" : undefined}
+      viewport={{ once: true, margin: "-50px" }}
       variants={motionOn ? staggerContainer(0.06) : undefined}
     >
       {specs.map((spec) => {

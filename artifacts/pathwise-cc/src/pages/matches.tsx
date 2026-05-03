@@ -132,7 +132,8 @@ export default function Matches() {
         <motion.div
           className="space-y-3 pb-12"
           initial={motionEnabled ? "hidden" : false}
-          animate={motionEnabled ? "show" : undefined}
+          whileInView={motionEnabled ? "show" : undefined}
+          viewport={{ once: true, margin: "-50px" }}
           variants={containerVariants}
         >
           {filtered.map((match, idx) => (

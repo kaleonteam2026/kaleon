@@ -229,7 +229,8 @@ function CCProgramList({ programs }: { programs: CCOpportunityItem[] }) {
     <motion.div
       className="space-y-3"
       initial={motionOn ? "hidden" : false}
-      animate={motionOn ? "show" : undefined}
+      whileInView={motionOn ? "show" : undefined}
+      viewport={{ once: true, margin: "-50px" }}
       variants={motionOn ? staggerContainer(0.06) : undefined}
     >
       {programs.map((program, i) => (
