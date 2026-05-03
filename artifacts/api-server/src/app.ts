@@ -9,6 +9,26 @@ import { authMiddleware } from "./middlewares/authMiddleware";
 
 const app: Express = express();
 
+function getAllowedOrigins(): Set<string> {
+  const origins = new Set<string>();
+  const replitDomains = process.env.REPLIT_DOMAINS;
+  if (replitDomains) {
+    for (const domain of replitDomains.split(",")) {
+      const trimmed = domain.trim();
+      if (trimmed) {
+        origins.add(`https://${trimmed}`);
+      }
+    }
+  }
+  const devDomain = process.env.REPLIT_DEV_DOMAIN;
+  if (devDomain) {
+    origins.add(`https://${devDomain}`);
+  }
+  return origins;
+}
+
+const allowedOrigins = getAllowedOrigins();
+
 app.use(
   pinoHttp({
     logger,
@@ -29,7 +49,18 @@ app.use(
   }),
 );
 
-app.use(cors({ credentials: true, origin: true }));
+app.use(
+  cors({
+    credentials: true,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.has(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+  }),
+);
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
