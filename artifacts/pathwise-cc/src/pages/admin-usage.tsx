@@ -31,6 +31,10 @@ interface UsageResponse {
     total30dUsd: number;
     totalAiCalls30d: number;
     totalTavilyCalls30d: number;
+    todayUsd: number;
+    avgDailyUsd: number;
+    projectedMonthEndUsd: number;
+    daysRemainingInMonth: number;
   };
 }
 
@@ -100,6 +104,37 @@ export default function AdminUsage() {
           ~{fmtUsd(data.cost_estimate.total30dUsd)} estimated last 30d
         </Badge>
       </header>
+
+      {/* Spend summary */}
+      <section className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Spent today (est.)</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold tabular-nums">{fmtUsd(data.cost_estimate.todayUsd)}</div>
+            <div className="text-xs text-slate-500 mt-1">
+              {data.today_usage.globalAi} AI + {data.today_usage.tavily} Tavily calls so far.
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Avg / day (last 30d)</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold tabular-nums">{fmtUsd(data.cost_estimate.avgDailyUsd)}</div>
+            <div className="text-xs text-slate-500 mt-1">
+              Across {data.cost_estimate.totalAiCalls30d} AI + {data.cost_estimate.totalTavilyCalls30d} Tavily calls.
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Projected month-end</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold tabular-nums">{fmtUsd(data.cost_estimate.projectedMonthEndUsd)}</div>
+            <div className="text-xs text-slate-500 mt-1">
+              Today + avg-daily &times; {data.cost_estimate.daysRemainingInMonth} days remaining.
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Today caps */}
       <section className="grid gap-4 sm:grid-cols-3">

@@ -201,6 +201,29 @@ router.get("/admin/usage", ownerOnly, async (_req, res) => {
   const totalRouteCost30d = routeBreakdown.reduce((s, r) => s + r.cost30dUsd, 0);
   const totalTavilyCost30d = Math.round(totalTavily30d * TAVILY_PER_CALL_USD * 1000) / 1000;
 
+  // ── Today's $ spend (per-route + Tavily) ─────────────────────────────────
+  const todayRouteCost = routeTodayRows.reduce(
+    (s, r) => s + costFor(r.route, r.count),
+    0,
+  );
+  const todayTavilyCost = (tavilyTodayRows[0]?.count ?? 0) * TAVILY_PER_CALL_USD;
+  const todayUsd = Math.round((todayRouteCost + todayTavilyCost) * 1000) / 1000;
+
+  // ── Projected month-end run-rate ─────────────────────────────────────────
+  // Average $/day over the trailing 30d window (or last N days with activity)
+  // times days remaining in the current calendar month, plus today's spend.
+  const now = new Date();
+  const daysInMonth = new Date(
+    now.getUTCFullYear(),
+    now.getUTCMonth() + 1,
+    0,
+  ).getUTCDate();
+  const dayOfMonth = now.getUTCDate();
+  const daysRemaining = Math.max(0, daysInMonth - dayOfMonth);
+  const avgDailyUsd = (totalRouteCost30d + totalTavilyCost30d) / 30;
+  const projectedMonthEndUsd =
+    Math.round((todayUsd + avgDailyUsd * daysRemaining) * 1000) / 1000;
+
   res.json({
     today,
     caps: {
@@ -236,6 +259,10 @@ router.get("/admin/usage", ownerOnly, async (_req, res) => {
       total30dUsd: Math.round((totalRouteCost30d + totalTavilyCost30d) * 1000) / 1000,
       totalAiCalls30d: totalAi30d,
       totalTavilyCalls30d: totalTavily30d,
+      todayUsd,
+      avgDailyUsd: Math.round(avgDailyUsd * 1000) / 1000,
+      projectedMonthEndUsd,
+      daysRemainingInMonth: daysRemaining,
     },
   });
 });
