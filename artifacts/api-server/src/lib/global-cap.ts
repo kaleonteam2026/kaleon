@@ -40,6 +40,17 @@ export async function incrementGlobalAi(): Promise<{ allowed: boolean; cap: numb
   return { allowed: false, cap, used };
 }
 
+export async function getGlobalAiUsage(): Promise<{ cap: number; used: number; remaining: number }> {
+  const day = todayKey();
+  const cap = getCap();
+  const rows = await db
+    .select({ count: aiDailyUsage.count })
+    .from(aiDailyUsage)
+    .where(eq(aiDailyUsage.day, day));
+  const used = rows[0]?.count ?? 0;
+  return { cap, used, remaining: Math.max(0, cap - used) };
+}
+
 export function globalCapMessage(cap: number): string {
   return `The app has reached its global daily AI limit (${cap} generations/day). Please try again tomorrow.`;
 }

@@ -1443,3 +1443,81 @@ Respond with only the JSON object.`;
   }
   throw lastError ?? new Error("Failed to generate transferability analysis");
 }
+
+// ─── Deep Dive Synthesis ──────────────────────────────────────────────────────
+
+export interface DeepDiveSectionInput {
+  key: "admissions" | "cost" | "outcomes" | "campus_life" | "news";
+  title: string;
+  rawAnswer: string;
+  citations: { title?: string; url: string; snippet?: string }[];
+}
+
+export interface DeepDiveSynthSection {
+  key: "admissions" | "cost" | "outcomes" | "campus_life" | "news";
+  title: string;
+  body: string;
+  citations: { title?: string; url: string; snippet?: string }[];
+}
+
+export async function synthesizeDeepDive(
+  universityName: string,
+  major: string,
+  inputs: DeepDiveSectionInput[],
+): Promise<DeepDiveSynthSection[]> {
+  const evidence = inputs.map((s) => {
+    const cites = s.citations.map((c, i) => `[${i + 1}] ${c.title ?? c.url}: ${c.snippet ?? ""}`).join("\n");
+    return `### ${s.title} (key: ${s.key})\nTavily summary:\n${s.rawAnswer}\n\nSources:\n${cites}`;
+  }).join("\n\n");
+
+  const prompt = `You are an objective research analyst writing a "Deep Dive" report for a California community college transfer student about ${universityName} with intended major: ${major}.
+
+You are given Tavily web research evidence broken into 5 sections. For EACH section, write a tight 120-200 word factual analysis grounded in the evidence below. Use inline citation markers like [1], [2] that reference the source numbers from that section's source list. Do not invent statistics. If a fact is not in the evidence, say "not available in current sources."
+
+For "outcomes", focus specifically on the ${major} program: admit rates by major, transfer GPA medians, and post-grad outcomes when available.
+For "news", summarize 2-4 recent campus developments from the last 12 months only.
+
+Evidence:
+${evidence}
+
+Return ONLY valid JSON (no fences, no preamble) with this exact shape:
+{
+  "sections": [
+    { "key": "admissions", "title": "Admissions", "body": "..." },
+    { "key": "cost", "title": "Cost of Attendance", "body": "..." },
+    { "key": "outcomes", "title": "Major Outcomes", "body": "..." },
+    { "key": "campus_life", "title": "Campus Life", "body": "..." },
+    { "key": "news", "title": "Recent News", "body": "..." }
+  ]
+}`;
+
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 3000,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+      const parsed = JSON.parse(cleaned) as { sections: { key: DeepDiveSynthSection["key"]; title: string; body: string }[] };
+      if (!Array.isArray(parsed.sections) || parsed.sections.length === 0) {
+        throw new Error("Invalid deep dive structure");
+      }
+      const byKey = new Map(inputs.map((i) => [i.key, i.citations]));
+      return parsed.sections.map((s) => ({
+        key: s.key,
+        title: s.title,
+        body: s.body,
+        citations: byKey.get(s.key) ?? [],
+      }));
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
+  }
+  throw lastError ?? new Error("Failed to synthesize deep dive");
+}

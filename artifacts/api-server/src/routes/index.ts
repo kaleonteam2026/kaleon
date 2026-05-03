@@ -16,6 +16,7 @@ import savedInternshipsRouter from "./saved-internships";
 import igetcRouter from "./igetc";
 import chatRouter from "./chat";
 import liveSearchRouter from "./live-search";
+import deepDiveRouter from "./deep-dive";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use(savedInternshipsRouter);
 router.use(igetcRouter);
 router.use(chatRouter);
 router.use(liveSearchRouter);
+router.use(deepDiveRouter);
 
 export default router;

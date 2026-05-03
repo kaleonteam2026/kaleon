@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, ExternalLink, Search, Loader2, GraduationCap, MapPin, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import DeepDivePanel from "@/components/deep-dive-panel";
 
 interface Match {
   universityId: string;
@@ -185,6 +186,7 @@ export default function Matches() {
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </div>
+                <DeepDivePanel universityId={match.universityId} universityName={match.name} profileId={pid} />
               </CardContent>
             </Card>
           ))}

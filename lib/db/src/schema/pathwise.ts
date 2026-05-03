@@ -1,4 +1,4 @@
-import { pgTable, text, real, json, timestamp, serial, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, real, json, timestamp, serial, integer, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./auth";
@@ -109,6 +109,37 @@ export const savedInternshipsTable = pgTable("saved_internships", {
   internshipData: json("internship_data").$type<Record<string, unknown>>().notNull(),
   savedAt: timestamp("saved_at").defaultNow().notNull(),
 });
+
+export interface DeepDiveSection {
+  key: "admissions" | "cost" | "outcomes" | "campus_life" | "news";
+  title: string;
+  body: string;
+  citations: { title?: string; url: string; snippet?: string }[];
+}
+
+export interface DeepDiveReport {
+  universityId: string;
+  universityName: string;
+  major: string;
+  generatedAt: string;
+  sections: DeepDiveSection[];
+  disclaimer: string;
+}
+
+export const universityDeepDivesTable = pgTable(
+  "university_deep_dives",
+  {
+    id: serial("id").primaryKey(),
+    universityId: text("university_id").notNull(),
+    major: text("major").notNull(),
+    reportJson: json("report_json").$type<DeepDiveReport>().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+  },
+  (t) => ({
+    uniMajorIdx: uniqueIndex("university_deep_dives_uni_major_idx").on(t.universityId, t.major),
+  }),
+);
 
 export const igetcProgressTable = pgTable("igetc_progress", {
   id: serial("id").primaryKey(),
