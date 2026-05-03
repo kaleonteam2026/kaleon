@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, BookOpen, Target, Map, Award, LogOut, Menu, X,
-  User, TrendingUp, Search, ChevronRight,
+  User, TrendingUp, Search, ChevronRight, Download,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -42,6 +42,7 @@ export default function Nav({ profileId }: Props) {
     { href: `/pathways/${resolvedId}`, label: "Pathway", icon: Target },
     { href: `/progress/${resolvedId}`, label: "Progress", icon: TrendingUp },
     { href: `/internships/${resolvedId}`, label: "Internships", icon: Search },
+    { href: `/exports/${resolvedId}`, label: "Exports", icon: Download },
   ] : [];
 
   const allLinks = [...staticLinks, ...profileLinks];

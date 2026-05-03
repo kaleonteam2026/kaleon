@@ -17,6 +17,7 @@ import igetcRouter from "./igetc";
 import chatRouter from "./chat";
 import liveSearchRouter from "./live-search";
 import deepDiveRouter from "./deep-dive";
+import exportsRouter from "./exports";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use(igetcRouter);
 router.use(chatRouter);
 router.use(liveSearchRouter);
 router.use(deepDiveRouter);
+router.use(exportsRouter);
 
 export default router;

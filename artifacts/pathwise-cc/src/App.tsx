@@ -18,6 +18,7 @@ import DreamAct from "@/pages/dream-act";
 import Scholarships from "@/pages/scholarships";
 import TagChecker from "@/pages/tag-checker";
 import IgetcTracker from "@/pages/igetc";
+import ExportsPage from "@/pages/exports";
 import Onboarding from "@/pages/onboarding";
 import ChatBubble from "@/components/chat-bubble";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
@@ -116,6 +117,11 @@ function Router() {
         <Route path="/igetc/:profileId">
           <ProtectedRoute>
             <IgetcTracker />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/exports/:profileId?">
+          <ProtectedRoute>
+            <ExportsPage />
           </ProtectedRoute>
         </Route>
         <Route component={NotFound} />
