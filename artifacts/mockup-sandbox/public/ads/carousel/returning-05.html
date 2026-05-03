@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DYP Carousel — Returning Adult 5/5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #0F172A;
+  --fg: #FFFFFF;
+  --body: #CBD5E1;
+  --muted: #64748B;
+  --accent: #FEF3C7;
+  --accent-text: #78350F;
+}
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; }
+  body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+  }
+  .frame {
+    width: 100vw;
+    height: 100vh;
+    padding: 5.5vh 5.5vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+  }
+  .top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2vh;
+  }
+  .logo-lockup { display: flex; align-items: center; gap: 1.4vh; }
+  .logo-square {
+    width: 6.4vh; height: 6.4vh;
+    background-color: #0F172A;
+    border: 3px solid var(--fg);
+    color: #FFFFFF;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 3.6vh;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-text { display: flex; flex-direction: column; }
+  .logo-wordmark {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: 3.4vh;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    text-transform: uppercase;
+  }
+  .logo-tagline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3vh;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 0.4vh;
+  }
+  .frame-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6vh;
+    color: var(--muted);
+    text-transform: uppercase;
+    border: 2px solid var(--muted);
+    padding: 0.8vh 1.4vh;
+    letter-spacing: 0.1em;
+  }
+  .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 2.2vh;
+    color: var(--accent-text);
+    background-color: var(--accent);
+    border: 3px solid var(--fg);
+    padding: 1vh 1.6vh;
+    align-self: flex-start;
+    text-transform: uppercase;
+    box-shadow: 5px 5px 0 0 var(--fg);
+    margin-bottom: 3.5vh;
+  }
+  .headline {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 7.4vh;
+    line-height: 0.95;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    margin: 0 0 3vh 0;
+  }
+  .body {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 2.6vh;
+    line-height: 1.3;
+    color: var(--body);
+    margin: 0 0 3vh 0;
+    max-width: 90%;
+  }
+  .stat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8vh;
+    color: var(--muted);
+    text-transform: uppercase;
+    border-top: 2px solid var(--muted);
+    padding-top: 1.6vh;
+  }
+  .bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 2vh;
+  }
+  .footer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6vh;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .swipe {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 2vh;
+    color: var(--fg);
+    text-transform: uppercase;
+    border: 3px solid var(--fg);
+    padding: 1vh 1.8vh;
+    box-shadow: 5px 5px 0 0 var(--fg);
+    background-color: var(--accent);
+    color: var(--accent-text);
+  }
+  /* hook frame */
+  .hook .headline { font-size: 9vh; }
+  .hook .body { font-size: 2.8vh; }
+  /* cta frame */
+  .cta-headline {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 11vh;
+    line-height: 0.92;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    margin: 0 0 3vh 0;
+  }
+  .cta-btn {
+    background-color: #000;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 4.4vh;
+    padding: 2.6vh 3.6vh;
+    border: 4px solid var(--fg);
+    box-shadow: 7px 7px 0 0 var(--fg);
+    text-transform: uppercase;
+    align-self: flex-start;
+    margin-bottom: 2vh;
+  }
+  .cta-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2vh;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+</style>
+</head>
+<body>
+<div class="frame  cta">
+<div class="top-row"><div class="logo-lockup">
+    <div class="logo-square">D</div>
+    <div class="logo-text">
+      <div class="logo-wordmark">DYP</div>
+      <div class="logo-tagline">// DO YOUR PATH</div>
+    </div>
+  </div><div class="frame-counter">05 / 05</div></div>
+  <div>
+    <div class="kicker">// READY? START FREE.</div>
+    <h1 class="cta-headline">DO YOUR PATH.</h1>
+    <p class="body">CC Programs · AI Pathways · Scholarships · Internship Finder. One free app, built for California community college students.</p>
+  </div>
+  <div>
+    <div class="cta-btn">GET STARTED FREE →</div>
+    <div class="cta-sub">// FREE · NO CREDIT CARD · DOYOURPATH.APP</div>
+  </div>
+</div>
+</body>
+</html>
