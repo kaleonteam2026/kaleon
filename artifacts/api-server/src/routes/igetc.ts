@@ -99,10 +99,12 @@ router.post("/profiles/:profileId/igetc/analyze", async (req, res) => {
       .map(c => `${c.courseCode ?? ""} ${c.courseName} (${c.units ?? 3} units, ${c.status ?? "unknown"}, grade: ${c.grade ?? "unknown"})`)
       .join("\n");
 
+    const { getRequestLocale, localeJsonPromptSuffix } = await import("../lib/locale");
+    const locale = getRequestLocale(req);
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 512,
-      system: "You are a California community college IGETC advisor. Given a list of courses, determine which IGETC areas they likely satisfy. Return ONLY valid JSON, no markdown fences, no explanation.",
+      system: "You are a California community college IGETC advisor. Given a list of courses, determine which IGETC areas they likely satisfy. Return ONLY valid JSON, no markdown fences, no explanation." + localeJsonPromptSuffix(locale),
       messages: [{
         role: "user",
         content: `Analyze these community college courses and return a JSON object indicating which IGETC areas they likely satisfy.\n\nCourses:\n${courseList}\n\nReturn JSON with these exact keys (set to true if likely satisfied, false if not): "1a" (English Composition), "1b" (Critical Thinking & Composition), "1c" (Oral Communication), "2" (Math/Quantitative Reasoning), "3a" (Arts), "3b" (Humanities), "4" (Social & Behavioral Sciences), "5a" (Physical Science), "5b" (Biological Science), "5c" (Lab Activity), "6" (Languages Other Than English), "7" (US History/Gov - CSU only). Only set to true if there is a clear match. Be conservative.`,

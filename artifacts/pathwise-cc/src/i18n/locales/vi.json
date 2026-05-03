@@ -1,0 +1,81 @@
+{
+  "brand": {
+    "name": "DYP",
+    "tagline": "// HÀNH TRÌNH CỦA BẠN",
+    "fullName": "Pathwise CC"
+  },
+  "common": {
+    "signIn": "Đăng nhập",
+    "signOut": "Đăng xuất",
+    "getStarted": "Bắt đầu miễn phí",
+    "loading": "Đang tải…",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "submit": "Gửi",
+    "search": "Tìm kiếm",
+    "close": "Đóng",
+    "menu": "Menu",
+    "navigation": "Điều hướng",
+    "skipToMain": "Chuyển đến nội dung chính",
+    "language": "Ngôn ngữ",
+    "selectLanguage": "Chọn ngôn ngữ",
+    "student": "Sinh viên"
+  },
+  "nav": {
+    "dashboard": "Bảng điều khiển",
+    "profile": "Hồ sơ",
+    "scholarships": "Học bổng",
+    "courses": "Khóa học",
+    "pathway": "Lộ trình",
+    "progress": "Tiến độ",
+    "internships": "Thực tập",
+    "exports": "Xuất",
+    "home": "Trang chủ",
+    "intern": "Thực tập"
+  },
+  "landing": {
+    "badge": "Dành cho sinh viên cao đẳng California",
+    "heroTitle1": "Làm Theo",
+    "heroTitle2": "Lộ Trình.",
+    "heroSubtitle": "DYP giúp sinh viên cao đẳng cộng đồng <strong>nỗ lực, thành công và chuyển trường</strong> — theo dõi khóa học, tìm học bổng, xây dựng lộ trình chuyển trường và nhận thực tập. Tất cả đều do AI hỗ trợ, ở một nơi duy nhất.",
+    "heroCta": "Bắt đầu miễn phí",
+    "heroNote": "// Miễn phí · Replit Auth · Không cần thẻ tín dụng",
+    "modulesEyebrow": "// Mô-đun",
+    "modulesTitle": "Mọi thứ sinh viên cao đẳng cần",
+    "ctaTitle": "Bắt đầu hành trình chuyển trường hôm nay",
+    "ctaBody": "Miễn phí cho mọi sinh viên cao đẳng cộng đồng California. Đăng nhập để bắt đầu."
+  },
+  "dashboard": {
+    "welcomeBack": "Chào mừng trở lại",
+    "yourProfile": "Hồ sơ của bạn",
+    "transferReadiness": "Sẵn sàng chuyển trường",
+    "quickActions": "Hành động nhanh",
+    "recentActivity": "Hoạt động gần đây"
+  },
+  "onboarding": {
+    "title": "Hãy cho chúng tôi biết về hành trình của bạn",
+    "subtitle": "Chúng tôi sẽ cá nhân hóa kế hoạch chuyển trường dựa trên câu trả lời của bạn.",
+    "next": "Tiếp theo",
+    "back": "Quay lại",
+    "submit": "Tạo kế hoạch của tôi"
+  },
+  "chat": {
+    "title": "Cố vấn DYP",
+    "askAnything": "Hỏi bất cứ điều gì",
+    "practiceInterview": "Luyện phỏng vấn",
+    "askPlaceholder": "Hỏi về chuyển trường, IGETC, TAG…",
+    "interviewPlaceholder": "Nhập câu trả lời của bạn…",
+    "emptyTitle": "Hỏi tôi bất cứ điều gì",
+    "emptySubtitle": "Yêu cầu chuyển trường, IGETC, TAG, học bổng, hỗ trợ tài chính, ngành học.",
+    "send": "Gửi tin nhắn",
+    "open": "Mở trò chuyện",
+    "close": "Đóng trò chuyện"
+  },
+  "languageSwitcher": {
+    "label": "Ngôn ngữ",
+    "saved": "Đã cập nhật ngôn ngữ"
+  }
+}

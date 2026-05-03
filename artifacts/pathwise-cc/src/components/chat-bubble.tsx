@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -104,6 +105,7 @@ function SummaryCard({ text, onRestart }: { text: string; onRestart: () => void 
 }
 
 export default function ChatBubble({ userId }: { userId?: string }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const reducedMotion = useReducedMotion();
@@ -275,7 +277,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
-          aria-label="DYP advisor chat"
+          aria-label={t("chat.title")}
           tabIndex={-1}
           className="bg-white border-2 border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] flex flex-col overflow-hidden focus:outline-none"
           style={{ width: "min(90vw, 380px)", height: "min(75vh, 560px)" }}>
@@ -286,7 +288,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                 <Bot className="h-4 w-4 text-white" />
               </div>
               <div>
-                <p className="text-white font-bold text-sm uppercase tracking-tight">DYP Advisor</p>
+                <p className="text-white font-bold text-sm uppercase tracking-tight">{t("chat.title")}</p>
                 <p className="text-slate-400 text-[10px] uppercase tracking-widest" style={{ fontFamily: "JetBrains Mono, monospace" }}>
                   {mode === "interview"
                     ? interviewActive ? `// Interview · Q${currentQ ?? 1}/5` : "// Practice Interview"
@@ -294,7 +296,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                 </p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="text-slate-300 hover:text-white" aria-label="Close chat">
+            <button onClick={() => setOpen(false)} className="text-slate-300 hover:text-white" aria-label={t("chat.close")}>
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -307,7 +309,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                 mode === "ask" ? "bg-white text-slate-900" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}
               data-testid="chat-mode-ask"
             >
-              <MessagesSquare className="h-3.5 w-3.5" /> Ask anything
+              <MessagesSquare className="h-3.5 w-3.5" /> {t("chat.askAnything")}
             </button>
             <button
               onClick={() => switchMode("interview")}
@@ -315,7 +317,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                 mode === "interview" ? "bg-amber-200 text-slate-900" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}
               data-testid="chat-mode-interview"
             >
-              <Mic className="h-3.5 w-3.5" /> Practice interview
+              <Mic className="h-3.5 w-3.5" /> {t("chat.practiceInterview")}
             </button>
           </div>
 
@@ -327,8 +329,8 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                 <div className="w-12 h-12 bg-slate-900 flex items-center justify-center mb-3">
                   <Bot className="h-6 w-6 text-white" />
                 </div>
-                <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">Ask me anything</p>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">Transfer requirements, IGETC, TAG, scholarships, financial aid, majors.</p>
+                <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">{t("chat.emptyTitle")}</p>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">{t("chat.emptySubtitle")}</p>
                 <div className="mt-4 space-y-1.5 w-full">
                   {["What is IGETC and do I need it?", "How does the TAG program work?", "What GPA do I need to transfer to UC?"].map(q => (
                     <button key={q} onClick={() => { setInput(q); inputRef.current?.focus(); }}
@@ -433,15 +435,15 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                aria-label={mode === "interview" ? "Your interview answer" : "Ask the DYP advisor a question"}
-                placeholder={mode === "interview" ? "Type your answer…" : "Ask about transfer, IGETC, TAG…"}
+                aria-label={mode === "interview" ? t("chat.interviewPlaceholder") : t("chat.askPlaceholder")}
+                placeholder={mode === "interview" ? t("chat.interviewPlaceholder") : t("chat.askPlaceholder")}
                 disabled={loading}
                 className="flex-1 text-xs px-3 py-2 border-2 border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-50"
                 data-testid="chat-input"
               />
               <button onClick={() => void send()} disabled={!input.trim() || loading}
                 className="px-3 bg-slate-900 border-2 border-slate-900 text-white hover:bg-slate-700 disabled:opacity-40 transition flex-shrink-0"
-                aria-label="Send message">
+                aria-label={t("chat.send")}>
                 <Send className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -451,7 +453,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
 
       <button
         onClick={() => setOpen(!open)}
-        aria-label={open ? "Close chat" : "Open chat"}
+        aria-label={open ? t("chat.close") : t("chat.open")}
         className={cn(
           "border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] flex items-center justify-center",
           reducedMotion

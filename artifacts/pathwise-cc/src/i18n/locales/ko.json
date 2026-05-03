@@ -1,0 +1,81 @@
+{
+  "brand": {
+    "name": "DYP",
+    "tagline": "// 당신의 길을 가세요",
+    "fullName": "Pathwise CC"
+  },
+  "common": {
+    "signIn": "로그인",
+    "signOut": "로그아웃",
+    "getStarted": "무료로 시작하기",
+    "loading": "불러오는 중…",
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "back": "뒤로",
+    "next": "다음",
+    "submit": "제출",
+    "search": "검색",
+    "close": "닫기",
+    "menu": "메뉴",
+    "navigation": "탐색",
+    "skipToMain": "본문으로 건너뛰기",
+    "language": "언어",
+    "selectLanguage": "언어 선택",
+    "student": "학생"
+  },
+  "nav": {
+    "dashboard": "대시보드",
+    "profile": "프로필",
+    "scholarships": "장학금",
+    "courses": "강의",
+    "pathway": "경로",
+    "progress": "진행 상황",
+    "internships": "인턴십",
+    "exports": "내보내기",
+    "home": "홈",
+    "intern": "인턴"
+  },
+  "landing": {
+    "badge": "캘리포니아 커뮤니티 칼리지 학생을 위해",
+    "heroTitle1": "당신의",
+    "heroTitle2": "길을.",
+    "heroSubtitle": "DYP는 커뮤니티 칼리지 학생들이 <strong>노력하고, 성공하고, 편입</strong>할 수 있도록 도와줍니다 — 강의를 추적하고, 장학금을 찾고, 편입 경로를 세우고, 인턴십을 얻으세요. 모두 AI 기반, 한 곳에서.",
+    "heroCta": "무료로 시작하기",
+    "heroNote": "// 무료 · Replit Auth · 신용카드 불필요",
+    "modulesEyebrow": "// 모듈",
+    "modulesTitle": "CC 학생에게 필요한 모든 것",
+    "ctaTitle": "오늘 편입 경로를 시작하세요",
+    "ctaBody": "모든 캘리포니아 커뮤니티 칼리지 학생에게 무료입니다. 로그인하여 시작하세요."
+  },
+  "dashboard": {
+    "welcomeBack": "다시 오신 것을 환영합니다",
+    "yourProfile": "내 프로필",
+    "transferReadiness": "편입 준비도",
+    "quickActions": "빠른 작업",
+    "recentActivity": "최근 활동"
+  },
+  "onboarding": {
+    "title": "당신의 경로에 대해 알려주세요",
+    "subtitle": "답변을 바탕으로 편입 계획을 맞춤화해 드립니다.",
+    "next": "다음",
+    "back": "뒤로",
+    "submit": "내 계획 만들기"
+  },
+  "chat": {
+    "title": "DYP 어드바이저",
+    "askAnything": "무엇이든 물어보세요",
+    "practiceInterview": "모의 인터뷰",
+    "askPlaceholder": "편입, IGETC, TAG에 대해 물어보세요…",
+    "interviewPlaceholder": "답변을 입력하세요…",
+    "emptyTitle": "무엇이든 물어보세요",
+    "emptySubtitle": "편입 요건, IGETC, TAG, 장학금, 학자금 지원, 전공.",
+    "send": "메시지 보내기",
+    "open": "채팅 열기",
+    "close": "채팅 닫기"
+  },
+  "languageSwitcher": {
+    "label": "언어",
+    "saved": "언어가 업데이트되었습니다"
+  }
+}

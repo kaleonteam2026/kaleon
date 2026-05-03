@@ -1,0 +1,81 @@
+{
+  "brand": {
+    "name": "DYP",
+    "tagline": "// GAWIN ANG IYONG LANDAS",
+    "fullName": "Pathwise CC"
+  },
+  "common": {
+    "signIn": "Mag-sign in",
+    "signOut": "Mag-sign out",
+    "getStarted": "Magsimula nang Libre",
+    "loading": "Naglo-load…",
+    "save": "I-save",
+    "cancel": "Kanselahin",
+    "delete": "Tanggalin",
+    "back": "Bumalik",
+    "next": "Susunod",
+    "submit": "Ipasa",
+    "search": "Maghanap",
+    "close": "Isara",
+    "menu": "Menu",
+    "navigation": "Pag-navigate",
+    "skipToMain": "Lumaktaw sa pangunahing nilalaman",
+    "language": "Wika",
+    "selectLanguage": "Pumili ng wika",
+    "student": "Estudyante"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "scholarships": "Scholarships",
+    "courses": "Mga Kurso",
+    "pathway": "Daan",
+    "progress": "Pag-unlad",
+    "internships": "Internships",
+    "exports": "I-export",
+    "home": "Tahanan",
+    "intern": "Intern"
+  },
+  "landing": {
+    "badge": "Para sa mga Estudyante ng CA Community College",
+    "heroTitle1": "Gawin Ang",
+    "heroTitle2": "Iyong Landas.",
+    "heroSubtitle": "Tinutulungan ng DYP ang mga estudyante ng community college na <strong>magsumikap, magtagumpay, at lumipat</strong> — i-track ang iyong mga kurso, humanap ng scholarships, gumawa ng iyong transfer pathway, at makakuha ng internships. Lahat ay AI-powered, lahat sa isang lugar.",
+    "heroCta": "Magsimula nang Libre",
+    "heroNote": "// Libre · Replit Auth · Walang Credit Card",
+    "modulesEyebrow": "// Mga Module",
+    "modulesTitle": "Lahat ng Kailangan ng Estudyante ng CC",
+    "ctaTitle": "Simulan ang Iyong Transfer Path Ngayon",
+    "ctaBody": "Libre para sa lahat ng estudyante ng California community college. Mag-sign in para magsimula."
+  },
+  "dashboard": {
+    "welcomeBack": "Maligayang pagbabalik",
+    "yourProfile": "Iyong Profile",
+    "transferReadiness": "Handa na sa Paglipat",
+    "quickActions": "Mabilis na Aksyon",
+    "recentActivity": "Kamakailang Aktibidad"
+  },
+  "onboarding": {
+    "title": "Sabihin Mo Sa Amin Ang Tungkol sa Iyong Landas",
+    "subtitle": "I-personalize namin ang iyong transfer plan batay sa iyong mga sagot.",
+    "next": "Susunod",
+    "back": "Bumalik",
+    "submit": "Gumawa ng Aking Plano"
+  },
+  "chat": {
+    "title": "Tagapayo ng DYP",
+    "askAnything": "Magtanong ng kahit ano",
+    "practiceInterview": "Practice interview",
+    "askPlaceholder": "Magtanong tungkol sa transfer, IGETC, TAG…",
+    "interviewPlaceholder": "I-type ang iyong sagot…",
+    "emptyTitle": "Tanungin mo ako ng kahit ano",
+    "emptySubtitle": "Transfer requirements, IGETC, TAG, scholarships, financial aid, majors.",
+    "send": "Magpadala ng mensahe",
+    "open": "Buksan ang chat",
+    "close": "Isara ang chat"
+  },
+  "languageSwitcher": {
+    "label": "Wika",
+    "saved": "Na-update ang wika"
+  }
+}

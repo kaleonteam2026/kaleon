@@ -6,6 +6,7 @@ import { tavilySearch } from "../lib/tavily";
 import { getOwnedProfile } from "../lib/ownership";
 import { incrementGlobalAi, globalCapMessage, getGlobalAiUsage } from "../lib/global-cap";
 import { synthesizeDeepDive, type DeepDiveSectionInput } from "../services/aiService.js";
+import { getRequestLocale } from "../lib/locale.js";
 
 const router = Router();
 
@@ -137,7 +138,7 @@ router.post("/universities/:uniId/deep-dive", async (req, res) => {
       return;
     }
 
-    const synthesized = await synthesizeDeepDive(uni.name, majorDisplay, sectionInputs);
+    const synthesized = await synthesizeDeepDive(uni.name, majorDisplay, sectionInputs, getRequestLocale(req));
 
     const report: DeepDiveReport = {
       universityId: uni.id,

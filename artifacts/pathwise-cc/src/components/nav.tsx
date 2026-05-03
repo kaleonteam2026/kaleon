@@ -6,8 +6,10 @@ import {
   User, TrendingUp, Search, ChevronRight, Download,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import NotificationBell from "@/components/notification-bell";
+import LanguageSwitcher from "@/components/language-switcher";
 
 const PROFILE_ID_KEY = "dyp_active_profile_id";
 
@@ -25,6 +27,7 @@ interface Props { profileId?: number; }
 export default function Nav({ profileId }: Props) {
   const [location] = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [resolvedId, setResolvedId] = useState<number | null>(profileId ?? null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -36,17 +39,17 @@ export default function Nav({ profileId }: Props) {
   }, [profileId]);
 
   const staticLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/profile", label: "Profile", icon: User },
-    { href: resolvedId ? `/scholarships/${resolvedId}` : "/scholarships", label: "Scholarships", icon: Award },
+    { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { href: "/profile", label: t("nav.profile"), icon: User },
+    { href: resolvedId ? `/scholarships/${resolvedId}` : "/scholarships", label: t("nav.scholarships"), icon: Award },
   ];
 
   const profileLinks = resolvedId ? [
-    { href: `/courses/${resolvedId}`, label: "Courses", icon: BookOpen },
-    { href: `/pathways/${resolvedId}`, label: "Pathway", icon: Target },
-    { href: `/progress/${resolvedId}`, label: "Progress", icon: TrendingUp },
-    { href: `/internships/${resolvedId}`, label: "Internships", icon: Search },
-    { href: `/exports/${resolvedId}`, label: "Exports", icon: Download },
+    { href: `/courses/${resolvedId}`, label: t("nav.courses"), icon: BookOpen },
+    { href: `/pathways/${resolvedId}`, label: t("nav.pathway"), icon: Target },
+    { href: `/progress/${resolvedId}`, label: t("nav.progress"), icon: TrendingUp },
+    { href: `/internships/${resolvedId}`, label: t("nav.internships"), icon: Search },
+    { href: `/exports/${resolvedId}`, label: t("nav.exports"), icon: Download },
   ] : [];
 
   const allLinks = [...staticLinks, ...profileLinks];
@@ -59,14 +62,14 @@ export default function Nav({ profileId }: Props) {
   };
 
   const bottomTabs = resolvedId ? [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
-    { href: `/courses/${resolvedId}`, icon: BookOpen, label: "Courses" },
-    { href: `/pathways/${resolvedId}`, icon: Target, label: "Pathway" },
-    { href: `/progress/${resolvedId}`, icon: TrendingUp, label: "Progress" },
-    { href: `/internships/${resolvedId}`, icon: Search, label: "Intern" },
+    { href: "/dashboard", icon: LayoutDashboard, label: t("nav.home") },
+    { href: `/courses/${resolvedId}`, icon: BookOpen, label: t("nav.courses") },
+    { href: `/pathways/${resolvedId}`, icon: Target, label: t("nav.pathway") },
+    { href: `/progress/${resolvedId}`, icon: TrendingUp, label: t("nav.progress") },
+    { href: `/internships/${resolvedId}`, icon: Search, label: t("nav.intern") },
   ] : [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
-    { href: "/profile", icon: User, label: "Profile" },
+    { href: "/dashboard", icon: LayoutDashboard, label: t("nav.home") },
+    { href: "/profile", icon: User, label: t("nav.profile") },
   ];
 
   const Brand = (
@@ -86,7 +89,7 @@ export default function Nav({ profileId }: Props) {
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-slate-900 focus:text-white focus:px-4 focus:py-2 focus:border-2 focus:border-amber-300 focus:outline-none"
       >
-        Skip to main content
+        {t("common.skipToMain")}
       </a>
 
       {/* ── Desktop nav ── */}
@@ -118,12 +121,13 @@ export default function Nav({ profileId }: Props) {
         </div>
         <div className="flex items-center gap-3">
           {resolvedId && <NotificationBell profileId={resolvedId} />}
+          <LanguageSwitcher />
           <span className="text-xs pwc-font-mono uppercase tracking-wider text-slate-600">
-            {user?.firstName ?? user?.email ?? "Student"}
+            {user?.firstName ?? user?.email ?? t("common.student")}
           </span>
           <button
             onClick={logout}
-            aria-label="Sign out"
+            aria-label={t("common.signOut")}
             className="text-slate-700 hover:text-slate-900 p-1.5 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -136,10 +140,11 @@ export default function Nav({ profileId }: Props) {
         {Brand}
         <div className="flex items-center gap-1">
           {resolvedId && <NotificationBell profileId={resolvedId} />}
+          <LanguageSwitcher />
         </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-label={mobileOpen ? t("common.close") : t("common.menu")}
           aria-expanded={mobileOpen}
           aria-controls="mobile-nav-menu"
           className="p-3 -mr-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
@@ -161,17 +166,17 @@ export default function Nav({ profileId }: Props) {
         >
           <div className="flex flex-col h-full overflow-y-auto">
             <div className="h-14 px-4 flex items-center justify-between border-b-2 border-slate-900 flex-shrink-0">
-              <span className="text-xs pwc-font-mono font-bold text-slate-900 uppercase tracking-widest">Menu</span>
+              <span className="text-xs pwc-font-mono font-bold text-slate-900 uppercase tracking-widest">{t("common.menu")}</span>
               <button
                 onClick={() => setMobileOpen(false)}
-                aria-label="Close navigation menu"
+                aria-label={t("common.close")}
                 className="p-3 -mr-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
             <div className="p-4 flex-1">
-              <p className="text-xs pwc-font-mono font-bold text-slate-600 uppercase tracking-widest mb-3 px-1">Navigation</p>
+              <p className="text-xs pwc-font-mono font-bold text-slate-600 uppercase tracking-widest mb-3 px-1">{t("common.navigation")}</p>
               {allLinks.map((link) => {
                 const active = isActive(link.href);
                 return (
@@ -193,13 +198,14 @@ export default function Nav({ profileId }: Props) {
                 );
               })}
             </div>
-            <div className="p-4 border-t-2 border-slate-900">
-              <div className="flex items-center justify-between">
-                <span className="text-xs pwc-font-mono uppercase text-slate-700">{user?.firstName ?? user?.email ?? "Student"}</span>
-                <button onClick={logout} className="flex items-center gap-2 text-xs pwc-font-mono uppercase text-slate-900 px-3 py-2 border-2 border-slate-900 hover:bg-slate-900 hover:text-white min-h-[44px]">
-                  <LogOut className="h-4 w-4" aria-hidden="true" />Sign out
-                </button>
+            <div className="p-4 border-t-2 border-slate-900 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs pwc-font-mono uppercase text-slate-700 truncate">{user?.firstName ?? user?.email ?? t("common.student")}</span>
+                <LanguageSwitcher />
               </div>
+              <button onClick={logout} className="w-full flex items-center justify-center gap-2 text-xs pwc-font-mono uppercase text-slate-900 px-3 py-2 border-2 border-slate-900 hover:bg-slate-900 hover:text-white min-h-[44px]">
+                <LogOut className="h-4 w-4" aria-hidden="true" />{t("common.signOut")}
+              </button>
             </div>
           </div>
         </div>

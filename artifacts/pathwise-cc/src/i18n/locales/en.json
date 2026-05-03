@@ -1,0 +1,81 @@
+{
+  "brand": {
+    "name": "DYP",
+    "tagline": "// DO YOUR PATH",
+    "fullName": "Pathwise CC"
+  },
+  "common": {
+    "signIn": "Sign In",
+    "signOut": "Sign out",
+    "getStarted": "Get Started Free",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "close": "Close",
+    "menu": "Menu",
+    "navigation": "Navigation",
+    "skipToMain": "Skip to main content",
+    "language": "Language",
+    "selectLanguage": "Select language",
+    "student": "Student"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "scholarships": "Scholarships",
+    "courses": "Courses",
+    "pathway": "Pathway",
+    "progress": "Progress",
+    "internships": "Internships",
+    "exports": "Exports",
+    "home": "Home",
+    "intern": "Intern"
+  },
+  "landing": {
+    "badge": "For California CC Students",
+    "heroTitle1": "Do Your",
+    "heroTitle2": "Path.",
+    "heroSubtitle": "DYP helps community college students <strong>strive, succeed, and transfer</strong> — track your courses, find scholarships, build your transfer pathway, and land internships. All AI-powered, all in one place.",
+    "heroCta": "Get Started Free",
+    "heroNote": "// Free · Replit Auth · No Credit Card",
+    "modulesEyebrow": "// Modules",
+    "modulesTitle": "Everything a CC Student Needs",
+    "ctaTitle": "Start Your Transfer Path Today",
+    "ctaBody": "Free for all California community college students. Sign in to begin."
+  },
+  "dashboard": {
+    "welcomeBack": "Welcome back",
+    "yourProfile": "Your Profile",
+    "transferReadiness": "Transfer Readiness",
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity"
+  },
+  "onboarding": {
+    "title": "Tell Us About Your Path",
+    "subtitle": "We'll personalize your transfer plan based on your answers.",
+    "next": "Next",
+    "back": "Back",
+    "submit": "Create My Plan"
+  },
+  "chat": {
+    "title": "DYP Advisor",
+    "askAnything": "Ask anything",
+    "practiceInterview": "Practice interview",
+    "askPlaceholder": "Ask about transfer, IGETC, TAG…",
+    "interviewPlaceholder": "Type your answer…",
+    "emptyTitle": "Ask me anything",
+    "emptySubtitle": "Transfer requirements, IGETC, TAG, scholarships, financial aid, majors.",
+    "send": "Send message",
+    "open": "Open chat",
+    "close": "Close chat"
+  },
+  "languageSwitcher": {
+    "label": "Language",
+    "saved": "Language updated"
+  }
+}

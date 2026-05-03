@@ -1,0 +1,81 @@
+{
+  "brand": {
+    "name": "DYP",
+    "tagline": "// 走自己的路",
+    "fullName": "Pathwise CC"
+  },
+  "common": {
+    "signIn": "登录",
+    "signOut": "退出登录",
+    "getStarted": "免费开始",
+    "loading": "加载中…",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "back": "返回",
+    "next": "下一步",
+    "submit": "提交",
+    "search": "搜索",
+    "close": "关闭",
+    "menu": "菜单",
+    "navigation": "导航",
+    "skipToMain": "跳转到主要内容",
+    "language": "语言",
+    "selectLanguage": "选择语言",
+    "student": "学生"
+  },
+  "nav": {
+    "dashboard": "仪表板",
+    "profile": "个人资料",
+    "scholarships": "奖学金",
+    "courses": "课程",
+    "pathway": "学习路径",
+    "progress": "进度",
+    "internships": "实习",
+    "exports": "导出",
+    "home": "首页",
+    "intern": "实习"
+  },
+  "landing": {
+    "badge": "面向加州社区大学学生",
+    "heroTitle1": "走你自己的",
+    "heroTitle2": "路。",
+    "heroSubtitle": "DYP 帮助社区大学学生<strong>奋斗、成功并转学</strong> —— 追踪你的课程、寻找奖学金、规划转学路径并获得实习机会。全部由 AI 驱动,一站式服务。",
+    "heroCta": "免费开始",
+    "heroNote": "// 免费 · Replit 登录 · 无需信用卡",
+    "modulesEyebrow": "// 模块",
+    "modulesTitle": "社区大学学生所需的一切",
+    "ctaTitle": "今天就开启你的转学之路",
+    "ctaBody": "对所有加州社区大学学生免费开放。登录即可开始。"
+  },
+  "dashboard": {
+    "welcomeBack": "欢迎回来",
+    "yourProfile": "你的资料",
+    "transferReadiness": "转学准备度",
+    "quickActions": "快捷操作",
+    "recentActivity": "最近活动"
+  },
+  "onboarding": {
+    "title": "告诉我们你的学习路径",
+    "subtitle": "我们将根据你的回答个性化你的转学计划。",
+    "next": "下一步",
+    "back": "返回",
+    "submit": "创建我的计划"
+  },
+  "chat": {
+    "title": "DYP 顾问",
+    "askAnything": "随便问",
+    "practiceInterview": "模拟面试",
+    "askPlaceholder": "询问转学、IGETC、TAG…",
+    "interviewPlaceholder": "输入你的回答…",
+    "emptyTitle": "有问必答",
+    "emptySubtitle": "转学要求、IGETC、TAG、奖学金、助学金、专业。",
+    "send": "发送消息",
+    "open": "打开聊天",
+    "close": "关闭聊天"
+  },
+  "languageSwitcher": {
+    "label": "语言",
+    "saved": "语言已更新"
+  }
+}

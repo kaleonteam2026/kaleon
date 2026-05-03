@@ -4,6 +4,7 @@ import {
 } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { generateInternshipMatches } from "../services/aiService.js";
+import { getRequestLocale } from "../lib/locale.js";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 import { getOwnedProfile } from "../lib/ownership";
 
@@ -50,6 +51,7 @@ router.post("/profiles/:profileId/internships/search", async (req, res) => {
       profile as unknown as Record<string, unknown>,
       courses as unknown as Record<string, unknown>[],
       selectedPathway ? (selectedPathway.reportJson as Record<string, unknown>) : null,
+      getRequestLocale(req),
     );
 
     const saved = await db.insert(internshipSearchesTable).values({

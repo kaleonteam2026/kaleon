@@ -1,0 +1,81 @@
+{
+  "brand": {
+    "name": "DYP",
+    "tagline": "// HAZ TU CAMINO",
+    "fullName": "Pathwise CC"
+  },
+  "common": {
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "getStarted": "Comienza gratis",
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "submit": "Enviar",
+    "search": "Buscar",
+    "close": "Cerrar",
+    "menu": "Menú",
+    "navigation": "Navegación",
+    "skipToMain": "Saltar al contenido principal",
+    "language": "Idioma",
+    "selectLanguage": "Seleccionar idioma",
+    "student": "Estudiante"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "profile": "Perfil",
+    "scholarships": "Becas",
+    "courses": "Cursos",
+    "pathway": "Trayectoria",
+    "progress": "Progreso",
+    "internships": "Pasantías",
+    "exports": "Exportar",
+    "home": "Inicio",
+    "intern": "Pasantía"
+  },
+  "landing": {
+    "badge": "Para estudiantes de colegios comunitarios de California",
+    "heroTitle1": "Haz Tu",
+    "heroTitle2": "Camino.",
+    "heroSubtitle": "DYP ayuda a los estudiantes de colegio comunitario a <strong>esforzarse, triunfar y transferirse</strong> — rastrea tus cursos, encuentra becas, construye tu plan de transferencia y consigue pasantías. Todo con IA, en un solo lugar.",
+    "heroCta": "Comienza gratis",
+    "heroNote": "// Gratis · Replit Auth · Sin tarjeta de crédito",
+    "modulesEyebrow": "// Módulos",
+    "modulesTitle": "Todo lo que un estudiante de CC necesita",
+    "ctaTitle": "Comienza hoy tu camino de transferencia",
+    "ctaBody": "Gratis para todos los estudiantes de colegios comunitarios de California. Inicia sesión para comenzar."
+  },
+  "dashboard": {
+    "welcomeBack": "Bienvenido/a de nuevo",
+    "yourProfile": "Tu perfil",
+    "transferReadiness": "Listo para transferirte",
+    "quickActions": "Acciones rápidas",
+    "recentActivity": "Actividad reciente"
+  },
+  "onboarding": {
+    "title": "Cuéntanos sobre tu camino",
+    "subtitle": "Personalizaremos tu plan de transferencia según tus respuestas.",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "submit": "Crear mi plan"
+  },
+  "chat": {
+    "title": "Asesor DYP",
+    "askAnything": "Pregunta lo que sea",
+    "practiceInterview": "Practica entrevista",
+    "askPlaceholder": "Pregunta sobre transferencia, IGETC, TAG…",
+    "interviewPlaceholder": "Escribe tu respuesta…",
+    "emptyTitle": "Pregúntame lo que sea",
+    "emptySubtitle": "Requisitos de transferencia, IGETC, TAG, becas, ayuda financiera, carreras.",
+    "send": "Enviar mensaje",
+    "open": "Abrir chat",
+    "close": "Cerrar chat"
+  },
+  "languageSwitcher": {
+    "label": "Idioma",
+    "saved": "Idioma actualizado"
+  }
+}

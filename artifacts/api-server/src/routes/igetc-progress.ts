@@ -69,10 +69,12 @@ ${courseList}
 
 Respond with ONLY the JSON object, no explanation.`;
 
+    const { getRequestLocale, localeJsonPromptSuffix } = await import("../lib/locale");
+    const locale = getRequestLocale(req);
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 512,
-      messages: [{ role: "user", content: prompt }],
+      messages: [{ role: "user", content: prompt + localeJsonPromptSuffix(locale) }],
     });
 
     const text = response.content[0].type === "text" ? response.content[0].text : "{}";

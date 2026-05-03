@@ -5,6 +5,7 @@ import opportunities from "../data/opportunities.json" assert { type: "json" };
 import { db, coursesTable, pathwaysTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { generatePathways } from "../services/aiService.js";
+import { getRequestLocale } from "../lib/locale.js";
 import { calculateCompatibility, interpretScore } from "../services/scoringService.js";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 import { getOwnedProfile, getOwnedPathway } from "../lib/ownership";
@@ -76,7 +77,8 @@ router.post("/profiles/:profileId/generate-pathways", async (req, res) => {
       courses as unknown as Record<string, unknown>[],
       rankedUnis as unknown as Record<string, unknown>[],
       scholarships as unknown as Record<string, unknown>[],
-      opportunities as unknown as Record<string, unknown>[]
+      opportunities as unknown as Record<string, unknown>[],
+      getRequestLocale(req),
     );
 
     // Save pathways to DB

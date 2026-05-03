@@ -1,6 +1,8 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
+import { useTranslation, Trans } from "react-i18next";
+import LanguageSwitcher from "@/components/language-switcher";
 import {
   GraduationCap, Target, BookOpen, Award, ArrowRight,
   TrendingUp, Search, Building2, Users, Map, Compass,
@@ -14,6 +16,7 @@ const FONT_STYLES = `
 export default function Landing() {
   const { isAuthenticated, isLoading, login } = useAuth();
   const [, navigate] = useLocation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -29,40 +32,43 @@ export default function Landing() {
       <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-900 px-6 md:px-12 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2 font-bold text-lg uppercase tracking-tight">
           <div className="h-7 w-7 bg-slate-900 text-white flex items-center justify-center pwc-font-mono font-bold text-sm">D</div>
-          <span>DYP</span>
-          <span className="hidden md:inline pwc-font-mono text-[10px] text-slate-500 normal-case tracking-widest font-medium">// DO YOUR PATH</span>
+          <span>{t("brand.name")}</span>
+          <span className="hidden md:inline pwc-font-mono text-[10px] text-slate-500 normal-case tracking-widest font-medium">{t("brand.tagline")}</span>
         </div>
-        <button
-          onClick={login}
-          className="border-2 border-slate-900 bg-slate-900 text-white px-4 py-1.5 text-xs pwc-font-mono uppercase tracking-wider font-bold hover:bg-slate-700 transition-colors"
-        >
-          Sign In
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <button
+            onClick={login}
+            className="border-2 border-slate-900 bg-slate-900 text-white px-4 py-1.5 text-xs pwc-font-mono uppercase tracking-wider font-bold hover:bg-slate-700 transition-colors"
+          >
+            {t("common.signIn")}
+          </button>
+        </div>
       </header>
 
       {/* Hero */}
       <section className="px-6 md:px-12 pt-16 pb-20 max-w-5xl mx-auto">
         <div className="inline-flex items-center gap-2 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] px-3 py-1.5 mb-8">
           <GraduationCap className="h-4 w-4" />
-          <span className="text-xs pwc-font-mono uppercase tracking-wider font-bold">For California CC Students</span>
+          <span className="text-xs pwc-font-mono uppercase tracking-wider font-bold">{t("landing.badge")}</span>
         </div>
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[0.95] uppercase">
-          Do Your<br />
-          <span className="bg-slate-900 text-white px-3 inline-block">Path.</span>
+          {t("landing.heroTitle1")}<br />
+          <span className="bg-slate-900 text-white px-3 inline-block">{t("landing.heroTitle2")}</span>
         </h1>
         <p className="text-lg md:text-xl text-slate-700 mb-8 max-w-2xl leading-relaxed">
-          DYP helps community college students <strong>strive, succeed, and transfer</strong> — track your courses, find scholarships, build your transfer pathway, and land internships. All AI-powered, all in one place.
+          <Trans i18nKey="landing.heroSubtitle" components={{ strong: <strong /> }} />
         </p>
         <div className="flex flex-col sm:flex-row gap-4 items-start">
           <button
             onClick={login}
             className="border-2 border-slate-900 bg-slate-900 text-white px-6 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold hover:bg-slate-700 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-all flex items-center gap-2"
           >
-            Get Started Free
+            {t("landing.heroCta")}
             <ArrowRight className="h-4 w-4" />
           </button>
           <p className="text-xs pwc-font-mono uppercase tracking-wider text-slate-500 self-center">
-            // Free · Replit Auth · No Credit Card
+            {t("landing.heroNote")}
           </p>
         </div>
       </section>
@@ -71,9 +77,9 @@ export default function Landing() {
       <section className="px-6 md:px-12 py-16 bg-white border-y-2 border-slate-900">
         <div className="max-w-6xl mx-auto">
           <div className="mb-12">
-            <p className="text-xs pwc-font-mono uppercase tracking-widest text-slate-500 font-bold mb-2">// Modules</p>
+            <p className="text-xs pwc-font-mono uppercase tracking-widest text-slate-500 font-bold mb-2">{t("landing.modulesEyebrow")}</p>
             <h2 className="text-3xl md:text-4xl font-bold uppercase">
-              Everything a CC Student Needs
+              {t("landing.modulesTitle")}
             </h2>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
@@ -137,16 +143,16 @@ export default function Landing() {
       <section className="px-6 md:px-12 py-20 bg-slate-900 text-white border-y-2 border-slate-900">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-5xl font-extrabold uppercase mb-4 tracking-tight">
-            Ready to Do Your Path?
+            {t("landing.ctaTitle")}
           </h2>
           <p className="text-slate-300 mb-8 text-base md:text-lg">
-            Built exclusively for California's 2.1 million community college students.
+            {t("landing.ctaBody")}
           </p>
           <button
             onClick={login}
             className="border-2 border-white bg-white text-slate-900 px-6 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold hover:bg-slate-100 shadow-[4px_4px_0px_0px_rgba(255,255,255,0.4)] inline-flex items-center gap-2"
           >
-            Get Started Free
+            {t("landing.heroCta")}
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>

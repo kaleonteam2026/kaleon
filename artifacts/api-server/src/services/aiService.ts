@@ -51,8 +51,11 @@ export async function generatePathways(
   courses: Record<string, unknown>[],
   universities: Record<string, unknown>[],
   scholarships: Record<string, unknown>[],
-  opportunities: Record<string, unknown>[]
+  opportunities: Record<string, unknown>[],
+  locale: string = "en",
 ): Promise<PathwayResult[]> {
+  const { localeJsonPromptSuffix } = await import("../lib/locale.js");
+  const localeSuffix = localeJsonPromptSuffix(locale);
   const prompt = `Generate exactly three transfer pathways for this community college student.
 
 Student Profile:
@@ -112,7 +115,7 @@ The three pathways must be DISTINCT universities representing different tiers of
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 8192,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + localeSuffix,
         messages: [{ role: "user", content: prompt }],
       });
 
@@ -840,7 +843,10 @@ export async function generateInternshipMatches(
   profile: Record<string, unknown>,
   courses: Record<string, unknown>[],
   selectedPathway: Record<string, unknown> | null,
+  locale: string = "en",
 ): Promise<InternshipMatchResult> {
+  const { localeJsonPromptSuffix } = await import("../lib/locale.js");
+  const internshipLocaleSuffix = localeJsonPromptSuffix(locale);
   const college = typeof profile.communityCollege === "string" ? profile.communityCollege : "a California community college";
   const major = typeof profile.intendedMajor === "string" ? profile.intendedMajor : "undeclared";
   const targetUniversity = selectedPathway ? String(selectedPathway.university ?? "UC/CSU") : "UC/CSU";
@@ -959,7 +965,7 @@ Rules:
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 6000,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + internshipLocaleSuffix,
         messages: [{ role: "user", content: prompt }],
       });
       const text = response.content[0].type === "text" ? response.content[0].text : "";
@@ -1464,7 +1470,10 @@ export async function synthesizeDeepDive(
   universityName: string,
   major: string,
   inputs: DeepDiveSectionInput[],
+  locale: string = "en",
 ): Promise<DeepDiveSynthSection[]> {
+  const { localeJsonPromptSuffix } = await import("../lib/locale.js");
+  const deepDiveLocaleSuffix = localeJsonPromptSuffix(locale);
   const evidence = inputs.map((s) => {
     const cites = s.citations.map((c, i) => `[${i + 1}] ${c.title ?? c.url}: ${c.snippet ?? ""}`).join("\n");
     return `### ${s.title} (key: ${s.key})\nTavily summary:\n${s.rawAnswer}\n\nSources:\n${cites}`;
@@ -1497,7 +1506,7 @@ Return ONLY valid JSON (no fences, no preamble) with this exact shape:
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 3000,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + deepDiveLocaleSuffix,
         messages: [{ role: "user", content: prompt }],
       });
 

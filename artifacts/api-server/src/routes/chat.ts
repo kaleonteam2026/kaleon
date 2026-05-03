@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 import { getOwnedProfile } from "../lib/ownership";
+import { getRequestLocale, localePromptSuffix } from "../lib/locale";
 
 const router = Router();
 
@@ -174,12 +175,14 @@ router.post("/chat", async (req, res) => {
       }
     }
 
+    const locale = getRequestLocale(req);
     let system: string;
     if (isInterview && session) {
       system = interviewBaseSystem(session.target) + phaseInstruction(phase, nextQNum, session.questionIndex);
     } else {
       system = CHAT_SYSTEM;
     }
+    system += localePromptSuffix(locale);
 
     if (profileId) {
       const owner = await getOwnedProfile(profileId, userId);
