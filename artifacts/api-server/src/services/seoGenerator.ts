@@ -207,7 +207,22 @@ export function generatePage(
   const title = `Transfer from ${cc.name} to ${uni.name} ${major.name} | DYP`;
   const metaDescription = `Step-by-step transfer guide from ${cc.name} to ${uni.name} for ${major.name}: GPA target (~${target.toFixed(2)}), prerequisites, IGETC strategy, and a 2-year pathway. Built for CA community college students.`;
 
-  const intro = `<p>This guide walks ${cc.name} students through the transfer pathway to <strong>${uni.name}</strong> for a <strong>${major.name}</strong> major. ${cc.name} sits in ${cc.city} and serves roughly ${cc.enrollment.toLocaleString()} students, with ${cc.strengths.includes(major.name) || cc.strengths.some((s) => major.name.toLowerCase().includes(s.toLowerCase())) ? `documented strength in ${major.name}` : `transfer strength in ${cc.strengths.slice(0, 3).join(", ")}`}. ${uni.name} (${uni.system}, ${uni.location}) is one of the more common transfer destinations for students in this region, and the ${major.name} pathway has its own quirks worth planning around.</p>`;
+  const sizeBand = cc.enrollment >= 25000
+    ? "one of the larger California community colleges"
+    : cc.enrollment >= 15000
+      ? "a mid-to-large California community college"
+      : cc.enrollment >= 7000
+        ? "a mid-sized California community college"
+        : "a smaller, regionally-focused California community college";
+  const topDest = cc.topTransferTo[0] ?? uni.name;
+  const isTopDest = cc.topTransferTo.some((d) => d.toLowerCase().includes(uni.name.toLowerCase()) || uni.name.toLowerCase().includes(d.toLowerCase()));
+  const destLine = isTopDest
+    ? `${uni.name} is already one of the published top transfer destinations from ${cc.name}, alongside ${cc.topTransferTo.filter((d) => !uni.name.toLowerCase().includes(d.toLowerCase())).slice(0, 2).join(" and ") || cc.topTransferTo.slice(1, 3).join(" and ")}.`
+    : `${cc.name}'s most common transfer destinations are ${cc.topTransferTo.slice(0, 3).join(", ")}, but the ${cc.name} → ${uni.name} pathway is a viable lateral choice — especially for students prioritizing the ${uni.location} region or ${uni.system} resources.`;
+  const strengthLine = cc.strengths.includes(major.name) || cc.strengths.some((s) => major.name.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(major.name.toLowerCase()))
+    ? `${major.name} is one of the documented program strengths at ${cc.name}, which means major-prep coursework is well-staffed and ASSIST articulation tends to be deeper than at peer colleges.`
+    : `${cc.name}'s most-cited program strengths are ${cc.strengths.slice(0, 3).join(", ")}; ${major.name} is a transferable pathway here even if it is not the headline program — the lower-division prerequisites are standard and articulate cleanly to the ${uni.system}.`;
+  const intro = `<p>This guide walks ${cc.name} students through the transfer pathway to <strong>${uni.name}</strong> for a <strong>${major.name}</strong> major. ${cc.name} is located in ${cc.city} (${cc.district}) and is ${sizeBand}, serving roughly ${cc.enrollment.toLocaleString()} students. ${strengthLine} ${destLine}</p><p>${cc.name} also runs ${cc.honors === "Honors Program" || cc.honors === "Honors Transfer Program" ? `an ${cc.honors.toLowerCase()}` : cc.honors}, which is the kind of academic-readiness signal that compounds with a strong major-prep GPA when ${uni.name} reads ${major.name} files. Students aiming primarily at ${topDest} from ${cc.name} should still treat ${uni.name} as a serious second look — the ${major.name} fit at ${uni.location} is often closer than the headline rankings suggest.</p>`;
 
   const art = articulation ?? SEED_ARTICULATIONS[articulationKey(cc, uni, major)] ?? null;
   const sourceLine = art
@@ -286,8 +301,13 @@ export function generatePage(
         },
         {
           "@type": "Question",
-          name: `Does ${cc.name} have an articulation agreement with ${uni.name}?`,
-          acceptedAnswer: { "@type": "Answer", text: `Yes. Articulation between ${cc.name} and ${uni.name} is published on ASSIST.org. Always confirm against the most recent year before relying on a course substitution.` },
+          name: `Does ${cc.name} have an articulation agreement with ${uni.name} for ${major.name}?`,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: art
+              ? `Yes — a verified ASSIST.org articulation agreement (cycle ${art.agreementCycle}) is published for ${cc.name} → ${uni.name} for ${major.name}. Always confirm against the most recent year on ASSIST.org before relying on a course substitution.`
+              : `A course-level ASSIST.org articulation agreement for ${cc.name} → ${uni.name} for ${major.name} is not yet ingested on this page. Check ASSIST.org directly for the current published agreement and the typical major-prep pattern described above.`,
+          },
         },
       ],
     },

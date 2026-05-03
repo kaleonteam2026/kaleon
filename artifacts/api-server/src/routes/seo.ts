@@ -12,7 +12,6 @@ import {
   uniSlug,
   SEED_ARTICULATIONS,
   articulationKey,
-  hasVerifiedArticulation,
   gpaRangeFor,
   type ArticulationEntry,
   type CC,
@@ -152,34 +151,60 @@ async function getOrCreatePage(cc: CC, uni: Uni, major: Major, origin: string) {
 
 // Hub index — /transfer
 //
-// Only CCs that have at least one verified ASSIST articulation entry are
-// linked from the hub / sitemap. This guarantees every live transfer page
-// renders a real, dated articulation table — no generic-prose-only pages.
-function ccHasAnyVerifiedCombo(cc: CC): boolean {
+// All California community colleges are surfaced. Combos that have a
+// verified ASSIST articulation entry (seed JSON OR `articulations` table)
+// render a real, dated articulation table; combos without one render the
+// prereq-prose fallback from the generator (clearly labeled as such).
+//
+// loadVerifiedCombos() merges the seed and DB sources so hub badges,
+// CC-index badges, and leaf-page rendering all use the same definition
+// of "verified".
+async function loadVerifiedCombos(): Promise<Set<string>> {
+  const set = new Set<string>(Object.keys(SEED_ARTICULATIONS));
+  try {
+    const rows = await db
+      .select({ fromSlug: articulationsTable.fromSlug, toSlug: articulationsTable.toSlug, majorSlug: articulationsTable.majorSlug })
+      .from(articulationsTable);
+    for (const r of rows) set.add(`${r.fromSlug}__${r.toSlug}__${r.majorSlug}`);
+  } catch {
+    // DB not available — fall back to seed-only set
+  }
+  return set;
+}
+function comboKey(cc: CC, uni: Uni, major: Major): string {
+  return `${cc.slug}__${uniSlug(uni)}__${major.slug}`;
+}
+function ccVerifiedComboCount(cc: CC, verified: Set<string>): number {
+  let n = 0;
   for (const uni of ALL_UNIS) {
     for (const major of ALL_MAJORS) {
-      if (hasVerifiedArticulation(cc, uni, major)) return true;
+      if (verified.has(comboKey(cc, uni, major))) n++;
     }
   }
-  return false;
+  return n;
 }
-function ccVerifiedUnis(cc: CC): Uni[] {
-  return ALL_UNIS.filter((u) => ALL_MAJORS.some((m) => hasVerifiedArticulation(cc, u, m)));
+function ccUnis(_cc: CC): Uni[] {
+  return ALL_UNIS;
 }
-function ccUniVerifiedMajors(cc: CC, uni: Uni): Major[] {
-  return ALL_MAJORS.filter((m) => hasVerifiedArticulation(cc, uni, m));
+function ccUniMajors(_cc: CC, _uni: Uni): Major[] {
+  return ALL_MAJORS;
+}
+function ccUniVerifiedMajorCount(cc: CC, uni: Uni, verified: Set<string>): number {
+  return ALL_MAJORS.reduce((n, m) => n + (verified.has(comboKey(cc, uni, m)) ? 1 : 0), 0);
 }
 
-router.get("/transfer", (req, res) => {
+router.get("/transfer", async (req, res) => {
   const origin = getOrigin(req);
-  const verifiedCCs = ALL_CCS.filter(ccHasAnyVerifiedCombo);
-  const cards = verifiedCCs
+  const verifiedSet = await loadVerifiedCombos();
+  const cards = ALL_CCS
     .map((cc) => {
-      const unis = ccVerifiedUnis(cc);
-      const combos = unis.reduce((sum, u) => sum + ccUniVerifiedMajors(cc, u).length, 0);
+      const unis = ccUnis(cc);
+      const combos = unis.length * ALL_MAJORS.length;
+      const verified = ccVerifiedComboCount(cc, verifiedSet);
+      const verifiedNote = verified > 0 ? ` · ${verified} with verified ASSIST tables` : "";
       return `<a class="dyp-card" href="/transfer/${escapeHtml(cc.slug)}">
       <h3>${escapeHtml(cc.name)}</h3>
-      <p>${escapeHtml(cc.city)} · ${combos} verified ASSIST guide${combos === 1 ? "" : "s"} across ${unis.length} school${unis.length === 1 ? "" : "s"}</p>
+      <p>${escapeHtml(cc.city)} · ${combos} transfer guide${combos === 1 ? "" : "s"} across ${unis.length} UC/CSU campus${unis.length === 1 ? "" : "es"}${verifiedNote}</p>
     </a>`;
     })
     .join("");
@@ -187,7 +212,7 @@ router.get("/transfer", (req, res) => {
   const body = `
     <div class="dyp-breadcrumbs"><a href="/">// HOME</a> / TRANSFER GUIDES</div>
     <h1>California CC Transfer Guides</h1>
-    <p>Each guide is built on a real, dated ASSIST.org articulation table plus the most recent published transfer-admit GPA range from the UC Infocenter / CSU campus reports. We only publish a page when we have verified data for that combo — pick your community college to see the verified guides we have today.</p>
+    <p>Major-by-major transfer guides for every California community college to UC and CSU campuses. Combos with a verified ASSIST.org agreement display a dated articulation table; the rest provide AI-assisted prerequisite guidance and pathway planning while we ingest more articulations. Always confirm against ASSIST.org and your CC counselor before applying.</p>
     <div class="dyp-grid">${cards}</div>
   `;
 
@@ -212,7 +237,7 @@ router.get("/transfer", (req, res) => {
   res.send(
     ssrShell({
       title: "California CC Transfer Guides | DYP",
-      description: `Verified ASSIST.org-backed transfer guides across ${verifiedCCs.length} California community colleges, with real articulation tables and current published transfer-admit GPA ranges.`,
+      description: `Major-by-major transfer guides across all ${ALL_CCS.length} California community colleges to UC and CSU campuses, with verified ASSIST.org articulation tables where available.`,
       canonical: `${origin}/transfer`,
       origin,
       schemaJsons: schema.map((s) => JSON.stringify(s)),
@@ -223,18 +248,19 @@ router.get("/transfer", (req, res) => {
 });
 
 // CC index — /transfer/:fromSlug
-router.get("/transfer/:fromSlug", (req, res) => {
+router.get("/transfer/:fromSlug", async (req, res) => {
   const cc = findCC(req.params.fromSlug);
   if (!cc) { res.status(404).send("Not found"); return; }
-  const verifiedUnis = ccVerifiedUnis(cc);
-  if (verifiedUnis.length === 0) { res.status(404).send("Not found"); return; }
+  const unis = ccUnis(cc);
   const origin = getOrigin(req);
-  const cards = verifiedUnis
+  const verifiedSet = await loadVerifiedCombos();
+  const cards = unis
     .map((uni) => {
-      const majorCount = ccUniVerifiedMajors(cc, uni).length;
+      const verifiedCount = ccUniVerifiedMajorCount(cc, uni, verifiedSet);
+      const verifiedNote = verifiedCount > 0 ? ` · ${verifiedCount} with verified ASSIST tables` : "";
       return `<a class="dyp-card" href="/transfer/${escapeHtml(cc.slug)}/${escapeHtml(uniSlug(uni))}">
       <h3>${escapeHtml(uni.name)}</h3>
-      <p>${escapeHtml(uni.system)} · ${escapeHtml(uni.location)} · ${majorCount} verified major${majorCount === 1 ? "" : "s"}</p>
+      <p>${escapeHtml(uni.system)} · ${escapeHtml(uni.location)} · ${ALL_MAJORS.length} major${ALL_MAJORS.length === 1 ? "" : "s"}${verifiedNote}</p>
     </a>`;
     })
     .join("");
@@ -249,7 +275,7 @@ router.get("/transfer/:fromSlug", (req, res) => {
   res.send(
     ssrShell({
       title: `Transfer from ${cc.name} — UC & CSU guides | DYP`,
-      description: `${cc.name} transfer guides for ${verifiedUnis.length} UC/CSU campus${verifiedUnis.length === 1 ? "" : "es"} with verified ASSIST.org articulation and Fall 2024 published admit GPA ranges.`,
+      description: `${cc.name} transfer guides for ${unis.length} UC/CSU campus${unis.length === 1 ? "" : "es"}, with verified ASSIST.org articulation and Fall 2024 published admit GPA ranges where available.`,
       canonical: `${origin}/transfer/${cc.slug}`,
       origin,
       schemaJsons: [
@@ -269,19 +295,22 @@ router.get("/transfer/:fromSlug", (req, res) => {
 });
 
 // CC + Uni index — /transfer/:fromSlug/:toSlug
-router.get("/transfer/:fromSlug/:toSlug", (req, res) => {
+router.get("/transfer/:fromSlug/:toSlug", async (req, res) => {
   const cc = findCC(req.params.fromSlug);
   const uni = findUni(req.params.toSlug);
   if (!cc || !uni) { res.status(404).send("Not found"); return; }
-  const verifiedMajors = ccUniVerifiedMajors(cc, uni);
-  if (verifiedMajors.length === 0) { res.status(404).send("Not found"); return; }
+  const majors = ccUniMajors(cc, uni);
   const origin = getOrigin(req);
-  const cards = verifiedMajors
+  const verifiedSet = await loadVerifiedCombos();
+  const cards = majors
     .map(
-      (m) => `<a class="dyp-card" href="/transfer/${escapeHtml(cc.slug)}/${escapeHtml(uniSlug(uni))}/${escapeHtml(m.slug)}">
+      (m) => {
+        const verified = verifiedSet.has(comboKey(cc, uni, m));
+        return `<a class="dyp-card" href="/transfer/${escapeHtml(cc.slug)}/${escapeHtml(uniSlug(uni))}/${escapeHtml(m.slug)}">
       <h3>${escapeHtml(m.name)}</h3>
-      <p>${escapeHtml(m.category)} · target GPA ~${(uni.gpaRangeRecommended ?? 3.5).toFixed(2)}${m.impacted ? " · impacted" : ""}</p>
-    </a>`,
+      <p>${escapeHtml(m.category)} · target GPA ~${(uni.gpaRangeRecommended ?? 3.5).toFixed(2)}${m.impacted ? " · impacted" : ""}${verified ? " · verified ASSIST" : ""}</p>
+    </a>`;
+      },
     )
     .join("");
 
@@ -295,7 +324,7 @@ router.get("/transfer/:fromSlug/:toSlug", (req, res) => {
   res.send(
     ssrShell({
       title: `${cc.name} → ${uni.name} transfer guides by major | DYP`,
-      description: `${cc.name} to ${uni.name} transfer guides across ${verifiedMajors.length} verified major${verifiedMajors.length === 1 ? "" : "s"}: real ASSIST.org articulation rows and current published admit GPA ranges.`,
+      description: `${cc.name} to ${uni.name} transfer guides across ${majors.length} major${majors.length === 1 ? "" : "s"} with verified ASSIST.org articulation and published admit GPA ranges where available.`,
       canonical: `${origin}/transfer/${cc.slug}/${uniSlug(uni)}`,
       origin,
       schemaJsons: [
@@ -321,10 +350,8 @@ router.get("/transfer/:fromSlug/:toSlug/:majorSlug", async (req, res) => {
   const uni = findUni(req.params.toSlug);
   const major = findMajor(req.params.majorSlug);
   if (!cc || !uni || !major) { res.status(404).send("Not found"); return; }
-  // Only render leaf transfer guides backed by a verified ASSIST articulation
-  // (matches the sitemap surface). Combos without articulation 404 instead of
-  // serving generic prereq prose.
-  if (!hasVerifiedArticulation(cc, uni, major)) { res.status(404).send("Not found"); return; }
+  // Combos without a verified ASSIST articulation render the prereq-prose
+  // fallback from the generator (clearly labeled as such on the page).
 
   const origin = getOrigin(req);
   const page = await getOrCreatePage(cc, uni, major, origin);
@@ -341,8 +368,8 @@ router.get("/transfer/:fromSlug/:toSlug/:majorSlug", async (req, res) => {
   </dl></div>`;
 
   // Internal links — only surface combos that actually exist (have a verified
-  // ASSIST articulation entry) so every related link resolves to a real page.
-  const related = ALL_MAJORS.filter((m) => m.slug !== major.slug && hasVerifiedArticulation(cc, uni, m))
+  // page generated by the same generator) so every related link resolves.
+  const related = ALL_MAJORS.filter((m) => m.slug !== major.slug)
     .slice(0, 6)
     .map(
       (m) => `<li><a href="/transfer/${escapeHtml(cc.slug)}/${escapeHtml(uniSlug(uni))}/${escapeHtml(m.slug)}">${escapeHtml(cc.name)} → ${escapeHtml(uni.name)} for ${escapeHtml(m.name)}</a></li>`,
@@ -350,7 +377,7 @@ router.get("/transfer/:fromSlug/:toSlug/:majorSlug", async (req, res) => {
     .join("");
 
   const otherSchools = ALL_UNIS.filter(
-    (u) => uniSlug(u) !== uniSlug(uni) && hasVerifiedArticulation(cc, u, major),
+    (u) => uniSlug(u) !== uniSlug(uni),
   )
     .slice(0, 6)
     .map(
@@ -435,21 +462,19 @@ router.get("/robots.txt", (req, res) => {
 });
 
 // sitemap.xml — all combos
-router.get("/sitemap.xml", (req, res) => {
+router.get("/sitemap.xml", async (req, res) => {
   const origin = getOrigin(req);
   const today = new Date().toISOString().slice(0, 10);
+  const verifiedSet = await loadVerifiedCombos();
   const urls: string[] = [];
   urls.push(`<url><loc>${origin}/transfer</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`);
   for (const cc of ALL_CCS) {
-    const unis = ccVerifiedUnis(cc);
-    if (unis.length === 0) continue;
     urls.push(`<url><loc>${origin}/transfer/${cc.slug}</loc><lastmod>${today}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>`);
-    for (const uni of unis) {
-      const majors = ccUniVerifiedMajors(cc, uni);
-      if (majors.length === 0) continue;
+    for (const uni of ALL_UNIS) {
       urls.push(`<url><loc>${origin}/transfer/${cc.slug}/${uniSlug(uni)}</loc><lastmod>${today}</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>`);
-      for (const m of majors) {
-        urls.push(`<url><loc>${origin}/transfer/${cc.slug}/${uniSlug(uni)}/${m.slug}</loc><lastmod>${today}</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>`);
+      for (const m of ALL_MAJORS) {
+        const verified = verifiedSet.has(comboKey(cc, uni, m));
+        urls.push(`<url><loc>${origin}/transfer/${cc.slug}/${uniSlug(uni)}/${m.slug}</loc><lastmod>${today}</lastmod><changefreq>monthly</changefreq><priority>${verified ? "0.6" : "0.4"}</priority></url>`);
       }
     }
   }
