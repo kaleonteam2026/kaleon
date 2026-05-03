@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ArrowRight, Loader2, Search, ChevronDown, X, Check } from "lucide-react";
+import { Save, ArrowRight, Loader2, Search, ChevronDown, X, Check, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // All 116 California Community Colleges
@@ -190,6 +190,194 @@ function CollegePicker({
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Reminder preferences card ────────────────────────────────────────────────
+const LEAD_OPTIONS = [30, 14, 7, 1] as const;
+
+interface ReminderPrefs {
+  enabled: string;
+  channelInApp: string;
+  channelEmail: string;
+  leadDays: number[];
+}
+
+function ReminderPrefsSection({ profileId }: { profileId: number }) {
+  const { toast } = useToast();
+  const [prefs, setPrefs] = useState<ReminderPrefs | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/reminders/prefs/${profileId}`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p: ReminderPrefs | null) => {
+        if (p) setPrefs(p);
+      })
+      .catch(() => {});
+  }, [profileId]);
+
+  if (!prefs) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Bell className="h-4 w-4" /> Deadline Reminders
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-xs text-slate-500">Loading…</CardContent>
+      </Card>
+    );
+  }
+
+  const update = async (patch: Partial<{ enabled: boolean; channelInApp: boolean; channelEmail: boolean; leadDays: number[] }>) => {
+    setSaving(true);
+    try {
+      const r = await fetch(`/api/reminders/prefs/${profileId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(patch),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      const updated = (await r.json()) as ReminderPrefs;
+      setPrefs(updated);
+    } catch {
+      toast({ title: "Couldn't save reminder preferences", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleLead = (n: number) => {
+    const has = prefs.leadDays.includes(n);
+    const next = has ? prefs.leadDays.filter((x) => x !== n) : [...prefs.leadDays, n];
+    if (next.length === 0) {
+      toast({ title: "Pick at least one lead time" });
+      return;
+    }
+    void update({ leadDays: next });
+  };
+
+  const runNow = async () => {
+    setRunning(true);
+    try {
+      const r = await fetch(`/api/reminders/${profileId}/run`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!r.ok) throw new Error(await r.text());
+      const data = (await r.json()) as { remindersCreated: number };
+      toast({
+        title: data.remindersCreated > 0
+          ? `Created ${data.remindersCreated} new reminder${data.remindersCreated > 1 ? "s" : ""}`
+          : "No new reminders right now",
+      });
+    } catch {
+      toast({ title: "Couldn't refresh reminders", variant: "destructive" });
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const enabled = prefs.enabled === "true";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Bell className="h-4 w-4" /> Deadline Reminders
+        </CardTitle>
+        <CardDescription>
+          Get personalized nudges before UC, CSU, TAG, FAFSA, and scholarship deadlines.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <label className="flex items-center justify-between gap-3 cursor-pointer">
+          <span className="text-sm font-semibold text-slate-900">Send me reminders</span>
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => void update({ enabled: e.target.checked })}
+            disabled={saving}
+            className="h-4 w-4"
+            data-testid="prefs-enabled"
+          />
+        </label>
+
+        <div className={cn("space-y-3 transition-opacity", !enabled && "opacity-40 pointer-events-none")}>
+          <div>
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Channels</p>
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={prefs.channelInApp === "true"}
+                  onChange={(e) => void update({ channelInApp: e.target.checked })}
+                  className="h-4 w-4"
+                  data-testid="prefs-in-app"
+                />
+                <span className="text-sm text-slate-800">In-app notifications (bell)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={prefs.channelEmail === "true"}
+                  onChange={(e) => void update({ channelEmail: e.target.checked })}
+                  className="h-4 w-4"
+                  data-testid="prefs-email"
+                />
+                <span className="text-sm text-slate-800">Email (when configured)</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Lead times</p>
+            <div className="flex flex-wrap gap-2">
+              {LEAD_OPTIONS.map((n) => {
+                const on = prefs.leadDays.includes(n);
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => toggleLead(n)}
+                    disabled={saving}
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-bold border-2 rounded-md transition",
+                      on
+                        ? "bg-slate-900 text-white border-slate-900"
+                        : "bg-white text-slate-700 border-slate-300 hover:border-slate-500",
+                    )}
+                    data-testid={`lead-${n}`}
+                  >
+                    {n} day{n > 1 ? "s" : ""}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1.5">
+              You'll get a reminder when a deadline falls inside any selected window.
+            </p>
+          </div>
+
+          <div className="pt-2">
+            <Button
+              type="button"
+              onClick={() => void runNow()}
+              disabled={running}
+              variant="outline"
+              className="w-full sm:w-auto"
+              data-testid="prefs-run-now"
+            >
+              {running ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Bell className="h-3.5 w-3.5 mr-1.5" />}
+              Refresh reminders now
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -472,6 +660,9 @@ export default function Profile() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Reminder preferences */}
+          {form.id ? <ReminderPrefsSection profileId={form.id} /> : null}
 
           {/* Save */}
           <div className="flex gap-3 justify-end">

@@ -18,6 +18,7 @@ import chatRouter from "./chat";
 import liveSearchRouter from "./live-search";
 import deepDiveRouter from "./deep-dive";
 import exportsRouter from "./exports";
+import remindersRouter from "./reminders";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use(chatRouter);
 router.use(liveSearchRouter);
 router.use(deepDiveRouter);
 router.use(exportsRouter);
+router.use(remindersRouter);
 
 export default router;

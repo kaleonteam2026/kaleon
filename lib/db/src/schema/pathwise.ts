@@ -164,6 +164,48 @@ export const roadmapInfographicsTable = pgTable(
   }),
 );
 
+// ─── Deadline reminders (Task #16) ───────────────────────────────────────────
+export const reminderPrefsTable = pgTable("reminder_prefs", {
+  id: serial("id").primaryKey(),
+  profileId: integer("profile_id").notNull().references(() => studentProfilesTable.id).unique(),
+  enabled: text("enabled").notNull().default("true"), // "true" | "false"
+  channelInApp: text("channel_in_app").notNull().default("true"),
+  channelEmail: text("channel_email").notNull().default("false"),
+  leadDays: json("lead_days").$type<number[]>().notNull().default([30, 14, 7, 1]),
+  lastRunDay: text("last_run_day"), // YYYY-MM-DD; for per-user-day batching
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const remindersTable = pgTable(
+  "reminders",
+  {
+    id: serial("id").primaryKey(),
+    profileId: integer("profile_id").notNull().references(() => studentProfilesTable.id),
+    deadlineId: text("deadline_id").notNull(), // matches DEADLINE source id
+    deadlineLabel: text("deadline_label").notNull(),
+    deadlineDate: text("deadline_date").notNull(), // ISO yyyy-mm-dd
+    leadDays: integer("lead_days").notNull(), // which lead-time bucket fired
+    category: text("category").notNull(),
+    priority: text("priority").notNull(),
+    url: text("url"),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    status: text("status").notNull().default("unread"), // unread | read | snoozed | done
+    snoozeUntil: timestamp("snooze_until"),
+    emailSent: text("email_sent").notNull().default("false"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    uniquePerBucket: uniqueIndex("reminders_profile_deadline_lead_date_idx").on(
+      t.profileId, t.deadlineId, t.leadDays, t.deadlineDate,
+    ),
+  }),
+);
+
+export type ReminderPrefs = typeof reminderPrefsTable.$inferSelect;
+export type Reminder = typeof remindersTable.$inferSelect;
+
 export const insertStudentProgressSchema = createInsertSchema(studentProgressTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProgressAnalysisSchema = createInsertSchema(progressAnalysesTable).omit({ id: true, createdAt: true });
 

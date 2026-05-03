@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import NotificationBell from "@/components/notification-bell";
 
 const PROFILE_ID_KEY = "dyp_active_profile_id";
 
@@ -116,6 +117,7 @@ export default function Nav({ profileId }: Props) {
           })}
         </div>
         <div className="flex items-center gap-3">
+          {resolvedId && <NotificationBell profileId={resolvedId} />}
           <span className="text-xs pwc-font-mono uppercase tracking-wider text-slate-600">
             {user?.firstName ?? user?.email ?? "Student"}
           </span>
@@ -132,6 +134,9 @@ export default function Nav({ profileId }: Props) {
       {/* ── Mobile top bar ── */}
       <nav aria-label="Primary" className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b-2 border-slate-900 px-4 h-14 flex items-center justify-between">
         {Brand}
+        <div className="flex items-center gap-1">
+          {resolvedId && <NotificationBell profileId={resolvedId} />}
+        </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
