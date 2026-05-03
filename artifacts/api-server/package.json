@@ -8,7 +8,9 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate:seo": "tsx src/scripts/generate-seo-pages.ts",
+    "audit:seo": "tsx src/scripts/seo-audit.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.19.0",
@@ -40,6 +42,7 @@
     "esbuild-plugin-pino": "^2.3.3",
     "pino-pretty": "^13",
     "thread-stream": "3.1.0",
+    "tsx": "catalog:",
     "vitest": "^3.2.4"
   }
 }

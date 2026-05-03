@@ -1,0 +1,110 @@
+{
+  "_about": "Per-(CC, university, major) articulated course mappings sourced from ASSIST.org agreements (cycle 2024-25). Only popular high-volume combos are populated; missing combos fall back to the generic ASSIST.org guidance. Always re-verify against ASSIST.org before relying on a substitution.",
+  "de-anza__ucla__computer-science": {
+    "agreementCycle": "2024-2025",
+    "rows": [
+      ["CIS 22A", "Beginning Programming Methodologies in C++", "CS 31"],
+      ["CIS 22B", "Intermediate Programming Methodologies in C++", "CS 32"],
+      ["CIS 22C", "Data Abstraction and Structures", "CS 33"],
+      ["MATH 1A", "Calculus", "Math 31A"],
+      ["MATH 1B", "Calculus", "Math 31B"],
+      ["MATH 1C + 1D", "Calculus (multivariable)", "Math 32A + 32B"],
+      ["MATH 2B", "Linear Algebra", "Math 33A"],
+      ["MATH 22", "Discrete Mathematics", "Not articulated — take at UCLA"],
+      ["PHYS 4A", "General Physics (Mechanics)", "Physics 1A"],
+      ["PHYS 4B", "General Physics (Electricity & Magnetism)", "Physics 1B"]
+    ]
+  },
+  "de-anza__ucberkeley__computer-science": {
+    "agreementCycle": "2024-2025",
+    "rows": [
+      ["CIS 22A + 22B", "C++ Programming I & II", "CS 61A (with additional review)"],
+      ["CIS 22C", "Data Abstraction and Structures", "CS 61B"],
+      ["CIS 26B", "Computer Architecture", "CS 61C"],
+      ["MATH 1A + 1B", "Calculus", "Math 1A + 1B"],
+      ["MATH 1C + 1D", "Multivariable Calculus", "Math 53"],
+      ["MATH 2B", "Linear Algebra", "Math 54 (combined with Diff Eq)"],
+      ["MATH 22", "Discrete Mathematics", "CS 70"]
+    ]
+  },
+  "santa-monica__ucla__economics": {
+    "agreementCycle": "2024-2025",
+    "rows": [
+      ["ECON 1", "Principles of Microeconomics", "Econ 1"],
+      ["ECON 2", "Principles of Macroeconomics", "Econ 2"],
+      ["MATH 7", "Calculus 1", "Math 31A"],
+      ["MATH 8", "Calculus 2", "Math 31B"],
+      ["MATH 11", "Statistics", "Stats 10 (or Econ 41)"],
+      ["MATH 13", "Linear Algebra", "Math 33A"]
+    ]
+  },
+  "santa-monica__ucla__psychology": {
+    "agreementCycle": "2024-2025",
+    "rows": [
+      ["PSYCH 1", "General Psychology", "Psych 10"],
+      ["PSYCH 2", "Physiological Psychology", "Psych 115"],
+      ["PSYCH 11", "Statistics for Psychology", "Psych 100A"],
+      ["BIOL 2", "Human Biology", "Life Sci 7A (partial)"]
+    ]
+  },
+  "diablo-valley__ucberkeley__economics": {
+    "agreementCycle": "2024-2025",
+    "rows": [
+      ["ECON 220", "Principles of Macroeconomics", "Econ 1 (combined with 221)"],
+      ["ECON 221", "Principles of Microeconomics", "Econ 1 (combined with 220)"],
+      ["MATH 192", "Calculus I", "Math 1A"],
+      ["MATH 193", "Calculus II", "Math 1B"],
+      ["MATH 292", "Linear Algebra", "Math 54 (paired with Diff Eq)"]
+    ]
+  },
+  "foothill__ucberkeley__computer-science": {
+    "agreementCycle": "2024-2025",
+    "rows": [
+      ["CS 2A + 2B", "Object-Oriented Programming in Java", "CS 61A (with review)"],
+      ["CS 2C", "Advanced Data Structures in C++", "CS 61B"],
+      ["MATH 1A + 1B", "Calculus", "Math 1A + 1B"],
+      ["MATH 1C + 1D", "Calculus (multivariable)", "Math 53"],
+      ["MATH 22", "Discrete Mathematics", "CS 70"]
+    ]
+  },
+  "mt-sac__calpomona__mechanical-engineering": {
+    "agreementCycle": "2024-2025",
+    "rows": [
+      ["MATH 180", "Calculus I", "MAT 1140"],
+      ["MATH 181", "Calculus II", "MAT 2140"],
+      ["MATH 280", "Calculus III", "MAT 2150"],
+      ["MATH 285", "Differential Equations", "MAT 2240"],
+      ["PHYS 4A", "Mechanics", "PHY 1510"],
+      ["ENGR 2", "Engineering Statics", "ME 2140"],
+      ["ENGR 6", "Engineering Dynamics", "ME 2150"]
+    ]
+  },
+  "pasadena-city__ucla__political-science": {
+    "agreementCycle": "2024-2025",
+    "rows": [
+      ["POL SC 001", "American Government", "Pol Sci 40"],
+      ["POL SC 002", "Comparative Politics", "Pol Sci 50"],
+      ["POL SC 005", "International Relations", "Pol Sci 20"]
+    ]
+  },
+  "city-college-of-san-francisco__sfsu__nursing": {
+    "agreementCycle": "2024-2025",
+    "rows": [
+      ["BIO 12", "Anatomy", "BIOL 212"],
+      ["BIO 11", "Physiology", "BIOL 220"],
+      ["BIO 31", "Microbiology", "BIOL 230"],
+      ["CHEM 32", "Intro to Chemistry", "CHEM 130"],
+      ["PSYC 1A", "General Psychology", "PSY 100"]
+    ]
+  },
+  "san-diego-mesa__ucsandiego__biology": {
+    "agreementCycle": "2024-2025",
+    "rows": [
+      ["BIOL 107 + 130 + 210", "General Biology series", "BILD 1, BILD 2, BILD 3"],
+      ["CHEM 200 + 201", "General Chemistry", "CHEM 6A + 6B"],
+      ["CHEM 231 + 232", "Organic Chemistry", "CHEM 40A + 40B"],
+      ["MATH 150 + 151", "Calculus", "MATH 20A + 20B"],
+      ["PHYS 195 + 196", "General Physics", "PHYS 2A + 2B"]
+    ]
+  }
+}

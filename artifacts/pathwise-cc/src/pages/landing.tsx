@@ -161,6 +161,11 @@ export default function Landing() {
             <span key={c}>{c}</span>
           ))}
         </div>
+        <div className="mt-4">
+          <a href="/transfer" className="pwc-font-mono uppercase tracking-wider text-slate-600 underline">
+            // Browse CC → UC/CSU transfer guides
+          </a>
+        </div>
         <span className="hidden"><Map /></span>
       </footer>
     </div>
