@@ -11,6 +11,7 @@ import {
   Star, GraduationCap, Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageMotion } from "@/components/page-motion";
 
 interface CampusOpportunityItem {
   name: string;
@@ -203,6 +204,7 @@ export default function Pathways() {
           </Button>
         </header>
 
+        <PageMotion>
         {generating && (
           <div className="text-center py-16">
             <Loader2 className="h-12 w-12 animate-spin text-indigo-500 mx-auto mb-4" />
@@ -455,6 +457,7 @@ export default function Pathways() {
             </div>
           </div>
         )}
+        </PageMotion>
       </main>
     </div>
   );

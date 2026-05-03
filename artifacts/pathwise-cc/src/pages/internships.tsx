@@ -5,6 +5,7 @@ import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { PageMotion } from "@/components/page-motion";
 import {
   Search, Loader2, ExternalLink, MapPin, Clock, DollarSign,
   ChevronDown, ChevronUp, Star, Shield, Beaker, Building2,
@@ -343,6 +344,7 @@ export default function InternshipsPage() {
           </p>
         </div>
 
+        <PageMotion>
         {/* Search / generate panel */}
         <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-200 rounded-2xl p-6 mb-6">
           <div className="flex items-start gap-4">
@@ -582,6 +584,7 @@ export default function InternshipsPage() {
         <p className="text-xs text-slate-600 text-center py-8">
           {t("pages.internships.finderFooter")}
         </p>
+        </PageMotion>
       </main>
     </div>
   );

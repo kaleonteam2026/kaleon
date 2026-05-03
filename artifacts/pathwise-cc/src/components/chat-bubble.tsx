@@ -295,10 +295,10 @@ export default function ChatBubble({ userId }: { userId?: string }) {
           aria-modal="true"
           aria-label={t("chat.title")}
           tabIndex={-1}
-          initial={reducedMotion ? false : { opacity: 0, y: 8, scale: 0.98 }}
-          animate={reducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
-          exit={reducedMotion ? undefined : { opacity: 0, y: 8, scale: 0.98 }}
-          transition={{ duration: DUR.fast, ease: EASE_OUT }}
+          initial={reducedMotion ? false : { opacity: 0, y: 4 }}
+          animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+          exit={reducedMotion ? undefined : { opacity: 0, y: 4 }}
+          transition={{ duration: 0.16, ease: EASE_OUT }}
           className="bg-white border-2 border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] flex flex-col overflow-hidden focus:outline-none origin-bottom-right"
           style={{ width: "min(90vw, 380px)", height: "min(75vh, 560px)" }}>
           {/* Header */}

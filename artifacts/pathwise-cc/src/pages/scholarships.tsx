@@ -3,7 +3,7 @@ import { useParams } from "wouter";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import Nav from "@/components/nav";
-import { fadeUp, staggerContainer, useMotionEnabled } from "@/lib/motion";
+import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift } from "@/lib/motion";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -281,8 +281,10 @@ export default function Scholarships() {
 
   const pid = profileId ? parseInt(profileId) : null;
   const schMotionEnabled = useMotionEnabled();
+  const schDirSign = useDirSign();
   const schItemVariants = useMemo(() => fadeUp(8, 0.22), []);
   const schContainerVariants = useMemo(() => staggerContainer(0.05), []);
+  const schLift = useMemo(() => (schMotionEnabled ? hoverLift(schDirSign) : undefined), [schMotionEnabled, schDirSign]);
 
   useEffect(() => {
     const scholarshipUrl = pid ? `/api/profiles/${pid}/recommended-scholarships` : "/api/scholarships";
@@ -392,7 +394,7 @@ export default function Scholarships() {
               variants={schContainerVariants}
             >
               {filteredScholarships.map(s => (
-                <motion.div key={s.id} variants={schItemVariants}>
+                <motion.div key={s.id} variants={schItemVariants} whileHover={schLift}>
                 <Card className="hover:border-indigo-200 hover:shadow-sm transition-all">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-3">

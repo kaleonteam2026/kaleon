@@ -4,6 +4,7 @@ import Nav from "@/components/nav";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLiveQuota } from "@/hooks/use-live-quota";
+import { PageMotion } from "@/components/page-motion";
 import {
   CalendarDays, CheckCircle2, Clock, AlertCircle, ExternalLink,
   ChevronRight, Info, GraduationCap, DollarSign, FileText,
@@ -156,6 +157,7 @@ export default function DeadlineCalendar() {
           </p>
         </div>
 
+        <PageMotion>
         {/* Next critical deadline banner */}
         {nextCritical && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 flex items-start gap-3">
@@ -343,6 +345,7 @@ export default function DeadlineCalendar() {
         <p className="text-xs text-slate-400 text-center mt-6 pb-4">
           DYP Transfer Calendar · {cycleYear}–{nextCycleYear} cycle · Verify all dates officially
         </p>
+        </PageMotion>
       </main>
     </div>
   );

@@ -3,7 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import Nav from "@/components/nav";
-import { fadeUp, staggerContainer, useMotionEnabled } from "@/lib/motion";
+import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -64,7 +64,9 @@ export default function Matches() {
   const [filterSystem, setFilterSystem] = useState("all");
   const pid = parseInt(profileId);
   const motionEnabled = useMotionEnabled();
+  const dirSign = useDirSign();
   const itemVariants = useMemo(() => fadeUp(8, 0.22), []);
+  const lift = useMemo(() => (motionEnabled ? hoverLift(dirSign) : undefined), [motionEnabled, dirSign]);
   const containerVariants = useMemo(() => staggerContainer(0.05), []);
 
   useEffect(() => {
@@ -134,7 +136,7 @@ export default function Matches() {
           variants={containerVariants}
         >
           {filtered.map((match, idx) => (
-            <motion.div key={match.universityId} variants={itemVariants}>
+            <motion.div key={match.universityId} variants={itemVariants} whileHover={lift}>
             <Card className="hover:border-indigo-200 hover:shadow-sm transition-all">
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">

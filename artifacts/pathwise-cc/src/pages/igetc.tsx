@@ -5,6 +5,7 @@ import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { PageMotion } from "@/components/page-motion";
 import {
   CheckCircle2, Circle, Sparkles, Loader2, Info, ExternalLink, Save,
   BookOpen, AlertCircle, ChevronDown, ChevronUp,
@@ -179,6 +180,7 @@ export default function IgetcTracker() {
           </p>
         </div>
 
+        <PageMotion>
         {/* Progress bar */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-6">
           <div className="flex items-center justify-between mb-3">
@@ -290,6 +292,7 @@ export default function IgetcTracker() {
             {t("pages.igetc.footerWarning")}
           </p>
         </div>
+        </PageMotion>
       </main>
     </div>
   );

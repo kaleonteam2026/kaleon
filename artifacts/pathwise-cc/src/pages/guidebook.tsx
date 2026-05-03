@@ -9,6 +9,7 @@ import {
   CheckSquare, Square, CheckCircle2,
 } from "lucide-react";
 import { MarkdownContent } from "@/components/markdown-renderer";
+import { PageMotion } from "@/components/page-motion";
 
 interface Guidebook {
   id: number;
@@ -100,6 +101,7 @@ export default function Guidebook() {
           </Button>
         </div>
 
+        <PageMotion>
         {/* Disclaimer */}
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5 flex gap-2.5">
           <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -131,6 +133,7 @@ export default function Guidebook() {
           </Button>
           <p className="text-xs text-slate-400 mt-3">{t("pages.guidebook.footer")}</p>
         </div>
+        </PageMotion>
       </main>
     </div>
   );

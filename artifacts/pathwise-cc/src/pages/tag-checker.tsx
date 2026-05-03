@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import Nav from "@/components/nav";
 import { cn } from "@/lib/utils";
+import { PageMotion } from "@/components/page-motion";
 import {
   CheckCircle2, XCircle, AlertCircle, ExternalLink, Info,
   GraduationCap, TrendingUp, CalendarDays, BookOpen,
@@ -175,6 +176,7 @@ export default function TagChecker() {
           </p>
         </div>
 
+        <PageMotion>
         {/* Explainer */}
         <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 mb-6">
           <p className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
@@ -290,6 +292,7 @@ export default function TagChecker() {
             </div>
           </>
         )}
+        </PageMotion>
       </main>
     </div>
   );

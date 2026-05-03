@@ -10,6 +10,7 @@ import {
   Link2, Copy, Check, X, RefreshCw,
 } from "lucide-react";
 import { MarkdownContent } from "@/components/markdown-renderer";
+import { PageMotion } from "@/components/page-motion";
 
 interface AcademicRoadmap {
   id: number;
@@ -252,6 +253,7 @@ export default function Roadmap() {
           </Button>
         </div>
 
+        <PageMotion>
         {/* Stale infographic banner — your roadmap changed since the cached image */}
         {status?.isStale && status.cached && (
           <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 mb-5 shadow-sm">
@@ -443,6 +445,7 @@ export default function Roadmap() {
           </Button>
           <p className="text-xs text-slate-400 mt-3">{t("common.verifyFooter")}</p>
         </div>
+        </PageMotion>
       </main>
     </div>
   );

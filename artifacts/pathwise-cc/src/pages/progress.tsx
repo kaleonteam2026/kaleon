@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { MarkdownContent } from "@/components/markdown-renderer";
 import { cn } from "@/lib/utils";
+import { PageMotion } from "@/components/page-motion";
 import {
   TrendingUp, Plus, Loader2, Trash2, AlertTriangle, Download,
   GraduationCap, Award, Briefcase, CheckCircle2, Star, AlertCircle,
@@ -513,6 +514,7 @@ export default function ProgressTracker() {
           </p>
         </div>
 
+        <PageMotion>
         {/* ── PATHWAY LOCK ─────────────────────────────────────────────────────── */}
         {!pathwayInfo?.hasSelectedPathway ? (
           <PathwayLockScreen profileId={pid} />
@@ -799,6 +801,7 @@ export default function ProgressTracker() {
         <p className="text-xs text-slate-600 text-center pb-10">
           {t("pages.progress.footerDisclaimer")}
         </p>
+        </PageMotion>
       </main>
     </div>
   );

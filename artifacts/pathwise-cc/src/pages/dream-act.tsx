@@ -1,6 +1,7 @@
 import Nav from "@/components/nav";
 import { ExternalLink, Heart, BookOpen, DollarSign, Shield, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageMotion } from "@/components/page-motion";
 
 interface Resource { label: string; url: string; desc: string; }
 
@@ -122,6 +123,7 @@ export default function DreamAct() {
           </p>
         </div>
 
+        <PageMotion>
         {/* Important note */}
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3 mb-6">
           <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -199,6 +201,7 @@ export default function DreamAct() {
         <p className="text-xs text-slate-400 text-center mt-6 pb-4">
           DYP · AB 540 & Dream Act Guide · Information current as of early 2025 · Always verify with official sources
         </p>
+        </PageMotion>
       </main>
     </div>
   );
