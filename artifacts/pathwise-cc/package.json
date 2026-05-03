@@ -52,6 +52,7 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@workspace/api-client-react": "workspace:*",
+    "@workspace/pathwise-deadlines": "workspace:*",
     "@workspace/replit-auth-web": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",

@@ -188,6 +188,9 @@ importers:
       '@workspace/integrations-anthropic-ai':
         specifier: workspace:*
         version: link:../../lib/integrations-anthropic-ai
+      '@workspace/pathwise-deadlines':
+        specifier: workspace:*
+        version: link:../../lib/pathwise-deadlines
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
@@ -567,6 +570,9 @@ importers:
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../../lib/api-client-react
+      '@workspace/pathwise-deadlines':
+        specifier: workspace:*
+        version: link:../../lib/pathwise-deadlines
       '@workspace/replit-auth-web':
         specifier: workspace:*
         version: link:../../lib/replit-auth-web
@@ -725,6 +731,8 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.3.5
+
+  lib/pathwise-deadlines: {}
 
   lib/replit-auth-web:
     dependencies:
