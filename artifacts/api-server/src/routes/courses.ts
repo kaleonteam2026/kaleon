@@ -5,7 +5,7 @@ import { generateTransferabilityAnalysis, generateCourseCatalog } from "../servi
 import { getOwnedProfile, getOwnedCourse } from "../lib/ownership";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 import { invalidateIgetcAnalysis } from "../lib/igetc-cache";
-import { getRequestLocale, profileLocale } from "../lib/locale.js";
+import { resolveAuthedLocale } from "../lib/locale.js";
 
 const router = Router();
 
@@ -236,7 +236,7 @@ router.get("/profiles/:profileId/course-catalog", async (req, res) => {
 
     const college = profile.communityCollege;
     const major = profile.intendedMajor ?? "General Education";
-    const locale = getRequestLocale(req) || profileLocale(profile);
+    const locale = resolveAuthedLocale(profile, req);
     const cacheKey = `${college}::${major}::${locale}`;
 
     const cached = catalogCache.get(cacheKey);
@@ -285,7 +285,7 @@ router.post("/profiles/:profileId/transferability-analysis", async (req, res) =>
 
     // Check cache (after ownership check to avoid leaking cached data to non-owners)
     const profile = owner.profile;
-    const locale = getRequestLocale(req) || profileLocale(profile);
+    const locale = resolveAuthedLocale(profile, req);
     const cacheKey = `${profileId}::${locale}`;
     const cached = transferabilityCache.get(cacheKey);
     if (cached && Date.now() - cached.cachedAt < TRANSFER_TTL) {

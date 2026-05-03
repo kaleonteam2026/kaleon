@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { generateAcademicRoadmap } from "../services/aiService.js";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 import { getOwnedPathway, getOwnedRoadmap, getOwnedProfile } from "../lib/ownership";
-import { getRequestLocale, profileLocale } from "../lib/locale";
+import { resolveAuthedLocale } from "../lib/locale";
 import {
   buildDashboardUrl,
   buildInfographicData,
@@ -62,7 +62,7 @@ router.post("/pathways/:pathwayId/generate-roadmap", async (req, res) => {
     const profile = owner.profile;
     const courses = await db.select().from(coursesTable).where(eq(coursesTable.profileId, pathway.profileId));
 
-    const locale = getRequestLocale(req) || profileLocale(profile);
+    const locale = resolveAuthedLocale(profile, req);
     const markdown = await generateAcademicRoadmap(
       profile as unknown as Record<string, unknown>,
       pathway.reportJson as Record<string, unknown> ?? {},

@@ -49,6 +49,20 @@ export function profileLocale(profile: { preferredLocale?: string | null }): str
   return typeof v === "string" && SUPPORTED.has(v) ? v : "en";
 }
 
+/**
+ * Resolve the effective locale for an authenticated request: prefer the user's
+ * stored profile locale (server-side source of truth), falling back to the
+ * request's header/Accept-Language locale only when no preference is stored.
+ */
+export function resolveAuthedLocale(
+  profile: { preferredLocale?: string | null } | null | undefined,
+  req: Request,
+): string {
+  const v = profile?.preferredLocale;
+  if (typeof v === "string" && SUPPORTED.has(v)) return v;
+  return getRequestLocale(req);
+}
+
 /** Human-readable language name for prompt instruction. */
 export function languageName(locale: string): string {
   return LANG_NAMES[locale] ?? "English";

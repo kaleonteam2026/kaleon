@@ -3,7 +3,7 @@ import universities from "../data/universities.json" assert { type: "json" };
 import { generateCampusOpportunities, generateCCOpportunities } from "../services/aiService.js";
 import { getOwnedProfile } from "../lib/ownership";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
-import { getRequestLocale, profileLocale } from "../lib/locale";
+import { getRequestLocale, resolveAuthedLocale } from "../lib/locale";
 
 const router = Router();
 
@@ -93,7 +93,7 @@ router.get("/profiles/:profileId/cc-campus-opportunities", async (req, res) => {
     const major = profile.intendedMajor ?? "General Studies";
     const city = "California";
 
-    const locale = getRequestLocale(req) || profileLocale(profile);
+    const locale = resolveAuthedLocale(profile, req);
     const cacheKey = `${collegeName}__${major}__${locale}`;
     const cached = ccOppsCache.get(cacheKey);
     if (cached && Date.now() - cached.cachedAt < CACHE_TTL) {

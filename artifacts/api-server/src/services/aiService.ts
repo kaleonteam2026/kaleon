@@ -14,9 +14,7 @@ Your tone is encouraging, direct, realistic, and nonjudgmental. Always explain w
 
 When returning pathway data, respond ONLY with valid JSON — no markdown fences, no preamble, no explanation outside the JSON structure.`;
 
-import { localePromptSuffix as _lps, localeJsonPromptSuffix as _ljs } from "../lib/locale.js";
-const localePromptSuffix = _lps;
-const localeJsonPromptSuffix = _ljs;
+import { localePromptSuffix, localeJsonPromptSuffix } from "../lib/locale.js";
 
 interface PathwayResult {
   type: string;
@@ -58,7 +56,6 @@ export async function generatePathways(
   opportunities: Record<string, unknown>[],
   locale: string = "en",
 ): Promise<PathwayResult[]> {
-  const { localeJsonPromptSuffix } = await import("../lib/locale.js");
   const localeSuffix = localeJsonPromptSuffix(locale);
   const prompt = `Generate exactly three transfer pathways for this community college student.
 
@@ -854,7 +851,6 @@ export async function generateInternshipMatches(
   selectedPathway: Record<string, unknown> | null,
   locale: string = "en",
 ): Promise<InternshipMatchResult> {
-  const { localeJsonPromptSuffix } = await import("../lib/locale.js");
   const internshipLocaleSuffix = localeJsonPromptSuffix(locale);
   const college = typeof profile.communityCollege === "string" ? profile.communityCollege : "a California community college";
   const major = typeof profile.intendedMajor === "string" ? profile.intendedMajor : "undeclared";
@@ -1484,7 +1480,6 @@ export async function synthesizeDeepDive(
   inputs: DeepDiveSectionInput[],
   locale: string = "en",
 ): Promise<DeepDiveSynthSection[]> {
-  const { localeJsonPromptSuffix } = await import("../lib/locale.js");
   const deepDiveLocaleSuffix = localeJsonPromptSuffix(locale);
   const evidence = inputs.map((s) => {
     const cites = s.citations.map((c, i) => `[${i + 1}] ${c.title ?? c.url}: ${c.snippet ?? ""}`).join("\n");
