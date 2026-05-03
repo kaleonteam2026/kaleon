@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
-import { SUPPORTED_LOCALES, changeLocale, getStoredLocale, type SupportedLocale } from "@/i18n/config";
+import { SUPPORTED_LOCALES, changeLocale, LOCALE_STORAGE_KEY, type SupportedLocale } from "@/i18n/config";
 
 interface AuthUser {
   id: string;
@@ -25,20 +25,23 @@ async function syncLocaleWithServer(): Promise<void> {
     const res = await fetch("/api/me/locale", { credentials: "include" });
     if (!res.ok) return;
     const { locale } = await res.json() as { locale?: string | null };
-    const localStored = getStoredLocale();
+    const explicitStored = typeof window !== "undefined"
+      ? window.localStorage.getItem(LOCALE_STORAGE_KEY)
+      : null;
     const valid = (l: unknown): l is SupportedLocale =>
       typeof l === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(l);
-    if (valid(localStored) && localStored !== locale) {
-      // Guest/device-chosen locale wins on sign-in: push it up to the server
-      // so a freshly chosen language carries through authentication.
+    if (valid(explicitStored) && explicitStored !== locale) {
+      // Explicit guest/device choice exists: push it up so the freshly
+      // chosen language carries through sign-in.
       await fetch("/api/me/locale", {
         method: "PATCH",
         credentials: "include",
-        headers: { "Content-Type": "application/json", "x-dyp-locale": localStored },
-        body: JSON.stringify({ locale: localStored }),
+        headers: { "Content-Type": "application/json", "x-dyp-locale": explicitStored },
+        body: JSON.stringify({ locale: explicitStored }),
       });
-    } else if (valid(locale) && locale !== localStored) {
-      // No device preference set — adopt the server's stored locale.
+    } else if (valid(locale)) {
+      // No explicit device choice — adopt the server's per-user preference
+      // (this also persists across fresh browsers/devices).
       await changeLocale(locale);
     }
   } catch {
