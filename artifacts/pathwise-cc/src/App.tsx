@@ -1,5 +1,6 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -44,8 +45,18 @@ function ChatBubbleWrapper() {
 }
 
 function Router() {
+  const [location] = useLocation();
+  const reduced = useReducedMotion();
   return (
     <>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={location}
+          initial={reduced ? false : { opacity: 0 }}
+          animate={reduced ? undefined : { opacity: 1 }}
+          exit={reduced ? undefined : { opacity: 0 }}
+          transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+        >
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/s/:token" component={ShareRoadmap} />
@@ -142,6 +153,8 @@ function Router() {
         <Route path="/admin/seo-conversions" component={AdminSeoConversions} />
         <Route component={NotFound} />
       </Switch>
+        </motion.div>
+      </AnimatePresence>
       <ChatBubbleWrapper />
     </>
   );

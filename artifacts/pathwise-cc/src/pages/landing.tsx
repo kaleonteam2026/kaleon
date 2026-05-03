@@ -86,10 +86,14 @@ export default function Landing() {
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900 pwc-font-sans">
       <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
 
-      {/* Header — height stays fixed (no CLS); only shadow/border swap on scroll. */}
+      {/* Header — tightens h-14 → h-12 on scroll past 24px (sticky element only;
+          page content is offset by the sticky header so h change does not shift
+          document flow). Border swaps to a hard shadow at the same time. */}
       <header
-        className={`sticky top-0 z-50 bg-white px-6 md:px-12 h-14 flex items-center justify-between border-b-2 border-slate-900 transition-shadow duration-200 ease-out ${
-          scrolled && motionOn ? "shadow-[0_2px_0_0_rgba(15,23,42,1)]" : ""
+        className={`sticky top-0 z-50 bg-white px-6 md:px-12 flex items-center justify-between transition-[height,box-shadow,border-color] duration-200 ease-out ${
+          scrolled && motionOn
+            ? "h-12 border-b border-transparent shadow-[0_2px_0_0_rgba(15,23,42,1)]"
+            : "h-14 border-b-2 border-slate-900"
         }`}
       >
         <div className="flex items-center gap-2 font-bold text-lg uppercase tracking-tight">
@@ -131,20 +135,12 @@ export default function Landing() {
           </motion.span>
         </h1>
 
-        <motion.p
-          {...mountProps}
-          variants={fadeUp(4, DUR.slow)}
-          transition={motionOn ? { duration: DUR.slow, ease: EASE_OUT, delay: 0.08 } : undefined}
-          className="text-lg md:text-xl text-slate-700 mb-8 max-w-2xl leading-relaxed"
-        >
+        {/* Subtitle + CTA stay instantly visible (LCP-critical). No initial=hidden. */}
+        <p className="text-lg md:text-xl text-slate-700 mb-8 max-w-2xl leading-relaxed">
           <Trans i18nKey="landing.heroSubtitle" components={{ strong: <strong /> }} />
-        </motion.p>
+        </p>
 
-        <motion.div
-          {...mountProps}
-          variants={fadeUp(2, DUR.med)}
-          className="flex flex-col sm:flex-row gap-4 items-start"
-        >
+        <div className="flex flex-col sm:flex-row gap-4 items-start">
           <button
             onClick={login}
             onMouseEnter={() => setCtaHover(true)}
@@ -163,7 +159,7 @@ export default function Landing() {
           <p className="text-xs pwc-font-mono uppercase tracking-wider text-slate-500 self-center">
             {t("landing.heroNote")}
           </p>
-        </motion.div>
+        </div>
       </section>
 
       {/* Features */}
