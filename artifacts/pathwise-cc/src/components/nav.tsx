@@ -1,6 +1,8 @@
 import { Link, useLocation } from "wouter";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
+import { DUR, EASE_OUT, useMotionEnabled } from "@/lib/motion";
 import {
   LayoutDashboard, BookOpen, Target, Map, Award, LogOut, Menu, X,
   User, TrendingUp, Search, ChevronRight, Download,
@@ -31,6 +33,7 @@ export default function Nav({ profileId }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [resolvedId, setResolvedId] = useState<number | null>(profileId ?? null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const motionEnabled = useMotionEnabled();
   useFocusTrap(mobileMenuRef, mobileOpen, () => setMobileOpen(false));
 
   useEffect(() => {
@@ -223,12 +226,23 @@ export default function Nav({ profileId }: Props) {
               aria-label={tab.label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex-1 flex flex-col items-center justify-center gap-0.5 border-r border-slate-200 last:border-r-0 min-h-[56px] py-2 px-1 focus:outline-none focus:bg-slate-100",
-                active && "bg-slate-900 text-white focus:bg-slate-800"
+                "relative flex-1 flex flex-col items-center justify-center gap-0.5 border-r border-slate-200 last:border-r-0 min-h-[56px] py-2 px-1 focus:outline-none focus:bg-slate-100",
+                active ? "text-white" : "text-slate-700"
               )}
             >
-              <tab.icon className={cn("h-5 w-5", active ? "text-white" : "text-slate-700")} aria-hidden="true" />
-              <span className={cn("text-[10px] pwc-font-mono uppercase font-bold", active ? "text-white" : "text-slate-700")}>
+              {active && motionEnabled && (
+                <motion.span
+                  layoutId="pwc-bottom-tab-pill"
+                  className="absolute inset-0 bg-slate-900"
+                  transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  aria-hidden="true"
+                />
+              )}
+              {active && !motionEnabled && (
+                <span className="absolute inset-0 bg-slate-900" aria-hidden="true" />
+              )}
+              <tab.icon className={cn("h-5 w-5 relative", active ? "text-white" : "text-slate-700")} aria-hidden="true" />
+              <span className={cn("text-[10px] pwc-font-mono uppercase font-bold relative", active ? "text-white" : "text-slate-700")}>
                 {tab.label}
               </span>
             </Link>

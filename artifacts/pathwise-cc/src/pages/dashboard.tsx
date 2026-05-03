@@ -2,8 +2,10 @@ import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 import Nav from "@/components/nav";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { fadeUp, staggerContainer, useMotionEnabled } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import {
   AlertCircle,
@@ -84,6 +86,9 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const reducedMotion = useReducedMotion();
+  const motionEnabled = useMotionEnabled();
+  const itemVariants = useMemo(() => fadeUp(8, 0.22), []);
+  const containerVariants = useMemo(() => staggerContainer(0.05), []);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -434,11 +439,17 @@ export default function Dashboard() {
                   <FileText size={16} /> {t("dashboard.ccSuccessModules")}
                 </h2>
               </div>
-              <div className="flex-grow flex flex-col">
+              <motion.div
+                className="flex-grow flex flex-col"
+                initial={motionEnabled ? "hidden" : false}
+                animate={motionEnabled ? "show" : undefined}
+                variants={containerVariants}
+              >
                 {roadmapItems.map((item) => (
-                  <button
+                  <motion.button
                     key={item.title}
                     onClick={() => navigate(item.href)}
+                    variants={itemVariants}
                     className="flex items-center p-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 cursor-pointer transition-colors group text-left"
                   >
                     <div className="h-8 w-8 rounded bg-slate-100 flex items-center justify-center mr-3 text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors">
@@ -458,9 +469,9 @@ export default function Dashboard() {
                       {item.metric}
                       <ChevronRight size={14} className="inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                  </button>
+                  </motion.button>
                 ))}
-              </div>
+              </motion.div>
             </div>
 
             <div className="bg-slate-200 border border-slate-300 p-4 rounded text-xs text-slate-600 flex gap-3">

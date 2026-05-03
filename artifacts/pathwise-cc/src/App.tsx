@@ -47,9 +47,9 @@ function ChatBubbleWrapper() {
 function Router() {
   const [location] = useLocation();
   const reduced = useReducedMotion();
-  // Only crossfade between landing ("/") and the rest of the app, so authenticated
-  // routes do not animate against each other (out of scope for Task #51).
-  const transitionKey = location === "/" ? "landing" : "app";
+  // Crossfade across all routes so every page shares the brutalist transition
+  // vocabulary established on the landing page (Task #53).
+  const transitionKey = location;
   return (
     <>
       <AnimatePresence mode="wait" initial={false}>

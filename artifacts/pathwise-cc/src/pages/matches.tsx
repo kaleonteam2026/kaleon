@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 import Nav from "@/components/nav";
+import { fadeUp, staggerContainer, useMotionEnabled } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,6 +63,9 @@ export default function Matches() {
   const [search, setSearch] = useState("");
   const [filterSystem, setFilterSystem] = useState("all");
   const pid = parseInt(profileId);
+  const motionEnabled = useMotionEnabled();
+  const itemVariants = useMemo(() => fadeUp(8, 0.22), []);
+  const containerVariants = useMemo(() => staggerContainer(0.05), []);
 
   useEffect(() => {
     fetch(`/api/profiles/${pid}/generate-matches`, { method: "POST", credentials: "include" })
@@ -122,9 +127,15 @@ export default function Matches() {
         </div>
 
         {/* Results */}
-        <div className="space-y-3 pb-12">
+        <motion.div
+          className="space-y-3 pb-12"
+          initial={motionEnabled ? "hidden" : false}
+          animate={motionEnabled ? "show" : undefined}
+          variants={containerVariants}
+        >
           {filtered.map((match, idx) => (
-            <Card key={match.universityId} className="hover:border-indigo-200 hover:shadow-sm transition-all">
+            <motion.div key={match.universityId} variants={itemVariants}>
+            <Card className="hover:border-indigo-200 hover:shadow-sm transition-all">
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   {/* Rank */}
@@ -194,8 +205,9 @@ export default function Matches() {
                 <DeepDivePanel universityId={match.universityId} universityName={match.name} profileId={pid} />
               </CardContent>
             </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Disclaimer + CTA */}
         <div className="border-t border-slate-200 py-8 space-y-4">

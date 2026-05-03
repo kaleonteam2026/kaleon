@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
+import { motion } from "framer-motion";
 import Nav from "@/components/nav";
 import { cn } from "@/lib/utils";
+import { fadeUp, useMotionEnabled } from "@/lib/motion";
 
 const FONT_STYLES = `
   .pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
@@ -22,6 +24,8 @@ export function PageShell({
   const widthClass =
     maxWidth === "narrow" ? "max-w-3xl" :
     maxWidth === "wide" ? "max-w-[1280px]" : "max-w-5xl";
+  const motionEnabled = useMotionEnabled();
+  const variants = fadeUp(8, 0.22);
 
   return (
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900 pwc-font-sans">
@@ -29,6 +33,7 @@ export function PageShell({
       <Nav profileId={profileId} />
       <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none">
         <div className={cn("mx-auto p-4 md:p-6", widthClass)}>
+          {/* Header is intentionally not animated so the LCP H1 paints immediately. */}
           <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 border-b-2 border-slate-900 pb-4 mb-6">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight uppercase">{title}</h1>
@@ -38,7 +43,13 @@ export function PageShell({
             </div>
             {action && <div className="flex-shrink-0">{action}</div>}
           </header>
-          {children}
+          {motionEnabled ? (
+            <motion.div initial="hidden" animate="show" variants={variants}>
+              {children}
+            </motion.div>
+          ) : (
+            children
+          )}
         </div>
       </main>
     </div>

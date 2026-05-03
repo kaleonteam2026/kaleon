@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { DUR, EASE_OUT } from "@/lib/motion";
 import { MessageCircle, X, Send, Loader2, Bot, User, MessagesSquare, Mic, Trophy, Sparkles, RotateCcw } from "lucide-react";
 
 type Mode = "ask" | "interview";
@@ -285,14 +287,19 @@ export default function ChatBubble({ userId }: { userId?: string }) {
 
   return (
     <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end gap-2 pwc-font-sans" style={{ fontFamily: "Inter, sans-serif" }}>
+      <AnimatePresence>
       {open && (
-        <div
+        <motion.div
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label={t("chat.title")}
           tabIndex={-1}
-          className="bg-white border-2 border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] flex flex-col overflow-hidden focus:outline-none"
+          initial={reducedMotion ? false : { opacity: 0, y: 8, scale: 0.98 }}
+          animate={reducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+          exit={reducedMotion ? undefined : { opacity: 0, y: 8, scale: 0.98 }}
+          transition={{ duration: DUR.fast, ease: EASE_OUT }}
+          className="bg-white border-2 border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] flex flex-col overflow-hidden focus:outline-none origin-bottom-right"
           style={{ width: "min(90vw, 380px)", height: "min(75vh, 560px)" }}>
           {/* Header */}
           <div className="bg-slate-900 px-4 py-3 flex items-center justify-between flex-shrink-0 border-b-2 border-slate-900">
@@ -461,8 +468,9 @@ export default function ChatBubble({ userId }: { userId?: string }) {
               </button>
             </div>
           )}
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       <button
         onClick={() => setOpen(!open)}

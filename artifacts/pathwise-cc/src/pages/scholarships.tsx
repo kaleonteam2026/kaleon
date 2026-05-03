@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams } from "wouter";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 import Nav from "@/components/nav";
+import { fadeUp, staggerContainer, useMotionEnabled } from "@/lib/motion";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -278,6 +280,9 @@ export default function Scholarships() {
   const [ccFilter, setCcFilter] = useState("all");
 
   const pid = profileId ? parseInt(profileId) : null;
+  const schMotionEnabled = useMotionEnabled();
+  const schItemVariants = useMemo(() => fadeUp(8, 0.22), []);
+  const schContainerVariants = useMemo(() => staggerContainer(0.05), []);
 
   useEffect(() => {
     const scholarshipUrl = pid ? `/api/profiles/${pid}/recommended-scholarships` : "/api/scholarships";
@@ -380,9 +385,15 @@ export default function Scholarships() {
               <Input className="pl-9" placeholder={t("pages.scholarships.searchPlaceholder")} value={search}
                 onChange={e => setSearch(e.target.value)} />
             </div>
-            <div className="space-y-3 pb-12">
+            <motion.div
+              className="space-y-3 pb-12"
+              initial={schMotionEnabled ? "hidden" : false}
+              animate={schMotionEnabled ? "show" : undefined}
+              variants={schContainerVariants}
+            >
               {filteredScholarships.map(s => (
-                <Card key={s.id} className="hover:border-indigo-200 hover:shadow-sm transition-all">
+                <motion.div key={s.id} variants={schItemVariants}>
+                <Card className="hover:border-indigo-200 hover:shadow-sm transition-all">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
@@ -421,8 +432,9 @@ export default function Scholarships() {
                     </div>
                   </CardContent>
                 </Card>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </>
         )}
 
