@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { generateGuidebook } from "../services/aiService.js";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 import { getOwnedPathway, getOwnedGuidebook, getOwnedProfile } from "../lib/ownership";
+import { getRequestLocale, profileLocale } from "../lib/locale";
 
 const router = Router();
 
@@ -49,12 +50,14 @@ router.post("/pathways/:pathwayId/generate-guidebook", async (req, res) => {
     const courses = await db.select().from(coursesTable)
       .where(eq(coursesTable.profileId, pathway.profileId));
 
+    const locale = getRequestLocale(req) || profileLocale(profile);
     const markdown = await generateGuidebook(
       profile as unknown as Record<string, unknown>,
       pathway.reportJson as Record<string, unknown> ?? {},
       courses as unknown as Record<string, unknown>[],
       (scholarships as unknown as Record<string, unknown>[]).slice(0, 15),
-      (opportunities as unknown as Record<string, unknown>[]).slice(0, 10)
+      (opportunities as unknown as Record<string, unknown>[]).slice(0, 10),
+      locale
     );
 
     const report = pathway.reportJson as Record<string, unknown> | null;

@@ -1,13 +1,7 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
-
 import en from "./locales/en.json";
-import es from "./locales/es.json";
-import zh from "./locales/zh.json";
-import vi from "./locales/vi.json";
-import tl from "./locales/tl.json";
-import ko from "./locales/ko.json";
 
 export const SUPPORTED_LOCALES = ["en", "es", "zh", "vi", "tl", "ko"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
@@ -44,17 +38,38 @@ export function setStoredLocale(locale: SupportedLocale): void {
   document.documentElement.lang = locale === "zh" ? "zh-CN" : locale;
 }
 
+// Lazy-loaded locale resources. English ships in the main bundle so first paint
+// has translations; everything else loads on demand when chosen.
+const LOADERS: Record<SupportedLocale, () => Promise<{ default: Record<string, unknown> }>> = {
+  en: async () => ({ default: en as Record<string, unknown> }),
+  es: () => import("./locales/es.json"),
+  zh: () => import("./locales/zh.json"),
+  vi: () => import("./locales/vi.json"),
+  tl: () => import("./locales/tl.json"),
+  ko: () => import("./locales/ko.json"),
+};
+
+const loadedBundles = new Set<SupportedLocale>(["en"]);
+
+export async function loadLocale(locale: SupportedLocale): Promise<void> {
+  if (loadedBundles.has(locale)) return;
+  const mod = await LOADERS[locale]();
+  i18n.addResourceBundle(locale, "translation", mod.default, true, true);
+  loadedBundles.add(locale);
+}
+
+export async function changeLocale(locale: SupportedLocale): Promise<void> {
+  await loadLocale(locale);
+  setStoredLocale(locale);
+  await i18n.changeLanguage(locale);
+}
+
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
       en: { translation: en },
-      es: { translation: es },
-      zh: { translation: zh },
-      vi: { translation: vi },
-      tl: { translation: tl },
-      ko: { translation: ko },
     },
     lng: getStoredLocale(),
     fallbackLng: "en",
@@ -66,6 +81,12 @@ void i18n
       caches: ["localStorage"],
     },
     returnNull: false,
+  })
+  .then(async () => {
+    const initial = (i18n.language?.split("-")[0] ?? "en") as SupportedLocale;
+    if ((SUPPORTED_LOCALES as readonly string[]).includes(initial) && initial !== "en") {
+      await loadLocale(initial);
+    }
   });
 
 if (typeof window !== "undefined") {

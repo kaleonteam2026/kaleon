@@ -3,6 +3,7 @@ import universities from "../data/universities.json" assert { type: "json" };
 import { generateCampusOpportunities, generateCCOpportunities } from "../services/aiService.js";
 import { getOwnedProfile } from "../lib/ownership";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { getRequestLocale, profileLocale } from "../lib/locale";
 
 const router = Router();
 
@@ -53,8 +54,10 @@ router.get("/universities/:uniId/campus-opportunities", async (req, res) => {
     return;
   }
 
-  // Check cache — keyed by fixed curated university ID, 24-hour TTL
-  const cached = opportunitiesCache.get(uniId);
+  const locale = getRequestLocale(req);
+  // Check cache — keyed by fixed curated university ID + locale, 24-hour TTL
+  const cacheKey = `${uniId}__${locale}`;
+  const cached = opportunitiesCache.get(cacheKey);
   if (cached && Date.now() - cached.cachedAt < CACHE_TTL) {
     res.json(cached.data);
     return;
@@ -67,8 +70,8 @@ router.get("/universities/:uniId/campus-opportunities", async (req, res) => {
   }
 
   try {
-    const data = await generateCampusOpportunities(uni.name, uni.system, uni.location);
-    opportunitiesCache.set(uniId, { data, cachedAt: Date.now() });
+    const data = await generateCampusOpportunities(uni.name, uni.system, uni.location, locale);
+    opportunitiesCache.set(cacheKey, { data, cachedAt: Date.now() });
     res.json(data);
   } catch (err) {
     req.log.error({ err }, "Error generating campus opportunities");
@@ -90,7 +93,8 @@ router.get("/profiles/:profileId/cc-campus-opportunities", async (req, res) => {
     const major = profile.intendedMajor ?? "General Studies";
     const city = "California";
 
-    const cacheKey = `${collegeName}__${major}`;
+    const locale = getRequestLocale(req) || profileLocale(profile);
+    const cacheKey = `${collegeName}__${major}__${locale}`;
     const cached = ccOppsCache.get(cacheKey);
     if (cached && Date.now() - cached.cachedAt < CACHE_TTL) {
       res.json(cached.data);
@@ -109,7 +113,7 @@ router.get("/profiles/:profileId/cc-campus-opportunities", async (req, res) => {
       return;
     }
 
-    const data = await generateCCOpportunities(collegeName, major, city);
+    const data = await generateCCOpportunities(collegeName, major, city, locale);
     ccOppsCache.set(cacheKey, { data, cachedAt: Date.now() });
     res.json(data);
   } catch (err) {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Bell, Check, Clock, ExternalLink, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ const PRIORITY_DOT: Record<string, string> = {
 };
 
 export default function NotificationBell({ profileId }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [feed, setFeed] = useState<FeedResponse>({ unread: 0, reminders: [] });
   const [busy, setBusy] = useState<number | null>(null);
@@ -97,7 +99,7 @@ export default function NotificationBell({ profileId }: Props) {
       <button
         type="button"
         onClick={() => void onToggle()}
-        aria-label={feed.unread > 0 ? `Notifications, ${feed.unread} unread` : "Notifications"}
+        aria-label={feed.unread > 0 ? t("notifications.unreadCount", { count: feed.unread }) : t("notifications.label")}
         aria-expanded={open}
         className="relative text-slate-700 hover:text-slate-900 p-1.5 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1"
         data-testid="notification-bell"
@@ -116,14 +118,14 @@ export default function NotificationBell({ profileId }: Props) {
       {open && (
         <div
           role="dialog"
-          aria-label="Reminders"
+          aria-label={t("notifications.title")}
           className="absolute right-0 top-full mt-2 w-[360px] max-w-[90vw] bg-white border-2 border-slate-900 shadow-xl z-[60] max-h-[480px] flex flex-col"
         >
           <div className="px-4 py-3 border-b-2 border-slate-900 flex items-center justify-between">
-            <span className="text-xs pwc-font-mono uppercase font-bold tracking-wider">Reminders</span>
+            <span className="text-xs pwc-font-mono uppercase font-bold tracking-wider">{t("notifications.title")}</span>
             <button
               onClick={() => setOpen(false)}
-              aria-label="Close"
+              aria-label={t("notifications.close")}
               className="text-slate-600 hover:text-slate-900"
             >
               <X className="h-4 w-4" />
@@ -132,7 +134,7 @@ export default function NotificationBell({ profileId }: Props) {
           <div className="overflow-y-auto flex-1">
             {feed.reminders.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-500">
-                No reminders yet. Enable deadline reminders in your profile to get personalized nudges.
+                {t("notifications.empty")}
               </div>
             ) : (
               <ul className="divide-y divide-slate-100">
@@ -144,7 +146,7 @@ export default function NotificationBell({ profileId }: Props) {
                         <p className="text-sm font-bold text-slate-900 leading-snug">{r.title}</p>
                         <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{r.body}</p>
                         <p className="text-[10px] text-slate-400 mt-1 pwc-font-mono uppercase tracking-wider">
-                          {r.deadlineLabel} · due {r.deadlineDate}
+                          {r.deadlineLabel} · {t("notifications.due")} {r.deadlineDate}
                         </p>
                         <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                           {r.url && (
@@ -154,7 +156,7 @@ export default function NotificationBell({ profileId }: Props) {
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-indigo-700 hover:text-indigo-900 border border-indigo-200 rounded"
                             >
-                              Open <ExternalLink className="h-3 w-3" />
+                              {t("notifications.open")} <ExternalLink className="h-3 w-3" />
                             </a>
                           )}
                           <button
@@ -164,7 +166,7 @@ export default function NotificationBell({ profileId }: Props) {
                             className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:text-slate-900 border border-slate-200 rounded disabled:opacity-50"
                             data-testid={`snooze-${r.id}`}
                           >
-                            <Clock className="h-3 w-3" /> Snooze 3d
+                            <Clock className="h-3 w-3" /> {t("notifications.snooze")}
                           </button>
                           <button
                             type="button"
@@ -173,7 +175,7 @@ export default function NotificationBell({ profileId }: Props) {
                             className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 border border-emerald-200 rounded disabled:opacity-50"
                             data-testid={`done-${r.id}`}
                           >
-                            <Check className="h-3 w-3" /> Done
+                            <Check className="h-3 w-3" /> {t("notifications.done")}
                           </button>
                         </div>
                       </div>

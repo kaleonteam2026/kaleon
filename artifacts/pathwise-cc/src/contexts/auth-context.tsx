@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { SUPPORTED_LOCALES, changeLocale, getStoredLocale, type SupportedLocale } from "@/i18n/config";
 
 interface AuthUser {
   id: string;
@@ -19,6 +20,31 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+async function syncLocaleWithServer(): Promise<void> {
+  try {
+    const res = await fetch("/api/me/locale", { credentials: "include" });
+    if (!res.ok) return;
+    const { locale } = await res.json() as { locale?: string | null };
+    const localStored = getStoredLocale();
+    const valid = (l: unknown): l is SupportedLocale =>
+      typeof l === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(l);
+    if (valid(locale) && locale !== localStored) {
+      // Server preference wins on first load (other devices may have changed it).
+      await changeLocale(locale);
+    } else if (valid(localStored) && localStored !== locale) {
+      // Push the device-chosen locale up to the server.
+      await fetch("/api/me/locale", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", "x-dyp-locale": localStored },
+        body: JSON.stringify({ locale: localStored }),
+      });
+    }
+  } catch {
+    /* offline or unauthenticated — no-op */
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,9 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<{ user: AuthUser | null }>;
       })
-      .then((data) => {
+      .then(async (data) => {
         setUser(data.user ?? null);
         setIsLoading(false);
+        if (data.user) await syncLocaleWithServer();
       })
       .catch(() => {
         setUser(null);

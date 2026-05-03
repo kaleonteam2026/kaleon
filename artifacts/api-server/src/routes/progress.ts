@@ -9,6 +9,7 @@ import { eq, desc } from "drizzle-orm";
 import { generateProgressAnalysis, generateEntryFeedback } from "../services/aiService.js";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 import { getOwnedProfile, getOwnedProgressEntry } from "../lib/ownership";
+import { getRequestLocale, profileLocale } from "../lib/locale.js";
 
 const router = Router();
 
@@ -122,6 +123,7 @@ router.post("/profiles/:profileId/progress/entry-feedback", async (req, res) => 
       pathwayReport,
       guidebookMarkdown,
       gpaEntries,
+      getRequestLocale(req) || profileLocale(owner.profile),
     );
 
     res.json(result);
@@ -208,6 +210,7 @@ router.post("/profiles/:profileId/progress/analyze", async (req, res) => {
       })),
       (scholarships as unknown as Record<string, unknown>[]).slice(0, 10),
       (opportunities as unknown as Record<string, unknown>[]).slice(0, 8),
+      getRequestLocale(req) || profileLocale(profile),
     );
 
     const analysis = await db.insert(progressAnalysesTable).values({

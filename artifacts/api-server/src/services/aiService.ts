@@ -14,6 +14,10 @@ Your tone is encouraging, direct, realistic, and nonjudgmental. Always explain w
 
 When returning pathway data, respond ONLY with valid JSON — no markdown fences, no preamble, no explanation outside the JSON structure.`;
 
+import { localePromptSuffix as _lps, localeJsonPromptSuffix as _ljs } from "../lib/locale.js";
+const localePromptSuffix = _lps;
+const localeJsonPromptSuffix = _ljs;
+
 interface PathwayResult {
   type: string;
   university: string;
@@ -139,7 +143,8 @@ The three pathways must be DISTINCT universities representing different tiers of
 export async function generateCampusOpportunities(
   universityName: string,
   system: string,
-  location: string
+  location: string,
+  locale: string = "en"
 ): Promise<CampusOpportunitiesResult> {
   const prompt = `You are a knowledgeable advisor for California community college transfer students. Using your public knowledge about ${universityName} (${system}, located in ${location}, California), generate a comprehensive list of on-site university opportunities that a California transfer student should know about.
 
@@ -185,7 +190,7 @@ Respond with only the JSON object, no explanation.`;
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 4096,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + localeJsonPromptSuffix(locale),
         messages: [{ role: "user", content: prompt }],
       });
 
@@ -211,7 +216,8 @@ export async function generateGuidebook(
   selectedPathway: Record<string, unknown>,
   courses: Record<string, unknown>[],
   scholarships: Record<string, unknown>[],
-  opportunities: Record<string, unknown>[]
+  opportunities: Record<string, unknown>[],
+  locale: string = "en"
 ): Promise<string> {
   const prompt = `Create a detailed pathway guidebook in Markdown for the selected pathway below.
 
@@ -350,7 +356,7 @@ End with this exact text on its own line:
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 8192,
-    system: SYSTEM_PROMPT,
+    system: SYSTEM_PROMPT + localePromptSuffix(locale),
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -364,7 +370,8 @@ export async function generateAcademicRoadmap(
   selectedPathway: Record<string, unknown>,
   courses: Record<string, unknown>[],
   scholarships: Record<string, unknown>[],
-  opportunities: Record<string, unknown>[]
+  opportunities: Record<string, unknown>[],
+  locale: string = "en"
 ): Promise<string> {
   const communityCollege = typeof profile.communityCollege === "string" ? profile.communityCollege : "your community college";
 
@@ -510,7 +517,7 @@ End with this exact text on its own line:
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 8192,
-    system: SYSTEM_PROMPT,
+    system: SYSTEM_PROMPT + localePromptSuffix(locale),
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -534,7 +541,8 @@ export async function generateProgressAnalysis(
   selectedPathway: Record<string, unknown> | null,
   progressEntries: ProgressEntry[],
   scholarships: Record<string, unknown>[],
-  opportunities: Record<string, unknown>[]
+  opportunities: Record<string, unknown>[],
+  locale: string = "en"
 ): Promise<{ markdown: string; overallScore: number; summary: string }> {
   const college = typeof profile.communityCollege === "string" ? profile.communityCollege : "your community college";
   const major = typeof profile.intendedMajor === "string" ? profile.intendedMajor : "your major";
@@ -651,7 +659,7 @@ End with this exact text:
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 8192,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + localeJsonPromptSuffix(locale),
         messages: [{ role: "user", content: prompt }],
       });
 
@@ -698,6 +706,7 @@ export async function generateCCOpportunities(
   collegeName: string,
   major: string,
   city: string,
+  locale: string = "en",
 ): Promise<CCOpportunitiesResult> {
   const prompt = `You are an expert on California Community Colleges. Generate a comprehensive list of on-campus programs, resources, and student organizations available at ${collegeName} (located in ${city}, California) that are relevant to a student studying ${major}.
 
@@ -795,7 +804,7 @@ Include 18-25 programs. Sort by relevance to ${major} first, then by importance 
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 5000,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + localeJsonPromptSuffix(locale),
         messages: [{ role: "user", content: prompt }],
       });
       const text = response.content[0].type === "text" ? response.content[0].text : "";
@@ -1001,7 +1010,8 @@ export async function generateEntryFeedback(
   profile: Record<string, unknown>,
   pathway: Record<string, unknown> | null,
   guidebookMarkdown: string | null,
-  recentGpaEntries: ProgressEntry[]
+  recentGpaEntries: ProgressEntry[],
+  locale: string = "en"
 ): Promise<EntryFeedbackResult> {
   const college = typeof profile.communityCollege === "string" ? profile.communityCollege : "the student's college";
   const major = typeof profile.intendedMajor === "string" ? profile.intendedMajor : "their major";
@@ -1197,7 +1207,7 @@ OUTPUT FORMAT — return ONLY a JSON object, no markdown fences:
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 1500,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + localeJsonPromptSuffix(locale),
         messages: [{ role: "user", content: prompt }],
       });
       const text = response.content[0].type === "text" ? response.content[0].text : "";
@@ -1245,7 +1255,8 @@ export interface CourseCatalog {
 
 export async function generateCourseCatalog(
   college: string,
-  major: string
+  major: string,
+  locale: string = "en"
 ): Promise<CourseCatalog> {
   const prompt = `You are an expert on California community college course catalogs. Generate an accurate, comprehensive list of courses offered at ${college} that are relevant to a student pursuing ${major}.
 
@@ -1292,7 +1303,7 @@ Respond with only the JSON object.`;
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 8192,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + localeJsonPromptSuffix(locale),
         messages: [{ role: "user", content: prompt }],
       });
 
@@ -1357,7 +1368,8 @@ export interface TransferabilityAnalysisResult {
 
 export async function generateTransferabilityAnalysis(
   courses: Record<string, unknown>[],
-  communityCollege: string
+  communityCollege: string,
+  locale: string = "en"
 ): Promise<TransferabilityAnalysisResult> {
   const courseList = courses.map(c =>
     `- ${c.courseCode ? c.courseCode + " " : ""}${c.courseName} (${c.units ?? 3} units, ${c.status ?? "completed"}${c.grade ? ", grade " + c.grade : ""})`
@@ -1430,7 +1442,7 @@ Respond with only the JSON object.`;
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 4096,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + localeJsonPromptSuffix(locale),
         messages: [{ role: "user", content: prompt }],
       });
 

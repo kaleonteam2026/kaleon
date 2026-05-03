@@ -1,9 +1,49 @@
 import { Router } from "express";
 import { db, studentProfilesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { getOwnedProfile } from "../lib/ownership";
+import { getRequestLocale } from "../lib/locale";
 
 const router = Router();
+
+const SUPPORTED_LOCALES = new Set(["en", "es", "zh", "vi", "tl", "ko"]);
+
+// GET /api/me/locale — current user's stored locale (or null if no profile yet)
+router.get("/me/locale", async (req, res) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const rows = await db
+      .select({ preferredLocale: studentProfilesTable.preferredLocale })
+      .from(studentProfilesTable)
+      .where(eq(studentProfilesTable.userId, req.user.id))
+      .orderBy(desc(studentProfilesTable.updatedAt))
+      .limit(1);
+    res.json({ locale: rows[0]?.preferredLocale ?? null });
+  } catch (err) {
+    req.log.error({ err }, "Error fetching user locale");
+    res.status(500).json({ error: "Failed to fetch locale" });
+  }
+});
+
+// PATCH /api/me/locale — persist locale on every profile owned by the user
+router.patch("/me/locale", async (req, res) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const body = req.body as { locale?: unknown };
+    const requested = typeof body?.locale === "string" ? body.locale : getRequestLocale(req);
+    if (!SUPPORTED_LOCALES.has(requested)) {
+      res.status(400).json({ error: "Unsupported locale" }); return;
+    }
+    await db
+      .update(studentProfilesTable)
+      .set({ preferredLocale: requested, updatedAt: new Date() })
+      .where(eq(studentProfilesTable.userId, req.user.id));
+    res.json({ locale: requested });
+  } catch (err) {
+    req.log.error({ err }, "Error updating user locale");
+    res.status(500).json({ error: "Failed to update locale" });
+  }
+});
 
 // POST /api/profiles
 router.post("/profiles", async (req, res) => {
@@ -16,8 +56,10 @@ router.post("/profiles", async (req, res) => {
     const userId = req.user.id;
     const body = req.body as Record<string, unknown>;
 
+    const requestLocale = getRequestLocale(req);
     const profile = await db.insert(studentProfilesTable).values({
       userId,
+      preferredLocale: requestLocale,
       fullName: body.fullName as string | undefined,
       communityCollege: body.communityCollege as string | undefined,
       currentGpa: body.currentGpa as number | undefined,

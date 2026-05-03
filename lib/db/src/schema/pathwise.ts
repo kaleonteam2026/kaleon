@@ -18,6 +18,7 @@ export const studentProfilesTable = pgTable("student_profiles", {
   longTermAspirations: text("long_term_aspirations"),
   isFirstGen: text("is_first_gen"),
   interests: json("interests").$type<string[]>(),
+  preferredLocale: text("preferred_locale").default("en"),
   completionPercent: real("completion_percent").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

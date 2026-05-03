@@ -13,6 +13,7 @@ import { incrementGlobalAi } from "./global-cap";
 import { computeUpcomingDeadlines, todayKey, type UpcomingHit } from "./deadlines";
 import { sendEmail, isEmailConfigured } from "./email";
 import { logger } from "./logger";
+import { profileLocale, localePromptSuffix } from "./locale";
 
 const REQUIRED_PROFILE_FIELDS: Array<keyof StudentProfile> = [
   "intendedMajor",
@@ -45,7 +46,8 @@ async function draftMessages(
   const missing = missingProfileFields(profile);
   const studentName = profile.fullName?.split(" ")[0] ?? "there";
 
-  const system = `You are an academic deadline reminder writer for California community college transfer students. Use BLUF (bottom line up front) style. For EACH reminder, write a short, personalized, action-oriented note (max 2 sentences, max 280 chars). Reference the student's missing profile fields when relevant. Never invent facts. Output ONLY valid JSON.`;
+  const locale = profileLocale(profile);
+  const system = `You are an academic deadline reminder writer for California community college transfer students. Use BLUF (bottom line up front) style. For EACH reminder, write a short, personalized, action-oriented note (max 2 sentences, max 280 chars). Reference the student's missing profile fields when relevant. Never invent facts. Output ONLY valid JSON.${localePromptSuffix(locale)}`;
 
   const user = `Student: ${studentName}
 Major: ${profile.intendedMajor ?? "(not set)"}

@@ -5,6 +5,7 @@ import { generateTransferabilityAnalysis, generateCourseCatalog } from "../servi
 import { getOwnedProfile, getOwnedCourse } from "../lib/ownership";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 import { invalidateIgetcAnalysis } from "../lib/igetc-cache";
+import { getRequestLocale, profileLocale } from "../lib/locale.js";
 
 const router = Router();
 
@@ -235,7 +236,8 @@ router.get("/profiles/:profileId/course-catalog", async (req, res) => {
 
     const college = profile.communityCollege;
     const major = profile.intendedMajor ?? "General Education";
-    const cacheKey = `${college}::${major}`;
+    const locale = getRequestLocale(req) || profileLocale(profile);
+    const cacheKey = `${college}::${major}::${locale}`;
 
     const cached = catalogCache.get(cacheKey);
     if (cached && Date.now() - cached.cachedAt < CATALOG_TTL) {
@@ -255,7 +257,7 @@ router.get("/profiles/:profileId/course-catalog", async (req, res) => {
       return;
     }
 
-    const catalog = await generateCourseCatalog(college, major);
+    const catalog = await generateCourseCatalog(college, major, locale);
     catalogCache.set(cacheKey, { data: catalog, cachedAt: Date.now() });
     res.json(catalog);
   } catch (err) {
@@ -266,7 +268,7 @@ router.get("/profiles/:profileId/course-catalog", async (req, res) => {
 
 // POST /api/profiles/:profileId/transferability-analysis
 // Rate-limit: one AI call per profile per 10 minutes (plus per-user hourly cap)
-const transferabilityCache = new Map<number, { data: unknown; cachedAt: number }>();
+const transferabilityCache = new Map<string, { data: unknown; cachedAt: number }>();
 const TRANSFER_TTL = 10 * 60 * 1000;
 
 router.post("/profiles/:profileId/transferability-analysis", async (req, res) => {
@@ -282,13 +284,14 @@ router.post("/profiles/:profileId/transferability-analysis", async (req, res) =>
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
     // Check cache (after ownership check to avoid leaking cached data to non-owners)
-    const cached = transferabilityCache.get(profileId);
+    const profile = owner.profile;
+    const locale = getRequestLocale(req) || profileLocale(profile);
+    const cacheKey = `${profileId}::${locale}`;
+    const cached = transferabilityCache.get(cacheKey);
     if (cached && Date.now() - cached.cachedAt < TRANSFER_TTL) {
       res.json(cached.data);
       return;
     }
-
-    const profile = owner.profile;
 
     // Fetch all courses
     const courses = await db.select().from(coursesTable).where(eq(coursesTable.profileId, profileId));
@@ -319,8 +322,8 @@ router.post("/profiles/:profileId/transferability-analysis", async (req, res) =>
       term: c.term,
     }));
 
-    const result = await generateTransferabilityAnalysis(coursesData, communityCollege);
-    transferabilityCache.set(profileId, { data: result, cachedAt: Date.now() });
+    const result = await generateTransferabilityAnalysis(coursesData, communityCollege, locale);
+    transferabilityCache.set(cacheKey, { data: result, cachedAt: Date.now() });
     res.json(result);
   } catch (err) {
     req.log.error({ err }, "Error generating transferability analysis");

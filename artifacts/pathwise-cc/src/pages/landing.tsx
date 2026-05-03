@@ -16,13 +16,40 @@ const FONT_STYLES = `
 export default function Landing() {
   const { isAuthenticated, isLoading, login } = useAuth();
   const [, navigate] = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       navigate("/dashboard");
     }
   }, [isAuthenticated, isLoading, navigate]);
+
+  // Reactive SEO: title / description / og:locale follow current language.
+  useEffect(() => {
+    const title = t("landing.seoTitle");
+    const desc = t("landing.seoDescription");
+    document.title = title;
+
+    const ensure = (selector: string, attrs: Record<string, string>) => {
+      let el = document.head.querySelector(selector) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        Object.entries(attrs).forEach(([k, v]) => el!.setAttribute(k, v));
+        document.head.appendChild(el);
+      }
+      return el;
+    };
+
+    ensure(`meta[name="description"]`, { name: "description" }).content = desc;
+    ensure(`meta[property="og:title"]`, { property: "og:title" }).content = title;
+    ensure(`meta[property="og:description"]`, { property: "og:description" }).content = desc;
+
+    const localeMap: Record<string, string> = {
+      en: "en_US", es: "es_MX", zh: "zh_CN", vi: "vi_VN", tl: "tl_PH", ko: "ko_KR",
+    };
+    const lang = (i18n.language?.split("-")[0] ?? "en");
+    ensure(`meta[property="og:locale"]`, { property: "og:locale" }).content = localeMap[lang] ?? "en_US";
+  }, [t, i18n.language]);
 
   return (
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900 pwc-font-sans">

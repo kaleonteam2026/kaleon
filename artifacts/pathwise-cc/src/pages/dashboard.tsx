@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import Nav from "@/components/nav";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ function estimatedTransferTerm(totalUnits: number): string {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const reducedMotion = useReducedMotion();
@@ -109,55 +111,60 @@ export default function Dashboard() {
   const accent = readinessAccent(score);
   const dashOffset = useMemo(() => `${(score / 100) * 283} 283`, [score]);
 
+  const STATUS_LABEL = {
+    Active: t("dashboard.active"),
+    "Action Needed": t("dashboard.actionNeeded"),
+    "Not Started": t("dashboard.notStarted"),
+  } as const;
   const roadmapItems = useMemo(() => {
     if (!profile) return [];
     return [
       {
-        title: "My Profile", icon: User,
+        title: t("dashboard.myProfile"), icon: User,
         status: (summary?.profileCompletionPercent ?? 0) >= 75 ? "Active" : "Action Needed",
         metric: `${summary?.profileCompletionPercent ?? 0}%`,
         href: `/profile/${profile.id}`,
       },
       {
-        title: "My Courses", icon: BookOpen,
+        title: t("dashboard.myCourses"), icon: BookOpen,
         status: (summary?.totalCourses ?? 0) > 0 ? "Active" : "Not Started",
-        metric: summary?.totalCourses ? `${summary.totalCourses} Logged` : "0 Logged",
+        metric: summary?.totalCourses ? `${summary.totalCourses}` : "0",
         href: `/courses/${profile.id}`,
       },
       {
-        title: "Transfer Targets", icon: Target,
+        title: t("dashboard.transferTargets"), icon: Target,
         status: summary?.chosenTransferSchool ? "Active" : summary?.topMatchUniversity ? "Action Needed" : "Not Started",
         metric: summary?.chosenTransferSchool
-          ? `Chosen: ${summary.chosenTransferSchool.split(",")[0].slice(0, 18)}`
-          : summary?.topMatchUniversity ? "Pick Primary" : "Explore",
+          ? summary.chosenTransferSchool.split(",")[0].slice(0, 18)
+          : summary?.topMatchUniversity ? t("dashboard.pickPrimary") : t("dashboard.explore"),
         href: `/matches/${profile.id}`,
       },
       {
-        title: "AI Pathways", icon: Map,
+        title: t("dashboard.aiPathways"), icon: Map,
         status: (summary?.savedPathwaysCount ?? 0) > 0 ? "Active" : "Action Needed",
-        metric: `${summary?.savedPathwaysCount ?? 0} Saved`,
+        metric: `${summary?.savedPathwaysCount ?? 0} ${t("dashboard.saved")}`,
         href: `/pathways/${profile.id}`,
       },
       {
-        title: "Scholarships", icon: Percent,
+        title: t("nav.scholarships"), icon: Percent,
         status: "Not Started",
-        metric: "Explore",
+        metric: t("dashboard.explore"),
         href: `/scholarships/${profile.id}`,
       },
       {
-        title: "My Progress", icon: LineChart,
+        title: t("dashboard.myProgress"), icon: LineChart,
         status: "Active",
-        metric: "On Track",
+        metric: t("dashboard.active"),
         href: `/progress/${profile.id}`,
       },
       {
-        title: "Internship Finder", icon: Briefcase,
+        title: t("dashboard.internshipFinder"), icon: Briefcase,
         status: "Not Started",
-        metric: "Explore",
+        metric: t("dashboard.explore"),
         href: `/internships/${profile.id}`,
       },
-    ];
-  }, [profile, summary]);
+    ] as const;
+  }, [profile, summary, t]);
 
   if (loading) {
     return (
@@ -174,16 +181,16 @@ export default function Dashboard() {
         <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto focus:outline-none">
           <div className="py-16 text-center">
             <Map className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-slate-800 mb-2">Let's get started</h2>
+            <h2 className="text-xl font-semibold text-slate-800 mb-2">{t("dashboard.letsGetStarted")}</h2>
             <p className="text-slate-600 mb-6 max-w-md mx-auto text-sm">
-              Create your student profile to unlock personalized transfer planning, AI pathways, internship matching, and scholarship recommendations.
+              {t("dashboard.letsGetStartedBody")}
             </p>
             <div className="flex gap-3 justify-center">
               <Button onClick={() => navigate("/onboarding")} className="bg-slate-900 hover:bg-slate-800">
-                <Plus className="h-4 w-4 mr-2" />Quick Setup (2 min)
+                <Plus className="h-4 w-4 mr-2" />{t("dashboard.quickSetup")}
               </Button>
               <Button variant="outline" onClick={() => navigate("/profile")} className="border-slate-300">
-                Manual Setup
+                {t("dashboard.manualSetup")}
               </Button>
             </div>
           </div>
@@ -206,18 +213,18 @@ export default function Dashboard() {
           {/* Header */}
           <header className="col-span-12 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 border-b-2 border-slate-900 pb-4 mb-2">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 uppercase">Mission Control</h1>
-              <p className="text-base md:text-lg text-slate-600 mt-1">Welcome back, {greeting} — System ready.</p>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 uppercase">{t("dashboard.missionControl")}</h1>
+              <p className="text-base md:text-lg text-slate-600 mt-1">{t("dashboard.welcomeBack", { name: greeting })}</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right flex flex-col items-end">
-                <span className="text-xs pwc-font-mono text-slate-600 uppercase">Est. Transfer Date</span>
+                <span className="text-xs pwc-font-mono text-slate-600 uppercase">{t("dashboard.estTransferDate")}</span>
                 <span className="pwc-font-mono font-bold">{transferTerm}</span>
               </div>
               <button
                 onClick={() => navigate(`/profile/${profile.id}`)}
                 className="h-10 w-10 bg-slate-900 rounded flex items-center justify-center text-white hover:bg-slate-700 transition-colors"
-                aria-label="Open profile"
+                aria-label={t("dashboard.openProfile")}
               >
                 <User size={20} />
               </button>
@@ -229,34 +236,34 @@ export default function Dashboard() {
             <div className="bg-white border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] p-5">
               <div className="flex items-center justify-between mb-4 border-b-2 border-slate-100 pb-3">
                 <h2 className="font-bold uppercase tracking-wider text-sm flex items-center gap-2">
-                  <Settings size={16} /> User Profile
+                  <Settings size={16} /> {t("dashboard.userProfile")}
                 </h2>
                 <button
                   onClick={() => navigate(`/profile/${profile.id}`)}
                   className="text-xs pwc-font-mono underline hover:text-slate-600"
-                >Edit</button>
+                >{t("dashboard.edit")}</button>
               </div>
               <div className="space-y-4 text-sm">
                 <div>
-                  <div className="text-xs pwc-font-mono text-slate-600 mb-1">Institution</div>
+                  <div className="text-xs pwc-font-mono text-slate-600 mb-1">{t("dashboard.institution")}</div>
                   <div className="font-medium">{profile.communityCollege ?? "—"}</div>
                 </div>
                 <div>
-                  <div className="text-xs pwc-font-mono text-slate-600 mb-1">Target Major</div>
+                  <div className="text-xs pwc-font-mono text-slate-600 mb-1">{t("dashboard.targetMajor")}</div>
                   <div className="font-medium">{profile.intendedMajor ?? "—"}</div>
                 </div>
                 <div>
-                  <div className="text-xs pwc-font-mono text-slate-600 mb-1">Career Goal</div>
+                  <div className="text-xs pwc-font-mono text-slate-600 mb-1">{t("dashboard.careerGoal")}</div>
                   <div className="font-medium">{profile.careerGoal ?? "—"}</div>
                 </div>
                 <div>
                   <div className="text-xs pwc-font-mono text-slate-600 mb-1 flex items-center gap-1.5">
-                    Chosen School
-                    <span className="pwc-font-mono text-[9px] bg-slate-900 text-white px-1 py-0.5 tracking-widest">PRIMARY</span>
+                    {t("dashboard.chosenSchool")}
+                    <span className="pwc-font-mono text-[9px] bg-slate-900 text-white px-1 py-0.5 tracking-widest">{t("dashboard.primary")}</span>
                   </div>
                   <div className="font-medium flex items-center gap-2">
                     {summary?.chosenTransferSchool ?? (
-                      <span className="text-slate-600 italic text-sm">Pick a primary on Pathway</span>
+                      <span className="text-slate-600 italic text-sm">{t("dashboard.pickPrimary")}</span>
                     )}
                     {summary?.chosenTransferScore != null && (
                       <span className="bg-slate-900 text-white text-xs px-1.5 py-0.5 rounded pwc-font-mono">
@@ -267,11 +274,11 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div className="text-xs pwc-font-mono text-slate-600 mb-1 flex items-center gap-1.5">
-                    Top Match
-                    <span className="pwc-font-mono text-[9px] bg-emerald-600 text-white px-1 py-0.5 tracking-widest">SAFETY</span>
+                    {t("dashboard.topMatch")}
+                    <span className="pwc-font-mono text-[9px] bg-emerald-600 text-white px-1 py-0.5 tracking-widest">{t("dashboard.safety")}</span>
                   </div>
                   <div className="font-medium flex items-center gap-2">
-                    {summary?.topMatchUniversity ?? "Generate pathways"}
+                    {summary?.topMatchUniversity ?? t("dashboard.generatePathways")}
                     {summary?.topMatchScore != null && (
                       <span className="bg-slate-900 text-white text-xs px-1.5 py-0.5 rounded pwc-font-mono">
                         {summary.topMatchScore}
@@ -284,11 +291,11 @@ export default function Dashboard() {
 
             <div className="bg-white border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] p-5 flex-grow">
               <h2 className="font-bold uppercase tracking-wider text-sm flex items-center gap-2 mb-4">
-                <Zap size={16} /> Urgent Actions
+                <Zap size={16} /> {t("dashboard.urgentActions")}
               </h2>
               <div className="space-y-3">
                 {(summary?.nextActions ?? []).length === 0 ? (
-                  <p className="text-sm text-slate-600 italic">No urgent actions — keep going!</p>
+                  <p className="text-sm text-slate-600 italic">{t("dashboard.noUrgent")}</p>
                 ) : (
                   summary!.nextActions.map((action, i) => (
                     <div
@@ -309,7 +316,7 @@ export default function Dashboard() {
             <div className="bg-slate-900 text-white p-5 md:p-6 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-bold uppercase tracking-wider text-sm text-slate-300 flex items-center gap-2">
-                  <Compass size={16} /> Readiness Radar
+                  <Compass size={16} /> {t("dashboard.readinessRadar")}
                 </h2>
                 <div className={`${accent.chip} text-slate-900 pwc-font-mono text-xs px-2 py-1 font-bold uppercase`}>
                   {summary?.readinessLabel ?? accent.label}
@@ -329,7 +336,7 @@ export default function Dashboard() {
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-4xl pwc-font-mono font-bold leading-none">{score}</span>
-                    <span className="text-xs text-slate-300 uppercase tracking-widest mt-1">Score</span>
+                    <span className="text-xs text-slate-300 uppercase tracking-widest mt-1">{t("dashboard.score")}</span>
                   </div>
                 </div>
 
@@ -359,11 +366,11 @@ export default function Dashboard() {
               </div>
 
               <div className="flex justify-between items-center border-t border-slate-800 pt-4 mt-2">
-                <span className="text-xs text-slate-300 pwc-font-mono">TOTAL TRANSFERABLE UNITS</span>
+                <span className="text-xs text-slate-300 pwc-font-mono">{t("dashboard.totalUnits")}</span>
                 <div className="flex items-center gap-2">
                   <span className="pwc-font-mono font-bold text-lg">{breakdown?.totalUnits ?? 0}</span>
                   <span className="text-slate-300">/</span>
-                  <span className="pwc-font-mono text-slate-300">60 Required</span>
+                  <span className="pwc-font-mono text-slate-300">{t("dashboard.unitsRequired")}</span>
                 </div>
               </div>
             </div>
@@ -373,11 +380,11 @@ export default function Dashboard() {
                 onClick={() => navigate(`/courses/${profile.id}`)}
                 className="bg-white border-2 border-slate-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-transform"
               >
-                <div className="text-xs pwc-font-mono text-slate-600 uppercase mb-2">Est. GPA</div>
+                <div className="text-xs pwc-font-mono text-slate-600 uppercase mb-2">{t("dashboard.estGpa")}</div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl pwc-font-mono font-bold">{summary?.estimatedGpa?.toFixed(2) ?? "—"}</span>
                   {profile.currentGpa != null && (
-                    <span className="text-xs text-slate-600">Current: {profile.currentGpa}</span>
+                    <span className="text-xs text-slate-600">{t("dashboard.current")}: {profile.currentGpa}</span>
                   )}
                 </div>
               </button>
@@ -386,11 +393,11 @@ export default function Dashboard() {
                 onClick={() => navigate(`/courses/${profile.id}`)}
                 className="bg-white border-2 border-slate-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-transform"
               >
-                <div className="text-xs pwc-font-mono text-slate-600 uppercase mb-2">Courses Logged</div>
+                <div className="text-xs pwc-font-mono text-slate-600 uppercase mb-2">{t("dashboard.coursesLogged")}</div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl pwc-font-mono font-bold">{summary?.totalCourses ?? 0}</span>
                   <span className="text-xs text-slate-600">
-                    {summary?.completedCourses ?? 0} Done, {summary?.inProgressCourses ?? 0} IP
+                    {t("dashboard.doneIp", { done: summary?.completedCourses ?? 0, ip: summary?.inProgressCourses ?? 0 })}
                   </span>
                 </div>
               </button>
@@ -399,7 +406,7 @@ export default function Dashboard() {
                 onClick={() => navigate(`/profile/${profile.id}`)}
                 className="bg-white border-2 border-slate-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-transform"
               >
-                <div className="text-xs pwc-font-mono text-slate-600 uppercase mb-2">Profile Complete</div>
+                <div className="text-xs pwc-font-mono text-slate-600 uppercase mb-2">{t("dashboard.profileComplete")}</div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl pwc-font-mono font-bold">{summary?.profileCompletionPercent ?? 0}%</span>
                 </div>
@@ -409,10 +416,10 @@ export default function Dashboard() {
                 onClick={() => navigate(`/pathways/${profile.id}`)}
                 className="bg-blue-50 border-2 border-blue-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-transform"
               >
-                <div className="text-xs pwc-font-mono text-blue-800 uppercase mb-2">AI Pathways</div>
+                <div className="text-xs pwc-font-mono text-blue-800 uppercase mb-2">{t("dashboard.aiPathways")}</div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl pwc-font-mono font-bold text-blue-900">{summary?.savedPathwaysCount ?? 0}</span>
-                  <span className="text-xs text-blue-700">Saved</span>
+                  <span className="text-xs text-blue-700">{t("dashboard.saved")}</span>
                 </div>
               </button>
             </div>
@@ -423,7 +430,7 @@ export default function Dashboard() {
             <div className="bg-white border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] p-0 overflow-hidden flex-grow flex flex-col">
               <div className="p-4 border-b-2 border-slate-900 bg-slate-50">
                 <h2 className="font-bold uppercase tracking-wider text-sm flex items-center gap-2">
-                  <FileText size={16} /> CC Success Modules
+                  <FileText size={16} /> {t("dashboard.ccSuccessModules")}
                 </h2>
               </div>
               <div className="flex-grow flex flex-col">
@@ -443,7 +450,7 @@ export default function Dashboard() {
                           item.status === "Active" ? "text-green-600" :
                           item.status === "Action Needed" ? "text-amber-600" : "text-slate-600"
                         }>●</span>
-                        {item.status}
+                        {STATUS_LABEL[item.status as keyof typeof STATUS_LABEL] ?? item.status}
                       </div>
                     </div>
                     <div className="text-xs pwc-font-mono text-slate-600 text-right ml-2 flex-shrink-0">
@@ -458,8 +465,8 @@ export default function Dashboard() {
             <div className="bg-slate-200 border border-slate-300 p-4 rounded text-xs text-slate-600 flex gap-3">
               <Info size={16} className="shrink-0 text-slate-600" />
               <p className="leading-relaxed">
-                <strong className="pwc-font-mono uppercase text-[10px] tracking-wider block mb-1">System Disclaimer</strong>
-                Scores and GPA estimates are AI-generated based on current inputs and historic transfer data. Always verify requirements directly with counselors or ASSIST.org.
+                <strong className="pwc-font-mono uppercase text-[10px] tracking-wider block mb-1">{t("dashboard.systemDisclaimer")}</strong>
+                {t("dashboard.disclaimerBody")}
               </p>
             </div>
 
@@ -468,7 +475,7 @@ export default function Dashboard() {
                 onClick={() => navigate(`/progress/${profile.id}`)}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-slate-900 bg-white text-sm font-bold uppercase tracking-wider hover:bg-slate-900 hover:text-white transition-colors"
               >
-                <TrendingUp size={14} /> View Progress
+                <TrendingUp size={14} /> {t("dashboard.viewProgress")}
               </button>
             </div>
           </div>

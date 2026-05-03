@@ -1,4 +1,6 @@
 import type { Request } from "express";
+import { db, studentProfilesTable } from "@workspace/db";
+import { eq, desc } from "drizzle-orm";
 
 const LANG_NAMES: Record<string, string> = {
   en: "English",
@@ -22,6 +24,29 @@ export function getRequestLocale(req: Request): string {
     if (SUPPORTED.has(tag)) return tag;
   }
   return "en";
+}
+
+/** Look up the locale stored on the user's most-recent profile (server-side jobs). */
+export async function getProfileLocaleForUser(userId: string): Promise<string> {
+  try {
+    const rows = await db
+      .select({ preferredLocale: studentProfilesTable.preferredLocale })
+      .from(studentProfilesTable)
+      .where(eq(studentProfilesTable.userId, userId))
+      .orderBy(desc(studentProfilesTable.updatedAt))
+      .limit(1);
+    const v = rows[0]?.preferredLocale;
+    if (typeof v === "string" && SUPPORTED.has(v)) return v;
+  } catch {
+    /* fall through */
+  }
+  return "en";
+}
+
+/** Look up the locale directly on a profile row. */
+export function profileLocale(profile: { preferredLocale?: string | null }): string {
+  const v = profile.preferredLocale;
+  return typeof v === "string" && SUPPORTED.has(v) ? v : "en";
 }
 
 /** Human-readable language name for prompt instruction. */

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import {
   SUPPORTED_LOCALES,
   LOCALE_LABELS,
-  setStoredLocale,
+  changeLocale,
   type SupportedLocale,
 } from "@/i18n/config";
 
@@ -37,9 +37,19 @@ export default function LanguageSwitcher({ variant = "light", className }: Props
   }, [open]);
 
   const choose = async (loc: SupportedLocale) => {
-    setStoredLocale(loc);
-    await i18n.changeLanguage(loc);
+    await changeLocale(loc);
     setOpen(false);
+    // Best-effort: persist to server if signed in. Silent on failure (guests).
+    try {
+      await fetch("/api/me/locale", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", "x-dyp-locale": loc },
+        body: JSON.stringify({ locale: loc }),
+      });
+    } catch {
+      /* guest or offline — localStorage already holds the choice */
+    }
   };
 
   const isDark = variant === "dark";

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,14 +32,16 @@ interface FormData {
   isFirstGen: string;
 }
 
-const STEPS = [
-  { title: "Welcome to DYP", subtitle: "Let's personalize your transfer journey", icon: Map },
-  { title: "Your College & Major", subtitle: "Tell us where you are and where you want to go", icon: GraduationCap },
-  { title: "Academic Standing", subtitle: "Help us match you to the right opportunities", icon: BookOpen },
-  { title: "Your Background", subtitle: "A few more details to personalize your experience", icon: User },
-];
+const STEP_ICONS = [Map, GraduationCap, BookOpen, User];
 
 export default function Onboarding() {
+  const { t } = useTranslation();
+  const STEPS = [
+    { title: t("onboarding.step1Title"), subtitle: t("onboarding.step1Subtitle"), icon: STEP_ICONS[0] },
+    { title: t("onboarding.step2Title"), subtitle: t("onboarding.step2Subtitle"), icon: STEP_ICONS[1] },
+    { title: t("onboarding.step3Title"), subtitle: t("onboarding.step3Subtitle"), icon: STEP_ICONS[2] },
+    { title: t("onboarding.step4Title"), subtitle: t("onboarding.step4Subtitle"), icon: STEP_ICONS[3] },
+  ];
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
@@ -107,7 +110,7 @@ export default function Onboarding() {
         {/* Progress bar */}
         <div className="mb-6">
           <div className="flex justify-between text-xs text-slate-500 mb-1.5">
-            <span>Step {step + 1} of {STEPS.length}</span>
+            <span>{t("onboarding.stepOf", { current: step + 1, total: STEPS.length })}</span>
             <span>{Math.round(progress)}%</span>
           </div>
           <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
@@ -132,9 +135,9 @@ export default function Onboarding() {
                 <legend className="sr-only">Welcome and personal info</legend>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { icon: GraduationCap, label: "Transfer Planning", desc: "UC & CSU matching" },
-                    { icon: BookOpen, label: "AI Pathways", desc: "Personalized roadmaps" },
-                    { icon: Target, label: "Scholarships", desc: "Money for college" },
+                    { icon: GraduationCap, label: t("onboarding.transferPlanning"), desc: t("onboarding.transferPlanningDesc") },
+                    { icon: BookOpen, label: t("onboarding.aiPathways"), desc: t("onboarding.aiPathwaysDesc") },
+                    { icon: Target, label: t("onboarding.scholarships"), desc: t("onboarding.scholarshipsDesc") },
                   ].map(f => (
                     <div key={f.label} className="bg-indigo-50 border border-indigo-100 rounded-2xl p-3 text-center">
                       <f.icon className="h-5 w-5 text-indigo-600 mx-auto mb-1.5" />
@@ -144,16 +147,16 @@ export default function Onboarding() {
                   ))}
                 </div>
                 <div>
-                  <label htmlFor="ob-fullname" className="block text-sm font-medium text-slate-700 mb-1.5">Your name</label>
+                  <label htmlFor="ob-fullname" className="block text-sm font-medium text-slate-700 mb-1.5">{t("onboarding.yourName")}</label>
                   <input
                     id="ob-fullname"
                     value={form.fullName}
                     onChange={e => set("fullName", e.target.value)}
-                    placeholder="Full name"
+                    placeholder={t("onboarding.fullNamePlaceholder")}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                <p className="text-xs text-slate-400 text-center">Takes about 2 minutes · Your data stays private</p>
+                <p className="text-xs text-slate-400 text-center">{t("onboarding.timeNote")}</p>
               </fieldset>
             )}
 
@@ -161,33 +164,33 @@ export default function Onboarding() {
               <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
                 <legend className="sr-only">College and major</legend>
                 <div>
-                  <label htmlFor="ob-cc" className="block text-sm font-medium text-slate-700 mb-1.5">Your California Community College <span className="text-red-500">*</span></label>
+                  <label htmlFor="ob-cc" className="block text-sm font-medium text-slate-700 mb-1.5">{t("onboarding.ccLabel")} <span className="text-red-500">*</span></label>
                   <input
                     id="ob-cc"
                     value={form.communityCollege}
                     onChange={e => set("communityCollege", e.target.value)}
-                    placeholder="e.g. De Anza College, City College of SF, Santa Monica College..."
+                    placeholder={t("onboarding.ccPlaceholder")}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
-                  <p className="text-xs text-slate-400 mt-1">Type the name of your California CC</p>
+                  <p className="text-xs text-slate-400 mt-1">{t("onboarding.ccHelp")}</p>
                 </div>
                 <div>
-                  <label htmlFor="ob-major" className="block text-sm font-medium text-slate-700 mb-1.5">Intended major <span className="text-red-500">*</span></label>
+                  <label htmlFor="ob-major" className="block text-sm font-medium text-slate-700 mb-1.5">{t("onboarding.majorLabel")} <span className="text-red-500">*</span></label>
                   <input
                     id="ob-major"
                     value={form.intendedMajor}
                     onChange={e => set("intendedMajor", e.target.value)}
-                    placeholder="e.g. Computer Science, Business, Psychology, Biology..."
+                    placeholder={t("onboarding.majorPlaceholder")}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label htmlFor="ob-career" className="block text-sm font-medium text-slate-700 mb-1.5">Career goal <span className="text-slate-400 font-normal">(optional)</span></label>
+                  <label htmlFor="ob-career" className="block text-sm font-medium text-slate-700 mb-1.5">{t("onboarding.careerLabel")} <span className="text-slate-400 font-normal">{t("onboarding.careerOptional")}</span></label>
                   <input
                     id="ob-career"
                     value={form.careerGoal}
                     onChange={e => set("careerGoal", e.target.value)}
-                    placeholder="e.g. Software engineer, nurse, environmental scientist..."
+                    placeholder={t("onboarding.careerPlaceholder")}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
@@ -198,7 +201,7 @@ export default function Onboarding() {
               <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
                 <legend className="sr-only">Academic standing</legend>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
-                  <legend className="block text-sm font-medium text-slate-700 mb-2">Current GPA <span className="text-red-500">*</span></legend>
+                  <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.currentGpa")} <span className="text-red-500">*</span></legend>
                   <div className="grid grid-cols-2 gap-2">
                     {GPA_RANGES.map(g => (
                       <button type="button" key={g} onClick={() => set("currentGpa", g)}
@@ -212,7 +215,7 @@ export default function Onboarding() {
                   </div>
                 </fieldset>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
-                  <legend className="block text-sm font-medium text-slate-700 mb-2">When do you plan to transfer?</legend>
+                  <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.transferWhen")}</legend>
                   <div className="grid grid-cols-2 gap-2">
                     {TRANSFER_TIMELINES.map(t => (
                       <button type="button" key={t} onClick={() => set("transferTimeline", t)}
@@ -232,7 +235,7 @@ export default function Onboarding() {
               <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
                 <legend className="sr-only">Background</legend>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
-                  <legend className="block text-sm font-medium text-slate-700 mb-2">Financial situation</legend>
+                  <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.financialSituation")}</legend>
                   <div className="space-y-2">
                     {FINANCIAL_OPTIONS.map(f => (
                       <button type="button" key={f} onClick={() => set("financialSituation", f)}
@@ -246,15 +249,19 @@ export default function Onboarding() {
                   </div>
                 </fieldset>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
-                  <legend className="block text-sm font-medium text-slate-700 mb-2">Are you a first-generation college student?</legend>
+                  <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.firstGen")}</legend>
                   <div className="flex gap-2">
-                    {["Yes", "No", "Not sure"].map(v => (
+                    {[
+                      { v: "Yes", label: t("onboarding.yes") },
+                      { v: "No", label: t("onboarding.no") },
+                      { v: "Not sure", label: t("onboarding.notSure") },
+                    ].map(({ v, label }) => (
                       <button type="button" key={v} onClick={() => set("isFirstGen", v)}
                         aria-pressed={form.isFirstGen === v}
                         className={cn("flex-1 text-sm px-3 py-2.5 rounded-xl border font-medium transition-all",
                           form.isFirstGen === v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
                         )}>
-                        {v}
+                        {label}
                       </button>
                     ))}
                   </div>
@@ -267,7 +274,7 @@ export default function Onboarding() {
           <div className="px-8 pb-8 flex items-center justify-between gap-3">
             {step > 0 ? (
               <Button variant="ghost" onClick={() => setStep(s => s - 1)} className="text-slate-600">
-                <ArrowLeft className="h-4 w-4 mr-1" />Back
+                <ArrowLeft className="h-4 w-4 mr-1" />{t("onboarding.back")}
               </Button>
             ) : (
               <div />
@@ -279,7 +286,7 @@ export default function Onboarding() {
                 disabled={!canProceed()}
                 className="bg-indigo-600 hover:bg-indigo-700 ml-auto"
               >
-                Continue <ArrowRight className="h-4 w-4 ml-1" />
+                {t("onboarding.continue")} <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
               <Button
@@ -288,8 +295,8 @@ export default function Onboarding() {
                 className="bg-indigo-600 hover:bg-indigo-700 ml-auto"
               >
                 {submitting
-                  ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Creating profile…</>
-                  : <><CheckCircle2 className="h-4 w-4 mr-2" />Start My Journey</>
+                  ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("onboarding.creating")}</>
+                  : <><CheckCircle2 className="h-4 w-4 mr-2" />{t("onboarding.startJourney")}</>
                 }
               </Button>
             )}
@@ -297,7 +304,7 @@ export default function Onboarding() {
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-6">
-          You can update all of this in your profile at any time.
+          {t("onboarding.updateLater")}
         </p>
       </div>
     </div>
