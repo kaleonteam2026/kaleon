@@ -34,9 +34,9 @@ const queryClient = new QueryClient({
 });
 
 function ChatBubbleWrapper() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) return null;
-  return <ChatBubble />;
+  return <ChatBubble userId={user?.id} />;
 }
 
 function Router() {

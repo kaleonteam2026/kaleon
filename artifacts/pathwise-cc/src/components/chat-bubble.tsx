@@ -6,7 +6,7 @@ import { MessageCircle, X, Send, Loader2, Bot, User, MessagesSquare, Mic, Trophy
 type Mode = "ask" | "interview";
 interface Message { role: "user" | "assistant"; content: string; }
 
-const STORAGE_KEY = (profileId: number | null) => `dyp_chat_${profileId ?? "guest"}`;
+const STORAGE_KEY = (userId: string | null) => `dyp_chat_${userId ?? "guest"}`;
 
 declare global {
   interface WindowEventMap {
@@ -102,7 +102,7 @@ function SummaryCard({ text, onRestart }: { text: string; onRestart: () => void 
   );
 }
 
-export default function ChatBubble({ profileId }: { profileId?: number }) {
+export default function ChatBubble({ userId }: { userId?: string }) {
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   useFocusTrap(dialogRef, open, () => setOpen(false));
@@ -117,15 +117,20 @@ export default function ChatBubble({ profileId }: { profileId?: number }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const targetInputRef = useRef<HTMLInputElement>(null);
-  const pid = profileId ?? null;
+  const uid = userId ?? null;
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY(pid))
-      ?? localStorage.getItem(`pathwise_chat_${pid ?? "guest"}`);
+    // Remove legacy guest key when a real user is present to prevent stale data exposure
+    if (uid) {
+      localStorage.removeItem(STORAGE_KEY(null));
+      localStorage.removeItem("pathwise_chat_guest");
+    }
+    const saved = localStorage.getItem(STORAGE_KEY(uid))
+      ?? localStorage.getItem(`pathwise_chat_${uid ?? "guest"}`);
     if (saved) {
       try { setMessages(JSON.parse(saved) as Message[]); } catch { /* ignore */ }
     }
-  }, [pid]);
+  }, [uid]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -148,11 +153,11 @@ export default function ChatBubble({ profileId }: { profileId?: number }) {
     };
     window.addEventListener("dyp:start-interview", handler);
     return () => window.removeEventListener("dyp:start-interview", handler);
-  }, [pid]);
+  }, [uid]);
 
   const persistAsk = (msgs: Message[]) => {
     if (mode !== "ask") return;
-    localStorage.setItem(STORAGE_KEY(pid), JSON.stringify(msgs.slice(-40)));
+    localStorage.setItem(STORAGE_KEY(uid), JSON.stringify(msgs.slice(-40)));
   };
 
   const switchMode = (next: Mode) => {
@@ -166,7 +171,7 @@ export default function ChatBubble({ profileId }: { profileId?: number }) {
       setTimeout(() => targetInputRef.current?.focus(), 100);
     } else {
       // restore Ask history
-      const saved = localStorage.getItem(STORAGE_KEY(pid));
+      const saved = localStorage.getItem(STORAGE_KEY(uid));
       if (saved) {
         try { setMessages(JSON.parse(saved) as Message[]); } catch { setMessages([]); }
       } else {
@@ -183,7 +188,6 @@ export default function ChatBubble({ profileId }: { profileId?: number }) {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          profileId: pid,
           messages: next.slice(-12),
           interview: session
             ? { sessionId: session.id, target: session.target, start: session.start === true }
