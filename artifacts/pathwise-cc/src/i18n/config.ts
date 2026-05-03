@@ -3,7 +3,7 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import en from "./locales/en.json";
 
-export const SUPPORTED_LOCALES = ["en", "es", "zh", "vi", "tl", "ko"] as const;
+export const SUPPORTED_LOCALES = ["en", "es", "zh", "vi", "tl", "ko", "ar", "ru", "fa"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const LOCALE_LABELS: Record<SupportedLocale, { native: string; english: string; flag: string }> = {
@@ -13,7 +13,15 @@ export const LOCALE_LABELS: Record<SupportedLocale, { native: string; english: s
   vi: { native: "Tiếng Việt", english: "Vietnamese", flag: "🇻🇳" },
   tl: { native: "Tagalog", english: "Tagalog", flag: "🇵🇭" },
   ko: { native: "한국어", english: "Korean", flag: "🇰🇷" },
+  ar: { native: "العربية", english: "Arabic (MSA)", flag: "🇸🇦" },
+  ru: { native: "Русский", english: "Russian", flag: "🇷🇺" },
+  fa: { native: "فارسی", english: "Persian (Farsi)", flag: "🇮🇷" },
 };
+
+export const RTL_LOCALES: ReadonlySet<SupportedLocale> = new Set(["ar", "fa"]);
+export function isRtlLocale(locale: string): boolean {
+  return RTL_LOCALES.has(locale as SupportedLocale);
+}
 
 export const LOCALE_STORAGE_KEY = "dyp_locale";
 
@@ -29,6 +37,9 @@ export function getStoredLocale(): SupportedLocale {
   if (browser.startsWith("vi")) return "vi";
   if (browser.startsWith("tl") || browser.startsWith("fil")) return "tl";
   if (browser.startsWith("ko")) return "ko";
+  if (browser.startsWith("ar")) return "ar";
+  if (browser.startsWith("ru")) return "ru";
+  if (browser.startsWith("fa") || browser.startsWith("pe")) return "fa";
   return "en";
 }
 
@@ -36,6 +47,7 @@ export function setStoredLocale(locale: SupportedLocale): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(LOCALE_STORAGE_KEY, locale);
   document.documentElement.lang = locale === "zh" ? "zh-CN" : locale;
+  document.documentElement.dir = isRtlLocale(locale) ? "rtl" : "ltr";
 }
 
 // Lazy-loaded locale resources. English ships in the main bundle so first paint
@@ -47,6 +59,9 @@ const LOADERS: Record<SupportedLocale, () => Promise<{ default: Record<string, u
   vi: () => import("./locales/vi.json"),
   tl: () => import("./locales/tl.json"),
   ko: () => import("./locales/ko.json"),
+  ar: () => import("./locales/ar.json"),
+  ru: () => import("./locales/ru.json"),
+  fa: () => import("./locales/fa.json"),
 };
 
 const loadedBundles = new Set<SupportedLocale>(["en"]);
@@ -91,6 +106,7 @@ void i18n
 
 if (typeof window !== "undefined") {
   document.documentElement.lang = i18n.language === "zh" ? "zh-CN" : i18n.language;
+  document.documentElement.dir = isRtlLocale(i18n.language) ? "rtl" : "ltr";
 }
 
 export default i18n;

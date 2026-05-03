@@ -9,6 +9,9 @@ const LANG_NAMES: Record<string, string> = {
   vi: "Vietnamese (Tiếng Việt)",
   tl: "Tagalog",
   ko: "Korean (한국어)",
+  ar: "Modern Standard Arabic (العربية الفصحى)",
+  ru: "Russian (Русский)",
+  fa: "Persian/Farsi (فارسی)",
 };
 
 const SUPPORTED = new Set(Object.keys(LANG_NAMES));

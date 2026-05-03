@@ -6,7 +6,7 @@ import { getRequestLocale } from "../lib/locale";
 
 const router = Router();
 
-const SUPPORTED_LOCALES = new Set(["en", "es", "zh", "vi", "tl", "ko"]);
+const SUPPORTED_LOCALES = new Set(["en", "es", "zh", "vi", "tl", "ko", "ar", "ru", "fa"]);
 
 // GET /api/me/locale — current user's stored locale (or null if no profile yet)
 router.get("/me/locale", async (req, res) => {
