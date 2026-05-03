@@ -111,15 +111,15 @@ export default function Landing() {
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {[
-              { icon: Building2, title: "CC Programs", description: "EOPS, Phi Theta Kappa, Umoja, Puente, MESA, TRIO, Transfer Center, and 20+ programs at YOUR community college." },
-              { icon: Target, title: "AI Pathways", description: "Claude AI generates 3 personalized transfer reports — stretch, match, safety — with GPA targets and deadlines." },
-              { icon: Search, title: "Internship Finder", description: "AI-matched internships from DOE, NASA, NIH, CA state agencies, and nonprofits — verified for CC students." },
-              { icon: Award, title: "40+ Scholarships", description: "Cal Grants, Jack Kent Cooke, Dream.US, EOPS scholarships, community foundation awards. Live deadline checks." },
-              { icon: TrendingUp, title: "Progress Tracker", description: "Log GPA milestones, certifications, leadership roles. Get instant AI feedback on transfer readiness." },
-              { icon: GraduationCap, title: "Transfer Likelihood", description: "AI scores your fit with 25+ UC/CSU/private California universities. Personalized acceptance reports." },
-              { icon: BookOpen, title: "Course Tracking", description: "Log completed and in-progress courses. Track GPA, identify articulation gaps, see what's left for transfer." },
-              { icon: Compass, title: "Academic Roadmap", description: "AI semester-by-semester plan with ASSIST.org articulation, transfer deadlines, impacted-major advice." },
-              { icon: Users, title: "Student Guidebook", description: "Complete AI guidebook with application timelines, essay tips, financial aid strategy, scholarship checklist." },
+              { icon: Building2, title: t("landing.featureCcProgramsTitle"), description: t("landing.featureCcProgramsDesc") },
+              { icon: Target, title: t("landing.featurePathwaysTitle"), description: t("landing.featurePathwaysDesc") },
+              { icon: Search, title: t("landing.featureInternshipsTitle"), description: t("landing.featureInternshipsDesc") },
+              { icon: Award, title: t("landing.featureScholarshipsTitle"), description: t("landing.featureScholarshipsDesc") },
+              { icon: TrendingUp, title: t("landing.featureProgressTitle"), description: t("landing.featureProgressDesc") },
+              { icon: GraduationCap, title: t("landing.featureLikelihoodTitle"), description: t("landing.featureLikelihoodDesc") },
+              { icon: BookOpen, title: t("landing.featureCoursesTitle"), description: t("landing.featureCoursesDesc") },
+              { icon: Compass, title: t("landing.featureRoadmapTitle"), description: t("landing.featureRoadmapDesc") },
+              { icon: Users, title: t("landing.featureGuidebookTitle"), description: t("landing.featureGuidebookDesc") },
             ].map((feature) => (
               <div key={feature.title} className="bg-white border-2 border-slate-900 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]">
                 <feature.icon className="h-7 w-7 mb-3 text-slate-900" />
@@ -134,16 +134,16 @@ export default function Landing() {
       {/* How it works */}
       <section className="px-6 md:px-12 py-16 max-w-3xl mx-auto">
         <div className="mb-10">
-          <p className="text-xs pwc-font-mono uppercase tracking-widest text-slate-500 font-bold mb-2">// Process</p>
-          <h2 className="text-3xl md:text-4xl font-bold uppercase">How It Works</h2>
+          <p className="text-xs pwc-font-mono uppercase tracking-widest text-slate-500 font-bold mb-2">{t("landing.howItWorksEyebrow")}</p>
+          <h2 className="text-3xl md:text-4xl font-bold uppercase">{t("landing.howItWorksTitle")}</h2>
         </div>
         <div className="space-y-3">
           {[
-            { step: "01", title: "Create your student profile", desc: "GPA, major, career goal, financial situation, your specific community college." },
-            { step: "02", title: "Discover CC campus programs", desc: "AI surfaces EOPS, honors, equity cohorts, tutoring centers, and major clubs at your own college." },
-            { step: "03", title: "Find internships matched to you", desc: "Personalized list of federal, state, and nonprofit internships verified for CC student eligibility." },
-            { step: "04", title: "Generate AI transfer pathways", desc: "Claude AI creates 3 reports with UC/CSU compatibility scores and semester action plans." },
-            { step: "05", title: "Track your progress", desc: "Log milestones, get AI feedback, build a complete transfer readiness timeline." },
+            { step: "01", title: t("landing.step1Title"), desc: t("landing.step1Desc") },
+            { step: "02", title: t("landing.step2Title"), desc: t("landing.step2Desc") },
+            { step: "03", title: t("landing.step3Title"), desc: t("landing.step3Desc") },
+            { step: "04", title: t("landing.step4Title"), desc: t("landing.step4Desc") },
+            { step: "05", title: t("landing.step5Title"), desc: t("landing.step5Desc") },
           ].map((item) => (
             <div key={item.step} className="flex gap-4 bg-white border-2 border-slate-900 p-4 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)]">
               <div className="pwc-font-mono font-bold text-2xl text-slate-900 leading-none">{item.step}</div>
@@ -159,9 +159,9 @@ export default function Landing() {
       {/* Disclaimer */}
       <section className="px-6 md:px-12 py-8 max-w-3xl mx-auto">
         <div className="bg-amber-100 border-2 border-amber-700 p-4 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)]">
-          <p className="text-xs pwc-font-mono uppercase tracking-widest text-amber-900 font-bold mb-1">// Important Disclaimer</p>
+          <p className="text-xs pwc-font-mono uppercase tracking-widest text-amber-900 font-bold mb-1">{t("landing.disclaimerEyebrow")}</p>
           <p className="text-sm text-amber-900 leading-relaxed">
-            DYP is an AI-powered planning tool, not an official academic advisor. All recommendations, GPA targets, and program info are AI-generated estimates. Always verify with your community college counselor and each institution's official resources.
+            {t("landing.disclaimerBody")}
           </p>
         </div>
       </section>
@@ -187,8 +187,8 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="px-6 md:px-12 py-8 text-center text-slate-500 text-xs">
-        <p className="pwc-font-mono uppercase tracking-wider mb-2">// DYP — DO YOUR PATH</p>
-        <p>Not affiliated with UC, CSU, or any California institution. Data shown is AI-generated. Verify all information with official sources.</p>
+        <p className="pwc-font-mono uppercase tracking-wider mb-2">{t("landing.footerLine1")}</p>
+        <p>{t("landing.footerLine2")}</p>
         <div className="flex flex-wrap justify-center gap-3 mt-3 text-slate-400 pwc-font-mono uppercase">
           {["Santa Monica", "De Anza", "Foothill", "Mt. SAC", "Pasadena City", "LACC", "Diablo Valley"].map(c => (
             <span key={c}>{c}</span>
@@ -196,7 +196,7 @@ export default function Landing() {
         </div>
         <div className="mt-4">
           <a href="/transfer" className="pwc-font-mono uppercase tracking-wider text-slate-600 underline">
-            // Browse CC → UC/CSU transfer guides
+            {t("landing.footerGuides")}
           </a>
         </div>
         <span className="hidden"><Map /></span>

@@ -78,7 +78,7 @@ export default function Matches() {
       <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-slate-900" />
-          <p className="text-sm text-slate-500">Calculating your university matches…</p>
+          <p className="text-sm text-slate-500">{t("pages.matches.calculating")}</p>
         </div>
       </div>
     );
@@ -92,7 +92,7 @@ export default function Matches() {
         <div className="py-6 border-b-2 border-slate-900 mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.matches.title")}</h1>
           <p className="text-slate-600 text-sm mt-1">
-            {matches.length} universities ranked by compatibility with your profile. Scores are AI estimates — always verify requirements.
+            {t("pages.matches.subtitle", { count: matches.length })}
           </p>
         </div>
 

@@ -334,7 +334,7 @@ export default function Scholarships() {
       <Nav profileId={pid ?? undefined} />
       <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-5xl mx-auto">
         <div className="py-6 border-b-2 border-slate-900 mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">Scholarships & CC Programs</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.scholarships.pageTitle")}</h1>
           <p className="text-slate-600 text-sm mt-1">
             {pid
               ? "Personalized scholarship recommendations + on-campus programs at your community college."
@@ -431,12 +431,12 @@ export default function Scholarships() {
               <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-6 text-center mb-6">
                 <Building2 className="h-10 w-10 text-indigo-300 mx-auto mb-3" />
                 <p className="text-slate-700 font-medium mb-1">{t("pages.scholarships.signInPrompt")}</p>
-                <p className="text-slate-500 text-sm">Your profile's community college determines which on-campus programs are shown.</p>
+                <p className="text-slate-500 text-sm">{t("pages.scholarships.ccDescriptor")}</p>
               </div>
             ) : ccLoading ? (
               <div className="text-center py-16">
                 <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mx-auto mb-3" />
-                <p className="text-slate-600 font-medium">Loading your campus programs…</p>
+                <p className="text-slate-600 font-medium">{t("pages.scholarships.loadingPrograms")}</p>
                 <p className="text-slate-400 text-sm mt-1">
                   AI is compiling programs, clubs, and resources at your specific community college.
                 </p>
@@ -482,7 +482,7 @@ export default function Scholarships() {
                 {/* Program cards */}
                 <div className="space-y-3">
                   {filteredCCPrograms.length === 0 ? (
-                    <div className="text-center py-8 text-slate-400 text-sm">No programs match this filter.</div>
+                    <div className="text-center py-8 text-slate-400 text-sm">{t("pages.scholarships.noProgramsMatch")}</div>
                   ) : (
                     filteredCCPrograms.map((program, i) => (
                       <CCProgramCard key={i} program={program} />
@@ -492,7 +492,7 @@ export default function Scholarships() {
 
                 {/* Key CC resources callout */}
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-2">
-                  <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide">High-Priority Programs for Transfer Students</p>
+                  <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide">{t("pages.scholarships.highPriority")}</p>
                   <div className="grid sm:grid-cols-3 gap-2 text-xs text-emerald-700">
                     <div className="flex items-center gap-1.5"><Award className="h-3.5 w-3.5 text-amber-500" /><strong>Phi Theta Kappa</strong> — boosts transfer applications</div>
                     <div className="flex items-center gap-1.5"><Heart className="h-3.5 w-3.5 text-rose-500" /><strong>EOPS</strong> — priority registration + financial support</div>

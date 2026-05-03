@@ -9,17 +9,30 @@ import {
   BookOpen, CheckCircle2, User, Loader2,
 } from "lucide-react";
 
-const TRANSFER_TIMELINES = [
-  "Fall 2025", "Spring 2026", "Fall 2026", "Spring 2027",
-  "Fall 2027", "Spring 2028", "Fall 2028", "Undecided",
-];
+const TRANSFER_TIMELINE_KEYS = [
+  "timelineFall2025", "timelineSpring2026", "timelineFall2026", "timelineSpring2027",
+  "timelineFall2027", "timelineSpring2028", "timelineFall2028", "timelineUndecided",
+] as const;
 
-const GPA_RANGES = ["4.0", "3.7–3.9", "3.3–3.6", "3.0–3.2", "2.7–2.9", "2.4–2.6", "Below 2.4", "Not sure"];
+const TRANSFER_TIMELINE_VALUES: Record<string, string> = {
+  timelineFall2025: "Fall 2025", timelineSpring2026: "Spring 2026", timelineFall2026: "Fall 2026",
+  timelineSpring2027: "Spring 2027", timelineFall2027: "Fall 2027", timelineSpring2028: "Spring 2028",
+  timelineFall2028: "Fall 2028", timelineUndecided: "Undecided",
+};
 
-const FINANCIAL_OPTIONS = [
-  "Federal Pell Grant eligible (FAFSA)", "California Dream Act eligible (no DACA/FAFSA)",
-  "AB 540 eligible", "Middle-income (no Pell)", "Full pay", "Not sure",
-];
+const GPA_RANGE_KEYS = ["4.0", "3.7–3.9", "3.3–3.6", "3.0–3.2", "2.7–2.9", "2.4–2.6", "gpaBelow", "gpaNotSure"] as const;
+const GPA_RANGE_LABELS: Record<string, string> = {
+  "4.0": "4.0", "3.7–3.9": "3.7–3.9", "3.3–3.6": "3.3–3.6", "3.0–3.2": "3.0–3.2",
+  "2.7–2.9": "2.7–2.9", "2.4–2.6": "2.4–2.6", gpaBelow: "Below 2.4", gpaNotSure: "Not sure",
+};
+
+const FINANCIAL_KEYS = ["finPell", "finDream", "finAb540", "finMiddle", "finFullPay", "finNotSure"] as const;
+const FINANCIAL_VALUES: Record<string, string> = {
+  finPell: "Federal Pell Grant eligible (FAFSA)",
+  finDream: "California Dream Act eligible (no DACA/FAFSA)",
+  finAb540: "AB 540 eligible", finMiddle: "Middle-income (no Pell)",
+  finFullPay: "Full pay", finNotSure: "Not sure",
+};
 
 interface FormData {
   fullName: string;
@@ -203,29 +216,36 @@ export default function Onboarding() {
                 <fieldset className="border-0 p-0 m-0 min-w-0">
                   <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.currentGpa")} <span className="text-red-500">*</span></legend>
                   <div className="grid grid-cols-2 gap-2">
-                    {GPA_RANGES.map(g => (
-                      <button type="button" key={g} onClick={() => set("currentGpa", g)}
-                        aria-pressed={form.currentGpa === g}
-                        className={cn("text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
-                          form.currentGpa === g ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
-                        )}>
-                        {g}
-                      </button>
-                    ))}
+                    {GPA_RANGE_KEYS.map(k => {
+                      const value = GPA_RANGE_LABELS[k];
+                      const label = (k === "gpaBelow" || k === "gpaNotSure") ? t(`onboarding.${k}`) : k;
+                      return (
+                        <button type="button" key={k} onClick={() => set("currentGpa", value)}
+                          aria-pressed={form.currentGpa === value}
+                          className={cn("text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
+                            form.currentGpa === value ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
+                          )}>
+                          {label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </fieldset>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
                   <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.transferWhen")}</legend>
                   <div className="grid grid-cols-2 gap-2">
-                    {TRANSFER_TIMELINES.map(t => (
-                      <button type="button" key={t} onClick={() => set("transferTimeline", t)}
-                        aria-pressed={form.transferTimeline === t}
-                        className={cn("text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
-                          form.transferTimeline === t ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
-                        )}>
-                        {t}
-                      </button>
-                    ))}
+                    {TRANSFER_TIMELINE_KEYS.map(k => {
+                      const value = TRANSFER_TIMELINE_VALUES[k];
+                      return (
+                        <button type="button" key={k} onClick={() => set("transferTimeline", value)}
+                          aria-pressed={form.transferTimeline === value}
+                          className={cn("text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
+                            form.transferTimeline === value ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
+                          )}>
+                          {t(`onboarding.${k}`)}
+                        </button>
+                      );
+                    })}
                   </div>
                 </fieldset>
               </fieldset>
@@ -237,15 +257,18 @@ export default function Onboarding() {
                 <fieldset className="border-0 p-0 m-0 min-w-0">
                   <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.financialSituation")}</legend>
                   <div className="space-y-2">
-                    {FINANCIAL_OPTIONS.map(f => (
-                      <button type="button" key={f} onClick={() => set("financialSituation", f)}
-                        aria-pressed={form.financialSituation === f}
-                        className={cn("w-full text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
-                          form.financialSituation === f ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
-                        )}>
-                        {f}
-                      </button>
-                    ))}
+                    {FINANCIAL_KEYS.map(k => {
+                      const value = FINANCIAL_VALUES[k];
+                      return (
+                        <button type="button" key={k} onClick={() => set("financialSituation", value)}
+                          aria-pressed={form.financialSituation === value}
+                          className={cn("w-full text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
+                            form.financialSituation === value ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
+                          )}>
+                          {t(`onboarding.${k}`)}
+                        </button>
+                      );
+                    })}
                   </div>
                 </fieldset>
                 <fieldset className="border-0 p-0 m-0 min-w-0">

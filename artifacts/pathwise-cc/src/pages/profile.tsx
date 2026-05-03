@@ -85,6 +85,7 @@ function CollegePicker({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -139,7 +140,7 @@ function CollegePicker({
         {value && (
           <button
             type="button"
-            aria-label="Clear college selection"
+            aria-label={t("pages.profile.clearCollege")}
             onClick={() => pick("")}
             className="px-2 text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md border-l border-slate-200"
           >
@@ -158,7 +159,7 @@ function CollegePicker({
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search colleges…"
+                placeholder={t("pages.profile.collegeSearchPlaceholder")}
                 className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:bg-white"
               />
             </div>
@@ -205,6 +206,7 @@ interface ReminderPrefs {
 }
 
 function ReminderPrefsSection({ profileId }: { profileId: number }) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [prefs, setPrefs] = useState<ReminderPrefs | null>(null);
   const [saving, setSaving] = useState(false);
@@ -288,15 +290,15 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
-          <Bell className="h-4 w-4" /> Deadline Reminders
+          <Bell className="h-4 w-4" /> {t("pages.profile.remindersTitle")}
         </CardTitle>
         <CardDescription>
-          Get personalized nudges before UC, CSU, TAG, FAFSA, and scholarship deadlines.
+          {t("pages.profile.remindersDesc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <label className="flex items-center justify-between gap-3 cursor-pointer">
-          <span className="text-sm font-semibold text-slate-900">Send me reminders</span>
+          <span className="text-sm font-semibold text-slate-900">{t("pages.profile.sendReminders")}</span>
           <input
             type="checkbox"
             checked={enabled}
@@ -309,7 +311,7 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
 
         <div className={cn("space-y-3 transition-opacity", !enabled && "opacity-40 pointer-events-none")}>
           <div>
-            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Channels</p>
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">{t("pages.profile.channels")}</p>
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -319,7 +321,7 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
                   className="h-4 w-4"
                   data-testid="prefs-in-app"
                 />
-                <span className="text-sm text-slate-800">In-app notifications (bell)</span>
+                <span className="text-sm text-slate-800">{t("pages.profile.channelInApp")}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -329,13 +331,13 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
                   className="h-4 w-4"
                   data-testid="prefs-email"
                 />
-                <span className="text-sm text-slate-800">Email (when configured)</span>
+                <span className="text-sm text-slate-800">{t("pages.profile.channelEmail")}</span>
               </label>
             </div>
           </div>
 
           <div>
-            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Lead times</p>
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">{t("pages.profile.leadTimes")}</p>
             <div className="flex flex-wrap gap-2">
               {LEAD_OPTIONS.map((n) => {
                 const on = prefs.leadDays.includes(n);
@@ -353,13 +355,13 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
                     )}
                     data-testid={`lead-${n}`}
                   >
-                    {n} day{n > 1 ? "s" : ""}
+                    {n} {n > 1 ? t("pages.profile.days") : t("pages.profile.day")}
                   </button>
                 );
               })}
             </div>
             <p className="text-[11px] text-slate-500 mt-1.5">
-              You'll get a reminder when a deadline falls inside any selected window.
+              {t("pages.profile.leadHelp")}
             </p>
           </div>
 
@@ -373,7 +375,7 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
               data-testid="prefs-run-now"
             >
               {running ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Bell className="h-3.5 w-3.5 mr-1.5" />}
-              Refresh reminders now
+              {t("pages.profile.refreshNow")}
             </Button>
           </div>
         </div>
@@ -547,30 +549,30 @@ export default function Profile() {
               <div className="space-y-1.5">
                 <Label>{t("pages.profile.communityCollege")}</Label>
                 <CollegePicker value={form.communityCollege} onChange={v => set("communityCollege", v)} />
-                <p className="text-xs text-slate-400">Can't find your college? Choose "Other (not listed)" and type it in below.</p>
+                <p className="text-xs text-slate-400">{t("pages.profile.collegeOther")}</p>
               </div>
 
               {form.communityCollege === "Other (not listed)" && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="collegeOther">College Name</Label>
+                  <Label htmlFor="collegeOther">{t("pages.profile.collegeNameLabel")}</Label>
                   <Input
                     id="collegeOther"
-                    placeholder="Type your California community college name"
+                    placeholder={t("pages.profile.collegeNamePlaceholder")}
                     onChange={e => set("communityCollege", e.target.value || "Other (not listed)")}
                   />
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="isFirstGen">Are you a first-generation college student?</Label>
+                <Label htmlFor="isFirstGen">{t("pages.profile.firstGenLabel")}</Label>
                 <Select value={form.isFirstGen} onValueChange={v => set("isFirstGen", v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select an option" />
+                    <SelectValue placeholder={t("pages.profile.firstGenSelect")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="yes">Yes — neither parent completed a 4-year degree</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                    <SelectItem value="unsure">Not sure</SelectItem>
+                    <SelectItem value="yes">{t("pages.profile.firstGenYes")}</SelectItem>
+                    <SelectItem value="no">{t("pages.profile.firstGenNo")}</SelectItem>
+                    <SelectItem value="unsure">{t("pages.profile.firstGenUnsure")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -586,22 +588,22 @@ export default function Profile() {
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="intendedMajor">{t("pages.profile.intendedMajor")}</Label>
-                <Input id="intendedMajor" value={form.intendedMajor} onChange={e => set("intendedMajor", e.target.value)} placeholder="e.g. Psychology, Computer Science, Business Administration" />
+                <Input id="intendedMajor" value={form.intendedMajor} onChange={e => set("intendedMajor", e.target.value)} placeholder={t("pages.profile.majorPlaceholder")} />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="careerGoal">{t("pages.profile.careerGoal")}</Label>
-                <Input id="careerGoal" value={form.careerGoal} onChange={e => set("careerGoal", e.target.value)} placeholder="e.g. Software engineer at a tech company, Clinical psychologist, Lawyer" />
+                <Input id="careerGoal" value={form.careerGoal} onChange={e => set("careerGoal", e.target.value)} placeholder={t("pages.profile.careerPlaceholder")} />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="longTermAspirations">Long-Term Aspirations</Label>
-                <Textarea id="longTermAspirations" value={form.longTermAspirations} onChange={e => set("longTermAspirations", e.target.value)} placeholder="Describe your 5–10 year vision. Graduate school? Starting a business? Working in a specific community?" rows={3} />
+                <Label htmlFor="longTermAspirations">{t("pages.profile.longTermLabel")}</Label>
+                <Textarea id="longTermAspirations" value={form.longTermAspirations} onChange={e => set("longTermAspirations", e.target.value)} placeholder={t("pages.profile.longTermPlaceholder")} rows={3} />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="interests">Interests & Hobbies (comma-separated)</Label>
-                <Input id="interests" value={form.interests} onChange={e => set("interests", e.target.value)} placeholder="e.g. coding, community service, creative writing, social justice" />
+                <Label htmlFor="interests">{t("pages.profile.interestsLabel")}</Label>
+                <Input id="interests" value={form.interests} onChange={e => set("interests", e.target.value)} placeholder={t("pages.profile.interestsPlaceholder")} />
               </div>
             </CardContent>
           </Card>
@@ -613,10 +615,10 @@ export default function Profile() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Transfer Timeline</Label>
+                <Label>{t("pages.profile.transferTimelineLabel")}</Label>
                 <Select value={form.transferTimeline} onValueChange={v => set("transferTimeline", v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="When do you plan to transfer?" />
+                    <SelectValue placeholder={t("pages.profile.transferTimelineSelect")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="fall 2025">Fall 2025</SelectItem>
@@ -630,10 +632,10 @@ export default function Profile() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Geographic Preference</Label>
+                <Label>{t("pages.profile.geoLabel")}</Label>
                 <Select value={form.geographicPreference} onValueChange={v => set("geographicPreference", v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Where do you want to go?" />
+                    <SelectValue placeholder={t("pages.profile.geoSelect")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Los Angeles / Southern California">Los Angeles / Southern California</SelectItem>
@@ -647,16 +649,16 @@ export default function Profile() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Financial Situation</Label>
+                <Label>{t("pages.profile.finLabel")}</Label>
                 <Select value={form.financialSituation} onValueChange={v => set("financialSituation", v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Describe your financial situation" />
+                    <SelectValue placeholder={t("pages.profile.finSelect")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low income — rely heavily on financial aid and scholarships">Low income — heavily reliant on financial aid</SelectItem>
-                    <SelectItem value="moderate — some financial aid, looking for scholarships">Moderate — some financial aid needed</SelectItem>
-                    <SelectItem value="comfortable — loans are okay, scholarships preferred">Comfortable — loans okay, scholarships preferred</SelectItem>
-                    <SelectItem value="no financial concerns — cost is not a limiting factor">No financial concerns</SelectItem>
+                    <SelectItem value="low income — rely heavily on financial aid and scholarships">{t("pages.profile.finLow")}</SelectItem>
+                    <SelectItem value="moderate — some financial aid, looking for scholarships">{t("pages.profile.finModerate")}</SelectItem>
+                    <SelectItem value="comfortable — loans are okay, scholarships preferred">{t("pages.profile.finComfortable")}</SelectItem>
+                    <SelectItem value="no financial concerns — cost is not a limiting factor">{t("pages.profile.finNoConcerns")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -670,16 +672,15 @@ export default function Profile() {
           <div className="flex gap-3 justify-end">
             <Button onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
               {saving ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving…</>
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("pages.profile.saving")}</>
               ) : (
-                <><Save className="mr-2 h-4 w-4" /> Save &amp; Continue <ArrowRight className="ml-1 h-4 w-4" /></>
+                <><Save className="mr-2 h-4 w-4" /> {t("pages.profile.saveContinue")} <ArrowRight className="ml-1 h-4 w-4" /></>
               )}
             </Button>
           </div>
 
           <p className="text-xs text-slate-400 text-center">
-            This information is used only to generate personalized recommendations. DYP is not an official advisor.
-            Verify all requirements with your community college counselor.
+            {t("pages.profile.bottomDisclaimer")}
           </p>
         </div>
       </main>
