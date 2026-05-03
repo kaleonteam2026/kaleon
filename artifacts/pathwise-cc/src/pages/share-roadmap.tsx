@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import { Loader2, Download, FileText, Image as ImageIcon, AlertTriangle, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageMotion } from "@/components/page-motion";
 
 interface SharePreview {
   studentName: string;
@@ -104,6 +105,7 @@ export default function ShareRoadmap() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 md:px-8 py-6">
+        <PageMotion>
         <section className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 mb-5">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{data.studentName}</h1>
           <p className="text-base text-slate-700 mt-1">→ {data.targetSchool}</p>
@@ -156,6 +158,7 @@ export default function ShareRoadmap() {
           {expires && <p>This link expires on {expires}. Students can revoke it at any time.</p>}
           <p className="mt-2">Pathwise CC · Not a substitute for official academic advising.</p>
         </section>
+        </PageMotion>
       </main>
     </div>
   );

@@ -47,17 +47,20 @@ function ChatBubbleWrapper() {
 function Router() {
   const [location] = useLocation();
   const reduced = useReducedMotion();
-  // Crossfade across all routes so every page shares the brutalist transition
-  // vocabulary established on the landing page (Task #53).
-  const transitionKey = location;
+  // Crossfade across all non-admin routes so every page shares the brutalist
+  // transition vocabulary established on the landing page (Task #53).
+  // Admin pages stay static per spec.
+  const isAdmin = location.startsWith("/admin");
+  const transitionKey = isAdmin ? "admin-static" : location;
+  const animateRoutes = !isAdmin && !reduced;
   return (
     <>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={transitionKey}
-          initial={reduced ? false : { opacity: 0 }}
-          animate={reduced ? undefined : { opacity: 1 }}
-          exit={reduced ? undefined : { opacity: 0 }}
+          initial={animateRoutes ? { opacity: 0 } : false}
+          animate={animateRoutes ? { opacity: 1 } : undefined}
+          exit={animateRoutes ? { opacity: 0 } : undefined}
           transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
         >
       <Switch>

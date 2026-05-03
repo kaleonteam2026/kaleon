@@ -8,6 +8,8 @@ import {
   Map, GraduationCap, Target, ArrowRight, ArrowLeft,
   BookOpen, CheckCircle2, User, Loader2,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useMotionEnabled, useDirSign, DUR, EASE_OUT } from "@/lib/motion";
 
 const TRANSFER_TIMELINE_KEYS = [
   "timelineFall2025", "timelineSpring2026", "timelineFall2026", "timelineSpring2027",
@@ -110,6 +112,8 @@ export default function Onboarding() {
 
   const progress = ((step) / (STEPS.length - 1)) * 100;
   const StepIcon = STEPS[step].icon;
+  const motionOn = useMotionEnabled();
+  const dir = useDirSign();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50 flex items-center justify-center px-4 py-12">
@@ -142,7 +146,16 @@ export default function Onboarding() {
           </div>
 
           {/* Content */}
-          <div className="px-8 py-6 space-y-5">
+          <div className="px-8 py-6 space-y-5 relative overflow-hidden">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={step}
+                initial={motionOn ? { opacity: 0, x: 12 * dir } : false}
+                animate={motionOn ? { opacity: 1, x: 0 } : undefined}
+                exit={motionOn ? { opacity: 0, x: -12 * dir } : undefined}
+                transition={{ duration: DUR.base, ease: EASE_OUT }}
+                className="space-y-5"
+              >
             {step === 0 && (
               <fieldset className="space-y-5 border-0 p-0 m-0 min-w-0">
                 <legend className="sr-only">{t("pages.onboarding.legend_welcome")}</legend>
@@ -291,6 +304,8 @@ export default function Onboarding() {
                 </fieldset>
               </fieldset>
             )}
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           {/* Footer buttons */}

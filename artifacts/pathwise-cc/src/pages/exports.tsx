@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, FileSpreadsheet, Presentation, Loader2, Download, CheckCircle2, AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
 
 interface ExportPreview {
   profile: { fullName: string | null; communityCollege: string | null; intendedMajor: string | null; currentGpa: number | null };
@@ -70,6 +72,82 @@ const EXPORTS: ExportSpec[] = [
 
 function sanitize(name: string): string {
   return (name || "student").trim().replace(/[^a-zA-Z0-9-_]+/g, "_").slice(0, 60) || "student";
+}
+
+function ExportGrid({
+  specs,
+  busy,
+  done,
+  onGenerate,
+}: {
+  specs: ExportSpec[];
+  busy: Record<ExportKey, boolean>;
+  done: Record<ExportKey, boolean>;
+  onGenerate: (spec: ExportSpec) => void;
+}) {
+  const motionOn = useMotionEnabled();
+  const dir = useDirSign();
+  const lift = hoverLift(dir);
+  return (
+    <motion.div
+      className="grid grid-cols-1 md:grid-cols-3 gap-5"
+      initial={motionOn ? "hidden" : false}
+      animate={motionOn ? "show" : undefined}
+      variants={motionOn ? staggerContainer(0.06) : undefined}
+    >
+      {specs.map((spec) => {
+        const Icon = spec.icon;
+        const isBusy = busy[spec.key];
+        const isDone = done[spec.key];
+        return (
+          <motion.div
+            key={spec.key}
+            variants={motionOn ? fadeUp(8, DUR.base) : undefined}
+            whileHover={motionOn ? lift : undefined}
+          >
+            <Card className="border-2 border-slate-900 rounded-none flex flex-col h-full">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="w-10 h-10 bg-slate-900 text-white flex items-center justify-center">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className="pwc-font-mono text-[10px] text-slate-400 uppercase tracking-widest">
+                    .{spec.ext}
+                  </span>
+                </div>
+                <CardTitle className="text-base mt-3">{spec.title}</CardTitle>
+                <CardDescription className="text-sm leading-relaxed">{spec.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col">
+                <p className="text-xs text-slate-500 uppercase tracking-wide pwc-font-mono mb-2">Contents</p>
+                <ul className="space-y-1 mb-5 flex-1">
+                  {spec.contents.map((c) => (
+                    <li key={c} className="text-sm text-slate-700 flex items-start gap-2">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  onClick={() => onGenerate(spec)}
+                  disabled={isBusy}
+                  className="w-full bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none gap-2"
+                >
+                  {isBusy ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
+                  ) : isDone ? (
+                    <><CheckCircle2 className="h-4 w-4" /> Generate again</>
+                  ) : (
+                    <><Download className="h-4 w-4" /> Generate &amp; download</>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
 }
 
 export default function ExportsPage() {
@@ -213,53 +291,12 @@ export default function ExportsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {EXPORTS.map((spec) => {
-          const Icon = spec.icon;
-          const isBusy = busy[spec.key];
-          const isDone = done[spec.key];
-          return (
-            <Card key={spec.key} className="border-2 border-slate-900 rounded-none flex flex-col">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="w-10 h-10 bg-slate-900 text-white flex items-center justify-center">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className="pwc-font-mono text-[10px] text-slate-400 uppercase tracking-widest">
-                    .{spec.ext}
-                  </span>
-                </div>
-                <CardTitle className="text-base mt-3">{spec.title}</CardTitle>
-                <CardDescription className="text-sm leading-relaxed">{spec.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
-                <p className="text-xs text-slate-500 uppercase tracking-wide pwc-font-mono mb-2">Contents</p>
-                <ul className="space-y-1 mb-5 flex-1">
-                  {spec.contents.map((c) => (
-                    <li key={c} className="text-sm text-slate-700 flex items-start gap-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
-                      {c}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  onClick={() => handleGenerate(spec)}
-                  disabled={isBusy}
-                  className="w-full bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none gap-2"
-                >
-                  {isBusy ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
-                  ) : isDone ? (
-                    <><CheckCircle2 className="h-4 w-4" /> Generate again</>
-                  ) : (
-                    <><Download className="h-4 w-4" /> Generate &amp; download</>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      <ExportGrid
+        specs={EXPORTS}
+        busy={busy}
+        done={done}
+        onGenerate={handleGenerate}
+      />
 
       <p className="text-xs text-slate-400 text-center mt-8">
         Exports are generated on demand and never stored. Always verify deadlines and IGETC fulfillment with your counselor.

@@ -2,6 +2,8 @@ import { useAuth } from "@/contexts/auth-context";
 import { useLocation } from "wouter";
 import { useEffect, useMemo } from "react";
 import { GraduationCap, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer, useMotionEnabled, DUR } from "@/lib/motion";
 
 const FONT_STYLES = `
   .pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
@@ -85,6 +87,7 @@ export default function Welcome({ persona }: WelcomeProps) {
   const { isAuthenticated, isLoading, login } = useAuth();
   const [, navigate] = useLocation();
   const content = PERSONAS[persona];
+  const motionOn = useMotionEnabled();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -195,10 +198,16 @@ export default function Welcome({ persona }: WelcomeProps) {
           {content.subhead}
         </p>
 
-        <ul className="space-y-3 mb-10 max-w-2xl">
+        <motion.ul
+          className="space-y-3 mb-10 max-w-2xl"
+          initial={motionOn ? "hidden" : false}
+          animate={motionOn ? "show" : undefined}
+          variants={motionOn ? staggerContainer(0.06) : undefined}
+        >
           {content.bullets.map((b) => (
-            <li
+            <motion.li
               key={b}
+              variants={motionOn ? fadeUp(8, DUR.base) : undefined}
               className={`border-2 p-3 pwc-font-mono text-xs uppercase tracking-wider font-bold shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] ${
                 isDark
                   ? "bg-slate-800 border-white/30 text-white"
@@ -206,9 +215,9 @@ export default function Welcome({ persona }: WelcomeProps) {
               }`}
             >
               // {b}
-            </li>
+            </motion.li>
           ))}
-        </ul>
+        </motion.ul>
 
         <div className="flex flex-col sm:flex-row gap-4 items-start">
           <a

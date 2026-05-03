@@ -3,7 +3,7 @@ import { useParams } from "wouter";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import Nav from "@/components/nav";
-import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift } from "@/lib/motion";
+import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -213,6 +213,35 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ─── CC Program List (motion-aware container) ─────────────────────────────────
+function CCProgramList({ programs }: { programs: CCOpportunityItem[] }) {
+  const { t } = useTranslation();
+  const motionOn = useMotionEnabled();
+  const dir = useDirSign();
+  const lift = hoverLift(dir);
+  if (programs.length === 0) {
+    return <div className="text-center py-8 text-slate-400 text-sm">{t("pages.scholarships.noProgramsMatch")}</div>;
+  }
+  return (
+    <motion.div
+      className="space-y-3"
+      initial={motionOn ? "hidden" : false}
+      animate={motionOn ? "show" : undefined}
+      variants={motionOn ? staggerContainer(0.05) : undefined}
+    >
+      {programs.map((program, i) => (
+        <motion.div
+          key={i}
+          variants={motionOn ? fadeUp(6, DUR.base) : undefined}
+          whileHover={motionOn ? lift : undefined}
+        >
+          <CCProgramCard program={program} />
+        </motion.div>
+      ))}
+    </motion.div>
   );
 }
 
@@ -496,15 +525,7 @@ export default function Scholarships() {
                 </div>
 
                 {/* Program cards */}
-                <div className="space-y-3">
-                  {filteredCCPrograms.length === 0 ? (
-                    <div className="text-center py-8 text-slate-400 text-sm">{t("pages.scholarships.noProgramsMatch")}</div>
-                  ) : (
-                    filteredCCPrograms.map((program, i) => (
-                      <CCProgramCard key={i} program={program} />
-                    ))
-                  )}
-                </div>
+                <CCProgramList programs={filteredCCPrograms} />
 
                 {/* Key CC resources callout */}
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-2">
