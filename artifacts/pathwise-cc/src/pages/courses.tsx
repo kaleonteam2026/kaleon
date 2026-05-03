@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useLocation } from "wouter";
-import { useTranslation, Trans } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -280,12 +280,9 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
       )}
 
       <p className="text-xs text-slate-600 text-center">
-        <Trans
-          i18nKey="pages.courses.aiAnalysisDisclaimer"
-          components={[
-            <a key="0" href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline" />,
-          ]}
-        />
+        {t("pages.courses.aiDisclaimerPrefix")}
+        <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline">assist.org</a>
+        {t("pages.courses.aiDisclaimerSuffix")}
       </p>
     </div>
   );

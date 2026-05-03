@@ -226,7 +226,7 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Bell className="h-4 w-4" /> Deadline Reminders
+            <Bell className="h-4 w-4" /> {t("profile.deadlineReminders")}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-xs text-slate-500">{t("common.loading")}</CardContent>

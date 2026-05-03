@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
+import { useTranslation, Trans } from "react-i18next";
 import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,7 @@ interface Guidebook {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Guidebook() {
+  const { t, i18n } = useTranslation();
   const { guidebookId } = useParams<{ guidebookId: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -26,12 +28,13 @@ export default function Guidebook() {
   const [loading, setLoading] = useState(true);
   const [, setCurrentSection] = useState("");
   const gid = parseInt(guidebookId);
+  void navigate;
 
   useEffect(() => {
     fetch(`/api/guidebooks/${gid}`, { credentials: "include" })
       .then(r => r.json())
       .then((g: Guidebook) => setGuidebook(g))
-      .catch(() => toast({ title: "Error loading guidebook", variant: "destructive" }))
+      .catch(() => toast({ title: t("pages.guidebook.toast_loadError"), variant: "destructive" }))
       .finally(() => setLoading(false));
   }, [gid]);
 
@@ -44,7 +47,7 @@ export default function Guidebook() {
     a.download = `dyp-guidebook-${guidebook.id}.md`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Guidebook downloaded!" });
+    toast({ title: t("pages.guidebook.toast_downloaded") });
   };
 
   if (loading) {
@@ -52,7 +55,7 @@ export default function Guidebook() {
       <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-          <p className="text-sm text-slate-500">Loading your guidebook…</p>
+          <p className="text-sm text-slate-500">{t("pages.guidebook.loading")}</p>
         </div>
       </div>
     );
@@ -63,8 +66,8 @@ export default function Guidebook() {
       <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
         <div className="text-center">
           <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">Guidebook not found.</p>
-          <Button variant="outline" onClick={() => window.history.back()} className="mt-4">Go Back</Button>
+          <p className="text-slate-500">{t("pages.guidebook.notFound")}</p>
+          <Button variant="outline" onClick={() => window.history.back()} className="mt-4">{t("pages.guidebook.goBack")}</Button>
         </div>
       </div>
     );
@@ -83,17 +86,17 @@ export default function Guidebook() {
               onClick={() => window.history.back()}
               className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-3 transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" /> Back to Pathways
+              <ArrowLeft className="h-4 w-4" /> {t("pages.guidebook.back")}
             </button>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-900 uppercase tracking-tight">{guidebook.title ?? "Your Transfer Guidebook"}</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900 uppercase tracking-tight">{guidebook.title ?? t("pages.guidebook.titleFallback")}</h1>
             {guidebook.createdAt && (
               <p className="text-xs text-slate-400 mt-1">
-                Generated {new Date(guidebook.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                {t("pages.guidebook.generatedOn", { date: new Date(guidebook.createdAt).toLocaleDateString(i18n.language, { month: "long", day: "numeric", year: "numeric" }) })}
               </p>
             )}
           </div>
           <Button onClick={downloadMarkdown} variant="outline" size="sm" className="flex-shrink-0">
-            <Download className="h-4 w-4 mr-2" /> Download
+            <Download className="h-4 w-4 mr-2" /> {t("pages.guidebook.download")}
           </Button>
         </div>
 
@@ -101,23 +104,22 @@ export default function Guidebook() {
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5 flex gap-2.5">
           <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-amber-700 leading-relaxed">
-            This guidebook is AI-generated and is <strong>not a substitute</strong> for official academic advising.
-            Verify all requirements with your counselor and each university's official admissions page.
+            <Trans i18nKey="pages.guidebook.disclaimer" components={{ strong: <strong /> }} />
           </p>
         </div>
 
         {/* Legend */}
         <div className="flex flex-wrap gap-5 mb-5 px-1 text-xs text-slate-500">
-          <span className="flex items-center gap-1.5"><Square className="h-3.5 w-3.5 text-slate-300" /> Pending</span>
-          <span className="flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5 text-emerald-500" /> Done</span>
-          <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" /> Action step</span>
-          <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" /> Note</span>
+          <span className="flex items-center gap-1.5"><Square className="h-3.5 w-3.5 text-slate-300" /> {t("pages.guidebook.legend_pending")}</span>
+          <span className="flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5 text-emerald-500" /> {t("pages.guidebook.legend_done")}</span>
+          <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" /> {t("pages.guidebook.legend_action")}</span>
+          <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" /> {t("pages.guidebook.legend_note")}</span>
         </div>
 
         {/* Guidebook content */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-6 md:px-10 py-8 mb-12">
           <MarkdownContent
-            markdown={guidebook.contentMarkdown ?? "No content available."}
+            markdown={guidebook.contentMarkdown ?? t("pages.guidebook.noContent")}
             setSection={setCurrentSection}
           />
         </div>
@@ -125,9 +127,9 @@ export default function Guidebook() {
         {/* Footer */}
         <div className="text-center pb-12">
           <Button onClick={downloadMarkdown} variant="outline">
-            <Download className="h-4 w-4 mr-2" /> Download Guidebook
+            <Download className="h-4 w-4 mr-2" /> {t("pages.guidebook.downloadFull")}
           </Button>
-          <p className="text-xs text-slate-400 mt-3">DYP · AI-generated · Always verify with official sources</p>
+          <p className="text-xs text-slate-400 mt-3">{t("pages.guidebook.footer")}</p>
         </div>
       </main>
     </div>

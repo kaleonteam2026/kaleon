@@ -28,17 +28,18 @@ async function syncLocaleWithServer(): Promise<void> {
     const localStored = getStoredLocale();
     const valid = (l: unknown): l is SupportedLocale =>
       typeof l === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(l);
-    if (valid(locale) && locale !== localStored) {
-      // Server preference wins on first load (other devices may have changed it).
-      await changeLocale(locale);
-    } else if (valid(localStored) && localStored !== locale) {
-      // Push the device-chosen locale up to the server.
+    if (valid(localStored) && localStored !== locale) {
+      // Guest/device-chosen locale wins on sign-in: push it up to the server
+      // so a freshly chosen language carries through authentication.
       await fetch("/api/me/locale", {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json", "x-dyp-locale": localStored },
         body: JSON.stringify({ locale: localStored }),
       });
+    } else if (valid(locale) && locale !== localStored) {
+      // No device preference set — adopt the server's stored locale.
+      await changeLocale(locale);
     }
   } catch {
     /* offline or unauthenticated — no-op */
