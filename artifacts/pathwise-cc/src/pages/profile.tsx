@@ -524,10 +524,12 @@ export default function Profile() {
       <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
       <Nav profileId={form.id} />
       <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto focus:outline-none">
-        <PageMotion className="py-6 border-b-2 border-slate-900 mb-6">
+        <div className="py-6 border-b-2 border-slate-900 mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.profile.title")}</h1>
-          <p className="text-slate-600 text-sm mt-1">{t("pages.profile.subtitle")}</p>
-        </PageMotion>
+          <PageMotion>
+            <p className="text-slate-600 text-sm mt-1">{t("pages.profile.subtitle")}</p>
+          </PageMotion>
+        </div>
 
         <div className="space-y-6 pb-12">
           {/* Basic Info */}
