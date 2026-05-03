@@ -45,7 +45,7 @@ export default function Landing() {
     ensure(`meta[property="og:description"]`, { property: "og:description" }).content = desc;
 
     const localeMap: Record<string, string> = {
-      en: "en_US", es: "es_MX", zh: "zh_CN", vi: "vi_VN", tl: "tl_PH", ko: "ko_KR",
+      en: "en_US", es: "es_MX", zh: "zh_CN", vi: "vi_VN", tl: "tl_PH", ko: "ko_KR", ar: "ar_SA", ru: "ru_RU", fa: "fa_IR",
     };
     const lang = (i18n.language?.split("-")[0] ?? "en");
     ensure(`meta[property="og:locale"]`, { property: "og:locale" }).content = localeMap[lang] ?? "en_US";
