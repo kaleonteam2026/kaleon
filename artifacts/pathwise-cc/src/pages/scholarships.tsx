@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ExternalLink, Search, Award, Briefcase, GraduationCap, BookOpen,
   Star, Loader2, Building2, Heart, Users, Stethoscope, Palette,
-  MapPin, ChevronRight, Info, Sparkles, Globe, RefreshCcw,
+  MapPin, ChevronRight, Info, Sparkles, Globe, RefreshCcw, Mic,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLiveQuota } from "@/hooks/use-live-quota";
@@ -394,10 +394,20 @@ export default function Scholarships() {
                           ))}
                         </div>
                       </div>
-                      <a href={s.sourceUrl} target="_blank" rel="noopener noreferrer"
-                        className="text-indigo-500 hover:text-indigo-700 flex-shrink-0">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <a href={s.sourceUrl} target="_blank" rel="noopener noreferrer"
+                          className="text-indigo-500 hover:text-indigo-700">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                        <button
+                          onClick={() => window.dispatchEvent(new CustomEvent("dyp:start-interview", { detail: { target: s.name } }))}
+                          className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-1 bg-amber-100 text-slate-900 border border-amber-300 hover:bg-amber-200 rounded-full"
+                          title="Practice an interview for this scholarship"
+                          data-testid={`practice-interview-${s.id}`}
+                        >
+                          <Mic className="h-3 w-3" /> Practice
+                        </button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
