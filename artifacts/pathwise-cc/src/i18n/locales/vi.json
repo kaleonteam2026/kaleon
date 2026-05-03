@@ -22,7 +22,7 @@
     "skipToMain": "Bỏ qua đến nội dung chính",
     "language": "Ngôn ngữ",
     "selectLanguage": "Chọn ngôn ngữ",
-    "student": "Sinh viên",
+    "student": "Học sinh",
     "open": "Mở",
     "edit": "Sửa",
     "viewAll": "Xem tất cả",
@@ -34,7 +34,10 @@
     "days": "ngày",
     "pending": "Chờ",
     "done": "Xong",
-    "verifyFooter": "DYP · Do AI tạo · Luôn xác minh với nguồn chính thức"
+    "verifyFooter": "DYP · Do AI tạo · Luôn xác minh với nguồn chính thức",
+    "season_fall": "Mùa Thu",
+    "season_spring": "Mùa Xuân",
+    "season_summer": "Mùa Hè"
   },
   "nav": {
     "dashboard": "Bảng điều khiển",
@@ -331,7 +334,13 @@
       "deadlineReminders": "Nhắc nhở hạn chót",
       "createdRemindersOne": "Đã tạo {{count}} nhắc nhở mới",
       "createdRemindersOther": "Đã tạo {{count}} nhắc nhở mới",
-      "noNewReminders": "Không có nhắc nhở mới"
+      "noNewReminders": "Không có nhắc nhở mới",
+      "timeline_fall2025": "Mùa Thu 2025",
+      "timeline_spring2026": "Mùa Xuân 2026",
+      "timeline_fall2026": "Mùa Thu 2026",
+      "timeline_fall2027": "Mùa Thu 2027",
+      "timeline_fall2028later": "Mùa Thu 2028 hoặc trễ hơn",
+      "timeline_flexible": "Linh hoạt / Chưa chắc chắn"
     },
     "scholarships": {
       "title": "Học Bổng",
@@ -392,7 +401,8 @@
       "filter_health_wellness": "Sức khỏe",
       "filter_stem_research": "STEM & Nghiên cứu",
       "openInNewTab": "Mở {{name}} trong tab mới",
-      "opportunityCategories": "Danh mục cơ hội"
+      "opportunityCategories": "Danh mục cơ hội",
+      "ccProgramsDisclaimer": "Do AI tạo dựa trên các chương trình công khai tại trường bạn. Xác minh tính khả dụng với dịch vụ sinh viên của trường."
     },
     "internships": {
       "title": "Tìm Kiếm Thực Tập",
@@ -643,7 +653,8 @@
       "lockFeat_admission": "Dự đoán tuyển sinh",
       "lockFeat_guidebook": "Phù hợp sách hướng dẫn",
       "lockFeat_trajectory": "Điểm quỹ đạo trực tiếp",
-      "loadingResponse": "Đang tải phản hồi…"
+      "loadingResponse": "Đang tải phản hồi…",
+      "needsFocus": "Cần chú ý"
     },
     "roadmap": {
       "goHome": "Về Trang Chủ",
@@ -811,6 +822,12 @@
       "footer": "DYP · AI tạo · Luôn xác minh với nguồn chính thức",
       "toast_loadError": "Lỗi tải sổ tay",
       "toast_downloaded": "Đã tải sổ tay!"
+    },
+    "onboarding": {
+      "legend_welcome": "Chào mừng và thông tin cá nhân",
+      "legend_collegeMajor": "Trường và chuyên ngành",
+      "legend_academic": "Tình hình học tập",
+      "legend_background": "Lý lịch"
     }
   }
 }

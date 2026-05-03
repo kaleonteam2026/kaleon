@@ -34,7 +34,10 @@
     "days": "araw",
     "pending": "Naghihintay",
     "done": "Tapos",
-    "verifyFooter": "DYP · AI-generated · Palaging i-verify sa opisyal na pinagkukunan"
+    "verifyFooter": "DYP · AI-generated · Palaging i-verify sa opisyal na pinagkukunan",
+    "season_fall": "Fall",
+    "season_spring": "Spring",
+    "season_summer": "Summer"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -331,7 +334,13 @@
       "deadlineReminders": "Mga Paalala ng Deadline",
       "createdRemindersOne": "Gumawa ng {{count}} bagong paalala",
       "createdRemindersOther": "Gumawa ng {{count}} bagong paalala",
-      "noNewReminders": "Walang bagong paalala ngayon"
+      "noNewReminders": "Walang bagong paalala ngayon",
+      "timeline_fall2025": "Fall 2025",
+      "timeline_spring2026": "Spring 2026",
+      "timeline_fall2026": "Fall 2026",
+      "timeline_fall2027": "Fall 2027",
+      "timeline_fall2028later": "Fall 2028 o mas huli",
+      "timeline_flexible": "Flexible / Hindi pa sigurado"
     },
     "scholarships": {
       "title": "Mga Scholarship",
@@ -392,7 +401,8 @@
       "filter_health_wellness": "Kalusugan",
       "filter_stem_research": "STEM at Pananaliksik",
       "openInNewTab": "Buksan ang {{name}} sa bagong tab",
-      "opportunityCategories": "Mga kategorya ng oportunidad"
+      "opportunityCategories": "Mga kategorya ng oportunidad",
+      "ccProgramsDisclaimer": "AI-generated batay sa mga kilalang programa sa iyong kolehiyo. I-verify ang availability sa student services ng iyong kolehiyo."
     },
     "internships": {
       "title": "Internship Finder",
@@ -643,7 +653,8 @@
       "lockFeat_admission": "Admission prediction",
       "lockFeat_guidebook": "Guidebook alignment",
       "lockFeat_trajectory": "Live trajectory score",
-      "loadingResponse": "Naglo-load ng tugon…"
+      "loadingResponse": "Naglo-load ng tugon…",
+      "needsFocus": "Kailangan ng Focus"
     },
     "roadmap": {
       "goHome": "Bumalik sa Home",
@@ -811,6 +822,12 @@
       "footer": "DYP · AI-generated · Palaging i-verify sa opisyal na pinagmulan",
       "toast_loadError": "Error sa pag-load ng guidebook",
       "toast_downloaded": "Na-download ang guidebook!"
+    },
+    "onboarding": {
+      "legend_welcome": "Maligayang pagdating at personal na impormasyon",
+      "legend_collegeMajor": "Kolehiyo at major",
+      "legend_academic": "Akademikong katayuan",
+      "legend_background": "Background"
     }
   }
 }

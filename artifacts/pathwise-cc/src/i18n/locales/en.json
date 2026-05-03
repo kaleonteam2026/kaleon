@@ -34,7 +34,10 @@
     "days": "days",
     "pending": "Pending",
     "done": "Done",
-    "verifyFooter": "DYP · AI-generated · Always verify with official sources"
+    "verifyFooter": "DYP · AI-generated · Always verify with official sources",
+    "season_fall": "Fall",
+    "season_spring": "Spring",
+    "season_summer": "Summer"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -331,7 +334,13 @@
       "deadlineReminders": "Deadline Reminders",
       "createdRemindersOne": "Created {{count}} new reminder",
       "createdRemindersOther": "Created {{count}} new reminders",
-      "noNewReminders": "No new reminders right now"
+      "noNewReminders": "No new reminders right now",
+      "timeline_fall2025": "Fall 2025",
+      "timeline_spring2026": "Spring 2026",
+      "timeline_fall2026": "Fall 2026",
+      "timeline_fall2027": "Fall 2027",
+      "timeline_fall2028later": "Fall 2028 or later",
+      "timeline_flexible": "Flexible / Not sure yet"
     },
     "scholarships": {
       "title": "Scholarships",
@@ -392,7 +401,8 @@
       "filter_health_wellness": "Health & Wellness",
       "filter_stem_research": "STEM & Research",
       "openInNewTab": "Open {{name}} in a new tab",
-      "opportunityCategories": "Opportunity categories"
+      "opportunityCategories": "Opportunity categories",
+      "ccProgramsDisclaimer": "AI-generated based on publicly known programs at your college. Verify availability with your college's student services."
     },
     "internships": {
       "title": "Internship Finder",
@@ -643,7 +653,8 @@
       "lockFeat_admission": "Admission prediction",
       "lockFeat_guidebook": "Guidebook alignment",
       "lockFeat_trajectory": "Live trajectory score",
-      "loadingResponse": "Loading response…"
+      "loadingResponse": "Loading response…",
+      "needsFocus": "Needs Focus"
     },
     "roadmap": {
       "goHome": "Go Home",
@@ -811,6 +822,12 @@
       "footer": "DYP · AI-generated · Always verify with official sources",
       "toast_loadError": "Error loading guidebook",
       "toast_downloaded": "Guidebook downloaded!"
+    },
+    "onboarding": {
+      "legend_welcome": "Welcome and personal info",
+      "legend_collegeMajor": "College and major",
+      "legend_academic": "Academic standing",
+      "legend_background": "Background"
     }
   }
 }

@@ -85,7 +85,7 @@ export default function Onboarding() {
       const gpaMap: Record<string, number> = { "4.0": 4.0, "3.7–3.9": 3.8, "3.3–3.6": 3.5, "3.0–3.2": 3.1, "2.7–2.9": 2.8, "2.4–2.6": 2.5, "Below 2.4": 2.2, "Not sure": 0 };
       const payload = {
         userId: user.id,
-        fullName: form.fullName || user.firstName || "Student",
+        fullName: form.fullName || user.firstName || t("common.student"),
         communityCollege: form.communityCollege,
         intendedMajor: form.intendedMajor,
         careerGoal: form.careerGoal,
@@ -145,7 +145,7 @@ export default function Onboarding() {
           <div className="px-8 py-6 space-y-5">
             {step === 0 && (
               <fieldset className="space-y-5 border-0 p-0 m-0 min-w-0">
-                <legend className="sr-only">Welcome and personal info</legend>
+                <legend className="sr-only">{t("pages.onboarding.legend_welcome")}</legend>
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { icon: GraduationCap, label: t("onboarding.transferPlanning"), desc: t("onboarding.transferPlanningDesc") },
@@ -175,7 +175,7 @@ export default function Onboarding() {
 
             {step === 1 && (
               <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
-                <legend className="sr-only">College and major</legend>
+                <legend className="sr-only">{t("pages.onboarding.legend_collegeMajor")}</legend>
                 <div>
                   <label htmlFor="ob-cc" className="block text-sm font-medium text-slate-700 mb-1.5">{t("onboarding.ccLabel")} <span className="text-red-500">*</span></label>
                   <input
@@ -212,7 +212,7 @@ export default function Onboarding() {
 
             {step === 2 && (
               <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
-                <legend className="sr-only">Academic standing</legend>
+                <legend className="sr-only">{t("pages.onboarding.legend_academic")}</legend>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
                   <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.currentGpa")} <span className="text-red-500">*</span></legend>
                   <div className="grid grid-cols-2 gap-2">
@@ -253,7 +253,7 @@ export default function Onboarding() {
 
             {step === 3 && (
               <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
-                <legend className="sr-only">Background</legend>
+                <legend className="sr-only">{t("pages.onboarding.legend_background")}</legend>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
                   <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.financialSituation")}</legend>
                   <div className="space-y-2">

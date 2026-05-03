@@ -455,7 +455,7 @@ export default function Scholarships() {
                     <p className="text-sm text-indigo-700 mt-0.5 leading-relaxed">{ccOpps.summary}</p>
                     <p className="text-xs text-indigo-400 mt-1.5 flex items-center gap-1">
                       <Info className="h-3 w-3" />
-                      AI-generated based on publicly known programs at your college. Verify availability with your college's student services.
+                      {t("pages.scholarships.ccProgramsDisclaimer")}
                     </p>
                   </div>
                 </div>

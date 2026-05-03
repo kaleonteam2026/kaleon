@@ -34,7 +34,10 @@
     "days": "天",
     "pending": "待办",
     "done": "完成",
-    "verifyFooter": "DYP · AI 生成 · 请始终通过官方来源核实"
+    "verifyFooter": "DYP · AI 生成 · 请始终通过官方来源核实",
+    "season_fall": "秋季",
+    "season_spring": "春季",
+    "season_summer": "夏季"
   },
   "nav": {
     "dashboard": "仪表板",
@@ -331,7 +334,13 @@
       "deadlineReminders": "截止日期提醒",
       "createdRemindersOne": "已创建 {{count}} 个新提醒",
       "createdRemindersOther": "已创建 {{count}} 个新提醒",
-      "noNewReminders": "现在没有新提醒"
+      "noNewReminders": "现在没有新提醒",
+      "timeline_fall2025": "2025 年秋",
+      "timeline_spring2026": "2026 年春",
+      "timeline_fall2026": "2026 年秋",
+      "timeline_fall2027": "2027 年秋",
+      "timeline_fall2028later": "2028 年秋或之后",
+      "timeline_flexible": "灵活 / 尚不确定"
     },
     "scholarships": {
       "title": "奖学金",
@@ -392,7 +401,8 @@
       "filter_health_wellness": "健康与福祉",
       "filter_stem_research": "STEM 与研究",
       "openInNewTab": "在新标签页中打开 {{name}}",
-      "opportunityCategories": "机会类别"
+      "opportunityCategories": "机会类别",
+      "ccProgramsDisclaimer": "由 AI 基于你所在学院公开已知的项目生成。请向学院学生服务确认是否可用。"
     },
     "internships": {
       "title": "实习查找器",
@@ -643,7 +653,8 @@
       "lockFeat_admission": "录取预测",
       "lockFeat_guidebook": "指南对齐",
       "lockFeat_trajectory": "实时轨迹分数",
-      "loadingResponse": "正在加载回复…"
+      "loadingResponse": "正在加载回复…",
+      "needsFocus": "需关注"
     },
     "roadmap": {
       "goHome": "返回首页",
@@ -811,6 +822,12 @@
       "footer": "DYP · AI 生成 · 请始终向官方来源核实",
       "toast_loadError": "加载指南出错",
       "toast_downloaded": "指南已下载！"
+    },
+    "onboarding": {
+      "legend_welcome": "欢迎与个人信息",
+      "legend_collegeMajor": "学院与专业",
+      "legend_academic": "学业情况",
+      "legend_background": "背景"
     }
   }
 }

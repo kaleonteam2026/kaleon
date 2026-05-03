@@ -62,21 +62,21 @@ const FONT_STYLES = `
 `;
 
 function readinessAccent(score: number) {
-  if (score >= 80) return { stroke: "#10b981", chip: "bg-emerald-500", labelKey: "dashboard.onTrack" };
-  if (score >= 60) return { stroke: "#10b981", chip: "bg-emerald-500", labelKey: "dashboard.onTrack" };
-  if (score >= 40) return { stroke: "#f59e0b", chip: "bg-amber-500", labelKey: "dashboard.needsFocus" };
-  return { stroke: "#ef4444", chip: "bg-red-500", labelKey: "dashboard.atRisk" };
+  if (score >= 80) return { stroke: "#10b981", chip: "bg-emerald-500", labelKey: "pages.progress.onTrack" };
+  if (score >= 60) return { stroke: "#10b981", chip: "bg-emerald-500", labelKey: "pages.progress.onTrack" };
+  if (score >= 40) return { stroke: "#f59e0b", chip: "bg-amber-500", labelKey: "pages.progress.needsFocus" };
+  return { stroke: "#ef4444", chip: "bg-red-500", labelKey: "pages.progress.atRisk" };
 }
 
-function estimatedTransferTerm(totalUnits: number): string {
+function estimatedTransferTerm(totalUnits: number, t: (k: string) => string): string {
   const remaining = Math.max(0, 60 - totalUnits);
   const semestersLeft = Math.ceil(remaining / 15);
   const now = new Date();
   const monthsAhead = semestersLeft * 5;
   const target = new Date(now.getFullYear(), now.getMonth() + monthsAhead, 1);
   const month = target.getMonth();
-  const term = month >= 6 && month <= 11 ? "Fall" : month >= 0 && month <= 4 ? "Spring" : "Summer";
-  return `${term} ${target.getFullYear()}`;
+  const seasonKey = month >= 6 && month <= 11 ? "common.season_fall" : month >= 0 && month <= 4 ? "common.season_spring" : "common.season_summer";
+  return `${t(seasonKey)} ${target.getFullYear()}`;
 }
 
 export default function Dashboard() {
@@ -200,8 +200,8 @@ export default function Dashboard() {
     );
   }
 
-  const transferTerm = estimatedTransferTerm(breakdown?.totalUnits ?? 0);
-  const greeting = user?.firstName ?? profile.fullName?.split(" ")[0] ?? "Student";
+  const transferTerm = estimatedTransferTerm(breakdown?.totalUnits ?? 0, t);
+  const greeting = user?.firstName ?? profile.fullName?.split(" ")[0] ?? t("common.student");
 
   return (
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900 pwc-font-sans selection:bg-slate-300">

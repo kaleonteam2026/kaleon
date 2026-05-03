@@ -34,7 +34,10 @@
     "days": "días",
     "pending": "Pendiente",
     "done": "Hecho",
-    "verifyFooter": "DYP · Generado por IA · Verifica siempre con fuentes oficiales"
+    "verifyFooter": "DYP · Generado por IA · Verifica siempre con fuentes oficiales",
+    "season_fall": "Otoño",
+    "season_spring": "Primavera",
+    "season_summer": "Verano"
   },
   "nav": {
     "dashboard": "Panel",
@@ -331,7 +334,13 @@
       "deadlineReminders": "Recordatorios de fechas límite",
       "createdRemindersOne": "Se creó {{count}} recordatorio nuevo",
       "createdRemindersOther": "Se crearon {{count}} recordatorios nuevos",
-      "noNewReminders": "No hay nuevos recordatorios ahora"
+      "noNewReminders": "No hay nuevos recordatorios ahora",
+      "timeline_fall2025": "Otoño 2025",
+      "timeline_spring2026": "Primavera 2026",
+      "timeline_fall2026": "Otoño 2026",
+      "timeline_fall2027": "Otoño 2027",
+      "timeline_fall2028later": "Otoño 2028 o después",
+      "timeline_flexible": "Flexible / No estoy seguro/a"
     },
     "scholarships": {
       "title": "Becas",
@@ -392,7 +401,8 @@
       "filter_health_wellness": "Salud y bienestar",
       "filter_stem_research": "STEM e investigación",
       "openInNewTab": "Abrir {{name}} en una pestaña nueva",
-      "opportunityCategories": "Categorías de oportunidades"
+      "opportunityCategories": "Categorías de oportunidades",
+      "ccProgramsDisclaimer": "Generado por IA según programas conocidos públicamente en tu colegio. Verifica disponibilidad con los servicios estudiantiles de tu colegio."
     },
     "internships": {
       "title": "Buscador de Prácticas",
@@ -643,7 +653,8 @@
       "lockFeat_admission": "Predicción de admisión",
       "lockFeat_guidebook": "Alineación con la guía",
       "lockFeat_trajectory": "Puntaje en vivo",
-      "loadingResponse": "Cargando respuesta…"
+      "loadingResponse": "Cargando respuesta…",
+      "needsFocus": "Necesita atención"
     },
     "roadmap": {
       "goHome": "Ir al Inicio",
@@ -811,6 +822,12 @@
       "footer": "DYP · Generado por IA · Siempre verifica con fuentes oficiales",
       "toast_loadError": "Error al cargar la guía",
       "toast_downloaded": "¡Guía descargada!"
+    },
+    "onboarding": {
+      "legend_welcome": "Bienvenida e información personal",
+      "legend_collegeMajor": "Colegio y carrera",
+      "legend_academic": "Situación académica",
+      "legend_background": "Antecedentes"
     }
   }
 }

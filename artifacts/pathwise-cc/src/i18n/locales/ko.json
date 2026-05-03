@@ -34,7 +34,10 @@
     "days": "일",
     "pending": "보류 중",
     "done": "완료",
-    "verifyFooter": "DYP · AI 생성 · 항상 공식 출처로 확인하세요"
+    "verifyFooter": "DYP · AI 생성 · 항상 공식 출처로 확인하세요",
+    "season_fall": "가을",
+    "season_spring": "봄",
+    "season_summer": "여름"
   },
   "nav": {
     "dashboard": "대시보드",
@@ -331,7 +334,13 @@
       "deadlineReminders": "마감일 알림",
       "createdRemindersOne": "{{count}}개의 새 알림 생성됨",
       "createdRemindersOther": "{{count}}개의 새 알림 생성됨",
-      "noNewReminders": "현재 새 알림 없음"
+      "noNewReminders": "현재 새 알림 없음",
+      "timeline_fall2025": "2025 가을",
+      "timeline_spring2026": "2026 봄",
+      "timeline_fall2026": "2026 가을",
+      "timeline_fall2027": "2027 가을",
+      "timeline_fall2028later": "2028 가을 이후",
+      "timeline_flexible": "유연함 / 아직 미정"
     },
     "scholarships": {
       "title": "장학금",
@@ -392,7 +401,8 @@
       "filter_health_wellness": "건강",
       "filter_stem_research": "STEM & 연구",
       "openInNewTab": "{{name}}을(를) 새 탭에서 열기",
-      "opportunityCategories": "기회 카테고리"
+      "opportunityCategories": "기회 카테고리",
+      "ccProgramsDisclaimer": "AI가 귀하의 대학에서 공개적으로 알려진 프로그램을 기반으로 생성합니다. 대학의 학생 서비스에서 이용 가능 여부를 확인하세요."
     },
     "internships": {
       "title": "인턴십 찾기",
@@ -643,7 +653,8 @@
       "lockFeat_admission": "합격 예측",
       "lockFeat_guidebook": "가이드북 정렬",
       "lockFeat_trajectory": "실시간 궤적 점수",
-      "loadingResponse": "응답 로딩 중…"
+      "loadingResponse": "응답 로딩 중…",
+      "needsFocus": "주의 필요"
     },
     "roadmap": {
       "goHome": "홈으로 이동",
@@ -811,6 +822,12 @@
       "footer": "DYP · AI 생성 · 항상 공식 출처에서 확인하세요",
       "toast_loadError": "가이드북 로딩 오류",
       "toast_downloaded": "가이드북 다운로드 완료!"
+    },
+    "onboarding": {
+      "legend_welcome": "환영 및 개인 정보",
+      "legend_collegeMajor": "대학 및 전공",
+      "legend_academic": "학업 현황",
+      "legend_background": "배경"
     }
   }
 }

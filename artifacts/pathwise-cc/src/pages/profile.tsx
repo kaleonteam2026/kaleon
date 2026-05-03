@@ -226,7 +226,7 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Bell className="h-4 w-4" /> {t("profile.deadlineReminders")}
+            <Bell className="h-4 w-4" /> {t("pages.profile.deadlineReminders")}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-xs text-slate-500">{t("common.loading")}</CardContent>
@@ -621,12 +621,12 @@ export default function Profile() {
                     <SelectValue placeholder={t("pages.profile.transferTimelineSelect")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fall 2025">Fall 2025</SelectItem>
-                    <SelectItem value="spring 2026">Spring 2026</SelectItem>
-                    <SelectItem value="fall 2026">Fall 2026</SelectItem>
-                    <SelectItem value="fall 2027">Fall 2027</SelectItem>
-                    <SelectItem value="fall 2028 or later">Fall 2028 or later</SelectItem>
-                    <SelectItem value="flexible">Flexible / Not sure yet</SelectItem>
+                    <SelectItem value="fall 2025">{t("pages.profile.timeline_fall2025")}</SelectItem>
+                    <SelectItem value="spring 2026">{t("pages.profile.timeline_spring2026")}</SelectItem>
+                    <SelectItem value="fall 2026">{t("pages.profile.timeline_fall2026")}</SelectItem>
+                    <SelectItem value="fall 2027">{t("pages.profile.timeline_fall2027")}</SelectItem>
+                    <SelectItem value="fall 2028 or later">{t("pages.profile.timeline_fall2028later")}</SelectItem>
+                    <SelectItem value="flexible">{t("pages.profile.timeline_flexible")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
