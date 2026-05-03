@@ -135,12 +135,23 @@ export default function Landing() {
           </motion.span>
         </h1>
 
-        {/* Subtitle + CTA stay instantly visible (LCP-critical). No initial=hidden. */}
-        <p className="text-lg md:text-xl text-slate-700 mb-8 max-w-2xl leading-relaxed">
+        {/* Subtitle + CTA stay readable from t=0 (opacity stays 1). Only a tiny
+            secondary y-translate animates in so LCP/readability is preserved. */}
+        <motion.p
+          initial={motionOn ? { y: 4 } : false}
+          animate={motionOn ? { y: 0 } : undefined}
+          transition={motionOn ? { duration: DUR.slow, ease: EASE_OUT, delay: 0.08 } : undefined}
+          className="text-lg md:text-xl text-slate-700 mb-8 max-w-2xl leading-relaxed"
+        >
           <Trans i18nKey="landing.heroSubtitle" components={{ strong: <strong /> }} />
-        </p>
+        </motion.p>
 
-        <div className="flex flex-col sm:flex-row gap-4 items-start">
+        <motion.div
+          initial={motionOn ? { y: 2 } : false}
+          animate={motionOn ? { y: 0 } : undefined}
+          transition={motionOn ? { duration: DUR.med, ease: EASE_OUT, delay: 0.12 } : undefined}
+          className="flex flex-col sm:flex-row gap-4 items-start"
+        >
           <button
             onClick={login}
             onMouseEnter={() => setCtaHover(true)}
@@ -159,7 +170,7 @@ export default function Landing() {
           <p className="text-xs pwc-font-mono uppercase tracking-wider text-slate-500 self-center">
             {t("landing.heroNote")}
           </p>
-        </div>
+        </motion.div>
       </section>
 
       {/* Features */}

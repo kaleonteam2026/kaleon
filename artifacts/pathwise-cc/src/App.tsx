@@ -47,11 +47,14 @@ function ChatBubbleWrapper() {
 function Router() {
   const [location] = useLocation();
   const reduced = useReducedMotion();
+  // Only crossfade between landing ("/") and the rest of the app, so authenticated
+  // routes do not animate against each other (out of scope for Task #51).
+  const transitionKey = location === "/" ? "landing" : "app";
   return (
     <>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
-          key={location}
+          key={transitionKey}
           initial={reduced ? false : { opacity: 0 }}
           animate={reduced ? undefined : { opacity: 1 }}
           exit={reduced ? undefined : { opacity: 0 }}
