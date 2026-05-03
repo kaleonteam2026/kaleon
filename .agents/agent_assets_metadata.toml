@@ -1,0 +1,86 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "2LYm2neWpLcSa_MJUqCD7"
+uri = "file://.local/exports/ad-bundle/BRIEF.md"
+type = "text"
+title = "Ad Brief — Personas, Hooks, Audiences, Copy"
+
+[[outputs]]
+id = "6RWAyRRhZbYxbQgAP1tDF"
+uri = "file://.local/exports/pathwise-ad-bundle.tar.gz"
+type = "unspecified"
+title = "Full Ad Bundle (.tar.gz) — 12 JPGs + source HTML + brief"
+
+[[outputs]]
+id = "TowSMDj7s_rnKFB62x5oT"
+uri = "file://.local/exports/ad-bundle/feed/first-gen-a.jpg"
+type = "image"
+title = "Feed 1080×1350 — First-Gen · Hook A (Pain/Identity)"
+
+[[outputs]]
+id = "B4ox4fuEwnKBbOFrZ_gdp"
+uri = "file://.local/exports/ad-bundle/feed/first-gen-b.jpg"
+type = "image"
+title = "Feed 1080×1350 — First-Gen · Hook B (Outcome)"
+
+[[outputs]]
+id = "bGCHXkg0E_RieIrk0M8Kt"
+uri = "file://.local/exports/ad-bundle/feed/ab540-a.jpg"
+type = "image"
+title = "Feed 1080×1350 — AB540 · Hook A (Reassurance)"
+
+[[outputs]]
+id = "NwlMKWaFFaOLdB9RDzJJ6"
+uri = "file://.local/exports/ad-bundle/feed/ab540-b.jpg"
+type = "image"
+title = "Feed 1080×1350 — AB540 · Hook B (Specificity)"
+
+[[outputs]]
+id = "pAMDt6RLjnt2W0M5nLFAi"
+uri = "file://.local/exports/ad-bundle/feed/returning-a.jpg"
+type = "image"
+title = "Feed 1080×1350 — Returning Adult · Hook A (Permission)"
+
+[[outputs]]
+id = "oEYVW-5O7Tq9Y9-a4xzfz"
+uri = "file://.local/exports/ad-bundle/feed/returning-b.jpg"
+type = "image"
+title = "Feed 1080×1350 — Returning Adult · Hook B (Outcome)"
+
+[[outputs]]
+id = "AWI3G8wIaLmDDoASC7j6V"
+uri = "file://.local/exports/ad-bundle/story/first-gen-a.jpg"
+type = "image"
+title = "Story 1080×1920 — First-Gen · Hook A"
+
+[[outputs]]
+id = "ISexWaNVHwLe3uXpU3tNr"
+uri = "file://.local/exports/ad-bundle/story/first-gen-b.jpg"
+type = "image"
+title = "Story 1080×1920 — First-Gen · Hook B"
+
+[[outputs]]
+id = "9CHzuT35-9UXD6ZccjR2Z"
+uri = "file://.local/exports/ad-bundle/story/ab540-a.jpg"
+type = "image"
+title = "Story 1080×1920 — AB540 · Hook A"
+
+[[outputs]]
+id = "Dx009RSUMghLk3bIpt15g"
+uri = "file://.local/exports/ad-bundle/story/ab540-b.jpg"
+type = "image"
+title = "Story 1080×1920 — AB540 · Hook B"
+
+[[outputs]]
+id = "Y9oFufsIHTKiTmJIJF5ZV"
+uri = "file://.local/exports/ad-bundle/story/returning-a.jpg"
+type = "image"
+title = "Story 1080×1920 — Returning Adult · Hook A"
+
+[[outputs]]
+id = "N3WALDPTh6elNsfHZeyOs"
+uri = "file://.local/exports/ad-bundle/story/returning-b.jpg"
+type = "image"
+title = "Story 1080×1920 — Returning Adult · Hook B"

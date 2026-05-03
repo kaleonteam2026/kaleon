@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DYP Ad - First Gen B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #FEF3C7;
+  }
+  .ad {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6vh 7vw;
+    box-sizing: border-box;
+    background-color: #FEF3C7;
+  }
+  .logo-lockup {
+    display: flex;
+    align-items: center;
+    gap: 2vw;
+  }
+  .logo-square {
+    width: 7vh;
+    height: 7vh;
+    background-color: #0F172A;
+    color: #FFFFFF;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4vh;
+  }
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+  }
+  .logo-wordmark {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: 3vh;
+    color: #0F172A;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .logo-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2vh;
+    color: #64748B;
+    text-transform: uppercase;
+    margin-top: 0.5vh;
+  }
+  .middle {
+    display: flex;
+    flex-direction: column;
+    gap: 3vh;
+  }
+  .headline {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 7vw;
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+    color: #0F172A;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .benefit {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 3vw;
+    color: #78350F;
+    margin: 0;
+    max-width: 85vw;
+    line-height: 1.3;
+  }
+  .cta-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5vh;
+  }
+  .cta-btn {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    background-color: #0F172A;
+    color: #FFFFFF;
+    padding: 2.4vh 4vw;
+    border: 3px solid #0F172A;
+    box-shadow: 5px 5px 0 0 #0F172A;
+    font-size: 3.5vw;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .cta-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 1.4vw;
+    color: #0F172A;
+    text-transform: uppercase;
+  }
+  .footer {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 1.8vw;
+    color: #0F172A;
+    text-transform: uppercase;
+  }
+
+  @media (max-aspect-ratio: 0.7) {
+    .headline {
+      font-size: 10vw;
+    }
+    .logo-square {
+      width: 6vh;
+      height: 6vh;
+      font-size: 3.5vh;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="ad">
+    <div class="logo-lockup">
+      <div class="logo-square">D</div>
+      <div class="logo-text">
+        <div class="logo-wordmark">DYP</div>
+        <div class="logo-tag">// DO YOUR PATH</div>
+      </div>
+    </div>
+    
+    <div class="middle">
+      <h1 class="headline">FROM CC TO UCLA.<br>IN 24 MONTHS.</h1>
+      <p class="benefit">Build the transfer plan your high school never showed you. AI maps every course, deadline, and scholarship.</p>
+    </div>
+    
+    <div class="cta-container">
+      <div class="cta-btn">GET STARTED FREE &rarr;</div>
+      <div class="cta-sub">// FREE &middot; NO CREDIT CARD</div>
+    </div>
+    
+    <div class="footer">
+      DYP // DOYOURPATH.APP
+    </div>
+  </div>
+</body>
+</html>
