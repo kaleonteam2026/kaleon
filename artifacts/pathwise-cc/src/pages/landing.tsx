@@ -205,14 +205,25 @@ export default function Landing() {
               <motion.div
                 key={feature.title}
                 variants={fadeUp(12, DUR.med)}
-                whileHover={motionOn ? { x: -1 * dirSign, y: -1, boxShadow: "6px 6px 0px 0px rgba(15,23,42,1)" } : undefined}
+                initial="rest"
+                whileHover={
+                  motionOn
+                    ? { x: -1 * dirSign, y: -1, boxShadow: "6px 6px 0px 0px rgba(15,23,42,1)" }
+                    : undefined
+                }
+                animate="rest"
                 transition={{ duration: 0.12, ease: EASE_OUT }}
                 className="bg-white border-2 border-slate-900 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] group"
               >
+                {/* Icon scales when the whole card is hovered (group-hover), not only the icon. */}
                 <motion.div
-                  whileHover={motionOn ? { scale: 1.06 } : undefined}
+                  variants={
+                    motionOn
+                      ? { rest: { scale: 1 }, hover: { scale: 1.06 } }
+                      : undefined
+                  }
                   transition={{ duration: 0.09, ease: EASE_OUT }}
-                  className="inline-block"
+                  className="inline-block transition-transform duration-[90ms] ease-out group-hover:scale-[1.06]"
                 >
                   <feature.icon className="h-7 w-7 mb-3 text-slate-900" />
                 </motion.div>
