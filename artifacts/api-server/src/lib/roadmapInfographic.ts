@@ -134,7 +134,7 @@ export function parseDeadlines(markdown: string): { label: string; date: string 
     }
     items.push({ label: truncate(text, 60), date: date || "TBD" });
   }
-  return items.slice(0, 6);
+  return items;
 }
 
 export interface BuildOptions {
@@ -172,11 +172,8 @@ export function buildInfographicData(opts: BuildOptions): InfographicData {
       totalUnits: cs.reduce((s, c) => s + c.units, 0),
     }));
   }
-  // Cap to 6 terms for layout
-  terms = terms.slice(0, 6);
-
   let deadlines = parseDeadlines(md);
-  if (deadlines.length === 0) deadlines = savedDeadlines.slice(0, 6);
+  if (deadlines.length === 0) deadlines = savedDeadlines;
 
   const igetcCompleted = IGETC_AREAS.filter((a) => igetcAreas[a]).length;
 
@@ -238,7 +235,83 @@ export function computeVersionHash(inputs: InfographicHashInputs): string {
 // ---------- SVG ----------
 
 const W = 1600;
-const H = 2000;
+// Default page height — used as a hint for PDF pagination. The actual rendered
+// SVG height grows dynamically when the content (terms or deadlines) overflows.
+const H_DEFAULT = 2000;
+
+// Wrap a string into at most `maxLines` lines, each at most `maxChars` chars.
+// Prefers breaking on whitespace; truncates the last line with an ellipsis if
+// the text still doesn't fit.
+function wrapText(s: string, maxChars: number, maxLines: number): string[] {
+  if (s.length <= maxChars) return [s];
+  const words = s.split(/\s+/);
+  const lines: string[] = [];
+  let cur = "";
+  for (const w of words) {
+    if (!cur) { cur = w; continue; }
+    if ((cur + " " + w).length <= maxChars) {
+      cur += " " + w;
+    } else {
+      lines.push(cur);
+      cur = w;
+      if (lines.length === maxLines) break;
+    }
+  }
+  if (lines.length < maxLines && cur) lines.push(cur);
+  // If we ran out of lines but still have remaining words, ellipsize the last.
+  const consumed = lines.join(" ").length + (lines.length - 1); // approx with spaces
+  if (consumed < s.length) {
+    const last = lines[lines.length - 1] ?? "";
+    lines[lines.length - 1] = truncate(last + " " + s.slice(consumed).trim(), maxChars);
+  }
+  // Hard-wrap any individual line that is still too long (no spaces case).
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].length > maxChars) {
+      if (i < lines.length - 1) lines[i] = lines[i].slice(0, maxChars);
+      else lines[i] = truncate(lines[i], maxChars);
+    }
+  }
+  return lines;
+}
+
+export interface InfographicLayout {
+  width: number;
+  height: number;
+  pageHeightHint: number;
+}
+
+export function computeInfographicLayout(data: InfographicData): InfographicLayout {
+  // Mirror renderInfographicSvg's grid math exactly, including the zero-term
+  // edge case (no rows, no cells). Using `|| 1` here would diverge from the
+  // SVG and corrupt PDF pagination height for empty roadmaps.
+  const cols = Math.min(3, Math.max(1, data.terms.length));
+  const rows = Math.ceil(data.terms.length / cols);
+  const cellW = (W - 160 - (cols - 1) * 24) / Math.max(1, cols);
+  const charsPerLine = Math.max(20, Math.floor((cellW - 110) / 9));
+  const courseLineH = 32;
+
+  // Determine the tallest term card so all cards in the grid share one height.
+  let maxLinesInAnyTerm = 0;
+  for (const t of data.terms) {
+    let lines = 0;
+    for (const c of t.courses) {
+      lines += wrapText(c.name, charsPerLine, 2).length;
+    }
+    if (lines > maxLinesInAnyTerm) maxLinesInAnyTerm = lines;
+  }
+  const cellH = Math.max(360, 100 + maxLinesInAnyTerm * courseLineH + 24);
+
+  const gridStartY = 720;
+  const deadlinesY = gridStartY + rows * (cellH + 24) + 24;
+  const deadlineRows = Math.max(1, Math.ceil((data.deadlines.length || 1) / 4));
+  const deadlinesEnd = deadlinesY + 60 + deadlineRows * (120 + 16);
+  // Footer is a 240px band that starts 24px below the deadlines section. This
+  // must match renderInfographicSvg exactly so the PDF pagination math agrees
+  // with the rasterized image dimensions.
+  const footerY = deadlinesEnd + 24;
+  const height = Math.max(H_DEFAULT, footerY + 240);
+  return { width: W, height, pageHeightHint: H_DEFAULT };
+}
 
 export async function renderInfographicSvg(data: InfographicData): Promise<string> {
   const qrPngDataUrl = await QRCode.toDataURL(data.dashboardUrl, {
@@ -252,29 +325,48 @@ export async function renderInfographicSvg(data: InfographicData): Promise<strin
   const ringC = 2 * Math.PI * ringR;
   const ringDash = ringC * igetcPct;
 
-  // Term grid: up to 6 terms in 3x2 grid
+  // Term grid: dynamic rows; up to 3 columns wide. Cell height grows with the
+  // tallest card (after wrapping long course names) so nothing is silently
+  // dropped when a student has many courses per term.
   const grid = data.terms;
   const cols = Math.min(3, Math.max(1, grid.length));
   const rows = Math.ceil(grid.length / cols);
   const gridStartX = 80;
   const gridStartY = 720;
   const cellW = (W - 160 - (cols - 1) * 24) / Math.max(1, cols);
-  const cellH = 360;
+  // Approx chars per line for body text inside a cell, leaving room for the
+  // right-aligned units label.
+  const charsPerLine = Math.max(20, Math.floor((cellW - 110) / 9));
+  const courseLineH = 32;
 
-  const termCards = grid.map((t, i) => {
+  let maxLinesInAnyTerm = 0;
+  const wrappedTerms = grid.map((t) => {
+    const wrapped = t.courses.map((c) => ({
+      ...c,
+      lines: wrapText(c.name, charsPerLine, 2),
+    }));
+    const totalLines = wrapped.reduce((s, c) => s + c.lines.length, 0);
+    if (totalLines > maxLinesInAnyTerm) maxLinesInAnyTerm = totalLines;
+    return { ...t, wrapped };
+  });
+  const cellH = Math.max(360, 100 + maxLinesInAnyTerm * courseLineH + 24);
+
+  const termCards = wrappedTerms.map((t, i) => {
     const r = Math.floor(i / cols);
     const c = i % cols;
     const x = gridStartX + c * (cellW + 24);
     const y = gridStartY + r * (cellH + 24);
-    const courses = t.courses.slice(0, 7);
-    const courseLines = courses.map((cs, idx) => {
-      const ty = y + 100 + idx * 32;
-      return `<text x="${x + 24}" y="${ty}" font-family="Inter, sans-serif" font-size="18" fill="#334155">${escapeXml(truncate(cs.name, 36))}</text>
-              <text x="${x + cellW - 24}" y="${ty}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="16" fill="#64748b">${cs.units}u</text>`;
+    let lineCursor = 0;
+    const courseLines = t.wrapped.map((cs) => {
+      const firstLineY = y + 100 + lineCursor * courseLineH;
+      const nameSvg = cs.lines.map((ln, li) => {
+        const ty = firstLineY + li * courseLineH;
+        return `<text x="${x + 24}" y="${ty}" font-family="Inter, sans-serif" font-size="18" fill="#334155">${escapeXml(ln)}</text>`;
+      }).join("");
+      const unitsSvg = `<text x="${x + cellW - 24}" y="${firstLineY}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="16" fill="#64748b">${cs.units}u</text>`;
+      lineCursor += cs.lines.length;
+      return nameSvg + unitsSvg;
     }).join("");
-    const more = t.courses.length > courses.length
-      ? `<text x="${x + 24}" y="${y + 100 + courses.length * 32}" font-family="Inter, sans-serif" font-size="14" fill="#94a3b8" font-style="italic">+ ${t.courses.length - courses.length} more</text>`
-      : "";
     return `
       <g>
         <rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
@@ -283,26 +375,35 @@ export async function renderInfographicSvg(data: InfographicData): Promise<strin
         <text x="${x + 24}" y="${y + 36}" font-family="Inter, sans-serif" font-size="20" font-weight="700" fill="#ffffff">${escapeXml(truncate(t.term, 28))}</text>
         <text x="${x + cellW - 24}" y="${y + 36}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="16" fill="#c7d2fe">${t.totalUnits} units</text>
         ${courseLines}
-        ${more}
       </g>
     `;
   }).join("");
 
-  // Deadlines strip (bottom)
+  // Deadlines: 4 per row, wrapping to additional rows when needed.
   const deadlinesY = gridStartY + rows * (cellH + 24) + 24;
-  const deadlineCards = data.deadlines.slice(0, 4).map((d, i) => {
-    const dx = 80 + i * ((W - 160 - 3 * 16) / 4 + 16);
-    const dw = (W - 160 - 3 * 16) / 4;
+  const deadlineCols = 4;
+  const deadlineGap = 16;
+  const deadlineW = (W - 160 - (deadlineCols - 1) * deadlineGap) / deadlineCols;
+  const deadlineH = 120;
+  const deadlineRowGap = 16;
+  const deadlineCards = data.deadlines.map((d, i) => {
+    const r = Math.floor(i / deadlineCols);
+    const c = i % deadlineCols;
+    const dx = 80 + c * (deadlineW + deadlineGap);
+    const dy = deadlinesY + 60 + r * (deadlineH + deadlineRowGap);
     return `
       <g>
-        <rect x="${dx}" y="${deadlinesY + 60}" width="${dw}" height="120" rx="16" fill="#fef3c7" stroke="#fde68a" stroke-width="2"/>
-        <text x="${dx + 20}" y="${deadlinesY + 96}" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700" fill="#b45309">${escapeXml(d.date)}</text>
-        <text x="${dx + 20}" y="${deadlinesY + 130}" font-family="Inter, sans-serif" font-size="16" fill="#78350f">${escapeXml(truncate(d.label, 36))}</text>
+        <rect x="${dx}" y="${dy}" width="${deadlineW}" height="${deadlineH}" rx="16" fill="#fef3c7" stroke="#fde68a" stroke-width="2"/>
+        <text x="${dx + 20}" y="${dy + 36}" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700" fill="#b45309">${escapeXml(d.date)}</text>
+        <text x="${dx + 20}" y="${dy + 70}" font-family="Inter, sans-serif" font-size="16" fill="#78350f">${escapeXml(truncate(d.label, 36))}</text>
       </g>
     `;
   }).join("");
+  const deadlineRows = Math.max(1, Math.ceil(data.deadlines.length / deadlineCols));
+  const deadlinesEnd = deadlinesY + 60 + deadlineRows * (deadlineH + deadlineRowGap);
 
-  const footerY = deadlinesY + 220;
+  const footerY = deadlinesEnd + 24;
+  const H = Math.max(H_DEFAULT, footerY + 240);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
@@ -400,10 +501,23 @@ export async function renderInfographicPdf(data: InfographicData, pngBuffer: Buf
     doc.on("error", reject);
 
     const pageW = doc.page.width - 72;
-    // Letter is portrait. Image is 1600x2000 → ratio 0.8.
+    const pageH = doc.page.height - 72;
+    const layout = computeInfographicLayout(data);
     const imgW = pageW;
-    const imgH = imgW * (H / W);
-    doc.image(pngBuffer, 36, 36, { width: imgW, height: imgH });
+    const imgH = imgW * (layout.height / layout.width);
+
+    // When the rendered infographic is taller than a single Letter page, slice
+    // it across multiple pages by clipping the page region and offsetting the
+    // image upward. This avoids a single page being squashed unreadably small
+    // when the student has many terms or deadlines.
+    const pages = Math.max(1, Math.ceil(imgH / pageH));
+    for (let i = 0; i < pages; i++) {
+      if (i > 0) doc.addPage();
+      doc.save();
+      doc.rect(36, 36, pageW, pageH).clip();
+      doc.image(pngBuffer, 36, 36 - i * pageH, { width: imgW });
+      doc.restore();
+    }
     doc.end();
   });
 }
