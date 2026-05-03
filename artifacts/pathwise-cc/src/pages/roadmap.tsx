@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Download, Loader2, MapPin, AlertTriangle,
   CheckSquare, Square, CheckCircle2, Image as ImageIcon, FileText, Sparkles,
-  Link2, Copy, Check, X,
+  Link2, Copy, Check, X, RefreshCw,
 } from "lucide-react";
 import { MarkdownContent } from "@/components/markdown-renderer";
 
@@ -29,6 +29,12 @@ export default function Roadmap() {
   const [, setCurrentSection] = useState("");
   const [infographicLoading, setInfographicLoading] = useState(false);
   const [infographicReady, setInfographicReady] = useState<{ pngUrl: string; pdfUrl: string; cached: boolean } | null>(null);
+  const [status, setStatus] = useState<{
+    currentHash: string;
+    hasCurrent: boolean;
+    isStale: boolean;
+    cached: { versionHash: string; generatedAt: string; pngUrl: string; pdfUrl: string } | null;
+  } | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
@@ -41,6 +47,27 @@ export default function Roadmap() {
       .then((r: AcademicRoadmap) => setRoadmap(r))
       .catch(() => toast({ title: t("pages.roadmap.errorLoading"), variant: "destructive" }))
       .finally(() => setLoading(false));
+  }, [rid]);
+
+  const refreshStatus = async () => {
+    try {
+      const res = await fetch(`/api/roadmaps/${rid}/infographic/status`, { credentials: "include" });
+      if (!res.ok) return;
+      const j = await res.json();
+      setStatus(j);
+      // Surface the most recent cached version for download even before the user
+      // taps Generate, so the existing image stays available while they decide.
+      if (j?.cached && !infographicReady) {
+        setInfographicReady({ pngUrl: j.cached.pngUrl, pdfUrl: j.cached.pdfUrl, cached: true });
+      }
+    } catch {
+      // Status is optional context; ignore network errors.
+    }
+  };
+
+  useEffect(() => {
+    refreshStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rid]);
 
   useEffect(() => {
@@ -76,6 +103,8 @@ export default function Roadmap() {
         title: json.cached ? t("pages.roadmap.infographicReadyCached") : t("pages.roadmap.infographicGenerated"),
         description: json.cached ? t("pages.roadmap.infographicCachedDesc") : t("pages.roadmap.infographicNewDesc"),
       });
+      // Re-check status so the "stale" banner clears after a fresh build.
+      refreshStatus();
     } catch {
       toast({ title: t("pages.roadmap.networkErrorInfographic"), variant: "destructive" });
     } finally {
@@ -223,6 +252,48 @@ export default function Roadmap() {
           </Button>
         </div>
 
+        {/* Stale infographic banner — your roadmap changed since the cached image */}
+        {status?.isStale && status.cached && (
+          <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 mb-5 shadow-sm">
+            <div className="flex items-start gap-3">
+              <RefreshCw className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <h3 className="text-sm font-semibold text-amber-900">Your roadmap has changed</h3>
+                  <span className="text-[11px] text-amber-700">
+                    Cached version: {new Date(status.cached.generatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                </div>
+                <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                  The shareable infographic was generated before your latest edits. Regenerate to make sure
+                  what you share matches your current courses, GPA, and IGETC progress.
+                  Your existing image stays available until the new one is ready.
+                </p>
+                <div className="mt-3 flex items-center gap-2 flex-wrap">
+                  <Button
+                    onClick={generateInfographic}
+                    disabled={infographicLoading}
+                    size="sm"
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    {infographicLoading ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Regenerating…</>
+                    ) : (
+                      <><RefreshCw className="h-4 w-4 mr-2" /> Regenerate now</>
+                    )}
+                  </Button>
+                  <a
+                    href={status.cached.pngUrl}
+                    className="text-xs font-medium text-amber-800 underline underline-offset-2 hover:text-amber-900"
+                  >
+                    Download the older version instead
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Infographic generator */}
         <div className="bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-xl p-5 mb-5 shadow-sm">
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -235,6 +306,12 @@ export default function Roadmap() {
               <p className="text-xs text-violet-100 mt-1 max-w-md leading-relaxed">
                 {t("pages.roadmap.onePageDesc")}
               </p>
+              {status?.cached && !status.isStale && (
+                <p className="text-[11px] text-violet-100/80 mt-1.5 inline-flex items-center gap-1.5">
+                  <Check className="h-3 w-3" />
+                  Up to date · generated {new Date(status.cached.generatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                </p>
+              )}
             </div>
             {!infographicReady ? (
               <Button
@@ -250,16 +327,25 @@ export default function Roadmap() {
                 )}
               </Button>
             ) : (
-              <div className="flex gap-2">
-                <Button onClick={() => downloadInfographic("png")} size="sm" className="bg-white text-indigo-700 hover:bg-violet-50">
-                  <ImageIcon className="h-4 w-4 mr-2" /> PNG
-                </Button>
-                <Button onClick={() => downloadInfographic("pdf")} size="sm" className="bg-white text-indigo-700 hover:bg-violet-50">
-                  <FileText className="h-4 w-4 mr-2" /> PDF
-                </Button>
-                <Button onClick={generateInfographic} disabled={infographicLoading} size="sm" variant="outline" className="border-white/40 text-white hover:bg-white/10 bg-transparent">
-                  {infographicLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.refresh")}
-                </Button>
+              <div className="flex flex-col items-end gap-1.5">
+                <div className="flex gap-2">
+                  <Button onClick={() => downloadInfographic("png")} size="sm" className="bg-white text-indigo-700 hover:bg-violet-50">
+                    <ImageIcon className="h-4 w-4 mr-2" /> PNG
+                  </Button>
+                  <Button onClick={() => downloadInfographic("pdf")} size="sm" className="bg-white text-indigo-700 hover:bg-violet-50">
+                    <FileText className="h-4 w-4 mr-2" /> PDF
+                  </Button>
+                  <Button onClick={generateInfographic} disabled={infographicLoading} size="sm" variant="outline" className="border-white/40 text-white hover:bg-white/10 bg-transparent">
+                    {infographicLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.refresh")}
+                  </Button>
+                </div>
+                {status?.cached && (
+                  <p className={`text-[11px] ${status.isStale ? "text-amber-200" : "text-violet-100/80"}`}>
+                    {status.isStale
+                      ? `Downloading cached version from ${new Date(status.cached.generatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+                      : `Current version · ${new Date(status.cached.generatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`}
+                  </p>
+                )}
               </div>
             )}
           </div>

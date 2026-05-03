@@ -130,6 +130,51 @@ router.get("/profiles/:profileId/roadmaps", async (req, res) => {
   }
 });
 
+// GET /api/roadmaps/:roadmapId/infographic/status — compare current vs latest cached hash
+router.get("/roadmaps/:roadmapId/infographic/status", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    const roadmapId = parseInt(req.params.roadmapId);
+    const owner = await getOwnedRoadmap(roadmapId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Roadmap not found" }); return; }
+
+    const inputs = await gatherInfographicInputs(roadmapId);
+    if (!inputs) { res.status(404).json({ error: "Roadmap data unavailable" }); return; }
+
+    const currentHash = computeVersionHash(inputs);
+
+    const rows = await db
+      .select()
+      .from(roadmapInfographicsTable)
+      .where(eq(roadmapInfographicsTable.roadmapId, roadmapId))
+      .orderBy(desc(roadmapInfographicsTable.createdAt));
+    const latest = rows[0] ?? null;
+
+    const isStale = !!latest && latest.versionHash !== currentHash;
+    const hasCurrent = !!latest && latest.versionHash === currentHash;
+
+    res.json({
+      currentHash,
+      hasCurrent,
+      isStale,
+      cached: latest
+        ? {
+            versionHash: latest.versionHash,
+            generatedAt: latest.createdAt,
+            pngUrl: `/api/roadmaps/${roadmapId}/infographic/png?v=${latest.versionHash}`,
+            pdfUrl: `/api/roadmaps/${roadmapId}/infographic/pdf?v=${latest.versionHash}`,
+          }
+        : null,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Error fetching infographic status");
+    res.status(500).json({ error: "Failed to fetch infographic status" });
+  }
+});
+
 // POST /api/roadmaps/:roadmapId/infographic — generate (or use cached) PNG+PDF
 router.post("/roadmaps/:roadmapId/infographic", async (req, res) => {
   if (!req.isAuthenticated()) {
@@ -411,11 +456,32 @@ router.get("/roadmaps/:roadmapId/infographic/:format", async (req, res) => {
     const owner = await getOwnedRoadmap(roadmapId, req.user.id);
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Roadmap not found" }); return; }
 
-    const inputs = await gatherInfographicInputs(roadmapId);
-    if (!inputs) { res.status(404).json({ error: "Roadmap not found" }); return; }
-    const versionHash = computeVersionHash(inputs);
-    const cached = await findCachedInfographic(roadmapId, versionHash);
-    if (!cached) { res.status(404).json({ error: "Infographic not generated yet" }); return; }
+    const requestedVersion = typeof req.query.v === "string" ? req.query.v : null;
+
+    let cached: { pngObjectPath: string; pdfObjectPath: string; versionHash: string } | null = null;
+    if (requestedVersion) {
+      // If the caller asked for a specific version, only serve that exact version.
+      // This preserves URL/version semantics: a stable URL must not silently serve
+      // a different asset just because a newer one happens to exist.
+      cached = await findCachedInfographic(roadmapId, requestedVersion);
+      if (!cached) { res.status(404).json({ error: "Requested infographic version not found" }); return; }
+    } else {
+      // No explicit version requested: fall back to the most recent cached row so
+      // that a stale (but still useful) infographic stays downloadable until the
+      // user regenerates.
+      const rows = await db
+        .select()
+        .from(roadmapInfographicsTable)
+        .where(eq(roadmapInfographicsTable.roadmapId, roadmapId))
+        .orderBy(desc(roadmapInfographicsTable.createdAt));
+      const latest = rows[0];
+      if (!latest) { res.status(404).json({ error: "Infographic not generated yet" }); return; }
+      cached = {
+        versionHash: latest.versionHash,
+        pngObjectPath: latest.pngObjectPath,
+        pdfObjectPath: latest.pdfObjectPath,
+      };
+    }
 
     const objectPath = format === "png" ? cached.pngObjectPath : cached.pdfObjectPath;
     const asset = await readInfographicAsset(objectPath);
