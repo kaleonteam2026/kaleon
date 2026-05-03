@@ -20,11 +20,16 @@ function normalizeMajor(m: string | null | undefined): string {
   return (m ?? "general").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-async function readFreshReport(uniId: string, major: string) {
+/** Cache key embeds locale so each language gets its own cached report. */
+function majorCacheKey(major: string, locale: string): string {
+  return `${major}::${locale}`;
+}
+
+async function readFreshReport(uniId: string, majorKey: string) {
   const rows = await db
     .select()
     .from(universityDeepDivesTable)
-    .where(and(eq(universityDeepDivesTable.universityId, uniId), eq(universityDeepDivesTable.major, major)))
+    .where(and(eq(universityDeepDivesTable.universityId, uniId), eq(universityDeepDivesTable.major, majorKey)))
     .limit(1);
   const row = rows[0];
   if (!row) return null;
@@ -44,7 +49,8 @@ router.get("/universities/:uniId/deep-dive", async (req, res) => {
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
     const major = normalizeMajor(owner.profile.intendedMajor);
-    const row = await readFreshReport(uniId, major);
+    const locale = getRequestLocale(req);
+    const row = await readFreshReport(uniId, majorCacheKey(major, locale));
     if (!row) { res.status(404).json({ error: "No fresh deep dive cached" }); return; }
     const usage = await getGlobalAiUsage();
     res.json({ cached: true, report: row.reportJson, expiresAt: row.expiresAt, generatedAt: row.createdAt, aiCredits: usage });
@@ -70,9 +76,11 @@ router.post("/universities/:uniId/deep-dive", async (req, res) => {
 
     const majorDisplay = owner.profile.intendedMajor?.trim() || "General Studies";
     const major = normalizeMajor(owner.profile.intendedMajor);
+    const locale = getRequestLocale(req);
+    const majorKey = majorCacheKey(major, locale);
 
     // Cache hit returns immediately, no AI cap consumed.
-    const cached = await readFreshReport(uniId, major);
+    const cached = await readFreshReport(uniId, majorKey);
     if (cached) {
       const usage = await getGlobalAiUsage();
       res.json({
@@ -138,7 +146,7 @@ router.post("/universities/:uniId/deep-dive", async (req, res) => {
       return;
     }
 
-    const synthesized = await synthesizeDeepDive(uni.name, majorDisplay, sectionInputs, getRequestLocale(req));
+    const synthesized = await synthesizeDeepDive(uni.name, majorDisplay, sectionInputs, locale);
 
     const report: DeepDiveReport = {
       universityId: uni.id,
@@ -152,7 +160,7 @@ router.post("/universities/:uniId/deep-dive", async (req, res) => {
     const expiresAt = new Date(Date.now() + TTL_MS);
     await db
       .insert(universityDeepDivesTable)
-      .values({ universityId: uni.id, major, reportJson: report, expiresAt })
+      .values({ universityId: uni.id, major: majorKey, reportJson: report, expiresAt })
       .onConflictDoUpdate({
         target: [universityDeepDivesTable.universityId, universityDeepDivesTable.major],
         set: { reportJson: report, expiresAt, createdAt: new Date() },

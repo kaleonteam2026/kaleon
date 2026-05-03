@@ -91,9 +91,13 @@ void i18n
     supportedLngs: SUPPORTED_LOCALES as unknown as string[],
     interpolation: { escapeValue: false },
     detection: {
+      // Only the user's explicit choice (via setStoredLocale/changeLocale) is
+      // cached at LOCALE_STORAGE_KEY; the auto-detector must NOT write there,
+      // otherwise we cannot tell a guest's deliberate pick from a browser
+      // auto-detection on a fresh device after sign-in.
       order: ["localStorage", "navigator"],
       lookupLocalStorage: LOCALE_STORAGE_KEY,
-      caches: ["localStorage"],
+      caches: [],
     },
     returnNull: false,
   })

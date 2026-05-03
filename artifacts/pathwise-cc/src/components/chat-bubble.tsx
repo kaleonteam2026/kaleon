@@ -6,7 +6,7 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { MessageCircle, X, Send, Loader2, Bot, User, MessagesSquare, Mic, Trophy, Sparkles, RotateCcw } from "lucide-react";
 
 type Mode = "ask" | "interview";
-interface Message { role: "user" | "assistant"; content: string; }
+interface Message { role: "user" | "assistant"; content: string; kind?: "kickoff" }
 
 const STORAGE_KEY = (userId: string | null) => `dyp_chat_${userId ?? "guest"}`;
 
@@ -233,6 +233,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
     const kickoff: Message = {
       role: "user",
       content: t("chat.kickoffPrompt", { target }),
+      kind: "kickoff",
     };
     setMessages([kickoff]);
     await callApi([kickoff], { id: sessionId, target, start: true });
@@ -398,8 +399,8 @@ export default function ChatBubble({ userId }: { userId?: string }) {
 
             {/* Messages list */}
             {messages.map((m, i) => {
-              // Hide synthetic kickoff from view in interview mode
-              if (mode === "interview" && i === 0 && m.role === "user" && /mock interview|entrevista simulada|模拟面试|phỏng vấn mô phỏng|mock interview na pagsasanay|모의 인터뷰/i.test(m.content)) {
+              // Hide synthetic kickoff from view in interview mode (locale-independent: tagged at creation).
+              if (mode === "interview" && m.kind === "kickoff") {
                 return null;
               }
               if (mode === "interview" && m.role === "assistant" && isSummary(m.content)) {
