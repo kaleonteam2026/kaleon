@@ -224,7 +224,7 @@ export default function IgetcTracker() {
           initial={igMotionOn ? "hidden" : false}
           whileInView={igMotionOn ? "show" : undefined}
           viewport={{ once: true, margin: "-50px" }}
-          variants={igMotionOn ? staggerContainer(0.05) : undefined}
+          variants={igMotionOn ? staggerContainer(0.06) : undefined}
         >
           {IGETC_AREAS.map(area => {
             const allDone = area.subAreas.filter(s => s.required).every(s => areas[s.key]);

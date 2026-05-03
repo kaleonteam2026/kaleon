@@ -270,7 +270,7 @@ export default function DeadlineCalendar() {
             initial={dcMotionOn ? "hidden" : false}
             whileInView={dcMotionOn ? "show" : undefined}
             viewport={{ once: true, margin: "-50px" }}
-            variants={dcMotionOn ? staggerContainer(0.04) : undefined}
+            variants={dcMotionOn ? staggerContainer(0.06) : undefined}
           >
           {upcoming.map(d => {
             const date = getDeadlineDate(d, cycleYear);
@@ -336,7 +336,7 @@ export default function DeadlineCalendar() {
               initial={dcMotionOn ? "hidden" : false}
               whileInView={dcMotionOn ? "show" : undefined}
               viewport={{ once: true, margin: "-50px" }}
-              variants={dcMotionOn ? staggerContainer(0.04) : undefined}
+              variants={dcMotionOn ? staggerContainer(0.06) : undefined}
             >
             {past.map(d => {
               const cfg = CATEGORY_CONFIG[d.category] ?? CATEGORY_CONFIG.decision;

@@ -230,7 +230,7 @@ function CCProgramList({ programs }: { programs: CCOpportunityItem[] }) {
       className="space-y-3"
       initial={motionOn ? "hidden" : false}
       animate={motionOn ? "show" : undefined}
-      variants={motionOn ? staggerContainer(0.05) : undefined}
+      variants={motionOn ? staggerContainer(0.06) : undefined}
     >
       {programs.map((program, i) => (
         <motion.div
@@ -312,7 +312,7 @@ export default function Scholarships() {
   const schMotionEnabled = useMotionEnabled();
   const schDirSign = useDirSign();
   const schItemVariants = useMemo(() => fadeUp(8, 0.22), []);
-  const schContainerVariants = useMemo(() => staggerContainer(0.05), []);
+  const schContainerVariants = useMemo(() => staggerContainer(0.06), []);
   const schLift = useMemo(() => (schMotionEnabled ? hoverLift(schDirSign) : undefined), [schMotionEnabled, schDirSign]);
 
   useEffect(() => {

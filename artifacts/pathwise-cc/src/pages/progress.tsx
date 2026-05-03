@@ -716,7 +716,7 @@ export default function ProgressTracker() {
                     initial={prMotionOn ? "hidden" : false}
                     whileInView={prMotionOn ? "show" : undefined}
                     viewport={{ once: true, margin: "-50px" }}
-                    variants={prMotionOn ? staggerContainer(0.04) : undefined}
+                    variants={prMotionOn ? staggerContainer(0.06) : undefined}
                   >
                     {filteredEntries.map(entry => (
                       <motion.div
@@ -788,7 +788,7 @@ export default function ProgressTracker() {
                         initial={prMotionOn ? "hidden" : false}
                         whileInView={prMotionOn ? "show" : undefined}
                         viewport={{ once: true, margin: "-50px" }}
-                        variants={prMotionOn ? staggerContainer(0.04) : undefined}
+                        variants={prMotionOn ? staggerContainer(0.06) : undefined}
                       >
                         {analyses.map(a => (
                           <motion.div

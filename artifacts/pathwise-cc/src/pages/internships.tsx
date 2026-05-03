@@ -520,7 +520,7 @@ export default function InternshipsPage() {
                     initial={iMotionOn ? "hidden" : false}
                     whileInView={iMotionOn ? "show" : undefined}
                     viewport={{ once: true, margin: "-50px" }}
-                    variants={iMotionOn ? staggerContainer(0.05) : undefined}
+                    variants={iMotionOn ? staggerContainer(0.06) : undefined}
                   >
                     {sorted.map(internship => (
                       <motion.div

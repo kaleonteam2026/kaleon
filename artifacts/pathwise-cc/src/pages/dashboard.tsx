@@ -91,7 +91,7 @@ export default function Dashboard() {
   const dashLift = hoverLift(dashDir);
   const motionEnabled = useMotionEnabled();
   const itemVariants = useMemo(() => fadeUp(8, 0.22), []);
-  const containerVariants = useMemo(() => staggerContainer(0.05), []);
+  const containerVariants = useMemo(() => staggerContainer(0.06), []);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -310,7 +310,7 @@ export default function Dashboard() {
                   initial={dashMotionOn ? "hidden" : false}
                   whileInView={dashMotionOn ? "show" : undefined}
                   viewport={{ once: true, margin: "-50px" }}
-                  variants={dashMotionOn ? staggerContainer(0.05) : undefined}
+                  variants={dashMotionOn ? staggerContainer(0.06) : undefined}
                 >
                   {summary!.nextActions.map((action, i) => (
                     <motion.div
@@ -397,7 +397,7 @@ export default function Dashboard() {
               initial={dashMotionOn ? "hidden" : false}
               whileInView={dashMotionOn ? "show" : undefined}
               viewport={{ once: true, margin: "-50px" }}
-              variants={dashMotionOn ? staggerContainer(0.05) : undefined}
+              variants={dashMotionOn ? staggerContainer(0.06) : undefined}
             >
               <motion.button
                 onClick={() => navigate(`/courses/${profile.id}`)}

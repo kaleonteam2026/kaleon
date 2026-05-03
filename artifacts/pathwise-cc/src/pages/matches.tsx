@@ -67,7 +67,7 @@ export default function Matches() {
   const dirSign = useDirSign();
   const itemVariants = useMemo(() => fadeUp(8, 0.22), []);
   const lift = useMemo(() => (motionEnabled ? hoverLift(dirSign) : undefined), [motionEnabled, dirSign]);
-  const containerVariants = useMemo(() => staggerContainer(0.05), []);
+  const containerVariants = useMemo(() => staggerContainer(0.06), []);
 
   useEffect(() => {
     fetch(`/api/profiles/${pid}/generate-matches`, { method: "POST", credentials: "include" })
