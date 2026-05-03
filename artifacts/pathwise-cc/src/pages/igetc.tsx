@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
 import {
   CheckCircle2, Circle, Sparkles, Loader2, Info, ExternalLink, Save,
   BookOpen, AlertCircle, ChevronDown, ChevronUp,
@@ -92,6 +94,9 @@ function completionPercent(areas: Record<string, boolean>): number {
 }
 
 export default function IgetcTracker() {
+  const igMotionOn = useMotionEnabled();
+  const igDir = useDirSign();
+  const igLift = hoverLift(igDir);
   const { t } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const pid = parseInt(profileId);
@@ -214,12 +219,23 @@ export default function IgetcTracker() {
         </div>
 
         {/* Areas */}
-        <div className="space-y-3 mb-8">
+        <motion.div
+          className="space-y-3 mb-8"
+          initial={igMotionOn ? "hidden" : false}
+          whileInView={igMotionOn ? "show" : undefined}
+          viewport={{ once: true, margin: "-50px" }}
+          variants={igMotionOn ? staggerContainer(0.05) : undefined}
+        >
           {IGETC_AREAS.map(area => {
             const allDone = area.subAreas.filter(s => s.required).every(s => areas[s.key]);
             const isOpen = expanded[area.key] !== false;
             return (
-              <div key={area.key} className={cn("bg-white border rounded-2xl overflow-hidden", allDone ? "border-emerald-200" : "border-slate-200")}>
+              <motion.div
+                key={area.key}
+                variants={igMotionOn ? fadeUp(6, DUR.base) : undefined}
+                whileHover={igMotionOn ? igLift : undefined}
+                className={cn("bg-white border rounded-2xl overflow-hidden", allDone ? "border-emerald-200" : "border-slate-200")}
+              >
                 <button
                   onClick={() => setExpanded(prev => ({ ...prev, [area.key]: !isOpen }))}
                   className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-slate-50 transition">
@@ -260,10 +276,10 @@ export default function IgetcTracker() {
                     ))}
                   </div>
                 )}
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
 
         {/* Resources */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5">

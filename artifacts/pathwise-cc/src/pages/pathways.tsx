@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
 
 interface CampusOpportunityItem {
   name: string;
@@ -90,6 +92,9 @@ export default function Pathways() {
   const [generatingGuidebook, setGeneratingGuidebook] = useState<number | null>(null);
   const [generatingRoadmap, setGeneratingRoadmap] = useState<number | null>(null);
   const pid = parseInt(profileId);
+  const pwMotionOn = useMotionEnabled();
+  const pwDir = useDirSign();
+  const pwLift = hoverLift(pwDir);
 
   const loadPathways = () => {
     fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" })
@@ -227,7 +232,13 @@ export default function Pathways() {
         )}
 
         {!generating && pathways.length > 0 && (
-          <div className="space-y-4 pb-12">
+          <motion.div
+            className="space-y-4 pb-12"
+            initial={pwMotionOn ? "hidden" : false}
+            whileInView={pwMotionOn ? "show" : undefined}
+            viewport={{ once: true, margin: "-50px" }}
+            variants={pwMotionOn ? staggerContainer(0.06) : undefined}
+          >
             {["least_compatible", "moderately_compatible", "most_compatible"].map(type => {
               const pathway = pathways.find(p => p.pathwayType === type);
               if (!pathway) return null;
@@ -237,7 +248,12 @@ export default function Pathways() {
               const isSelected = pathway.isSelected === "true";
 
               return (
-                <Card key={pathway.id} className={cn(
+                <motion.div
+                  key={pathway.id}
+                  variants={pwMotionOn ? fadeUp(8, DUR.base) : undefined}
+                  whileHover={pwMotionOn ? pwLift : undefined}
+                >
+                <Card className={cn(
                   "transition-all border-2 border-slate-900 rounded-none shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]",
                   isSelected && "ring-4 ring-slate-900 ring-offset-2"
                 )}>
@@ -449,13 +465,14 @@ export default function Pathways() {
                     )}
                   </div>
                 </Card>
+                </motion.div>
               );
             })}
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700">
               <Trans i18nKey="pages.pathways.disclaimer" components={{ strong: <strong /> }} />
             </div>
-          </div>
+          </motion.div>
         )}
         </PageMotion>
       </main>

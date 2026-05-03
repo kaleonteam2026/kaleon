@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { MarkdownContent } from "@/components/markdown-renderer";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
 import {
   TrendingUp, Plus, Loader2, Trash2, AlertTriangle, Download,
   GraduationCap, Award, Briefcase, CheckCircle2, Star, AlertCircle,
@@ -335,6 +337,9 @@ function PathwayLockScreen({ profileId }: { profileId: number }) {
 type Tab = "log" | "timeline" | "assessment";
 
 export default function ProgressTracker() {
+  const prMotionOn = useMotionEnabled();
+  const prDir = useDirSign();
+  const prLift = hoverLift(prDir);
   const { t, i18n } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const { toast } = useToast();
@@ -706,11 +711,23 @@ export default function ProgressTracker() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <motion.div
+                    className="space-y-3"
+                    initial={prMotionOn ? "hidden" : false}
+                    whileInView={prMotionOn ? "show" : undefined}
+                    viewport={{ once: true, margin: "-50px" }}
+                    variants={prMotionOn ? staggerContainer(0.04) : undefined}
+                  >
                     {filteredEntries.map(entry => (
-                      <EntryCard key={entry.id} entry={entry} onDelete={handleDelete} />
+                      <motion.div
+                        key={entry.id}
+                        variants={prMotionOn ? fadeUp(6, DUR.base) : undefined}
+                        whileHover={prMotionOn ? prLift : undefined}
+                      >
+                        <EntryCard entry={entry} onDelete={handleDelete} />
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                 )}
               </div>
             )}
@@ -766,9 +783,23 @@ export default function ProgressTracker() {
                   <div className="grid md:grid-cols-[220px_1fr] gap-5 items-start">
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide px-1">{t("pages.progress.assessmentHistory")}</p>
-                      {analyses.map(a => (
-                        <AnalysisCard key={a.id} analysis={a} isActive={activeAnalysis?.id === a.id} onClick={() => setActiveAnalysis(a)} />
-                      ))}
+                      <motion.div
+                        className="space-y-2"
+                        initial={prMotionOn ? "hidden" : false}
+                        whileInView={prMotionOn ? "show" : undefined}
+                        viewport={{ once: true, margin: "-50px" }}
+                        variants={prMotionOn ? staggerContainer(0.04) : undefined}
+                      >
+                        {analyses.map(a => (
+                          <motion.div
+                            key={a.id}
+                            variants={prMotionOn ? fadeUp(6, DUR.base) : undefined}
+                            whileHover={prMotionOn ? prLift : undefined}
+                          >
+                            <AnalysisCard analysis={a} isActive={activeAnalysis?.id === a.id} onClick={() => setActiveAnalysis(a)} />
+                          </motion.div>
+                        ))}
+                      </motion.div>
                     </div>
                     {activeAnalysis && (
                       <div ref={analysisRef}>

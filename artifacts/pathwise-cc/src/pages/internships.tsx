@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
 import {
   Search, Loader2, ExternalLink, MapPin, Clock, DollarSign,
   ChevronDown, ChevronUp, Star, Shield, Beaker, Building2,
@@ -237,7 +239,14 @@ const TYPE_LABEL_KEYS: Record<string, string> = {
   nonprofit: "pages.internships.type_nonprofit",
 };
 
+function useInternshipsMotion() {
+  const on = useMotionEnabled();
+  const dir = useDirSign();
+  return { iMotionOn: on, iLift: hoverLift(dir) };
+}
+
 export default function InternshipsPage() {
+  const { iMotionOn, iLift } = useInternshipsMotion();
   const { t } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const { toast } = useToast();
@@ -506,9 +515,20 @@ export default function InternshipsPage() {
                     <p className="text-slate-600">{t("pages.internships.noMatchFilter")}</p>
                   </div>
                 ) : (
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <motion.div
+                    className="grid sm:grid-cols-2 gap-4"
+                    initial={iMotionOn ? "hidden" : false}
+                    whileInView={iMotionOn ? "show" : undefined}
+                    viewport={{ once: true, margin: "-50px" }}
+                    variants={iMotionOn ? staggerContainer(0.05) : undefined}
+                  >
                     {sorted.map(internship => (
-                      <div key={internship.id} className="relative">
+                      <motion.div
+                        key={internship.id}
+                        className="relative"
+                        variants={iMotionOn ? fadeUp(8, DUR.base) : undefined}
+                        whileHover={iMotionOn ? iLift : undefined}
+                      >
                         <button
                           onClick={() => void toggleSave(internship)}
                           title={savedSlugs.has(internship.id) ? t("pages.internships.removeFromSaved") : t("pages.internships.saveInternship")}
@@ -522,9 +542,9 @@ export default function InternshipsPage() {
                           <Bookmark className={cn("h-3.5 w-3.5", savedSlugs.has(internship.id) ? "fill-white text-white" : "text-slate-600")} />
                         </button>
                         <InternshipCard internship={internship} />
-                      </div>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                 )}
 
                 {/* Saved count badge */}

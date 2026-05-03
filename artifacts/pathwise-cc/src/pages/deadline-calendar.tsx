@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLiveQuota } from "@/hooks/use-live-quota";
 import { PageMotion } from "@/components/page-motion";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
 import {
   CalendarDays, CheckCircle2, Clock, AlertCircle, ExternalLink,
   ChevronRight, Info, GraduationCap, DollarSign, FileText,
@@ -84,6 +86,9 @@ interface VerifyResult {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DeadlineCalendar() {
+  const dcMotionOn = useMotionEnabled();
+  const dcDir = useDirSign();
+  const dcLift = hoverLift(dcDir);
   const { profileId } = useParams<{ profileId?: string }>();
   const pid = profileId ? parseInt(profileId) : undefined;
   const { toast } = useToast();
@@ -258,8 +263,15 @@ export default function DeadlineCalendar() {
         </div>
 
         {/* Upcoming deadlines */}
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wide">Upcoming</h2>
+        <section className="mb-8">
+          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Upcoming</h2>
+          <motion.div
+            className="space-y-3"
+            initial={dcMotionOn ? "hidden" : false}
+            whileInView={dcMotionOn ? "show" : undefined}
+            viewport={{ once: true, margin: "-50px" }}
+            variants={dcMotionOn ? staggerContainer(0.04) : undefined}
+          >
           {upcoming.map(d => {
             const date = getDeadlineDate(d, cycleYear);
             const days = daysUntil(date);
@@ -269,10 +281,15 @@ export default function DeadlineCalendar() {
             const isImminent = days >= 0 && days <= 14;
 
             return (
-              <div key={d.id} className={cn(
-                "bg-white border rounded-2xl p-4 flex gap-3 hover:shadow-sm transition-shadow",
-                isImminent ? "border-red-200" : "border-slate-200"
-              )}>
+              <motion.div
+                key={d.id}
+                variants={dcMotionOn ? fadeUp(6, DUR.base) : undefined}
+                whileHover={dcMotionOn ? dcLift : undefined}
+                className={cn(
+                  "bg-white border rounded-2xl p-4 flex gap-3 hover:shadow-sm transition-shadow",
+                  isImminent ? "border-red-200" : "border-slate-200"
+                )}
+              >
                 <div className={cn("w-1 rounded-full self-stretch flex-shrink-0", cfg.bar)} />
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -304,20 +321,32 @@ export default function DeadlineCalendar() {
                     </a>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
+          </motion.div>
         </section>
 
         {/* Past deadlines */}
         {past.length > 0 && (
-          <section className="space-y-2">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Past (this cycle)</h2>
+          <section>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Past (this cycle)</h2>
+            <motion.div
+              className="space-y-2"
+              initial={dcMotionOn ? "hidden" : false}
+              whileInView={dcMotionOn ? "show" : undefined}
+              viewport={{ once: true, margin: "-50px" }}
+              variants={dcMotionOn ? staggerContainer(0.04) : undefined}
+            >
             {past.map(d => {
               const cfg = CATEGORY_CONFIG[d.category] ?? CATEGORY_CONFIG.decision;
               const Icon = cfg.icon;
               return (
-                <div key={d.id} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex gap-3 opacity-60">
+                <motion.div
+                  key={d.id}
+                  variants={dcMotionOn ? fadeUp(6, DUR.base) : undefined}
+                  className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex gap-3 opacity-60"
+                >
                   <CheckCircle2 className="h-4 w-4 text-slate-400 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -328,9 +357,10 @@ export default function DeadlineCalendar() {
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">{formatDateRange(d, cycleYear)}</p>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
+            </motion.div>
           </section>
         )}
 
