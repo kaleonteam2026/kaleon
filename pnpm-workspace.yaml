@@ -105,6 +105,9 @@ overrides:
   path-to-regexp: ^8.4.0
   picomatch@^2: ^2.3.2
   picomatch@^4: ^4.0.4
+  '@tootallnate/once': ^3.0.1
+  uuid@^8: ^11.1.0
+  uuid@^9: ^11.1.0
   postcss: ^8.5.10
   rollup>@rollup/rollup-android-arm-eabi: '-'
   rollup>@rollup/rollup-android-arm64: '-'
