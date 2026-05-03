@@ -1,12 +1,24 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation, Trans } from "react-i18next";
+import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import LanguageSwitcher from "@/components/language-switcher";
 import {
   GraduationCap, Target, BookOpen, Award, ArrowRight,
   TrendingUp, Search, Building2, Users, Map, Compass,
 } from "lucide-react";
+import {
+  useMotionEnabled,
+  fadeUp,
+  fadeIn,
+  stamp,
+  staggerContainer,
+  arrowShimmer,
+  ctaShadowPulse,
+  EASE_OUT,
+  DUR,
+} from "@/lib/motion";
 
 const FONT_STYLES = `
   .pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
@@ -17,6 +29,17 @@ export default function Landing() {
   const { isAuthenticated, isLoading, login } = useAuth();
   const [, navigate] = useLocation();
   const { t, i18n } = useTranslation();
+  const motionOn = useMotionEnabled();
+  const [scrolled, setScrolled] = useState(false);
+  const [ctaHover, setCtaHover] = useState(false);
+  const isRtl = i18n.dir() === "rtl";
+  const dirSign = isRtl ? -1 : 1;
+
+  const { scrollY } = useScroll();
+  useMotionValueEvent(scrollY, "change", (v) => {
+    const next = v > 24;
+    if (next !== scrolled) setScrolled(next);
+  });
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -51,12 +74,24 @@ export default function Landing() {
     ensure(`meta[property="og:locale"]`, { property: "og:locale" }).content = localeMap[lang] ?? "en_US";
   }, [t, i18n.language]);
 
+  // Reveal helpers — when motion is off, render content immediately visible with no transforms.
+  const revealProps = motionOn
+    ? { initial: "hidden" as const, whileInView: "show" as const, viewport: { once: true, margin: "-10% 0px" } }
+    : {};
+  const mountProps = motionOn
+    ? { initial: "hidden" as const, animate: "show" as const }
+    : {};
+
   return (
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900 pwc-font-sans">
       <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-900 px-6 md:px-12 h-14 flex items-center justify-between">
+      {/* Header — height stays fixed (no CLS); only shadow/border swap on scroll. */}
+      <header
+        className={`sticky top-0 z-50 bg-white px-6 md:px-12 h-14 flex items-center justify-between border-b-2 border-slate-900 transition-shadow duration-200 ease-out ${
+          scrolled && motionOn ? "shadow-[0_2px_0_0_rgba(15,23,42,1)]" : ""
+        }`}
+      >
         <div className="flex items-center gap-2 font-bold text-lg uppercase tracking-tight">
           <div className="h-7 w-7 bg-slate-900 text-white flex items-center justify-center pwc-font-mono font-bold text-sm">D</div>
           <span>{t("brand.name")}</span>
@@ -75,41 +110,80 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="px-6 md:px-12 pt-16 pb-20 max-w-5xl mx-auto">
-        <div className="inline-flex items-center gap-2 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] px-3 py-1.5 mb-8">
+        <motion.div
+          {...mountProps}
+          variants={fadeUp(-6, DUR.med)}
+          className="inline-flex items-center gap-2 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] px-3 py-1.5 mb-8"
+        >
           <GraduationCap className="h-4 w-4" />
           <span className="text-xs pwc-font-mono uppercase tracking-wider font-bold">{t("landing.badge")}</span>
-        </div>
+        </motion.div>
+
+        {/* H1 stays instantly visible — only the inverted PATH. block stamps in. */}
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[0.95] uppercase">
           {t("landing.heroTitle1")}<br />
-          <span className="bg-slate-900 text-white px-3 inline-block">{t("landing.heroTitle2")}</span>
+          <motion.span
+            {...mountProps}
+            variants={stamp}
+            className={`bg-slate-900 text-white px-3 inline-block ${isRtl ? "origin-right" : "origin-left"}`}
+          >
+            {t("landing.heroTitle2")}
+          </motion.span>
         </h1>
-        <p className="text-lg md:text-xl text-slate-700 mb-8 max-w-2xl leading-relaxed">
+
+        <motion.p
+          {...mountProps}
+          variants={fadeUp(4, DUR.slow)}
+          transition={motionOn ? { duration: DUR.slow, ease: EASE_OUT, delay: 0.08 } : undefined}
+          className="text-lg md:text-xl text-slate-700 mb-8 max-w-2xl leading-relaxed"
+        >
           <Trans i18nKey="landing.heroSubtitle" components={{ strong: <strong /> }} />
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 items-start">
+        </motion.p>
+
+        <motion.div
+          {...mountProps}
+          variants={fadeUp(2, DUR.med)}
+          className="flex flex-col sm:flex-row gap-4 items-start"
+        >
           <button
             onClick={login}
+            onMouseEnter={() => setCtaHover(true)}
+            onMouseLeave={() => setCtaHover(false)}
             className="border-2 border-slate-900 bg-slate-900 text-white px-6 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold hover:bg-slate-700 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-all flex items-center gap-2"
           >
             {t("landing.heroCta")}
-            <ArrowRight className="h-4 w-4" />
+            <motion.span
+              animate={motionOn && !ctaHover ? { x: [0, 3 * dirSign, 0] } : false}
+              transition={motionOn && !ctaHover ? arrowShimmer : undefined}
+              className="inline-flex"
+            >
+              <ArrowRight className={`h-4 w-4 ${isRtl ? "rotate-180" : ""}`} />
+            </motion.span>
           </button>
           <p className="text-xs pwc-font-mono uppercase tracking-wider text-slate-500 self-center">
             {t("landing.heroNote")}
           </p>
-        </div>
+        </motion.div>
       </section>
 
       {/* Features */}
       <section className="px-6 md:px-12 py-16 bg-white border-y-2 border-slate-900">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-12">
+          <motion.div
+            {...revealProps}
+            variants={fadeUp(8, DUR.med)}
+            className="mb-12"
+          >
             <p className="text-xs pwc-font-mono uppercase tracking-widest text-slate-500 font-bold mb-2">{t("landing.modulesEyebrow")}</p>
             <h2 className="text-3xl md:text-4xl font-bold uppercase">
               {t("landing.modulesTitle")}
             </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-5">
+          </motion.div>
+          <motion.div
+            {...revealProps}
+            variants={staggerContainer(0.06)}
+            className="grid md:grid-cols-3 gap-5"
+          >
             {[
               { icon: Building2, title: t("landing.featureCcProgramsTitle"), description: t("landing.featureCcProgramsDesc") },
               { icon: Target, title: t("landing.featurePathwaysTitle"), description: t("landing.featurePathwaysDesc") },
@@ -121,23 +195,43 @@ export default function Landing() {
               { icon: Compass, title: t("landing.featureRoadmapTitle"), description: t("landing.featureRoadmapDesc") },
               { icon: Users, title: t("landing.featureGuidebookTitle"), description: t("landing.featureGuidebookDesc") },
             ].map((feature) => (
-              <div key={feature.title} className="bg-white border-2 border-slate-900 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]">
-                <feature.icon className="h-7 w-7 mb-3 text-slate-900" />
+              <motion.div
+                key={feature.title}
+                variants={fadeUp(12, DUR.med)}
+                whileHover={motionOn ? { x: -1 * dirSign, y: -1, boxShadow: "6px 6px 0px 0px rgba(15,23,42,1)" } : undefined}
+                transition={{ duration: 0.12, ease: EASE_OUT }}
+                className="bg-white border-2 border-slate-900 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] group"
+              >
+                <motion.div
+                  whileHover={motionOn ? { scale: 1.06 } : undefined}
+                  transition={{ duration: 0.09, ease: EASE_OUT }}
+                  className="inline-block"
+                >
+                  <feature.icon className="h-7 w-7 mb-3 text-slate-900" />
+                </motion.div>
                 <h3 className="font-bold uppercase tracking-tight text-base mb-1.5">{feature.title}</h3>
                 <p className="text-sm text-slate-600 leading-relaxed">{feature.description}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* How it works */}
       <section className="px-6 md:px-12 py-16 max-w-3xl mx-auto">
-        <div className="mb-10">
+        <motion.div
+          {...revealProps}
+          variants={fadeUp(8, DUR.med)}
+          className="mb-10"
+        >
           <p className="text-xs pwc-font-mono uppercase tracking-widest text-slate-500 font-bold mb-2">{t("landing.howItWorksEyebrow")}</p>
           <h2 className="text-3xl md:text-4xl font-bold uppercase">{t("landing.howItWorksTitle")}</h2>
-        </div>
-        <div className="space-y-3">
+        </motion.div>
+        <motion.div
+          {...revealProps}
+          variants={staggerContainer(0.07)}
+          className="space-y-3"
+        >
           {[
             { step: "01", title: t("landing.step1Title"), desc: t("landing.step1Desc") },
             { step: "02", title: t("landing.step2Title"), desc: t("landing.step2Desc") },
@@ -145,43 +239,81 @@ export default function Landing() {
             { step: "04", title: t("landing.step4Title"), desc: t("landing.step4Desc") },
             { step: "05", title: t("landing.step5Title"), desc: t("landing.step5Desc") },
           ].map((item) => (
-            <div key={item.step} className="flex gap-4 bg-white border-2 border-slate-900 p-4 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)]">
-              <div className="pwc-font-mono font-bold text-2xl text-slate-900 leading-none">{item.step}</div>
+            <motion.div
+              key={item.step}
+              variants={{
+                hidden: { opacity: 0, x: -8 * dirSign },
+                show: { opacity: 1, x: 0, transition: { duration: DUR.med, ease: EASE_OUT } },
+              }}
+              className="flex gap-4 bg-white border-2 border-slate-900 p-4 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)]"
+            >
+              <motion.div
+                initial={motionOn ? { color: "#cbd5e1" } : false}
+                whileInView={motionOn ? { color: "#0f172a" } : undefined}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, ease: EASE_OUT, delay: 0.15 }}
+                className="pwc-font-mono font-bold text-2xl leading-none"
+              >
+                {item.step}
+              </motion.div>
               <div className="flex-1 pt-0.5">
                 <h3 className="font-bold uppercase text-sm tracking-tight">{item.title}</h3>
                 <p className="text-sm text-slate-600 mt-0.5 leading-relaxed">{item.desc}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* Disclaimer */}
       <section className="px-6 md:px-12 py-8 max-w-3xl mx-auto">
-        <div className="bg-amber-100 border-2 border-amber-700 p-4 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)]">
+        <motion.div
+          {...revealProps}
+          variants={fadeUp(6, DUR.base)}
+          className="bg-amber-100 border-2 border-amber-700 p-4 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)]"
+        >
           <p className="text-xs pwc-font-mono uppercase tracking-widest text-amber-900 font-bold mb-1">{t("landing.disclaimerEyebrow")}</p>
           <p className="text-sm text-amber-900 leading-relaxed">
             {t("landing.disclaimerBody")}
           </p>
-        </div>
+        </motion.div>
       </section>
 
       {/* CTA */}
       <section className="px-6 md:px-12 py-20 bg-slate-900 text-white border-y-2 border-slate-900">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-5xl font-extrabold uppercase mb-4 tracking-tight">
+          <motion.h2
+            {...revealProps}
+            variants={stamp}
+            className="text-3xl md:text-5xl font-extrabold uppercase mb-4 tracking-tight inline-block origin-center"
+          >
             {t("landing.ctaTitle")}
-          </h2>
-          <p className="text-slate-300 mb-8 text-base md:text-lg">
+          </motion.h2>
+          <motion.p
+            {...revealProps}
+            variants={fadeIn(DUR.med)}
+            className="text-slate-300 mb-8 text-base md:text-lg"
+          >
             {t("landing.ctaBody")}
-          </p>
-          <button
+          </motion.p>
+          <motion.button
+            {...revealProps}
+            variants={fadeUp(4, DUR.med)}
             onClick={login}
-            className="border-2 border-white bg-white text-slate-900 px-6 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold hover:bg-slate-100 shadow-[4px_4px_0px_0px_rgba(255,255,255,0.4)] inline-flex items-center gap-2"
+            onMouseEnter={() => setCtaHover(true)}
+            onMouseLeave={() => setCtaHover(false)}
+            animate={
+              motionOn && !ctaHover
+                ? { boxShadow: ["4px 4px 0px 0px rgba(255,255,255,0.4)", "4px 4px 0px 0px rgba(255,255,255,0.7)"] }
+                : false
+            }
+            style={!motionOn || ctaHover ? { boxShadow: "4px 4px 0px 0px rgba(255,255,255,0.4)" } : undefined}
+            transition={motionOn && !ctaHover ? ctaShadowPulse : undefined}
+            className="border-2 border-white bg-white text-slate-900 px-6 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold hover:bg-slate-100 inline-flex items-center gap-2"
           >
             {t("landing.heroCta")}
-            <ArrowRight className="h-4 w-4" />
-          </button>
+            <ArrowRight className={`h-4 w-4 ${isRtl ? "rotate-180" : ""}`} />
+          </motion.button>
         </div>
       </section>
 
@@ -189,11 +321,20 @@ export default function Landing() {
       <footer className="px-6 md:px-12 py-8 text-center text-slate-500 text-xs">
         <p className="pwc-font-mono uppercase tracking-wider mb-2">{t("landing.footerLine1")}</p>
         <p>{t("landing.footerLine2")}</p>
-        <div className="flex flex-wrap justify-center gap-3 mt-3 text-slate-400 pwc-font-mono uppercase">
+        <motion.div
+          {...revealProps}
+          variants={staggerContainer(0.04)}
+          className="flex flex-wrap justify-center gap-3 mt-3 text-slate-400 pwc-font-mono uppercase"
+        >
           {["Santa Monica", "De Anza", "Foothill", "Mt. SAC", "Pasadena City", "LACC", "Diablo Valley"].map(c => (
-            <span key={c}>{c}</span>
+            <motion.span
+              key={c}
+              variants={fadeUp(5, DUR.fast)}
+            >
+              {c}
+            </motion.span>
           ))}
-        </div>
+        </motion.div>
         <div className="mt-4">
           <a href="/transfer" className="pwc-font-mono uppercase tracking-wider text-slate-600 underline">
             {t("landing.footerGuides")}
