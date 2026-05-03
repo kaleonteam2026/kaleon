@@ -177,7 +177,7 @@ export async function runReminderJob(opts: RunOptions = {}): Promise<RunResult> 
     }
 
     // ── One AI cap unit per user-day batch (per-user + global) ────────────
-    const cap = await enforceAiCap(profile.userId);
+    const cap = await enforceAiCap(profile.userId, "reminders");
     if (!cap.allowed) {
       logger.warn(
         { profileId: profile.id, userId: profile.userId, reason: cap.reason },

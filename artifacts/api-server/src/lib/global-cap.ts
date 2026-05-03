@@ -1,8 +1,8 @@
-import { db, aiDailyUsage, aiUserDailyUsage } from "@workspace/db";
+import { db, aiDailyUsage, aiUserDailyUsage, aiRouteDailyUsage } from "@workspace/db";
 import { and, eq, sql } from "drizzle-orm";
 
-const DEFAULT_GLOBAL_CAP = 200;
-const DEFAULT_USER_CAP = 20;
+const DEFAULT_GLOBAL_CAP = 100;
+const DEFAULT_USER_CAP = 10;
 
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
@@ -20,6 +20,10 @@ function getUserCap(): number {
   if (!raw) return DEFAULT_USER_CAP;
   const n = parseInt(raw, 10);
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_USER_CAP;
+}
+
+export function getCapDefaults(): { global: number; user: number } {
+  return { global: getGlobalCap(), user: getUserCap() };
 }
 
 export async function incrementGlobalAi(): Promise<{ allowed: boolean; cap: number; used: number }> {
@@ -109,6 +113,26 @@ export function userCapMessage(cap: number): string {
 }
 
 /**
+ * Best-effort per-route counter. Failures are swallowed: observability must
+ * never break a successful AI request. Increments only after the user+global
+ * caps have already accepted the call so totals roughly match.
+ */
+async function incrementRouteCounter(route: string): Promise<void> {
+  try {
+    const day = todayKey();
+    await db
+      .insert(aiRouteDailyUsage)
+      .values({ day, route, count: 1 })
+      .onConflictDoUpdate({
+        target: [aiRouteDailyUsage.day, aiRouteDailyUsage.route],
+        set: { count: sql`${aiRouteDailyUsage.count} + 1` },
+      });
+  } catch {
+    /* observability only — never fail the request */
+  }
+}
+
+/**
  * Combined per-user + global cap enforcement. Increments per-user first
  * (cheaper, more relevant error message), then global. Returns a 429-shaped
  * payload on denial so callers can `res.status(r.status).json({ error: r.error })`.
@@ -116,10 +140,13 @@ export function userCapMessage(cap: number): string {
  * Note: if the per-user check passes but the global check fails, the user
  * unit is still consumed. Acceptable trade-off vs a transactional 2-phase
  * rollback for this volume of traffic.
+ *
+ * The optional `route` argument labels the call for the admin usage dashboard.
+ * Failures to record the route counter are swallowed.
  */
 export type CapReason = "user" | "global";
 
-export async function enforceAiCap(userId: string): Promise<
+export async function enforceAiCap(userId: string, route?: string): Promise<
   | { allowed: true; global: { cap: number; used: number }; user: { cap: number; used: number } }
   | { allowed: false; status: 429; error: string; reason: CapReason }
 > {
@@ -130,6 +157,9 @@ export async function enforceAiCap(userId: string): Promise<
   const g = await incrementGlobalAi();
   if (!g.allowed) {
     return { allowed: false, status: 429, error: globalCapMessage(g.cap), reason: "global" };
+  }
+  if (route) {
+    await incrementRouteCounter(route);
   }
   return {
     allowed: true,

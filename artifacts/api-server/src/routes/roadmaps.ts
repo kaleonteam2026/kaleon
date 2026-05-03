@@ -56,7 +56,7 @@ router.post("/pathways/:pathwayId/generate-roadmap", async (req, res) => {
     const owner = await getOwnedPathway(pathwayId, req.user.id);
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Pathway not found" }); return; }
 
-    const cap = await enforceAiCap(req.user.id);
+    const cap = await enforceAiCap(req.user.id, "roadmap");
     if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
 
     const pathway = owner.pathway;
@@ -208,7 +208,7 @@ router.post("/roadmaps/:roadmapId/infographic", async (req, res) => {
     }
 
     // First-time generation: count one AI cap unit
-    const cap = await enforceAiCap(req.user.id);
+    const cap = await enforceAiCap(req.user.id, "roadmap-infographic");
     if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
 
     const data = buildInfographicData({

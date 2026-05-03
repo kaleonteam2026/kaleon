@@ -16,6 +16,11 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Owner-only admin
+
+- `OWNER_USER_IDS` env var (comma-separated user IDs) gates `/admin/usage` and `GET /api/admin/usage`. Non-owners (and unauthenticated users) get 404, not 403, so the surface stays unadvertised.
+- AI cost caps: defaults are 100 generations/day app-wide, 10 generations/day per user, 20 Tavily searches/day. Override with `AI_DAILY_CAP`, `AI_DAILY_USER_CAP`, `TAVILY_DAILY_CAP`.
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages

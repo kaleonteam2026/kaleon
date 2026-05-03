@@ -20,6 +20,7 @@ import Scholarships from "@/pages/scholarships";
 import TagChecker from "@/pages/tag-checker";
 import IgetcTracker from "@/pages/igetc";
 import ExportsPage from "@/pages/exports";
+import AdminUsage from "@/pages/admin-usage";
 import Onboarding from "@/pages/onboarding";
 import Welcome from "@/pages/welcome";
 import ChatBubble from "@/components/chat-bubble";
@@ -136,6 +137,7 @@ function Router() {
             <ExportsPage />
           </ProtectedRoute>
         </Route>
+        <Route path="/admin/usage" component={AdminUsage} />
         <Route component={NotFound} />
       </Switch>
       <ChatBubbleWrapper />

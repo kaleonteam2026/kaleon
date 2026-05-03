@@ -171,7 +171,7 @@ router.post("/chat", async (req, res) => {
     // increment succeeds. Non-interview chats always count.
     const needsCapDebit = !isInterview || (session !== null && !session.countedAgainstCap);
     if (needsCapDebit) {
-      const cap = await enforceAiCap(req.user.id);
+      const cap = await enforceAiCap(req.user.id, isInterview ? "chat:interview" : "chat");
       if (!cap.allowed) {
         res.status(cap.status).json({ error: cap.error });
         return;

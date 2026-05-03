@@ -42,7 +42,7 @@ router.post("/pathways/:pathwayId/generate-guidebook", async (req, res) => {
     const owner = await getOwnedPathway(pathwayId, req.user.id);
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Pathway not found" }); return; }
 
-    const cap = await enforceAiCap(req.user.id);
+    const cap = await enforceAiCap(req.user.id, "guidebook");
     if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
 
     const pathway = owner.pathway;

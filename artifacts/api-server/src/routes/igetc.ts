@@ -89,7 +89,7 @@ router.post("/profiles/:profileId/igetc/analyze", async (req, res) => {
       return;
     }
 
-    const cap = await enforceAiCap(req.user.id);
+    const cap = await enforceAiCap(req.user.id, "igetc");
     if (!cap.allowed) {
       res.status(cap.status).json({ error: cap.error });
       return;

@@ -144,7 +144,7 @@ router.post("/universities/:uniId/deep-dive", async (req, res) => {
     }
 
     // Reserve the AI credit only now, right before the expensive synthesis call.
-    const cap = await enforceAiCap(req.user.id);
+    const cap = await enforceAiCap(req.user.id, "deep-dive");
     if (!cap.allowed) {
       res.status(cap.status).json({ error: cap.error });
       return;

@@ -41,7 +41,7 @@ router.post("/profiles/:profileId/internships/search", async (req, res) => {
       db.select().from(pathwaysTable).where(eq(pathwaysTable.profileId, profileId)),
     ]);
 
-    const cap = await enforceAiCap(req.user.id);
+    const cap = await enforceAiCap(req.user.id, "internships-search");
     if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
 
     const profile = owner.profile;

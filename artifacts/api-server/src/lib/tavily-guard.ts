@@ -12,15 +12,18 @@ const KIND_DAY = "day";
 
 function resolveDailyCap(): number {
   const raw = process.env["TAVILY_DAILY_CAP"];
-  if (raw === undefined) return 50;
+  if (raw === undefined) return 20;
   const parsed = Number(raw);
   if (!Number.isFinite(parsed) || parsed <= 0) {
-    logger.warn({ raw }, "Invalid TAVILY_DAILY_CAP; falling back to 50");
-    return 50;
+    logger.warn({ raw }, "Invalid TAVILY_DAILY_CAP; falling back to 20");
+    return 20;
   }
   return Math.floor(parsed);
 }
 const DAILY_CAP = resolveDailyCap();
+export function getTavilyDailyCap(): number {
+  return DAILY_CAP;
+}
 
 function calendarDayKey(ts: number): string {
   // UTC calendar day so reset is deterministic across server restarts.

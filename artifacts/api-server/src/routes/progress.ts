@@ -81,7 +81,7 @@ router.post("/profiles/:profileId/progress/entry-feedback", async (req, res) => 
     if (!entry) { res.status(404).json({ error: "Entry not found" }); return; }
 
     {
-      const cap = await enforceAiCap(req.user.id);
+      const cap = await enforceAiCap(req.user.id, "progress-feedback");
       if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
     }
 
@@ -181,7 +181,7 @@ router.post("/profiles/:profileId/progress/analyze", async (req, res) => {
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
     {
-      const cap = await enforceAiCap(req.user.id);
+      const cap = await enforceAiCap(req.user.id, "progress-analyze");
       if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
     }
 

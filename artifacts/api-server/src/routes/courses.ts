@@ -251,7 +251,7 @@ router.get("/profiles/:profileId/course-catalog", async (req, res) => {
       return;
     }
 
-    const cap = await enforceAiCap(req.user.id);
+    const cap = await enforceAiCap(req.user.id, "course-catalog");
     if (!cap.allowed) {
       res.status(cap.status).json({ error: cap.error });
       return;
@@ -306,7 +306,7 @@ router.post("/profiles/:profileId/transferability-analysis", async (req, res) =>
       return;
     }
 
-    const cap = await enforceAiCap(req.user.id);
+    const cap = await enforceAiCap(req.user.id, "transferability");
     if (!cap.allowed) {
       res.status(cap.status).json({ error: cap.error });
       return;

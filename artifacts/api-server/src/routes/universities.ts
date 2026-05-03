@@ -63,7 +63,7 @@ router.get("/universities/:uniId/campus-opportunities", async (req, res) => {
     return;
   }
 
-  const cap = await enforceAiCap(req.user.id);
+  const cap = await enforceAiCap(req.user.id, "campus-opportunities");
   if (!cap.allowed) {
     res.status(cap.status).json({ error: cap.error });
     return;
@@ -107,7 +107,7 @@ router.get("/profiles/:profileId/cc-campus-opportunities", async (req, res) => {
       return;
     }
 
-    const cap = await enforceAiCap(req.user.id);
+    const cap = await enforceAiCap(req.user.id, "cc-opportunities");
     if (!cap.allowed) {
       res.status(cap.status).json({ error: cap.error });
       return;

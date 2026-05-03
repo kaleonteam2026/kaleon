@@ -19,6 +19,7 @@ import liveSearchRouter from "./live-search";
 import deepDiveRouter from "./deep-dive";
 import exportsRouter from "./exports";
 import remindersRouter from "./reminders";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -42,5 +43,6 @@ router.use(liveSearchRouter);
 router.use(deepDiveRouter);
 router.use(exportsRouter);
 router.use(remindersRouter);
+router.use(adminRouter);
 
 export default router;

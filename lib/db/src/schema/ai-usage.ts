@@ -20,3 +20,17 @@ export const aiUserDailyUsage = pgTable(
 );
 
 export type AiUserDailyUsage = typeof aiUserDailyUsage.$inferSelect;
+
+export const aiRouteDailyUsage = pgTable(
+  "ai_route_daily_usage",
+  {
+    day: date("day").notNull(),
+    route: text("route").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.day, t.route] }),
+  }),
+);
+
+export type AiRouteDailyUsage = typeof aiRouteDailyUsage.$inferSelect;
