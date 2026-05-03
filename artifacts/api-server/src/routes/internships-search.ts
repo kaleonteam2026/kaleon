@@ -5,7 +5,7 @@ import {
 import { eq, desc } from "drizzle-orm";
 import { generateInternshipMatches } from "../services/aiService.js";
 import { getRequestLocale } from "../lib/locale.js";
-import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { enforceAiCap } from "../lib/global-cap";
 import { getOwnedProfile } from "../lib/ownership";
 
 const router = Router();
@@ -41,8 +41,8 @@ router.post("/profiles/:profileId/internships/search", async (req, res) => {
       db.select().from(pathwaysTable).where(eq(pathwaysTable.profileId, profileId)),
     ]);
 
-    const cap = await incrementGlobalAi();
-    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
+    const cap = await enforceAiCap(req.user.id);
+    if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
 
     const profile = owner.profile;
     const selectedPathway = pathways.find(p => p.isSelected === "true") ?? null;

@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { generatePathways } from "../services/aiService.js";
 import { getRequestLocale } from "../lib/locale.js";
 import { calculateCompatibility, interpretScore } from "../services/scoringService.js";
-import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { enforceAiCap } from "../lib/global-cap";
 import { getOwnedProfile, getOwnedPathway } from "../lib/ownership";
 
 const router = Router();
@@ -45,9 +45,9 @@ router.post("/profiles/:profileId/generate-pathways", async (req, res) => {
     const owner = await getOwnedProfile(profileId, req.user.id);
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
-    const cap = await incrementGlobalAi();
+    const cap = await enforceAiCap(req.user.id);
     if (!cap.allowed) {
-      res.status(429).json({ error: globalCapMessage(cap.cap) });
+      res.status(cap.status).json({ error: cap.error });
       return;
     }
 

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { enforceAiCap } from "../lib/global-cap";
 import { getOwnedProfile } from "../lib/ownership";
 import { getRequestLocale, localePromptSuffix } from "../lib/locale";
 
@@ -171,9 +171,9 @@ router.post("/chat", async (req, res) => {
     // increment succeeds. Non-interview chats always count.
     const needsCapDebit = !isInterview || (session !== null && !session.countedAgainstCap);
     if (needsCapDebit) {
-      const cap = await incrementGlobalAi();
+      const cap = await enforceAiCap(req.user.id);
       if (!cap.allowed) {
-        res.status(429).json({ error: globalCapMessage(cap.cap) });
+        res.status(cap.status).json({ error: cap.error });
         return;
       }
     }

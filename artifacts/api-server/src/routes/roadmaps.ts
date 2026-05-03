@@ -4,7 +4,7 @@ import opportunities from "../data/opportunities.json" assert { type: "json" };
 import { db, coursesTable, academicRoadmapsTable, roadmapInfographicsTable, roadmapShareLinksTable } from "@workspace/db";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { generateAcademicRoadmap } from "../services/aiService.js";
-import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { enforceAiCap } from "../lib/global-cap";
 import { getOwnedPathway, getOwnedRoadmap, getOwnedProfile } from "../lib/ownership";
 import { resolveAuthedLocale } from "../lib/locale";
 import {
@@ -56,8 +56,8 @@ router.post("/pathways/:pathwayId/generate-roadmap", async (req, res) => {
     const owner = await getOwnedPathway(pathwayId, req.user.id);
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Pathway not found" }); return; }
 
-    const cap = await incrementGlobalAi();
-    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
+    const cap = await enforceAiCap(req.user.id);
+    if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
 
     const pathway = owner.pathway;
     const profile = owner.profile;
@@ -163,8 +163,8 @@ router.post("/roadmaps/:roadmapId/infographic", async (req, res) => {
     }
 
     // First-time generation: count one AI cap unit
-    const cap = await incrementGlobalAi();
-    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
+    const cap = await enforceAiCap(req.user.id);
+    if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
 
     const data = buildInfographicData({
       roadmap,

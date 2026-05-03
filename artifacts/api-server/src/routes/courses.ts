@@ -3,7 +3,7 @@ import { db, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { generateTransferabilityAnalysis, generateCourseCatalog } from "../services/aiService.js";
 import { getOwnedProfile, getOwnedCourse } from "../lib/ownership";
-import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { enforceAiCap } from "../lib/global-cap";
 import { invalidateIgetcAnalysis } from "../lib/igetc-cache";
 import { resolveAuthedLocale } from "../lib/locale.js";
 
@@ -251,9 +251,9 @@ router.get("/profiles/:profileId/course-catalog", async (req, res) => {
       return;
     }
 
-    const cap = await incrementGlobalAi();
+    const cap = await enforceAiCap(req.user.id);
     if (!cap.allowed) {
-      res.status(429).json({ error: globalCapMessage(cap.cap) });
+      res.status(cap.status).json({ error: cap.error });
       return;
     }
 
@@ -306,9 +306,9 @@ router.post("/profiles/:profileId/transferability-analysis", async (req, res) =>
       return;
     }
 
-    const cap = await incrementGlobalAi();
+    const cap = await enforceAiCap(req.user.id);
     if (!cap.allowed) {
-      res.status(429).json({ error: globalCapMessage(cap.cap) });
+      res.status(cap.status).json({ error: cap.error });
       return;
     }
 

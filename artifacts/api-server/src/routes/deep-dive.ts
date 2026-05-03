@@ -4,7 +4,7 @@ import universities from "../data/universities.json" assert { type: "json" };
 import { db, universityDeepDivesTable, type DeepDiveReport } from "@workspace/db";
 import { tavilySearch } from "../lib/tavily";
 import { getOwnedProfile } from "../lib/ownership";
-import { incrementGlobalAi, globalCapMessage, getGlobalAiUsage } from "../lib/global-cap";
+import { checkAiCapAvailable, enforceAiCap, getGlobalAiUsage, getUserAiUsage } from "../lib/global-cap";
 import { synthesizeDeepDive, type DeepDiveSectionInput } from "../services/aiService.js";
 import { getRequestLocale } from "../lib/locale.js";
 
@@ -82,23 +82,27 @@ router.post("/universities/:uniId/deep-dive", async (req, res) => {
     // Cache hit returns immediately, no AI cap consumed.
     const cached = await readFreshReport(uniId, majorKey);
     if (cached) {
-      const usage = await getGlobalAiUsage();
+      const [global, user] = await Promise.all([
+        getGlobalAiUsage(),
+        getUserAiUsage(req.user.id),
+      ]);
       res.json({
         cached: true,
         report: cached.reportJson,
         expiresAt: cached.expiresAt,
         generatedAt: cached.createdAt,
-        aiCredits: usage,
+        aiCredits: { ...global, user, global },
       });
       return;
     }
 
     // Pre-flight check (no increment yet) so we don't waste research effort if
-    // we're already at the cap. Final consumption happens just before the
-    // (expensive) synthesis call so failed source-gathering doesn't consume a credit.
-    const preCheck = await getGlobalAiUsage();
-    if (preCheck.remaining <= 0) {
-      res.status(429).json({ error: globalCapMessage(preCheck.cap) });
+    // either the per-user or global cap is already exhausted. Final consumption
+    // happens just before the (expensive) synthesis call so failed source-
+    // gathering doesn't consume a credit.
+    const preCheck = await checkAiCapAvailable(req.user.id);
+    if (!preCheck.ok) {
+      res.status(preCheck.status).json({ error: preCheck.error });
       return;
     }
 
@@ -140,9 +144,9 @@ router.post("/universities/:uniId/deep-dive", async (req, res) => {
     }
 
     // Reserve the AI credit only now, right before the expensive synthesis call.
-    const cap = await incrementGlobalAi();
+    const cap = await enforceAiCap(req.user.id);
     if (!cap.allowed) {
-      res.status(429).json({ error: globalCapMessage(cap.cap) });
+      res.status(cap.status).json({ error: cap.error });
       return;
     }
 
@@ -171,7 +175,13 @@ router.post("/universities/:uniId/deep-dive", async (req, res) => {
       report,
       expiresAt: expiresAt.toISOString(),
       generatedAt: report.generatedAt,
-      aiCredits: { used: cap.used, cap: cap.cap, remaining: Math.max(0, cap.cap - cap.used) },
+      aiCredits: {
+        used: cap.global.used,
+        cap: cap.global.cap,
+        remaining: Math.max(0, cap.global.cap - cap.global.used),
+        global: { used: cap.global.used, cap: cap.global.cap, remaining: Math.max(0, cap.global.cap - cap.global.used) },
+        user: { used: cap.user.used, cap: cap.user.cap, remaining: Math.max(0, cap.user.cap - cap.user.used) },
+      },
     });
   } catch (err) {
     req.log.error({ err }, "Failed to generate deep dive");

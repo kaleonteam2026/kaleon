@@ -2,7 +2,7 @@ import { Router } from "express";
 import universities from "../data/universities.json" assert { type: "json" };
 import { generateCampusOpportunities, generateCCOpportunities } from "../services/aiService.js";
 import { getOwnedProfile } from "../lib/ownership";
-import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { enforceAiCap } from "../lib/global-cap";
 import { getRequestLocale, resolveAuthedLocale } from "../lib/locale";
 
 const router = Router();
@@ -63,9 +63,9 @@ router.get("/universities/:uniId/campus-opportunities", async (req, res) => {
     return;
   }
 
-  const cap = await incrementGlobalAi();
+  const cap = await enforceAiCap(req.user.id);
   if (!cap.allowed) {
-    res.status(429).json({ error: globalCapMessage(cap.cap) });
+    res.status(cap.status).json({ error: cap.error });
     return;
   }
 
@@ -107,9 +107,9 @@ router.get("/profiles/:profileId/cc-campus-opportunities", async (req, res) => {
       return;
     }
 
-    const cap = await incrementGlobalAi();
+    const cap = await enforceAiCap(req.user.id);
     if (!cap.allowed) {
-      res.status(429).json({ error: globalCapMessage(cap.cap) });
+      res.status(cap.status).json({ error: cap.error });
       return;
     }
 

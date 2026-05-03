@@ -3,7 +3,7 @@ import { db, igetcProgressTable, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { getOwnedProfile } from "../lib/ownership";
-import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { enforceAiCap } from "../lib/global-cap";
 import { igetcAnalysisCache, IGETC_ANALYSIS_TTL } from "../lib/igetc-cache";
 
 const router = Router();
@@ -89,9 +89,9 @@ router.post("/profiles/:profileId/igetc/analyze", async (req, res) => {
       return;
     }
 
-    const cap = await incrementGlobalAi();
+    const cap = await enforceAiCap(req.user.id);
     if (!cap.allowed) {
-      res.status(429).json({ error: globalCapMessage(cap.cap) });
+      res.status(cap.status).json({ error: cap.error });
       return;
     }
 

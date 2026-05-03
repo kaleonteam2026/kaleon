@@ -4,7 +4,7 @@ import opportunities from "../data/opportunities.json" assert { type: "json" };
 import { db, coursesTable, guidebooksTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { generateGuidebook } from "../services/aiService.js";
-import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { enforceAiCap } from "../lib/global-cap";
 import { getOwnedPathway, getOwnedGuidebook, getOwnedProfile } from "../lib/ownership";
 import { resolveAuthedLocale } from "../lib/locale";
 
@@ -42,8 +42,8 @@ router.post("/pathways/:pathwayId/generate-guidebook", async (req, res) => {
     const owner = await getOwnedPathway(pathwayId, req.user.id);
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Pathway not found" }); return; }
 
-    const cap = await incrementGlobalAi();
-    if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
+    const cap = await enforceAiCap(req.user.id);
+    if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
 
     const pathway = owner.pathway;
     const profile = owner.profile;

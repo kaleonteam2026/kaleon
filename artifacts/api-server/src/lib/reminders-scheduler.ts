@@ -9,7 +9,7 @@ import {
 } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { incrementGlobalAi } from "./global-cap";
+import { enforceAiCap } from "./global-cap";
 import { computeUpcomingDeadlines, todayKey, type UpcomingHit } from "./deadlines";
 import { sendEmail, isEmailConfigured } from "./email";
 import { logger } from "./logger";
@@ -176,12 +176,20 @@ export async function runReminderJob(opts: RunOptions = {}): Promise<RunResult> 
       continue;
     }
 
-    // ── One AI cap unit per user-day batch ─────────────────────────────────
-    const cap = await incrementGlobalAi();
+    // ── One AI cap unit per user-day batch (per-user + global) ────────────
+    const cap = await enforceAiCap(profile.userId);
     if (!cap.allowed) {
-      result.capExhausted = true;
-      logger.warn({ profileId: profile.id }, "Reminder job hit global AI cap; will retry tomorrow");
-      break;
+      logger.warn(
+        { profileId: profile.id, userId: profile.userId, reason: cap.reason },
+        "Reminder job blocked by AI cap; will retry tomorrow",
+      );
+      // Only stop the whole job for the global cap — a single user hitting
+      // their personal cap shouldn't halt reminders for everyone else.
+      if (cap.reason === "global") {
+        result.capExhausted = true;
+        break;
+      }
+      continue;
     }
 
     const drafted = await draftMessages(profile, newHits);

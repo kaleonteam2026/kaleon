@@ -7,7 +7,7 @@ import {
 } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { generateProgressAnalysis, generateEntryFeedback } from "../services/aiService.js";
-import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { enforceAiCap } from "../lib/global-cap";
 import { getOwnedProfile, getOwnedProgressEntry } from "../lib/ownership";
 import { resolveAuthedLocale } from "../lib/locale.js";
 
@@ -81,8 +81,8 @@ router.post("/profiles/:profileId/progress/entry-feedback", async (req, res) => 
     if (!entry) { res.status(404).json({ error: "Entry not found" }); return; }
 
     {
-      const cap = await incrementGlobalAi();
-      if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
+      const cap = await enforceAiCap(req.user.id);
+      if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
     }
 
     const selectedPathway = pathways.find(p => p.isSelected === "true") ?? null;
@@ -181,8 +181,8 @@ router.post("/profiles/:profileId/progress/analyze", async (req, res) => {
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
 
     {
-      const cap = await incrementGlobalAi();
-      if (!cap.allowed) { res.status(429).json({ error: globalCapMessage(cap.cap) }); return; }
+      const cap = await enforceAiCap(req.user.id);
+      if (!cap.allowed) { res.status(cap.status).json({ error: cap.error }); return; }
     }
 
     const [courses, pathways, progressEntries] = await Promise.all([

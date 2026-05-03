@@ -15,12 +15,13 @@ interface DeepDiveReport {
   sections: DeepDiveSection[];
   disclaimer: string;
 }
+interface CapInfo { used: number; cap: number; remaining: number }
 interface DeepDiveResponse {
   cached: boolean;
   report: DeepDiveReport;
   expiresAt: string;
   generatedAt: string;
-  aiCredits?: { used: number; cap: number; remaining: number };
+  aiCredits?: CapInfo & { user?: CapInfo; global?: CapInfo };
 }
 
 const SECTION_THEME: Record<string, string> = {
@@ -65,10 +66,11 @@ export default function DeepDivePanel({ universityId, universityName, profileId 
       const resp = body as DeepDiveResponse;
       setData(resp);
       const credits = resp.aiCredits;
+      const personal = credits?.user ?? credits;
       if (resp.cached) {
-        toast({ title: "Loaded cached Deep Dive", description: credits ? `${credits.remaining} of ${credits.cap} shared app AI credits left today.` : undefined });
-      } else if (credits) {
-        toast({ title: "Deep Dive ready", description: `${credits.remaining} of ${credits.cap} shared app AI credits left today.` });
+        toast({ title: "Loaded cached Deep Dive", description: personal ? `${personal.remaining} of ${personal.cap} of your daily AI credits left.` : undefined });
+      } else if (personal) {
+        toast({ title: "Deep Dive ready", description: `${personal.remaining} of ${personal.cap} of your daily AI credits left.` });
       }
     } catch (err) {
       toast({ title: "Network error", description: String(err), variant: "destructive" });
@@ -89,11 +91,18 @@ export default function DeepDivePanel({ universityId, universityName, profileId 
           </CollapsibleTrigger>
           {open && (
             <div className="flex items-center gap-2">
-              {data?.aiCredits && (
-                <span className="text-[10px] font-mono text-slate-500" title="Shared across all Pathwise CC users today">
-                  {data.aiCredits.remaining}/{data.aiCredits.cap} app AI credits
-                </span>
-              )}
+              {data?.aiCredits && (() => {
+                const personal = data.aiCredits.user ?? data.aiCredits;
+                const global = data.aiCredits.global;
+                const title = global
+                  ? `Your personal daily limit. App-wide: ${global.remaining}/${global.cap} left today.`
+                  : "Your personal daily AI limit";
+                return (
+                  <span className="text-[10px] font-mono text-slate-500" title={title}>
+                    {personal.remaining}/{personal.cap} your daily AI
+                  </span>
+                );
+              })()}
               <Button
                 size="sm"
                 onClick={runDeepDive}
