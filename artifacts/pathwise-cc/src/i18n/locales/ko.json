@@ -37,7 +37,11 @@
     "verifyFooter": "DYP · AI 생성 · 항상 공식 출처로 확인하세요",
     "season_fall": "가을",
     "season_spring": "봄",
-    "season_summer": "여름"
+    "season_summer": "여름",
+    "tagline": "당신의 길을 가세요",
+    "primaryNav": "기본",
+    "navMenu": "내비게이션 메뉴",
+    "quickNav": "빠른 내비게이션"
   },
   "nav": {
     "dashboard": "대시보드",
@@ -340,7 +344,13 @@
       "timeline_fall2026": "2026 가을",
       "timeline_fall2027": "2027 가을",
       "timeline_fall2028later": "2028 가을 이후",
-      "timeline_flexible": "유연함 / 아직 미정"
+      "timeline_flexible": "유연함 / 아직 미정",
+      "geo_la": "로스앤젤레스 / 남부 캘리포니아",
+      "geo_bay": "샌프란시스코 베이 지역 / 북부 캘리포니아",
+      "geo_sd": "샌디에이고",
+      "geo_central": "센트럴 밸리",
+      "geo_anywhere": "캘리포니아 어디든",
+      "geo_oos": "주 외 지역도 고려"
     },
     "scholarships": {
       "title": "장학금",

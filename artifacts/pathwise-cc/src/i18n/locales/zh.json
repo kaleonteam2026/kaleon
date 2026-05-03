@@ -37,7 +37,11 @@
     "verifyFooter": "DYP · AI 生成 · 请始终通过官方来源核实",
     "season_fall": "秋季",
     "season_spring": "春季",
-    "season_summer": "夏季"
+    "season_summer": "夏季",
+    "tagline": "走出你的路",
+    "primaryNav": "主导航",
+    "navMenu": "导航菜单",
+    "quickNav": "快速导航"
   },
   "nav": {
     "dashboard": "仪表板",
@@ -340,7 +344,13 @@
       "timeline_fall2026": "2026 年秋",
       "timeline_fall2027": "2027 年秋",
       "timeline_fall2028later": "2028 年秋或之后",
-      "timeline_flexible": "灵活 / 尚不确定"
+      "timeline_flexible": "灵活 / 尚不确定",
+      "geo_la": "洛杉矶 / 南加州",
+      "geo_bay": "旧金山湾区 / 北加州",
+      "geo_sd": "圣地亚哥",
+      "geo_central": "中央谷地",
+      "geo_anywhere": "加州任何地方",
+      "geo_oos": "可考虑州外"
     },
     "scholarships": {
       "title": "奖学金",

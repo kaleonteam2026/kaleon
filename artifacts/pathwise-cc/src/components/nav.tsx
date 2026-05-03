@@ -78,7 +78,7 @@ export default function Nav({ profileId }: Props) {
         D
       </div>
       <span>DYP</span>
-      <span className="hidden lg:inline pwc-font-mono text-[10px] text-slate-500 normal-case tracking-widest font-medium">// DO YOUR PATH</span>
+      <span className="hidden lg:inline pwc-font-mono text-[10px] text-slate-500 normal-case tracking-widest font-medium">// {t("common.tagline")}</span>
     </Link>
   );
 
@@ -93,7 +93,7 @@ export default function Nav({ profileId }: Props) {
       </a>
 
       {/* ── Desktop nav ── */}
-      <nav aria-label="Primary" className="hidden md:flex fixed top-0 left-0 right-0 z-50 bg-white border-b-2 border-slate-900 px-6 h-14 items-center justify-between">
+      <nav aria-label={t("common.primaryNav")} className="hidden md:flex fixed top-0 left-0 right-0 z-50 bg-white border-b-2 border-slate-900 px-6 h-14 items-center justify-between">
         {Brand}
         <div className="flex items-center gap-1 flex-nowrap overflow-x-auto min-w-0">
           {allLinks.map((link) => {
@@ -136,7 +136,7 @@ export default function Nav({ profileId }: Props) {
       </nav>
 
       {/* ── Mobile top bar ── */}
-      <nav aria-label="Primary" className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b-2 border-slate-900 px-4 h-14 flex items-center justify-between">
+      <nav aria-label={t("common.primaryNav")} className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b-2 border-slate-900 px-4 h-14 flex items-center justify-between">
         {Brand}
         <div className="flex items-center gap-1">
           {resolvedId && <NotificationBell profileId={resolvedId} />}
@@ -160,7 +160,7 @@ export default function Nav({ profileId }: Props) {
           id="mobile-nav-menu"
           role="dialog"
           aria-modal="true"
-          aria-label="Navigation menu"
+          aria-label={t("common.navMenu")}
           tabIndex={-1}
           className="md:hidden fixed inset-0 z-50 bg-white focus:outline-none"
         >
@@ -212,7 +212,7 @@ export default function Nav({ profileId }: Props) {
       )}
 
       {/* ── Mobile bottom tab bar ── */}
-      <nav aria-label="Quick navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-slate-900 flex">
+      <nav aria-label={t("common.quickNav")} className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-slate-900 flex">
         {bottomTabs.map((tab) => {
           const active = isActive(tab.href);
           return (

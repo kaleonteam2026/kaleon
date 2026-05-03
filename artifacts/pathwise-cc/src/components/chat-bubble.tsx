@@ -20,19 +20,25 @@ function makeSessionId() {
   return `iv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+// Locale-independent machine markers emitted by the backend prompt.
+// Markers are always in English so this parser works regardless of the
+// language the AI is responding in.
+const MARKER_RE = /\[\[(?:SUMMARY|SCORE:[^\]]+|STRENGTHS|IMPROVE|END|Q:\d+\/\d+)\]\]/g;
+
 // Detect closing summary message
 function isSummary(text: string): boolean {
-  return /\*\*\s*Interview Summary\s*\*\*/i.test(text);
+  return /\[\[SUMMARY\]\]/.test(text);
 }
 
 function parseSummary(text: string) {
-  const scoreMatch = text.match(/Score:\s*([0-9]+(?:\.[0-9]+)?)\s*\/\s*10/i);
+  const scoreMatch = text.match(/\[\[SCORE:\s*([0-9]+(?:\.[0-9]+)?)\s*\/\s*10\s*\]\]/);
   const score = scoreMatch ? scoreMatch[1] : null;
-  const strengthsBlock = text.match(/Strengths:\s*([\s\S]*?)(?:Improve next:|$)/i);
-  const improveBlock = text.match(/Improve next:\s*([\s\S]*?)(?:\n\n[A-Z]|$)/i);
+  const strengthsBlock = text.match(/\[\[STRENGTHS\]\]([\s\S]*?)(?:\[\[IMPROVE\]\]|\[\[END\]\]|$)/);
+  const improveBlock = text.match(/\[\[IMPROVE\]\]([\s\S]*?)(?:\[\[END\]\]|$)/);
   const toBullets = (s: string | undefined) => (s ?? "")
     .split("\n").map(l => l.replace(/^[-*•]\s*/, "").trim()).filter(Boolean).slice(0, 5);
-  const tail = text.split(/Improve next:[\s\S]*?(?:\n\n|$)/i).slice(-1)[0] ?? "";
+  const endIdx = text.indexOf("[[END]]");
+  const tail = endIdx >= 0 ? text.slice(endIdx + "[[END]]".length) : "";
   const closing = tail.split("\n").map(s => s.trim()).filter(Boolean).pop() ?? "";
   return {
     score,
@@ -43,12 +49,17 @@ function parseSummary(text: string) {
 }
 
 function questionNumber(text: string): number | null {
-  const m = text.match(/\*\*\s*Question\s+(\d+)\s+of\s+5\s*[:.]?\s*\*\*/i);
+  const m = text.match(/\[\[Q:(\d+)\/\d+\]\]/);
   return m ? parseInt(m[1], 10) : null;
 }
 
+// Strip machine markers from display text — they're for state parsing only.
+function stripMarkers(text: string): string {
+  return text.replace(MARKER_RE, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 function formatMessage(text: string) {
-  return text.split("\n").map((line, i) => {
+  return stripMarkers(text).split("\n").map((line, i) => {
     const bolded = line.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
       part.startsWith("**") && part.endsWith("**")
         ? <strong key={j}>{part.slice(2, -2)}</strong>

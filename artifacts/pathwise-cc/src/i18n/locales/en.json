@@ -37,7 +37,11 @@
     "verifyFooter": "DYP · AI-generated · Always verify with official sources",
     "season_fall": "Fall",
     "season_spring": "Spring",
-    "season_summer": "Summer"
+    "season_summer": "Summer",
+    "tagline": "DO YOUR PATH",
+    "primaryNav": "Primary",
+    "navMenu": "Navigation menu",
+    "quickNav": "Quick navigation"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -340,7 +344,13 @@
       "timeline_fall2026": "Fall 2026",
       "timeline_fall2027": "Fall 2027",
       "timeline_fall2028later": "Fall 2028 or later",
-      "timeline_flexible": "Flexible / Not sure yet"
+      "timeline_flexible": "Flexible / Not sure yet",
+      "geo_la": "Los Angeles / Southern California",
+      "geo_bay": "SF Bay Area / Northern California",
+      "geo_sd": "San Diego",
+      "geo_central": "Central Valley",
+      "geo_anywhere": "Anywhere in California",
+      "geo_oos": "Open to out of state"
     },
     "scholarships": {
       "title": "Scholarships",

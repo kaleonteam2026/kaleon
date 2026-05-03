@@ -37,7 +37,11 @@
     "verifyFooter": "DYP · AI-generated · Palaging i-verify sa opisyal na pinagkukunan",
     "season_fall": "Fall",
     "season_spring": "Spring",
-    "season_summer": "Summer"
+    "season_summer": "Summer",
+    "tagline": "GAWIN ANG IYONG LANDAS",
+    "primaryNav": "Pangunahin",
+    "navMenu": "Menu ng nabigasyon",
+    "quickNav": "Mabilis na nabigasyon"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -340,7 +344,13 @@
       "timeline_fall2026": "Fall 2026",
       "timeline_fall2027": "Fall 2027",
       "timeline_fall2028later": "Fall 2028 o mas huli",
-      "timeline_flexible": "Flexible / Hindi pa sigurado"
+      "timeline_flexible": "Flexible / Hindi pa sigurado",
+      "geo_la": "Los Angeles / Katimugang California",
+      "geo_bay": "SF Bay Area / Hilagang California",
+      "geo_sd": "San Diego",
+      "geo_central": "Central Valley",
+      "geo_anywhere": "Kahit saan sa California",
+      "geo_oos": "Bukas sa labas ng estado"
     },
     "scholarships": {
       "title": "Mga Scholarship",

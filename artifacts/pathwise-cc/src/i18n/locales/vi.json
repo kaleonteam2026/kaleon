@@ -37,7 +37,11 @@
     "verifyFooter": "DYP · Do AI tạo · Luôn xác minh với nguồn chính thức",
     "season_fall": "Mùa Thu",
     "season_spring": "Mùa Xuân",
-    "season_summer": "Mùa Hè"
+    "season_summer": "Mùa Hè",
+    "tagline": "ĐI CON ĐƯỜNG CỦA BẠN",
+    "primaryNav": "Chính",
+    "navMenu": "Trình đơn điều hướng",
+    "quickNav": "Điều hướng nhanh"
   },
   "nav": {
     "dashboard": "Bảng điều khiển",
@@ -340,7 +344,13 @@
       "timeline_fall2026": "Mùa Thu 2026",
       "timeline_fall2027": "Mùa Thu 2027",
       "timeline_fall2028later": "Mùa Thu 2028 hoặc trễ hơn",
-      "timeline_flexible": "Linh hoạt / Chưa chắc chắn"
+      "timeline_flexible": "Linh hoạt / Chưa chắc chắn",
+      "geo_la": "Los Angeles / Nam California",
+      "geo_bay": "Vùng Vịnh SF / Bắc California",
+      "geo_sd": "San Diego",
+      "geo_central": "Thung lũng Trung tâm",
+      "geo_anywhere": "Bất cứ đâu ở California",
+      "geo_oos": "Sẵn sàng ra ngoài tiểu bang"
     },
     "scholarships": {
       "title": "Học Bổng",

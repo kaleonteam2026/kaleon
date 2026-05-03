@@ -37,7 +37,11 @@
     "verifyFooter": "DYP · Generado por IA · Verifica siempre con fuentes oficiales",
     "season_fall": "Otoño",
     "season_spring": "Primavera",
-    "season_summer": "Verano"
+    "season_summer": "Verano",
+    "tagline": "TU CAMINO",
+    "primaryNav": "Principal",
+    "navMenu": "Menú de navegación",
+    "quickNav": "Navegación rápida"
   },
   "nav": {
     "dashboard": "Panel",
@@ -340,7 +344,13 @@
       "timeline_fall2026": "Otoño 2026",
       "timeline_fall2027": "Otoño 2027",
       "timeline_fall2028later": "Otoño 2028 o después",
-      "timeline_flexible": "Flexible / No estoy seguro/a"
+      "timeline_flexible": "Flexible / No estoy seguro/a",
+      "geo_la": "Los Ángeles / Sur de California",
+      "geo_bay": "Área de la Bahía / Norte de California",
+      "geo_sd": "San Diego",
+      "geo_central": "Valle Central",
+      "geo_anywhere": "Cualquier lugar en California",
+      "geo_oos": "Abierto a fuera del estado"
     },
     "scholarships": {
       "title": "Becas",

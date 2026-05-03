@@ -67,14 +67,17 @@ function interviewBaseSystem(target: string): string {
 }
 
 function phaseInstruction(phase: "first" | "next" | "summary", nextQNum: number, totalAsked: number): string {
+  // Machine markers (in double square brackets) MUST be emitted verbatim in
+  // English so the client can parse interview state regardless of the
+  // student's selected language. Surrounding prose is localized.
   if (phase === "first") {
-    return `\n\nThis is the START of the interview. Output EXACTLY:\n1. One short welcoming sentence (max 15 words).\n2. A blank line.\n3. The question line beginning with the literal label "**Question 1 of ${TOTAL_QUESTIONS}:**" followed by your first question (1–2 sentences).\n\nDo NOT include any other text. Do NOT include feedback (there is no prior answer).`;
+    return `\n\nThis is the START of the interview. Output EXACTLY:\n1. One short welcoming sentence (max 15 words).\n2. A blank line.\n3. A line beginning with the literal marker "[[Q:1/${TOTAL_QUESTIONS}]]" followed by your first question (1–2 sentences).\n\nDo NOT include any other text. Do NOT include feedback (there is no prior answer). The "[[Q:1/${TOTAL_QUESTIONS}]]" marker MUST appear verbatim in English even if your answer is in another language.`;
   }
   if (phase === "next") {
-    return `\n\nThe student has just answered question ${totalAsked}. Output EXACTLY:\n1. 2–4 sentences of rubric-style feedback on their most recent answer covering Clarity, Specificity, and Fit (to "${"the target"}"). Be concrete and suggest one improvement.\n2. A blank line.\n3. The next question line beginning with the literal label "**Question ${nextQNum} of ${TOTAL_QUESTIONS}:**" followed by your question (1–2 sentences).\n\nDo NOT add anything after the question. Do NOT skip the feedback.`;
+    return `\n\nThe student has just answered question ${totalAsked}. Output EXACTLY:\n1. 2–4 sentences of rubric-style feedback on their most recent answer covering Clarity, Specificity, and Fit. Be concrete and suggest one improvement.\n2. A blank line.\n3. A line beginning with the literal marker "[[Q:${nextQNum}/${TOTAL_QUESTIONS}]]" followed by your question (1–2 sentences).\n\nDo NOT add anything after the question. Do NOT skip the feedback. The "[[Q:${nextQNum}/${TOTAL_QUESTIONS}]]" marker MUST appear verbatim in English even if your answer is in another language.`;
   }
   // summary
-  return `\n\nThe student has just answered question ${TOTAL_QUESTIONS} (the final one). Do NOT ask another question. Output EXACTLY this structure (preserve the headers verbatim):\n\n**Interview Summary**\nScore: X/10\nStrengths:\n- ...\n- ...\n- ...\nImprove next:\n- ...\n- ...\n- ...\n\nThen one short sentence of encouragement. Base the score and bullets on the full session.`;
+  return `\n\nThe student has just answered question ${TOTAL_QUESTIONS} (the final one). Do NOT ask another question. Output EXACTLY this structure (preserve every "[[...]]" marker verbatim in English even if your answer is in another language; only the bullet content and the closing sentence are localized):\n\n[[SUMMARY]]\n[[SCORE:X/10]]\n[[STRENGTHS]]\n- ...\n- ...\n- ...\n[[IMPROVE]]\n- ...\n- ...\n- ...\n[[END]]\n<one short sentence of encouragement>\n\nReplace X with an integer 0–10. Base the score and bullets on the full session.`;
 }
 
 router.post("/chat", async (req, res) => {

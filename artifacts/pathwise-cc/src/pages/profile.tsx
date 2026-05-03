@@ -638,12 +638,12 @@ export default function Profile() {
                     <SelectValue placeholder={t("pages.profile.geoSelect")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Los Angeles / Southern California">Los Angeles / Southern California</SelectItem>
-                    <SelectItem value="San Francisco Bay Area / Northern California">SF Bay Area / Northern California</SelectItem>
-                    <SelectItem value="San Diego">San Diego</SelectItem>
-                    <SelectItem value="Central Valley">Central Valley</SelectItem>
-                    <SelectItem value="Anywhere in California">Anywhere in California</SelectItem>
-                    <SelectItem value="Open to out of state">Open to out of state</SelectItem>
+                    <SelectItem value="Los Angeles / Southern California">{t("pages.profile.geo_la")}</SelectItem>
+                    <SelectItem value="San Francisco Bay Area / Northern California">{t("pages.profile.geo_bay")}</SelectItem>
+                    <SelectItem value="San Diego">{t("pages.profile.geo_sd")}</SelectItem>
+                    <SelectItem value="Central Valley">{t("pages.profile.geo_central")}</SelectItem>
+                    <SelectItem value="Anywhere in California">{t("pages.profile.geo_anywhere")}</SelectItem>
+                    <SelectItem value="Open to out of state">{t("pages.profile.geo_oos")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
