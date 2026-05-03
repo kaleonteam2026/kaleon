@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,6 +49,7 @@ const COST_LABELS: Record<string, string> = {
 };
 
 export default function Matches() {
+  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -88,7 +90,7 @@ export default function Matches() {
       <Nav profileId={pid} />
       <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-5xl mx-auto">
         <div className="py-6 border-b-2 border-slate-900 mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">University Matches</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.matches.title")}</h1>
           <p className="text-slate-600 text-sm mt-1">
             {matches.length} universities ranked by compatibility with your profile. Scores are AI estimates — always verify requirements.
           </p>
@@ -98,7 +100,7 @@ export default function Matches() {
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input className="pl-9" placeholder="Search universities…" value={search} onChange={e => setSearch(e.target.value)} />
+            <Input className="pl-9" placeholder={t("pages.matches.searchPlaceholder")} value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-2">
             {["all", "UC", "CSU", "Private"].map(sys => (

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "wouter";
+import { useTranslation } from "react-i18next";
 import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -90,6 +91,7 @@ function completionPercent(areas: Record<string, boolean>): number {
 }
 
 export default function IgetcTracker() {
+  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const pid = parseInt(profileId);
   const { toast } = useToast();
@@ -170,7 +172,7 @@ export default function IgetcTracker() {
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <BookOpen className="h-5 w-5 text-indigo-600" />
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">IGETC Tracker</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.igetc.title")}</h1>
           </div>
           <p className="text-slate-500 text-sm max-w-xl">
             IGETC is a set of general education courses completed at your CC that satisfies GE requirements at all UC campuses (and most CSUs). Track your progress here.
@@ -181,7 +183,7 @@ export default function IgetcTracker() {
         <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-6">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-sm font-bold text-slate-800">IGETC Completion</p>
+              <p className="text-sm font-bold text-slate-800">{t("pages.igetc.completion")}</p>
               <p className="text-xs text-slate-500">{doneRequired}/{REQUIRED_KEYS.length} required areas complete</p>
             </div>
             <div className="text-3xl font-bold text-indigo-600">{pct}%</div>
@@ -204,7 +206,7 @@ export default function IgetcTracker() {
           </Button>
           {dirty && (
             <Button onClick={save} disabled={saving} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
-              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : <><Save className="h-4 w-4 mr-2" />Save Progress</>}
+              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("pages.igetc.saving")}</> : <><Save className="h-4 w-4 mr-2" />{t("pages.igetc.saveProgress")}</>}
             </Button>
           )}
         </div>
@@ -263,7 +265,7 @@ export default function IgetcTracker() {
 
         {/* Resources */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5">
-          <p className="text-sm font-bold text-slate-800 mb-3">Verify Your IGETC</p>
+          <p className="text-sm font-bold text-slate-800 mb-3">{t("pages.igetc.verifyTitle")}</p>
           <div className="space-y-2">
             {[
               { label: "ASSIST.org — Official Articulation Agreements", url: "https://assist.org", desc: "See which CC courses satisfy IGETC at your target UC/CSU" },

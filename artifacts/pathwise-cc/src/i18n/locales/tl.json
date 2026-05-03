@@ -170,5 +170,83 @@
   "languageSwitcher": {
     "label": "Wika",
     "saved": "Na-update ang wika"
+  },
+  "pages": {
+    "profile": {
+      "title": "Profile ng Mag-aaral",
+      "subtitle": "Kumpletuhin ang iyong profile para makakuha ng personalized na rekomendasyon sa transfer.",
+      "basicInfo": "Pangunahing Impormasyon",
+      "fullName": "Buong Pangalan",
+      "fullNamePlaceholder": "Iyong buong pangalan",
+      "currentGpa": "Kasalukuyang GPA",
+      "gpaPlaceholder": "hal. 3.5",
+      "communityCollege": "Community College",
+      "academicGoals": "Akademiko at Career na Layunin",
+      "academicGoalsDesc": "Maging tiyak hangga't maaari — ito ang gumagabay sa rekomendasyon ng AI.",
+      "intendedMajor": "Nais na Major",
+      "careerGoal": "Layunin sa Karera",
+      "transferPrefs": "Mga Kagustuhan sa Transfer",
+      "save": "I-save ang Profile",
+      "saving": "Nagse-save…",
+      "saved": "Na-save ang profile",
+      "remindersTitle": "Mga Paalala sa Deadline",
+      "sendMeReminders": "Padalhan ako ng mga paalala"
+    },
+    "scholarships": {
+      "title": "Mga Scholarship",
+      "searchPlaceholder": "Maghanap ng na-save na scholarship…",
+      "signInPrompt": "Mag-sign in at gumawa ng profile para makita ang personalized na CC programs",
+      "empty": "Wala pang na-save na scholarship"
+    },
+    "internships": {
+      "title": "Internship Finder",
+      "aiMatching": "AI Internship Matching",
+      "noSearches": "Wala pang internship searches",
+      "history": "Kasaysayan ng Paghahanap",
+      "eligibility": "Mga Kinakailangan sa Eligibility"
+    },
+    "courses": {
+      "title": "Aking mga Kurso",
+      "searchPlaceholder": "Maghanap ayon sa course code o pangalan…",
+      "empty": "Wala pang naidagdag na kurso",
+      "status": "Katayuan",
+      "completed": "Tapos Na",
+      "inProgress": "Kasalukuyang Ginagawa",
+      "planned": "Nakaplano",
+      "grade": "Marka",
+      "transferable": "Maililipat",
+      "alreadyAdded": "Naidagdag na",
+      "close": "Isara"
+    },
+    "progress": {
+      "title": "Aking Progress Tracker",
+      "trajectoryScore": "Trajectory Score",
+      "selectPathwayFirst": "Pumili Muna ng Iyong Pathway",
+      "latestGpa": "Pinakabagong GPA",
+      "certifications": "Mga Sertipikasyon",
+      "opportunities": "Mga Oportunidad",
+      "achievements": "Mga Tagumpay",
+      "logUpdate": "Mag-log ng Progress Update",
+      "noUpdates": "Wala pang naitala na update",
+      "aiAssessment": "AI Live Progress Assessment",
+      "noAssessments": "Wala pang mga assessment",
+      "assessmentHistory": "Kasaysayan ng Assessment"
+    },
+    "roadmap": {
+      "goHome": "Bumalik sa Home",
+      "shareableInfographic": "Naibabahaging infographic"
+    },
+    "igetc": {
+      "title": "IGETC Tracker",
+      "completion": "Pagkumpleto ng IGETC",
+      "saving": "Nagse-save…",
+      "saveProgress": "I-save ang Progress",
+      "optional": "Opsyonal",
+      "verifyTitle": "I-verify ang Iyong IGETC"
+    },
+    "matches": {
+      "title": "Mga Tugmang Unibersidad",
+      "searchPlaceholder": "Maghanap ng mga unibersidad…"
+    }
   }
 }

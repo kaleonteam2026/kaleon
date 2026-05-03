@@ -170,5 +170,83 @@
   "languageSwitcher": {
     "label": "语言",
     "saved": "语言已更新"
+  },
+  "pages": {
+    "profile": {
+      "title": "学生档案",
+      "subtitle": "完善您的档案以获得个性化的转学路径推荐。",
+      "basicInfo": "基本信息",
+      "fullName": "全名",
+      "fullNamePlaceholder": "您的全名",
+      "currentGpa": "当前 GPA",
+      "gpaPlaceholder": "例如 3.5",
+      "communityCollege": "社区学院",
+      "academicGoals": "学术与职业目标",
+      "academicGoalsDesc": "请尽量具体——这将驱动 AI 路径推荐。",
+      "intendedMajor": "预期专业",
+      "careerGoal": "职业目标",
+      "transferPrefs": "转学偏好",
+      "save": "保存档案",
+      "saving": "保存中…",
+      "saved": "档案已保存",
+      "remindersTitle": "截止日期提醒",
+      "sendMeReminders": "发送提醒给我"
+    },
+    "scholarships": {
+      "title": "奖学金",
+      "searchPlaceholder": "搜索已保存的奖学金…",
+      "signInPrompt": "登录并创建您的档案以查看个性化的 CC 项目",
+      "empty": "暂无已保存的奖学金"
+    },
+    "internships": {
+      "title": "实习查找器",
+      "aiMatching": "AI 实习匹配",
+      "noSearches": "暂无实习搜索记录",
+      "history": "搜索历史",
+      "eligibility": "资格要求"
+    },
+    "courses": {
+      "title": "我的课程",
+      "searchPlaceholder": "按课程代码或名称搜索…",
+      "empty": "尚未添加课程",
+      "status": "状态",
+      "completed": "已完成",
+      "inProgress": "进行中",
+      "planned": "计划中",
+      "grade": "成绩",
+      "transferable": "可转学分",
+      "alreadyAdded": "已添加",
+      "close": "关闭"
+    },
+    "progress": {
+      "title": "我的进度跟踪",
+      "trajectoryScore": "轨迹评分",
+      "selectPathwayFirst": "请先选择您的路径",
+      "latestGpa": "最新 GPA",
+      "certifications": "证书",
+      "opportunities": "机会",
+      "achievements": "成就",
+      "logUpdate": "记录进度更新",
+      "noUpdates": "尚未记录任何更新",
+      "aiAssessment": "AI 实时进度评估",
+      "noAssessments": "暂无评估",
+      "assessmentHistory": "评估历史"
+    },
+    "roadmap": {
+      "goHome": "返回首页",
+      "shareableInfographic": "可分享的信息图"
+    },
+    "igetc": {
+      "title": "IGETC 跟踪器",
+      "completion": "IGETC 完成度",
+      "saving": "保存中…",
+      "saveProgress": "保存进度",
+      "optional": "可选",
+      "verifyTitle": "验证您的 IGETC"
+    },
+    "matches": {
+      "title": "大学匹配",
+      "searchPlaceholder": "搜索大学…"
+    }
   }
 }

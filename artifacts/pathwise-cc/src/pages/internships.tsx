@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
+import { useTranslation } from "react-i18next";
 import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -234,6 +235,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default function InternshipsPage() {
+  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const { toast } = useToast();
   const pid = parseInt(profileId);
@@ -332,7 +334,7 @@ export default function InternshipsPage() {
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <Search className="h-5 w-5 text-indigo-600" />
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">Internship Finder</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.internships.title")}</h1>
           </div>
           <p className="text-slate-600 text-sm max-w-2xl">
             AI-matched internships from federal government programs, California state agencies, university research, and nonprofit organizations — all verified for community college student eligibility.
@@ -346,7 +348,7 @@ export default function InternshipsPage() {
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
-              <h2 className="text-base font-bold text-slate-900">AI Internship Matching</h2>
+              <h2 className="text-base font-bold text-slate-900">{t("pages.internships.aiMatching")}</h2>
               <p className="text-sm text-slate-600 mt-0.5">
                 Your AI advisor scans verified California and federal internship programs, matches them to your major, GPA, location, and completed courses, and explains exactly why each one fits you.
               </p>
@@ -388,7 +390,7 @@ export default function InternshipsPage() {
         ) : searches.length === 0 ? (
           <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center">
             <Search className="h-12 w-12 text-slate-200 mx-auto mb-4" />
-            <p className="text-slate-600 font-semibold text-lg mb-1">No internship searches yet</p>
+            <p className="text-slate-600 font-semibold text-lg mb-1">{t("pages.internships.noSearches")}</p>
             <p className="text-slate-600 text-sm max-w-sm mx-auto">Click "Find My Internships" above to get a personalized list of opportunities matched to your profile.</p>
           </div>
         ) : (
@@ -396,7 +398,7 @@ export default function InternshipsPage() {
 
             {/* Sidebar: history */}
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide px-1">Search History</p>
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide px-1">{t("pages.internships.history")}</p>
               {searches.map(s => (
                 <SearchHistoryRow
                   key={s.id}

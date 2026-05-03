@@ -170,5 +170,83 @@
   "languageSwitcher": {
     "label": "언어",
     "saved": "언어가 업데이트되었습니다"
+  },
+  "pages": {
+    "profile": {
+      "title": "학생 프로필",
+      "subtitle": "맞춤형 편입 경로 추천을 받으려면 프로필을 작성하세요.",
+      "basicInfo": "기본 정보",
+      "fullName": "성명",
+      "fullNamePlaceholder": "성명을 입력하세요",
+      "currentGpa": "현재 GPA",
+      "gpaPlaceholder": "예: 3.5",
+      "communityCollege": "커뮤니티 칼리지",
+      "academicGoals": "학업 및 진로 목표",
+      "academicGoalsDesc": "최대한 구체적으로 입력하세요 — AI 경로 추천에 영향을 줍니다.",
+      "intendedMajor": "희망 전공",
+      "careerGoal": "진로 목표",
+      "transferPrefs": "편입 선호 사항",
+      "save": "프로필 저장",
+      "saving": "저장 중…",
+      "saved": "프로필이 저장되었습니다",
+      "remindersTitle": "마감일 알림",
+      "sendMeReminders": "알림 받기"
+    },
+    "scholarships": {
+      "title": "장학금",
+      "searchPlaceholder": "저장된 장학금 검색…",
+      "signInPrompt": "맞춤형 CC 프로그램을 보려면 로그인하고 프로필을 만드세요",
+      "empty": "저장된 장학금이 없습니다"
+    },
+    "internships": {
+      "title": "인턴십 찾기",
+      "aiMatching": "AI 인턴십 매칭",
+      "noSearches": "아직 인턴십 검색 기록이 없습니다",
+      "history": "검색 기록",
+      "eligibility": "자격 요건"
+    },
+    "courses": {
+      "title": "내 강좌",
+      "searchPlaceholder": "강좌 코드 또는 이름으로 검색…",
+      "empty": "추가된 강좌가 없습니다",
+      "status": "상태",
+      "completed": "완료",
+      "inProgress": "수강 중",
+      "planned": "계획됨",
+      "grade": "성적",
+      "transferable": "편입 가능",
+      "alreadyAdded": "이미 추가됨",
+      "close": "닫기"
+    },
+    "progress": {
+      "title": "내 진행 상황 추적",
+      "trajectoryScore": "성장 점수",
+      "selectPathwayFirst": "먼저 경로를 선택하세요",
+      "latestGpa": "최신 GPA",
+      "certifications": "자격증",
+      "opportunities": "기회",
+      "achievements": "성취",
+      "logUpdate": "진행 상황 업데이트 기록",
+      "noUpdates": "아직 기록된 업데이트가 없습니다",
+      "aiAssessment": "AI 실시간 진행 평가",
+      "noAssessments": "아직 평가가 없습니다",
+      "assessmentHistory": "평가 기록"
+    },
+    "roadmap": {
+      "goHome": "홈으로 이동",
+      "shareableInfographic": "공유 가능한 인포그래픽"
+    },
+    "igetc": {
+      "title": "IGETC 추적기",
+      "completion": "IGETC 완료도",
+      "saving": "저장 중…",
+      "saveProgress": "진행 상황 저장",
+      "optional": "선택",
+      "verifyTitle": "IGETC 확인"
+    },
+    "matches": {
+      "title": "대학 매칭",
+      "searchPlaceholder": "대학 검색…"
+    }
   }
 }

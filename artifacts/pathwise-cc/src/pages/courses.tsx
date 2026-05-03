@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -585,6 +586,7 @@ function CatalogModal({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Courses() {
+  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -735,7 +737,7 @@ export default function Courses() {
         {/* Header */}
         <div className="py-6 border-b-2 border-slate-900 mb-6 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">My Courses</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.courses.title")}</h1>
             <p className="text-slate-600 text-sm mt-1">
               Select courses directly from your college&apos;s catalog to ensure accurate course codes and unit counts.
             </p>
@@ -791,7 +793,7 @@ export default function Courses() {
         {courses.length === 0 ? (
           <div className="text-center py-16">
             <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-600 font-medium mb-1">No courses added yet</p>
+            <p className="text-slate-600 font-medium mb-1">{t("pages.courses.empty")}</p>
             <p className="text-slate-600 text-sm mb-6">
               Browse your college&apos;s actual course catalog and add the courses you&apos;ve completed or are taking.
             </p>

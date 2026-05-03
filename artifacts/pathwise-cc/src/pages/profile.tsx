@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/auth-context";
 import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
@@ -405,6 +406,7 @@ const EMPTY: ProfileData = {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Profile() {
+  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId?: string }>();
   const { user } = useAuth();
   const [, navigate] = useLocation();
@@ -520,30 +522,30 @@ export default function Profile() {
       <Nav profileId={form.id} />
       <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto focus:outline-none">
         <div className="py-6 border-b-2 border-slate-900 mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">Student Profile</h1>
-          <p className="text-slate-600 text-sm mt-1">Complete your profile to get personalized transfer pathway recommendations.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.profile.title")}</h1>
+          <p className="text-slate-600 text-sm mt-1">{t("pages.profile.subtitle")}</p>
         </div>
 
         <div className="space-y-6 pb-12">
           {/* Basic Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Basic Information</CardTitle>
+              <CardTitle className="text-base">{t("pages.profile.basicInfo")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input id="fullName" value={form.fullName} onChange={e => set("fullName", e.target.value)} placeholder="Your full name" />
+                  <Label htmlFor="fullName">{t("pages.profile.fullName")}</Label>
+                  <Input id="fullName" value={form.fullName} onChange={e => set("fullName", e.target.value)} placeholder={t("pages.profile.fullNamePlaceholder")} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="currentGpa">Current GPA</Label>
-                  <Input id="currentGpa" type="number" min="0" max="4" step="0.01" value={form.currentGpa} onChange={e => set("currentGpa", e.target.value)} placeholder="e.g. 3.5" />
+                  <Label htmlFor="currentGpa">{t("pages.profile.currentGpa")}</Label>
+                  <Input id="currentGpa" type="number" min="0" max="4" step="0.01" value={form.currentGpa} onChange={e => set("currentGpa", e.target.value)} placeholder={t("pages.profile.gpaPlaceholder")} />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label>Community College</Label>
+                <Label>{t("pages.profile.communityCollege")}</Label>
                 <CollegePicker value={form.communityCollege} onChange={v => set("communityCollege", v)} />
                 <p className="text-xs text-slate-400">Can't find your college? Choose "Other (not listed)" and type it in below.</p>
               </div>
@@ -578,17 +580,17 @@ export default function Profile() {
           {/* Academic & Career Goals */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Academic & Career Goals</CardTitle>
-              <CardDescription>Be as specific as possible — this drives your AI pathway recommendations.</CardDescription>
+              <CardTitle className="text-base">{t("pages.profile.academicGoals")}</CardTitle>
+              <CardDescription>{t("pages.profile.academicGoalsDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="intendedMajor">Intended Major</Label>
+                <Label htmlFor="intendedMajor">{t("pages.profile.intendedMajor")}</Label>
                 <Input id="intendedMajor" value={form.intendedMajor} onChange={e => set("intendedMajor", e.target.value)} placeholder="e.g. Psychology, Computer Science, Business Administration" />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="careerGoal">Career Goal</Label>
+                <Label htmlFor="careerGoal">{t("pages.profile.careerGoal")}</Label>
                 <Input id="careerGoal" value={form.careerGoal} onChange={e => set("careerGoal", e.target.value)} placeholder="e.g. Software engineer at a tech company, Clinical psychologist, Lawyer" />
               </div>
 
@@ -607,7 +609,7 @@ export default function Profile() {
           {/* Transfer Preferences */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Transfer Preferences</CardTitle>
+              <CardTitle className="text-base">{t("pages.profile.transferPrefs")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">

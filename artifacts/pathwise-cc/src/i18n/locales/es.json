@@ -170,5 +170,83 @@
   "languageSwitcher": {
     "label": "Idioma",
     "saved": "Idioma actualizado"
+  },
+  "pages": {
+    "profile": {
+      "title": "Perfil del Estudiante",
+      "subtitle": "Completa tu perfil para recibir recomendaciones personalizadas de transferencia.",
+      "basicInfo": "Información Básica",
+      "fullName": "Nombre Completo",
+      "fullNamePlaceholder": "Tu nombre completo",
+      "currentGpa": "GPA Actual",
+      "gpaPlaceholder": "ej. 3.5",
+      "communityCollege": "Colegio Comunitario",
+      "academicGoals": "Metas Académicas y Profesionales",
+      "academicGoalsDesc": "Sé lo más específico posible — esto guía las recomendaciones de IA.",
+      "intendedMajor": "Carrera Deseada",
+      "careerGoal": "Meta Profesional",
+      "transferPrefs": "Preferencias de Transferencia",
+      "save": "Guardar Perfil",
+      "saving": "Guardando…",
+      "saved": "Perfil guardado",
+      "remindersTitle": "Recordatorios de Plazos",
+      "sendMeReminders": "Enviarme recordatorios"
+    },
+    "scholarships": {
+      "title": "Becas",
+      "searchPlaceholder": "Buscar becas guardadas…",
+      "signInPrompt": "Inicia sesión y crea tu perfil para ver programas personalizados",
+      "empty": "Aún no hay becas guardadas"
+    },
+    "internships": {
+      "title": "Buscador de Prácticas",
+      "aiMatching": "Emparejamiento de Prácticas con IA",
+      "noSearches": "Aún no hay búsquedas de prácticas",
+      "history": "Historial de Búsquedas",
+      "eligibility": "Requisitos de Elegibilidad"
+    },
+    "courses": {
+      "title": "Mis Cursos",
+      "searchPlaceholder": "Buscar por código o nombre del curso…",
+      "empty": "Aún no has agregado cursos",
+      "status": "Estado",
+      "completed": "Completado",
+      "inProgress": "En Curso",
+      "planned": "Planificado",
+      "grade": "Calificación",
+      "transferable": "Transferible",
+      "alreadyAdded": "Ya agregado",
+      "close": "Cerrar"
+    },
+    "progress": {
+      "title": "Mi Seguimiento de Progreso",
+      "trajectoryScore": "Puntaje de Trayectoria",
+      "selectPathwayFirst": "Selecciona Tu Ruta Primero",
+      "latestGpa": "GPA Más Reciente",
+      "certifications": "Certificaciones",
+      "opportunities": "Oportunidades",
+      "achievements": "Logros",
+      "logUpdate": "Registrar una Actualización de Progreso",
+      "noUpdates": "Aún no hay actualizaciones registradas",
+      "aiAssessment": "Evaluación de Progreso en Vivo con IA",
+      "noAssessments": "Aún no hay evaluaciones",
+      "assessmentHistory": "Historial de Evaluaciones"
+    },
+    "roadmap": {
+      "goHome": "Ir al Inicio",
+      "shareableInfographic": "Infografía compartible"
+    },
+    "igetc": {
+      "title": "Seguimiento IGETC",
+      "completion": "Finalización de IGETC",
+      "saving": "Guardando…",
+      "saveProgress": "Guardar Progreso",
+      "optional": "Opcional",
+      "verifyTitle": "Verifica Tu IGETC"
+    },
+    "matches": {
+      "title": "Coincidencias de Universidades",
+      "searchPlaceholder": "Buscar universidades…"
+    }
   }
 }

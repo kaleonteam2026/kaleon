@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import Nav from "@/components/nav";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Button } from "@/components/ui/button";
@@ -290,12 +291,13 @@ function AnalysisCard({ analysis, isActive, onClick }: { analysis: ProgressAnaly
 
 // ─── Pathway lock screen ──────────────────────────────────────────────────────
 function PathwayLockScreen({ profileId }: { profileId: number }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
       <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center mb-5">
         <Lock className="h-9 w-9 text-slate-600" />
       </div>
-      <h2 className="text-xl font-bold text-slate-800 mb-2">Select Your Pathway First</h2>
+      <h2 className="text-xl font-bold text-slate-800 mb-2">{t("pages.progress.selectPathwayFirst")}</h2>
       <p className="text-slate-600 max-w-md leading-relaxed mb-2">
         The Progress Tracker is activated once you've committed to a transfer pathway. Your AI advisor needs to know your target university and guidebook before it can evaluate your updates and predict your admission chances.
       </p>
@@ -327,6 +329,7 @@ function PathwayLockScreen({ profileId }: { profileId: number }) {
 type Tab = "log" | "timeline" | "assessment";
 
 export default function ProgressTracker() {
+  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const { toast } = useToast();
   const pid = parseInt(profileId);
@@ -492,7 +495,7 @@ export default function ProgressTracker() {
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="h-5 w-5 text-indigo-600" />
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">My Progress Tracker</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.progress.title")}</h1>
             {pathwayInfo?.hasSelectedPathway && (
               <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
@@ -586,7 +589,7 @@ export default function ProgressTracker() {
                 {!pendingFeedback.loading && !pendingFeedback.data && (
                   <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-6">
                     <div>
-                      <h2 className="text-base font-bold text-slate-900 mb-1">Log a Progress Update</h2>
+                      <h2 className="text-base font-bold text-slate-900 mb-1">{t("pages.progress.logUpdate")}</h2>
                       <p className="text-xs text-slate-600">Every entry is checked against your <strong className="text-slate-600">{String(pathwayInfo?.pathway?.university ?? "selected university")}</strong> guidebook in real time.</p>
                     </div>
 
@@ -689,7 +692,7 @@ export default function ProgressTracker() {
                 ) : filteredEntries.length === 0 ? (
                   <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-10 text-center">
                     <Activity className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-                    <p className="text-slate-600 font-medium">No updates logged yet</p>
+                    <p className="text-slate-600 font-medium">{t("pages.progress.noUpdates")}</p>
                     <p className="text-slate-600 text-sm mt-1">Use the Log Update tab to start tracking your progress.</p>
                     <Button variant="outline" size="sm" onClick={() => setTab("log")} className="mt-4">
                       <Plus className="h-3.5 w-3.5 mr-1" />Log Your First Update
@@ -714,7 +717,7 @@ export default function ProgressTracker() {
                       <Sparkles className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-base font-bold text-slate-900">AI Live Progress Assessment</h2>
+                      <h2 className="text-base font-bold text-slate-900">{t("pages.progress.aiAssessment")}</h2>
                       <p className="text-sm text-slate-600 mt-1">
                         Your AI advisor reviews your full profile, courses, <strong>{String(pathwayInfo?.pathway?.university ?? "selected university")}</strong> guidebook, and all {entries.length} logged updates to predict your admission chances and give precise next steps.
                       </p>
@@ -749,13 +752,13 @@ export default function ProgressTracker() {
                 ) : analyses.length === 0 ? (
                   <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-10 text-center">
                     <BarChart3 className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-                    <p className="text-slate-600 font-medium">No assessments yet</p>
+                    <p className="text-slate-600 font-medium">{t("pages.progress.noAssessments")}</p>
                     <p className="text-slate-600 text-sm mt-1">Generate your first AI progress assessment above.</p>
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-[220px_1fr] gap-5 items-start">
                     <div className="space-y-2">
-                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide px-1">Assessment History</p>
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide px-1">{t("pages.progress.assessmentHistory")}</p>
                       {analyses.map(a => (
                         <AnalysisCard key={a.id} analysis={a} isActive={activeAnalysis?.id === a.id} onClick={() => setActiveAnalysis(a)} />
                       ))}

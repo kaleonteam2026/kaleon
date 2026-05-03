@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +19,7 @@ interface AcademicRoadmap {
 }
 
 export default function Roadmap() {
+  const { t } = useTranslation();
   const { roadmapId } = useParams<{ roadmapId: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -100,7 +102,7 @@ export default function Roadmap() {
         <div className="text-center">
           <MapPin className="h-12 w-12 text-slate-300 mx-auto mb-3" />
           <p className="text-slate-500">Roadmap not found.</p>
-          <Button variant="outline" onClick={() => navigate("/")} className="mt-4">Go Home</Button>
+          <Button variant="outline" onClick={() => navigate("/")} className="mt-4">{t("pages.roadmap.goHome")}</Button>
         </div>
       </div>
     );
@@ -144,7 +146,7 @@ export default function Roadmap() {
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="h-4 w-4 text-violet-100" />
-                <span className="text-xs font-semibold uppercase tracking-wide text-violet-100">Shareable infographic</span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-violet-100">{t("pages.roadmap.shareableInfographic")}</span>
               </div>
               <h2 className="text-lg font-bold">One-page visual roadmap</h2>
               <p className="text-xs text-violet-100 mt-1 max-w-md leading-relaxed">

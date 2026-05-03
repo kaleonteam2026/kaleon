@@ -170,5 +170,83 @@
   "languageSwitcher": {
     "label": "Ngôn ngữ",
     "saved": "Đã cập nhật ngôn ngữ"
+  },
+  "pages": {
+    "profile": {
+      "title": "Hồ Sơ Sinh Viên",
+      "subtitle": "Hoàn thành hồ sơ để nhận đề xuất lộ trình chuyển trường cá nhân hóa.",
+      "basicInfo": "Thông Tin Cơ Bản",
+      "fullName": "Họ và Tên",
+      "fullNamePlaceholder": "Họ và tên đầy đủ",
+      "currentGpa": "GPA Hiện Tại",
+      "gpaPlaceholder": "vd. 3.5",
+      "communityCollege": "Cao Đẳng Cộng Đồng",
+      "academicGoals": "Mục Tiêu Học Tập & Sự Nghiệp",
+      "academicGoalsDesc": "Càng cụ thể càng tốt — điều này định hướng đề xuất AI.",
+      "intendedMajor": "Chuyên Ngành Dự Định",
+      "careerGoal": "Mục Tiêu Nghề Nghiệp",
+      "transferPrefs": "Tùy Chọn Chuyển Trường",
+      "save": "Lưu Hồ Sơ",
+      "saving": "Đang lưu…",
+      "saved": "Đã lưu hồ sơ",
+      "remindersTitle": "Nhắc Nhở Hạn Chót",
+      "sendMeReminders": "Gửi nhắc nhở cho tôi"
+    },
+    "scholarships": {
+      "title": "Học Bổng",
+      "searchPlaceholder": "Tìm kiếm học bổng đã lưu…",
+      "signInPrompt": "Đăng nhập và tạo hồ sơ để xem các chương trình CC cá nhân hóa",
+      "empty": "Chưa có học bổng nào được lưu"
+    },
+    "internships": {
+      "title": "Tìm Kiếm Thực Tập",
+      "aiMatching": "Ghép Nối Thực Tập bằng AI",
+      "noSearches": "Chưa có tìm kiếm thực tập nào",
+      "history": "Lịch Sử Tìm Kiếm",
+      "eligibility": "Yêu Cầu Đủ Điều Kiện"
+    },
+    "courses": {
+      "title": "Khóa Học Của Tôi",
+      "searchPlaceholder": "Tìm theo mã hoặc tên khóa học…",
+      "empty": "Chưa có khóa học nào được thêm",
+      "status": "Trạng Thái",
+      "completed": "Đã Hoàn Thành",
+      "inProgress": "Đang Học",
+      "planned": "Đã Lên Kế Hoạch",
+      "grade": "Điểm",
+      "transferable": "Có Thể Chuyển Đổi",
+      "alreadyAdded": "Đã thêm",
+      "close": "Đóng"
+    },
+    "progress": {
+      "title": "Theo Dõi Tiến Độ Của Tôi",
+      "trajectoryScore": "Điểm Quỹ Đạo",
+      "selectPathwayFirst": "Hãy Chọn Lộ Trình Trước",
+      "latestGpa": "GPA Mới Nhất",
+      "certifications": "Chứng Chỉ",
+      "opportunities": "Cơ Hội",
+      "achievements": "Thành Tựu",
+      "logUpdate": "Ghi Nhận Cập Nhật Tiến Độ",
+      "noUpdates": "Chưa có cập nhật nào",
+      "aiAssessment": "Đánh Giá Tiến Độ Trực Tiếp bằng AI",
+      "noAssessments": "Chưa có đánh giá nào",
+      "assessmentHistory": "Lịch Sử Đánh Giá"
+    },
+    "roadmap": {
+      "goHome": "Về Trang Chủ",
+      "shareableInfographic": "Đồ họa thông tin có thể chia sẻ"
+    },
+    "igetc": {
+      "title": "Theo Dõi IGETC",
+      "completion": "Hoàn Thành IGETC",
+      "saving": "Đang lưu…",
+      "saveProgress": "Lưu Tiến Độ",
+      "optional": "Tùy Chọn",
+      "verifyTitle": "Xác Minh IGETC Của Bạn"
+    },
+    "matches": {
+      "title": "Trường Đại Học Phù Hợp",
+      "searchPlaceholder": "Tìm kiếm trường đại học…"
+    }
   }
 }

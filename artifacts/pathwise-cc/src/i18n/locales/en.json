@@ -170,5 +170,83 @@
   "languageSwitcher": {
     "label": "Language",
     "saved": "Language updated"
+  },
+  "pages": {
+    "profile": {
+      "title": "Student Profile",
+      "subtitle": "Complete your profile to get personalized transfer pathway recommendations.",
+      "basicInfo": "Basic Information",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Your full name",
+      "currentGpa": "Current GPA",
+      "gpaPlaceholder": "e.g. 3.5",
+      "communityCollege": "Community College",
+      "academicGoals": "Academic & Career Goals",
+      "academicGoalsDesc": "Be as specific as possible — this drives your AI pathway recommendations.",
+      "intendedMajor": "Intended Major",
+      "careerGoal": "Career Goal",
+      "transferPrefs": "Transfer Preferences",
+      "save": "Save Profile",
+      "saving": "Saving…",
+      "saved": "Profile saved",
+      "remindersTitle": "Deadline Reminders",
+      "sendMeReminders": "Send me reminders"
+    },
+    "scholarships": {
+      "title": "Scholarships",
+      "searchPlaceholder": "Search saved scholarships…",
+      "signInPrompt": "Sign in and create your profile to see personalized CC programs",
+      "empty": "No saved scholarships yet"
+    },
+    "internships": {
+      "title": "Internship Finder",
+      "aiMatching": "AI Internship Matching",
+      "noSearches": "No internship searches yet",
+      "history": "Search History",
+      "eligibility": "Eligibility Requirements"
+    },
+    "courses": {
+      "title": "My Courses",
+      "searchPlaceholder": "Search by course code or name…",
+      "empty": "No courses added yet",
+      "status": "Status",
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "planned": "Planned",
+      "grade": "Grade",
+      "transferable": "Transferable",
+      "alreadyAdded": "Already added",
+      "close": "Close"
+    },
+    "progress": {
+      "title": "My Progress Tracker",
+      "trajectoryScore": "Trajectory Score",
+      "selectPathwayFirst": "Select Your Pathway First",
+      "latestGpa": "Latest GPA",
+      "certifications": "Certifications",
+      "opportunities": "Opportunities",
+      "achievements": "Achievements",
+      "logUpdate": "Log a Progress Update",
+      "noUpdates": "No updates logged yet",
+      "aiAssessment": "AI Live Progress Assessment",
+      "noAssessments": "No assessments yet",
+      "assessmentHistory": "Assessment History"
+    },
+    "roadmap": {
+      "goHome": "Go Home",
+      "shareableInfographic": "Shareable infographic"
+    },
+    "igetc": {
+      "title": "IGETC Tracker",
+      "completion": "IGETC Completion",
+      "saving": "Saving…",
+      "saveProgress": "Save Progress",
+      "optional": "Optional",
+      "verifyTitle": "Verify Your IGETC"
+    },
+    "matches": {
+      "title": "University Matches",
+      "searchPlaceholder": "Search universities…"
+    }
   }
 }

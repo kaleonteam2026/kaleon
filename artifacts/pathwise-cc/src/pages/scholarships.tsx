@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams } from "wouter";
+import { useTranslation } from "react-i18next";
 import Nav from "@/components/nav";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -261,6 +262,7 @@ function CCProgramCard({ program }: { program: CCOpportunityItem }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Scholarships() {
+  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId?: string }>();
   const { toast } = useToast();
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
@@ -373,7 +375,7 @@ export default function Scholarships() {
 
             <div className="relative mb-6">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input className="pl-9" placeholder="Search saved scholarships…" value={search}
+              <Input className="pl-9" placeholder={t("pages.scholarships.searchPlaceholder")} value={search}
                 onChange={e => setSearch(e.target.value)} />
             </div>
             <div className="space-y-3 pb-12">
@@ -428,7 +430,7 @@ export default function Scholarships() {
             {!pid ? (
               <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-6 text-center mb-6">
                 <Building2 className="h-10 w-10 text-indigo-300 mx-auto mb-3" />
-                <p className="text-slate-700 font-medium mb-1">Sign in and create your profile to see personalized CC programs</p>
+                <p className="text-slate-700 font-medium mb-1">{t("pages.scholarships.signInPrompt")}</p>
                 <p className="text-slate-500 text-sm">Your profile's community college determines which on-campus programs are shown.</p>
               </div>
             ) : ccLoading ? (
