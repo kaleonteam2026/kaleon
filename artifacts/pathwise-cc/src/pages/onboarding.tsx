@@ -128,7 +128,8 @@ export default function Onboarding() {
           {/* Content */}
           <div className="px-8 py-6 space-y-5">
             {step === 0 && (
-              <div className="space-y-5">
+              <fieldset className="space-y-5 border-0 p-0 m-0 min-w-0">
+                <legend className="sr-only">Welcome and personal info</legend>
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { icon: GraduationCap, label: "Transfer Planning", desc: "UC & CSU matching" },
@@ -153,11 +154,12 @@ export default function Onboarding() {
                   />
                 </div>
                 <p className="text-xs text-slate-400 text-center">Takes about 2 minutes · Your data stays private</p>
-              </div>
+              </fieldset>
             )}
 
             {step === 1 && (
-              <div className="space-y-4">
+              <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
+                <legend className="sr-only">College and major</legend>
                 <div>
                   <label htmlFor="ob-cc" className="block text-sm font-medium text-slate-700 mb-1.5">Your California Community College <span className="text-red-500">*</span></label>
                   <input
@@ -189,16 +191,18 @@ export default function Onboarding() {
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-              </div>
+              </fieldset>
             )}
 
             {step === 2 && (
-              <div className="space-y-4">
-                <div role="group" aria-labelledby="ob-gpa-label">
-                  <div id="ob-gpa-label" className="block text-sm font-medium text-slate-700 mb-2">Current GPA <span className="text-red-500">*</span></div>
+              <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
+                <legend className="sr-only">Academic standing</legend>
+                <fieldset className="border-0 p-0 m-0 min-w-0">
+                  <legend className="block text-sm font-medium text-slate-700 mb-2">Current GPA <span className="text-red-500">*</span></legend>
                   <div className="grid grid-cols-2 gap-2">
                     {GPA_RANGES.map(g => (
-                      <button key={g} onClick={() => set("currentGpa", g)}
+                      <button type="button" key={g} onClick={() => set("currentGpa", g)}
+                        aria-pressed={form.currentGpa === g}
                         className={cn("text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
                           form.currentGpa === g ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
                         )}>
@@ -206,12 +210,13 @@ export default function Onboarding() {
                       </button>
                     ))}
                   </div>
-                </div>
-                <div role="group" aria-labelledby="ob-timeline-label">
-                  <div id="ob-timeline-label" className="block text-sm font-medium text-slate-700 mb-2">When do you plan to transfer?</div>
+                </fieldset>
+                <fieldset className="border-0 p-0 m-0 min-w-0">
+                  <legend className="block text-sm font-medium text-slate-700 mb-2">When do you plan to transfer?</legend>
                   <div className="grid grid-cols-2 gap-2">
                     {TRANSFER_TIMELINES.map(t => (
-                      <button key={t} onClick={() => set("transferTimeline", t)}
+                      <button type="button" key={t} onClick={() => set("transferTimeline", t)}
+                        aria-pressed={form.transferTimeline === t}
                         className={cn("text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
                           form.transferTimeline === t ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
                         )}>
@@ -219,17 +224,19 @@ export default function Onboarding() {
                       </button>
                     ))}
                   </div>
-                </div>
-              </div>
+                </fieldset>
+              </fieldset>
             )}
 
             {step === 3 && (
-              <div className="space-y-4">
-                <div role="group" aria-labelledby="ob-finance-label">
-                  <div id="ob-finance-label" className="block text-sm font-medium text-slate-700 mb-2">Financial situation</div>
+              <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
+                <legend className="sr-only">Background</legend>
+                <fieldset className="border-0 p-0 m-0 min-w-0">
+                  <legend className="block text-sm font-medium text-slate-700 mb-2">Financial situation</legend>
                   <div className="space-y-2">
                     {FINANCIAL_OPTIONS.map(f => (
-                      <button key={f} onClick={() => set("financialSituation", f)}
+                      <button type="button" key={f} onClick={() => set("financialSituation", f)}
+                        aria-pressed={form.financialSituation === f}
                         className={cn("w-full text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
                           form.financialSituation === f ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
                         )}>
@@ -237,12 +244,13 @@ export default function Onboarding() {
                       </button>
                     ))}
                   </div>
-                </div>
-                <div role="group" aria-labelledby="ob-firstgen-label">
-                  <div id="ob-firstgen-label" className="block text-sm font-medium text-slate-700 mb-2">Are you a first-generation college student?</div>
+                </fieldset>
+                <fieldset className="border-0 p-0 m-0 min-w-0">
+                  <legend className="block text-sm font-medium text-slate-700 mb-2">Are you a first-generation college student?</legend>
                   <div className="flex gap-2">
                     {["Yes", "No", "Not sure"].map(v => (
-                      <button key={v} onClick={() => set("isFirstGen", v)}
+                      <button type="button" key={v} onClick={() => set("isFirstGen", v)}
+                        aria-pressed={form.isFirstGen === v}
                         className={cn("flex-1 text-sm px-3 py-2.5 rounded-xl border font-medium transition-all",
                           form.isFirstGen === v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
                         )}>
@@ -250,8 +258,8 @@ export default function Onboarding() {
                       </button>
                     ))}
                   </div>
-                </div>
-              </div>
+                </fieldset>
+              </fieldset>
             )}
           </div>
 
