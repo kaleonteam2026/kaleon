@@ -489,8 +489,15 @@ export async function gatherInfographicInputs(roadmapId: number) {
   return { roadmap, profile, pathway: pathway ?? null, courses, igetcAreas, savedDeadlines };
 }
 
-export function buildDashboardUrl(profileId: number): string {
+function publicHost(): string {
   const domains = (process.env.REPLIT_DOMAINS ?? "").split(",").map((d) => d.trim()).filter(Boolean);
-  const host = domains[0] ?? process.env.REPLIT_DEV_DOMAIN ?? "pathwise.cc";
-  return `https://${host}/dashboard/${profileId}`;
+  return domains[0] ?? process.env.REPLIT_DEV_DOMAIN ?? "pathwise.cc";
+}
+
+export function buildDashboardUrl(profileId: number): string {
+  return `https://${publicHost()}/dashboard/${profileId}`;
+}
+
+export function buildShareUrl(token: string): string {
+  return `https://${publicHost()}/s/${token}`;
 }

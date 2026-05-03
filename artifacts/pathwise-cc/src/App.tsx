@@ -11,6 +11,7 @@ import Matches from "@/pages/matches";
 import Pathways from "@/pages/pathways";
 import Guidebook from "@/pages/guidebook";
 import Roadmap from "@/pages/roadmap";
+import ShareRoadmap from "@/pages/share-roadmap";
 import Progress from "@/pages/progress";
 import Internships from "@/pages/internships";
 import DeadlineCalendar from "@/pages/deadline-calendar";
@@ -45,6 +46,7 @@ function Router() {
     <>
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/s/:token" component={ShareRoadmap} />
         <Route path="/welcome/first-gen">
           <Welcome persona="first-gen" />
         </Route>

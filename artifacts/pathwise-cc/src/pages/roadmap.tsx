@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Download, Loader2, MapPin, AlertTriangle,
   CheckSquare, Square, CheckCircle2, Image as ImageIcon, FileText, Sparkles,
+  Link2, Copy, Check, X,
 } from "lucide-react";
 import { MarkdownContent } from "@/components/markdown-renderer";
 
@@ -28,6 +29,10 @@ export default function Roadmap() {
   const [, setCurrentSection] = useState("");
   const [infographicLoading, setInfographicLoading] = useState(false);
   const [infographicReady, setInfographicReady] = useState<{ pngUrl: string; pdfUrl: string; cached: boolean } | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
+  const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
+  const [shareBusy, setShareBusy] = useState(false);
   const rid = parseInt(roadmapId);
 
   useEffect(() => {
@@ -36,6 +41,18 @@ export default function Roadmap() {
       .then((r: AcademicRoadmap) => setRoadmap(r))
       .catch(() => toast({ title: t("pages.roadmap.errorLoading"), variant: "destructive" }))
       .finally(() => setLoading(false));
+  }, [rid]);
+
+  useEffect(() => {
+    fetch(`/api/roadmaps/${rid}/share`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then((j) => {
+        if (j?.active) {
+          setShareUrl(j.active.shareUrl);
+          setShareExpiresAt(j.active.expiresAt);
+        }
+      })
+      .catch(() => {});
   }, [rid]);
 
   const generateInfographic = async () => {
@@ -51,6 +68,10 @@ export default function Roadmap() {
         return;
       }
       setInfographicReady({ pngUrl: json.pngUrl, pdfUrl: json.pdfUrl, cached: !!json.cached });
+      if (json.shareUrl) {
+        setShareUrl(json.shareUrl);
+        setShareExpiresAt(json.shareExpiresAt ?? null);
+      }
       toast({
         title: json.cached ? t("pages.roadmap.infographicReadyCached") : t("pages.roadmap.infographicGenerated"),
         description: json.cached ? t("pages.roadmap.infographicCachedDesc") : t("pages.roadmap.infographicNewDesc"),
@@ -71,6 +92,68 @@ export default function Roadmap() {
     document.body.appendChild(a);
     a.click();
     a.remove();
+  };
+
+  const createShareLink = async () => {
+    setShareBusy(true);
+    try {
+      const res = await fetch(`/api/roadmaps/${rid}/share`, { method: "POST", credentials: "include" });
+      const json = await res.json();
+      if (!res.ok) {
+        toast({ title: json.error ?? "Could not create share link", variant: "destructive" });
+        return;
+      }
+      setShareUrl(json.shareUrl);
+      setShareExpiresAt(json.expiresAt ?? null);
+      await copyToClipboard(json.shareUrl);
+    } catch {
+      toast({ title: "Network error creating share link", variant: "destructive" });
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
+  const copyToClipboard = async (value: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = value;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      setCopyState("copied");
+      toast({ title: "Share link copied", description: "Paste it into a text or email." });
+      setTimeout(() => setCopyState("idle"), 2000);
+    } catch {
+      toast({ title: "Could not copy link", description: "Long-press the link to copy it manually.", variant: "destructive" });
+    }
+  };
+
+  const revokeShareLink = async () => {
+    if (!shareUrl) return;
+    if (!confirm("Revoke this share link? Anyone with the link will get a 'no longer available' message.")) return;
+    setShareBusy(true);
+    try {
+      const res = await fetch(`/api/roadmaps/${rid}/share`, { method: "DELETE", credentials: "include" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        toast({ title: json.error ?? "Could not revoke link", variant: "destructive" });
+        return;
+      }
+      setShareUrl(null);
+      setShareExpiresAt(null);
+      toast({ title: "Share link revoked" });
+    } catch {
+      toast({ title: "Network error revoking link", variant: "destructive" });
+    } finally {
+      setShareBusy(false);
+    }
   };
 
   const downloadMarkdown = () => {
@@ -179,6 +262,67 @@ export default function Roadmap() {
                 </Button>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Share link */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 mb-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <Link2 className="h-4 w-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <h3 className="text-sm font-semibold text-slate-900">Share with a counselor or friend</h3>
+                {shareUrl && shareExpiresAt && (
+                  <span className="text-[11px] text-slate-400">
+                    Expires {new Date(shareExpiresAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                A short link that opens a mobile-friendly preview of your infographic — no login needed.
+              </p>
+
+              {!shareUrl ? (
+                <Button
+                  onClick={createShareLink}
+                  disabled={shareBusy}
+                  size="sm"
+                  className="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  {shareBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Link2 className="h-4 w-4 mr-2" />}
+                  Create share link
+                </Button>
+              ) : (
+                <div className="mt-3 flex items-center gap-2 flex-wrap">
+                  <input
+                    readOnly
+                    value={shareUrl}
+                    onFocus={(e) => e.currentTarget.select()}
+                    className="flex-1 min-w-0 text-xs font-mono px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-slate-700"
+                    aria-label="Share link"
+                  />
+                  <Button
+                    onClick={() => copyToClipboard(shareUrl)}
+                    size="sm"
+                    variant="outline"
+                    disabled={shareBusy}
+                  >
+                    {copyState === "copied"
+                      ? <><Check className="h-4 w-4 mr-1.5 text-emerald-600" /> Copied</>
+                      : <><Copy className="h-4 w-4 mr-1.5" /> Copy</>}
+                  </Button>
+                  <Button
+                    onClick={revokeShareLink}
+                    size="sm"
+                    variant="ghost"
+                    disabled={shareBusy}
+                    className="text-slate-500 hover:text-red-600"
+                  >
+                    <X className="h-4 w-4 mr-1" /> Revoke
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

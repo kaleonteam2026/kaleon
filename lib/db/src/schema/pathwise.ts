@@ -165,6 +165,24 @@ export const roadmapInfographicsTable = pgTable(
   }),
 );
 
+export const roadmapShareLinksTable = pgTable(
+  "roadmap_share_links",
+  {
+    id: serial("id").primaryKey(),
+    roadmapId: integer("roadmap_id").notNull().references(() => academicRoadmapsTable.id),
+    profileId: integer("profile_id").notNull().references(() => studentProfilesTable.id),
+    token: text("token").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    revokedAt: timestamp("revoked_at"),
+  },
+  (t) => ({
+    tokenIdx: uniqueIndex("roadmap_share_links_token_idx").on(t.token),
+  }),
+);
+
+export type RoadmapShareLink = typeof roadmapShareLinksTable.$inferSelect;
+
 // ─── Deadline reminders (Task #16) ───────────────────────────────────────────
 export const reminderPrefsTable = pgTable("reminder_prefs", {
   id: serial("id").primaryKey(),

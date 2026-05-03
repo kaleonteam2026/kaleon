@@ -1,8 +1,8 @@
 import { Router } from "express";
 import scholarships from "../data/scholarships.json" assert { type: "json" };
 import opportunities from "../data/opportunities.json" assert { type: "json" };
-import { db, coursesTable, academicRoadmapsTable, roadmapInfographicsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, coursesTable, academicRoadmapsTable, roadmapInfographicsTable, roadmapShareLinksTable } from "@workspace/db";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { generateAcademicRoadmap } from "../services/aiService.js";
 import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 import { getOwnedPathway, getOwnedRoadmap, getOwnedProfile } from "../lib/ownership";
@@ -10,6 +10,7 @@ import { resolveAuthedLocale } from "../lib/locale";
 import {
   buildDashboardUrl,
   buildInfographicData,
+  buildShareUrl,
   computeVersionHash,
   findCachedInfographic,
   gatherInfographicInputs,
@@ -148,11 +149,15 @@ router.post("/roadmaps/:roadmapId/infographic", async (req, res) => {
 
     const cached = await findCachedInfographic(roadmapId, versionHash);
     if (cached) {
+      const shareLink = await ensureActiveShareLink(roadmapId, profile.id);
       res.json({
         cached: true,
         versionHash,
         pngUrl: `/api/roadmaps/${roadmapId}/infographic/png?v=${versionHash}`,
         pdfUrl: `/api/roadmaps/${roadmapId}/infographic/pdf?v=${versionHash}`,
+        shareUrl: buildShareUrl(shareLink.token),
+        shareToken: shareLink.token,
+        shareExpiresAt: shareLink.expiresAt,
       });
       return;
     }
@@ -187,15 +192,207 @@ router.post("/roadmaps/:roadmapId/infographic", async (req, res) => {
       pdfObjectPath,
     }).onConflictDoNothing();
 
+    const shareLink = await ensureActiveShareLink(roadmapId, profile.id);
     res.json({
       cached: false,
       versionHash,
       pngUrl: `/api/roadmaps/${roadmapId}/infographic/png?v=${versionHash}`,
       pdfUrl: `/api/roadmaps/${roadmapId}/infographic/pdf?v=${versionHash}`,
+      shareUrl: buildShareUrl(shareLink.token),
+      shareToken: shareLink.token,
+      shareExpiresAt: shareLink.expiresAt,
     });
   } catch (err) {
     req.log.error({ err }, "Error generating roadmap infographic");
     if (!res.headersSent) res.status(500).json({ error: "Failed to generate infographic" });
+  }
+});
+
+// ─── Share links ─────────────────────────────────────────────────────────────
+
+const SHARE_TTL_DAYS = 90;
+
+function newShareToken(): string {
+  return crypto.randomBytes(12).toString("base64url");
+}
+
+async function ensureActiveShareLink(roadmapId: number, profileId: number) {
+  const now = new Date();
+  const existing = await db
+    .select()
+    .from(roadmapShareLinksTable)
+    .where(and(
+      eq(roadmapShareLinksTable.roadmapId, roadmapId),
+      isNull(roadmapShareLinksTable.revokedAt),
+    ))
+    .orderBy(desc(roadmapShareLinksTable.createdAt));
+  const active = existing.find((r) => r.expiresAt > now);
+  if (active) return active;
+
+  const expiresAt = new Date(now.getTime() + SHARE_TTL_DAYS * 86400_000);
+  const [created] = await db.insert(roadmapShareLinksTable).values({
+    roadmapId,
+    profileId,
+    token: newShareToken(),
+    expiresAt,
+  }).returning();
+  return created;
+}
+
+// Returns the most recently generated infographic row for this roadmap, or null.
+async function findShareableInfographic(roadmapId: number) {
+  const rows = await db
+    .select()
+    .from(roadmapInfographicsTable)
+    .where(eq(roadmapInfographicsTable.roadmapId, roadmapId))
+    .orderBy(desc(roadmapInfographicsTable.createdAt));
+  return rows[0] ?? null;
+}
+
+// POST /api/roadmaps/:roadmapId/share — create or fetch active share link
+router.post("/roadmaps/:roadmapId/share", async (req, res) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const roadmapId = parseInt(req.params.roadmapId);
+    const owner = await getOwnedRoadmap(roadmapId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Roadmap not found" }); return; }
+    const link = await ensureActiveShareLink(roadmapId, owner.roadmap.profileId);
+    res.json({
+      token: link.token,
+      shareUrl: buildShareUrl(link.token),
+      expiresAt: link.expiresAt,
+      createdAt: link.createdAt,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Error creating share link");
+    res.status(500).json({ error: "Failed to create share link" });
+  }
+});
+
+// GET /api/roadmaps/:roadmapId/share — return current active share link (if any)
+router.get("/roadmaps/:roadmapId/share", async (req, res) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const roadmapId = parseInt(req.params.roadmapId);
+    const owner = await getOwnedRoadmap(roadmapId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Roadmap not found" }); return; }
+    const now = new Date();
+    const rows = await db
+      .select()
+      .from(roadmapShareLinksTable)
+      .where(and(
+        eq(roadmapShareLinksTable.roadmapId, roadmapId),
+        isNull(roadmapShareLinksTable.revokedAt),
+      ))
+      .orderBy(desc(roadmapShareLinksTable.createdAt));
+    const active = rows.find((r) => r.expiresAt > now);
+    if (!active) { res.json({ active: null }); return; }
+    res.json({
+      active: {
+        token: active.token,
+        shareUrl: buildShareUrl(active.token),
+        expiresAt: active.expiresAt,
+        createdAt: active.createdAt,
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "Error fetching share link");
+    res.status(500).json({ error: "Failed to fetch share link" });
+  }
+});
+
+// DELETE /api/roadmaps/:roadmapId/share — revoke all active share links
+router.delete("/roadmaps/:roadmapId/share", async (req, res) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const roadmapId = parseInt(req.params.roadmapId);
+    const owner = await getOwnedRoadmap(roadmapId, req.user.id);
+    if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Roadmap not found" }); return; }
+    await db
+      .update(roadmapShareLinksTable)
+      .set({ revokedAt: new Date() })
+      .where(and(
+        eq(roadmapShareLinksTable.roadmapId, roadmapId),
+        isNull(roadmapShareLinksTable.revokedAt),
+      ));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Error revoking share link");
+    res.status(500).json({ error: "Failed to revoke share link" });
+  }
+});
+
+// ─── Public share preview (no auth) ──────────────────────────────────────────
+
+async function resolveShareToken(token: string): Promise<
+  | { ok: true; link: typeof roadmapShareLinksTable.$inferSelect }
+  | { ok: false; status: 404 | 410; error: string }
+> {
+  if (!token || token.length < 8 || token.length > 64) {
+    return { ok: false, status: 404, error: "Share link not found" };
+  }
+  const [link] = await db
+    .select()
+    .from(roadmapShareLinksTable)
+    .where(eq(roadmapShareLinksTable.token, token));
+  if (!link) return { ok: false, status: 404, error: "Share link not found" };
+  if (link.revokedAt) return { ok: false, status: 410, error: "This share link has been revoked by the student." };
+  if (link.expiresAt <= new Date()) return { ok: false, status: 410, error: "This share link has expired." };
+  return { ok: true, link };
+}
+
+// GET /api/share/roadmap/:token — counselor-facing preview metadata
+router.get("/share/roadmap/:token", async (req, res) => {
+  try {
+    const resolved = await resolveShareToken(req.params.token);
+    if (!resolved.ok) { res.status(resolved.status).json({ error: resolved.error }); return; }
+    const { link } = resolved;
+    const inputs = await gatherInfographicInputs(link.roadmapId);
+    if (!inputs) { res.status(404).json({ error: "Roadmap not found" }); return; }
+    const cached = await findShareableInfographic(link.roadmapId);
+    res.json({
+      studentName: inputs.profile.fullName ?? "Student",
+      targetSchool: (() => {
+        const r = (inputs.pathway?.reportJson ?? {}) as Record<string, unknown>;
+        return typeof r.university === "string" && r.university
+          ? r.university
+          : (inputs.profile.targetUniversities?.[0] ?? "Target University");
+      })(),
+      major: inputs.profile.intendedMajor ?? "Undeclared",
+      generatedAt: cached?.createdAt ?? inputs.roadmap.updatedAt ?? inputs.roadmap.createdAt,
+      hasInfographic: !!cached,
+      pngUrl: `/api/share/roadmap/${link.token}/png`,
+      pdfUrl: `/api/share/roadmap/${link.token}/pdf`,
+      expiresAt: link.expiresAt,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Error fetching shared roadmap");
+    res.status(500).json({ error: "Failed to load shared roadmap" });
+  }
+});
+
+// GET /api/share/roadmap/:token/:format — public download of cached PNG/PDF
+router.get("/share/roadmap/:token/:format", async (req, res) => {
+  try {
+    const format = req.params.format;
+    if (format !== "png" && format !== "pdf") {
+      res.status(400).json({ error: "Invalid format" }); return;
+    }
+    const resolved = await resolveShareToken(req.params.token);
+    if (!resolved.ok) { res.status(resolved.status).json({ error: resolved.error }); return; }
+    const cached = await findShareableInfographic(resolved.link.roadmapId);
+    if (!cached) { res.status(404).json({ error: "Infographic not generated yet" }); return; }
+    const objectPath = format === "png" ? cached.pngObjectPath : cached.pdfObjectPath;
+    const asset = await readInfographicAsset(objectPath);
+    const filename = `pathwise-roadmap-${resolved.link.roadmapId}.${format}`;
+    const disposition = req.query.download === "1" ? "attachment" : "inline";
+    res.setHeader("Content-Type", asset.contentType);
+    res.setHeader("Content-Disposition", `${disposition}; filename="${filename}"`);
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.send(asset.body);
+  } catch (err) {
+    req.log.error({ err }, "Error serving shared infographic");
+    if (!res.headersSent) res.status(500).json({ error: "Failed to download infographic" });
   }
 });
 
