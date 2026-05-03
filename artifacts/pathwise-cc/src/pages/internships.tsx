@@ -88,7 +88,7 @@ function InternshipCard({ internship }: { internship: InternshipMatch }) {
           <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full border", cfg.badge)}>
             {cfg.label}
           </span>
-          <span className="text-xs text-slate-500 truncate">{internship.category}</span>
+          <span className="text-xs text-slate-600 truncate">{internship.category}</span>
         </div>
         <MatchScore score={internship.matchScore} />
       </div>
@@ -97,18 +97,18 @@ function InternshipCard({ internship }: { internship: InternshipMatch }) {
       <div className="px-4 pt-3 pb-4 flex flex-col gap-3 flex-1">
         <div>
           <h3 className="text-sm font-bold text-slate-900 leading-snug">{internship.title}</h3>
-          <p className="text-xs text-slate-500 mt-0.5 font-medium">{internship.organization}</p>
+          <p className="text-xs text-slate-600 mt-0.5 font-medium">{internship.organization}</p>
         </div>
 
         {/* Meta row */}
         <div className="flex flex-wrap gap-2 text-xs">
-          <span className="flex items-center gap-1 text-slate-500">
+          <span className="flex items-center gap-1 text-slate-600">
             <MapPin className="h-3 w-3" />{internship.location}
           </span>
-          <span className="flex items-center gap-1 text-slate-500">
+          <span className="flex items-center gap-1 text-slate-600">
             <Clock className="h-3 w-3" />{internship.duration}
           </span>
-          <span className="flex items-center gap-1 text-slate-500">
+          <span className="flex items-center gap-1 text-slate-600">
             <DollarSign className="h-3 w-3" />{internship.stipend}
           </span>
         </div>
@@ -121,7 +121,7 @@ function InternshipCard({ internship }: { internship: InternshipMatch }) {
             </span>
           ))}
           {internship.applicationDeadline && (
-            <span className="flex items-center gap-1 text-xs text-slate-400 ml-1">
+            <span className="flex items-center gap-1 text-xs text-slate-600 ml-1">
               <CalendarDays className="h-3 w-3" />Deadline: {internship.applicationDeadline}
             </span>
           )}
@@ -137,7 +137,7 @@ function InternshipCard({ internship }: { internship: InternshipMatch }) {
 
         {/* Why it matches */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+          <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
             <Star className="h-3 w-3 text-amber-400" />Why This Matches You
           </p>
           <p className="text-xs text-slate-600 leading-relaxed">{internship.whyMatches}</p>
@@ -155,7 +155,7 @@ function InternshipCard({ internship }: { internship: InternshipMatch }) {
         {expanded && (
           <div className="space-y-2.5 animate-in fade-in duration-150">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Eligibility Requirements</p>
+              <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Eligibility Requirements</p>
               <ul className="space-y-1">
                 {internship.eligibility.map((req, i) => (
                   <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
@@ -172,7 +172,7 @@ function InternshipCard({ internship }: { internship: InternshipMatch }) {
                 <p className="text-xs text-indigo-600">{internship.handshakeTip}</p>
               </div>
             )}
-            <p className="text-xs text-slate-400 flex items-center gap-1">
+            <p className="text-xs text-slate-600 flex items-center gap-1">
               <Info className="h-3 w-3" />{internship.source}
             </p>
           </div>
@@ -210,7 +210,7 @@ function SearchHistoryRow({ search, isActive, onClick }: {
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-slate-500">
+        <span className="text-slate-600">
           {new Date(search.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
         </span>
         <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full font-semibold">{count} matches</span>
@@ -334,7 +334,7 @@ export default function InternshipsPage() {
             <Search className="h-5 w-5 text-indigo-600" />
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">Internship Finder</h1>
           </div>
-          <p className="text-slate-500 text-sm max-w-2xl">
+          <p className="text-slate-600 text-sm max-w-2xl">
             AI-matched internships from federal government programs, California state agencies, university research, and nonprofit organizations — all verified for community college student eligibility.
           </p>
         </div>
@@ -350,7 +350,7 @@ export default function InternshipsPage() {
               <p className="text-sm text-slate-600 mt-0.5">
                 Your AI advisor scans verified California and federal internship programs, matches them to your major, GPA, location, and completed courses, and explains exactly why each one fits you.
               </p>
-              <div className="flex flex-wrap gap-3 mt-3 text-xs text-slate-500">
+              <div className="flex flex-wrap gap-3 mt-3 text-xs text-slate-600">
                 {[
                   { icon: Landmark, label: "Federal gov't programs" },
                   { icon: Shield, label: "CA state agencies" },
@@ -369,14 +369,14 @@ export default function InternshipsPage() {
                 : <><Search className="h-4 w-4 mr-2" />{searches.length > 0 ? "Refresh My Matches" : "Find My Internships"}</>
               }
             </Button>
-            <p className="text-xs text-slate-400">Up to 5 searches per hour</p>
+            <p className="text-xs text-slate-600">Up to 5 searches per hour</p>
           </div>
           {generating && (
             <div className="mt-4 bg-white/70 rounded-xl p-4 flex items-center gap-3 border border-indigo-100">
               <Loader2 className="h-5 w-5 animate-spin text-indigo-500 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-slate-700">Matching internships to your profile…</p>
-                <p className="text-xs text-slate-400">Scanning federal agencies, CA state programs, research labs, and Handshake sources. Takes 15–25 seconds.</p>
+                <p className="text-xs text-slate-600">Scanning federal agencies, CA state programs, research labs, and Handshake sources. Takes 15–25 seconds.</p>
               </div>
             </div>
           )}
@@ -384,19 +384,19 @@ export default function InternshipsPage() {
 
         {/* Main content */}
         {loadingSearches ? (
-          <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-slate-400" /></div>
+          <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-slate-600" /></div>
         ) : searches.length === 0 ? (
           <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center">
             <Search className="h-12 w-12 text-slate-200 mx-auto mb-4" />
             <p className="text-slate-600 font-semibold text-lg mb-1">No internship searches yet</p>
-            <p className="text-slate-400 text-sm max-w-sm mx-auto">Click "Find My Internships" above to get a personalized list of opportunities matched to your profile.</p>
+            <p className="text-slate-600 text-sm max-w-sm mx-auto">Click "Find My Internships" above to get a personalized list of opportunities matched to your profile.</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-[200px_1fr] gap-6 items-start">
 
             {/* Sidebar: history */}
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide px-1">Search History</p>
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide px-1">Search History</p>
               {searches.map(s => (
                 <SearchHistoryRow
                   key={s.id}
@@ -414,11 +414,11 @@ export default function InternshipsPage() {
                 {/* Summary */}
                 {activeSearch.resultsJson?.summary && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                    <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5 flex items-center gap-1">
                       <Star className="h-3.5 w-3.5 text-amber-400" />Your Match Summary
                     </p>
                     <p className="text-sm text-slate-700 leading-relaxed">{activeSearch.resultsJson.summary}</p>
-                    <p className="text-xs text-slate-400 mt-2">
+                    <p className="text-xs text-slate-600 mt-2">
                       Generated {new Date(activeSearch.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                       &nbsp;·&nbsp;{internships.length} total matches
                     </p>
@@ -475,7 +475,7 @@ export default function InternshipsPage() {
                       );
                     })}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-2 text-xs text-slate-600">
                     <span>Sort:</span>
                     <button
                       onClick={() => setSortBy("score")}
@@ -495,7 +495,7 @@ export default function InternshipsPage() {
                 {/* Internship cards grid */}
                 {sorted.length === 0 ? (
                   <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-8 text-center">
-                    <p className="text-slate-500">No internships match this filter.</p>
+                    <p className="text-slate-600">No internships match this filter.</p>
                   </div>
                 ) : (
                   <div className="grid sm:grid-cols-2 gap-4">
@@ -511,7 +511,7 @@ export default function InternshipsPage() {
                               : "bg-white/90 border-slate-200 hover:border-indigo-300"
                           )}
                         >
-                          <Bookmark className={cn("h-3.5 w-3.5", savedSlugs.has(internship.id) ? "fill-white text-white" : "text-slate-400")} />
+                          <Bookmark className={cn("h-3.5 w-3.5", savedSlugs.has(internship.id) ? "fill-white text-white" : "text-slate-600")} />
                         </button>
                         <InternshipCard internship={internship} />
                       </div>
@@ -521,7 +521,7 @@ export default function InternshipsPage() {
 
                 {/* Saved count badge */}
                 {savedSlugs.size > 0 && (
-                  <div className="flex items-center gap-2 text-xs text-slate-500 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
+                  <div className="flex items-center gap-2 text-xs text-slate-600 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
                     <Bookmark className="h-3.5 w-3.5 text-indigo-500 fill-indigo-500" />
                     <span><strong>{savedSlugs.size}</strong> internship{savedSlugs.size !== 1 ? "s" : ""} saved — tap the bookmark icon on any card to save or unsave</span>
                   </div>
@@ -529,7 +529,7 @@ export default function InternshipsPage() {
 
                 {/* Legend */}
                 <div className="bg-white border border-slate-200 rounded-2xl p-4">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1">
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-3 flex items-center gap-1">
                     <Info className="h-3.5 w-3.5" />How Match Scores Work
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-600">
@@ -537,7 +537,7 @@ export default function InternshipsPage() {
                     <div className="flex items-center gap-2"><span className="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-[10px]">70+</span>Good fit</div>
                     <div className="flex items-center gap-2"><span className="w-7 h-7 rounded-full bg-slate-400 text-white flex items-center justify-center font-bold text-[10px]">60+</span>Worth exploring</div>
                   </div>
-                  <div className="mt-3 flex items-start gap-2 text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                  <div className="mt-3 flex items-start gap-2 text-xs text-slate-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
                     <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
                     <span>Program details, deadlines, and stipends change yearly. Always verify directly at the official application URL before applying.</span>
                   </div>
@@ -545,7 +545,7 @@ export default function InternshipsPage() {
 
                 {/* Additional resources */}
                 <div className="bg-white border border-slate-200 rounded-2xl p-5">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1">
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-3 flex items-center gap-1">
                     <BookOpen className="h-3.5 w-3.5" />Additional Places to Search
                   </p>
                   <div className="grid sm:grid-cols-2 gap-2.5">
@@ -562,7 +562,7 @@ export default function InternshipsPage() {
                         <span className="truncate">{label}</span>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-semibold", color)}>{badge}</span>
-                          <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-indigo-500 transition" />
+                          <ExternalLink className="h-3 w-3 text-slate-600 group-hover:text-indigo-500 transition" />
                         </div>
                       </a>
                     ))}
@@ -573,7 +573,7 @@ export default function InternshipsPage() {
           </div>
         )}
 
-        <p className="text-xs text-slate-400 text-center py-8">
+        <p className="text-xs text-slate-600 text-center py-8">
           DYP Internship Finder · Matches generated by AI based on your profile · Always verify deadlines and eligibility directly with the program
         </p>
       </main>

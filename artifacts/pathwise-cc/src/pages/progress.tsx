@@ -92,9 +92,9 @@ function ScoreRing({ score }: { score: number }) {
         <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-slate-800">{score}</span>
       </div>
       <div>
-        <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-0.5">Trajectory Score</p>
+        <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-0.5">Trajectory Score</p>
         <p className={cn("text-lg font-bold", labelColor)}>{label}</p>
-        <p className="text-xs text-slate-400 mt-0.5">out of 100 points</p>
+        <p className="text-xs text-slate-600 mt-0.5">out of 100 points</p>
       </div>
     </div>
   );
@@ -105,7 +105,7 @@ function AdmissionBadge({ chance, delta }: { chance: number; delta: number }) {
   const color = chance >= 70 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
     : chance >= 45 ? "bg-amber-50 border-amber-200 text-amber-700"
     : "bg-rose-50 border-rose-200 text-rose-700";
-  const deltaColor = delta > 0 ? "text-emerald-600" : delta < 0 ? "text-rose-600" : "text-slate-400";
+  const deltaColor = delta > 0 ? "text-emerald-600" : delta < 0 ? "text-rose-600" : "text-slate-600";
   const deltaPrefix = delta > 0 ? "+" : "";
   return (
     <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full border font-semibold text-sm", color)}>
@@ -147,7 +147,7 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
             <p className="text-sm font-bold text-slate-800 mt-1">{feedback.heading}</p>
           </div>
         </div>
-        <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 text-lg leading-none flex-shrink-0 mt-0.5">×</button>
+        <button onClick={onDismiss} className="text-slate-600 hover:text-slate-600 text-lg leading-none flex-shrink-0 mt-0.5">×</button>
       </div>
 
       {/* Admission chance */}
@@ -155,7 +155,7 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
 
       {/* Alignment score */}
       <div className="flex items-center gap-2 text-sm">
-        <span className="text-slate-500 text-xs">Guidebook alignment:</span>
+        <span className="text-slate-600 text-xs">Guidebook alignment:</span>
         <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden max-w-32">
           <div
             className={cn("h-full rounded-full transition-all duration-700",
@@ -238,12 +238,12 @@ function EntryCard({ entry, onDelete }: { entry: ProgressEntry; onDelete: (id: n
             <span className={cn("text-xs font-semibold px-1.5 py-0.5 rounded-full border", cfg.bg, cfg.color, cfg.border)}>{cfg.label}</span>
             <p className="mt-1 text-sm font-semibold text-slate-800 leading-tight">{entry.title}</p>
             {entry.numericValue != null && (
-              <p className="text-xs text-slate-500 mt-0.5">GPA: <strong className="text-slate-800">{entry.numericValue.toFixed(2)}</strong></p>
+              <p className="text-xs text-slate-600 mt-0.5">GPA: <strong className="text-slate-800">{entry.numericValue.toFixed(2)}</strong></p>
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {entry.entryDate && (
-              <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="h-3 w-3" />{entry.entryDate}</span>
+              <span className="text-xs text-slate-600 flex items-center gap-1"><Clock className="h-3 w-3" />{entry.entryDate}</span>
             )}
             <button
               onClick={async () => { setDeleting(true); await onDelete(entry.id); setDeleting(false); }}
@@ -255,7 +255,7 @@ function EntryCard({ entry, onDelete }: { entry: ProgressEntry; onDelete: (id: n
             </button>
           </div>
         </div>
-        {entry.description && <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{entry.description}</p>}
+        {entry.description && <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">{entry.description}</p>}
       </div>
     </div>
   );
@@ -275,7 +275,7 @@ function AnalysisCard({ analysis, isActive, onClick }: { analysis: ProgressAnaly
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-600">
           {new Date(analysis.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
         </span>
         <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full border", color)}>{score}/100</span>
@@ -290,13 +290,13 @@ function PathwayLockScreen({ profileId }: { profileId: number }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
       <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center mb-5">
-        <Lock className="h-9 w-9 text-slate-400" />
+        <Lock className="h-9 w-9 text-slate-600" />
       </div>
       <h2 className="text-xl font-bold text-slate-800 mb-2">Select Your Pathway First</h2>
-      <p className="text-slate-500 max-w-md leading-relaxed mb-2">
+      <p className="text-slate-600 max-w-md leading-relaxed mb-2">
         The Progress Tracker is activated once you've committed to a transfer pathway. Your AI advisor needs to know your target university and guidebook before it can evaluate your updates and predict your admission chances.
       </p>
-      <p className="text-sm text-slate-400 mb-8">Go to your Pathway tab, review your university matches, and select the one you're targeting.</p>
+      <p className="text-sm text-slate-600 mb-8">Go to your Pathway tab, review your university matches, and select the one you're targeting.</p>
       <Link href={`/pathways/${profileId}`}>
         <Button className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none gap-2">
           <Target className="h-4 w-4" />
@@ -312,7 +312,7 @@ function PathwayLockScreen({ profileId }: { profileId: number }) {
         ].map(({ icon: Icon, label, color }) => (
           <div key={label} className="bg-slate-50 rounded-xl p-3 border border-slate-200">
             <Icon className={cn("h-5 w-5 mx-auto mb-1.5", color)} />
-            <p className="text-xs text-slate-500 font-medium">{label}</p>
+            <p className="text-xs text-slate-600 font-medium">{label}</p>
           </div>
         ))}
       </div>
@@ -497,7 +497,7 @@ export default function ProgressTracker() {
               </span>
             )}
           </div>
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-600 text-sm">
             Log certifications, GPA updates, opportunities, and milestones. Your AI advisor checks every update against your guidebook and predicts your updated admission chances in real time.
           </p>
         </div>
@@ -512,19 +512,19 @@ export default function ProgressTracker() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                 <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
                   <p className="text-2xl font-bold text-blue-600">{latestGpa != null ? latestGpa.toFixed(2) : "—"}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Latest GPA</p>
+                  <p className="text-xs text-slate-600 mt-0.5">Latest GPA</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
                   <p className="text-2xl font-bold text-amber-600">{certCount}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Certifications</p>
+                  <p className="text-xs text-slate-600 mt-0.5">Certifications</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
                   <p className="text-2xl font-bold text-teal-600">{oppCount}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Opportunities</p>
+                  <p className="text-xs text-slate-600 mt-0.5">Opportunities</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
                   <p className="text-2xl font-bold text-slate-900">{achievementCount}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Achievements</p>
+                  <p className="text-xs text-slate-600 mt-0.5">Achievements</p>
                 </div>
               </div>
             )}
@@ -541,7 +541,7 @@ export default function ProgressTracker() {
                   onClick={() => setTab(t.id as Tab)}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
-                    tab === t.id ? "bg-white text-indigo-700 shadow-sm border border-slate-200" : "text-slate-500 hover:text-slate-700"
+                    tab === t.id ? "bg-white text-indigo-700 shadow-sm border border-slate-200" : "text-slate-600 hover:text-slate-700"
                   )}
                 >
                   <t.icon className="h-3.5 w-3.5" />
@@ -584,7 +584,7 @@ export default function ProgressTracker() {
                   <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-6">
                     <div>
                       <h2 className="text-base font-bold text-slate-900 mb-1">Log a Progress Update</h2>
-                      <p className="text-xs text-slate-400">Every entry is checked against your <strong className="text-slate-600">{String(pathwayInfo?.pathway?.university ?? "selected university")}</strong> guidebook in real time.</p>
+                      <p className="text-xs text-slate-600">Every entry is checked against your <strong className="text-slate-600">{String(pathwayInfo?.pathway?.university ?? "selected university")}</strong> guidebook in real time.</p>
                     </div>
 
                     {/* Entry type grid */}
@@ -599,13 +599,13 @@ export default function ProgressTracker() {
                               className={cn("flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all",
                                 active ? cn("border-2 shadow-sm", cfg.border, cfg.bg) : "border-slate-200 bg-white hover:border-slate-300"
                               )}>
-                              <Icon className={cn("h-5 w-5", active ? cfg.color : "text-slate-400")} />
+                              <Icon className={cn("h-5 w-5", active ? cfg.color : "text-slate-600")} />
                               <span className={cn("text-xs font-semibold leading-tight", active ? cfg.color : "text-slate-600")}>{cfg.label}</span>
                             </button>
                           );
                         })}
                       </div>
-                      <p className="text-xs text-slate-400">{ENTRY_TYPES[entryType].description}</p>
+                      <p className="text-xs text-slate-600">{ENTRY_TYPES[entryType].description}</p>
                     </div>
 
                     {entryType === "gpa_update" && (
@@ -614,7 +614,7 @@ export default function ProgressTracker() {
                         <Input id="gpaValue" type="number" min="0" max="4" step="0.01"
                           value={numericValue} onChange={e => setNumericValue(e.target.value)}
                           placeholder="e.g. 3.75" className="max-w-xs" />
-                        <p className="text-xs text-slate-400">0.00 – 4.00. The AI will compare this against your pathway's GPA requirements.</p>
+                        <p className="text-xs text-slate-600">0.00 – 4.00. The AI will compare this against your pathway's GPA requirements.</p>
                       </div>
                     )}
 
@@ -633,7 +633,7 @@ export default function ProgressTracker() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="entryDesc">Details <span className="text-slate-400 font-normal">(optional)</span></Label>
+                      <Label htmlFor="entryDesc">Details <span className="text-slate-600 font-normal">(optional)</span></Label>
                       <Textarea id="entryDesc" rows={3} value={description} onChange={e => setDescription(e.target.value)}
                         placeholder="Add context — the AI uses this to give you more precise guidebook alignment feedback…" />
                     </div>
@@ -647,7 +647,7 @@ export default function ProgressTracker() {
                       <Button onClick={handleLogEntry} disabled={saving || !title.trim()} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
                         {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : <><Plus className="h-4 w-4 mr-2" />Log & Analyze</>}
                       </Button>
-                      <p className="text-xs text-slate-400 flex items-center gap-1">
+                      <p className="text-xs text-slate-600 flex items-center gap-1">
                         <Sparkles className="h-3 w-3 text-indigo-400" />
                         AI will check this against your {String(pathwayInfo?.pathway?.university ?? "university")} guidebook instantly
                       </p>
@@ -687,7 +687,7 @@ export default function ProgressTracker() {
                   <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-10 text-center">
                     <Activity className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                     <p className="text-slate-600 font-medium">No updates logged yet</p>
-                    <p className="text-slate-400 text-sm mt-1">Use the Log Update tab to start tracking your progress.</p>
+                    <p className="text-slate-600 text-sm mt-1">Use the Log Update tab to start tracking your progress.</p>
                     <Button variant="outline" size="sm" onClick={() => setTab("log")} className="mt-4">
                       <Plus className="h-3.5 w-3.5 mr-1" />Log Your First Update
                     </Button>
@@ -715,7 +715,7 @@ export default function ProgressTracker() {
                       <p className="text-sm text-slate-600 mt-1">
                         Your AI advisor reviews your full profile, courses, <strong>{String(pathwayInfo?.pathway?.university ?? "selected university")}</strong> guidebook, and all {entries.length} logged updates to predict your admission chances and give precise next steps.
                       </p>
-                      <div className="flex flex-wrap gap-2 mt-3 text-xs text-slate-500">
+                      <div className="flex flex-wrap gap-2 mt-3 text-xs text-slate-600">
                         <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> Courses</span>
                         <span className="flex items-center gap-1"><Target className="h-3 w-3" /> Guidebook</span>
                         <span className="flex items-center gap-1"><Activity className="h-3 w-3" /> {entries.length} updates</span>
@@ -728,31 +728,31 @@ export default function ProgressTracker() {
                     <Button onClick={handleGenerateAnalysis} disabled={generating} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
                       {generating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Analyzing your journey…</> : <><Sparkles className="h-4 w-4 mr-2" />{analyses.length > 0 ? "Regenerate Assessment" : "Generate My Assessment"}</>}
                     </Button>
-                    <p className="text-xs text-slate-400">Up to 5 assessments per hour</p>
+                    <p className="text-xs text-slate-600">Up to 5 assessments per hour</p>
                   </div>
                   {generating && (
                     <div className="mt-4 bg-white/70 rounded-xl p-4 flex items-center gap-3 border border-indigo-100">
                       <Loader2 className="h-5 w-5 animate-spin text-indigo-500 flex-shrink-0" />
                       <div>
                         <p className="text-sm font-medium text-slate-700">Analyzing your full journey…</p>
-                        <p className="text-xs text-slate-400">Reviewing courses, guidebook, and {entries.length} logged updates. This takes 20–40 seconds.</p>
+                        <p className="text-xs text-slate-600">Reviewing courses, guidebook, and {entries.length} logged updates. This takes 20–40 seconds.</p>
                       </div>
                     </div>
                   )}
                 </div>
 
                 {loadingAnalyses ? (
-                  <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-slate-400" /></div>
+                  <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-slate-600" /></div>
                 ) : analyses.length === 0 ? (
                   <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-10 text-center">
                     <BarChart3 className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                     <p className="text-slate-600 font-medium">No assessments yet</p>
-                    <p className="text-slate-400 text-sm mt-1">Generate your first AI progress assessment above.</p>
+                    <p className="text-slate-600 text-sm mt-1">Generate your first AI progress assessment above.</p>
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-[220px_1fr] gap-5 items-start">
                     <div className="space-y-2">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide px-1">Assessment History</p>
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide px-1">Assessment History</p>
                       {analyses.map(a => (
                         <AnalysisCard key={a.id} analysis={a} isActive={activeAnalysis?.id === a.id} onClick={() => setActiveAnalysis(a)} />
                       ))}
@@ -764,7 +764,7 @@ export default function ProgressTracker() {
                             <ScoreRing score={activeAnalysis.overallScore ?? 0} />
                             <div className="flex-1">
                               {activeAnalysis.summary && <p className="text-sm text-slate-600 leading-relaxed">{activeAnalysis.summary}</p>}
-                              <p className="text-xs text-slate-400 mt-2">
+                              <p className="text-xs text-slate-600 mt-2">
                                 Generated {new Date(activeAnalysis.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                               </p>
                             </div>
@@ -785,7 +785,7 @@ export default function ProgressTracker() {
           </>
         )}
 
-        <p className="text-xs text-slate-400 text-center pb-10">
+        <p className="text-xs text-slate-600 text-center pb-10">
           DYP Progress Tracker · AI assessments are not a substitute for official academic advising
         </p>
       </main>

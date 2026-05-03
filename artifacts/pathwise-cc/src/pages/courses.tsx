@@ -150,7 +150,7 @@ function CourseAnalysisRow({ c }: { c: CourseTransferResult }) {
           <div className="flex flex-wrap items-center gap-2">
             {c.courseCode && <span className="text-xs font-mono bg-white/70 border border-slate-200 px-1.5 py-0.5 rounded text-slate-600">{c.courseCode}</span>}
             <span className="text-sm font-semibold text-slate-800">{c.courseName}</span>
-            <span className="text-xs text-slate-400">{c.units} units</span>
+            <span className="text-xs text-slate-600">{c.units} units</span>
           </div>
           <div className="flex flex-wrap gap-2 mt-1">
             <StatusBadge status={c.status} />
@@ -158,7 +158,7 @@ function CourseAnalysisRow({ c }: { c: CourseTransferResult }) {
             {c.csuGEArea && <span className="text-xs bg-teal-50 text-teal-700 border border-teal-200 px-2 py-0.5 rounded-full font-medium">CSU GE {c.csuGEArea}</span>}
           </div>
         </div>
-        {open ? <ChevronUp className="h-4 w-4 text-slate-400 flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0" />}
+        {open ? <ChevronUp className="h-4 w-4 text-slate-600 flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-slate-600 flex-shrink-0" />}
       </button>
       {open && (
         <div className="px-4 py-3 bg-white border-t border-slate-100 text-sm text-slate-600 leading-relaxed">
@@ -207,13 +207,13 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
                       m.matchScore >= 80 ? "bg-emerald-100 text-emerald-700" : m.matchScore >= 65 ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
                     )}>{m.matchScore}% match</span>
                   </div>
-                  <p className="text-xs text-slate-500 mb-1.5">{m.matchReason}</p>
+                  <p className="text-xs text-slate-600 mb-1.5">{m.matchReason}</p>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div className={cn("h-full rounded-full", m.matchScore >= 80 ? "bg-emerald-400" : m.matchScore >= 65 ? "bg-amber-400" : "bg-rose-400")}
                         style={{ width: `${(m.transferableCount / Math.max(m.totalCourses, 1)) * 100}%` }} />
                     </div>
-                    <span className="text-xs text-slate-400 whitespace-nowrap">{m.transferableCount}/{m.totalCourses} courses transfer</span>
+                    <span className="text-xs text-slate-600 whitespace-nowrap">{m.transferableCount}/{m.totalCourses} courses transfer</span>
                   </div>
                 </div>
               </div>
@@ -233,15 +233,15 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
             return (
               <div key={area.key} className={cn("flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0", i % 2 === 0 ? "bg-white" : "bg-slate-50/60")}>
                 {done ? <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" /> : <AlertCircle className="h-4 w-4 text-slate-300 flex-shrink-0" />}
-                <span className={cn("text-sm", done ? "text-slate-800 font-medium" : "text-slate-500")}>{area.label}</span>
-                <span className={cn("ml-auto text-xs font-semibold px-2 py-0.5 rounded-full", done ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400")}>
+                <span className={cn("text-sm", done ? "text-slate-800 font-medium" : "text-slate-600")}>{area.label}</span>
+                <span className={cn("ml-auto text-xs font-semibold px-2 py-0.5 rounded-full", done ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600")}>
                   {done ? "Complete" : "Needed"}
                 </span>
               </div>
             );
           })}
         </div>
-        <p className="text-xs text-slate-400 mt-2">
+        <p className="text-xs text-slate-600 mt-2">
           IGETC completion qualifies you for any UC or CSU with GE satisfied.{" "}
           <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">Verify on assist.org →</a>
         </p>
@@ -249,9 +249,9 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
 
       <div>
         <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-slate-500" />
+          <BookOpen className="h-4 w-4 text-slate-600" />
           Course-by-Course Analysis
-          <span className="text-xs font-normal text-slate-400">— tap any row for details</span>
+          <span className="text-xs font-normal text-slate-600">— tap any row for details</span>
         </h2>
         <div className="space-y-2">
           {result.courseAnalysis.map((c, i) => <CourseAnalysisRow key={i} c={c} />)}
@@ -275,7 +275,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
         </div>
       )}
 
-      <p className="text-xs text-slate-400 text-center">
+      <p className="text-xs text-slate-600 text-center">
         Analysis is AI-generated based on typical ASSIST.org articulation patterns. Always verify at{" "}
         <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline">assist.org</a> and with your counselor.
       </p>
@@ -318,9 +318,9 @@ function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerPr
       <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-200">
         <div>
           <h2 className="text-sm font-bold text-slate-900">{catalog.college}</h2>
-          <p className="text-xs text-slate-500">{catalog.major} · {catalog.courses.length} courses in catalog</p>
+          <p className="text-xs text-slate-600">{catalog.major} · {catalog.courses.length} courses in catalog</p>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1">
+        <button onClick={onClose} className="text-slate-600 hover:text-slate-700 p-1">
           <X className="h-5 w-5" />
         </button>
       </div>
@@ -328,7 +328,7 @@ function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerPr
       {/* Search */}
       <div className="px-4 py-3 border-b border-slate-100">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
           <input
             ref={inputRef}
             type="text"
@@ -338,7 +338,7 @@ function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerPr
             className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:bg-white"
           />
           {search && (
-            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600">
               <X className="h-3.5 w-3.5" />
             </button>
           )}
@@ -366,7 +366,7 @@ function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerPr
       {/* Course list */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
         {filtered.length === 0 ? (
-          <div className="text-center py-10 text-slate-400 text-sm">No courses match your search.</div>
+          <div className="text-center py-10 text-slate-600 text-sm">No courses match your search.</div>
         ) : (
           filtered.map(c => {
             const added = alreadyAdded.has(`${c.courseCode}::${c.courseName}`);
@@ -383,14 +383,14 @@ function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerPr
                     : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 cursor-pointer"
                 )}
               >
-                <Icon className="h-4 w-4 text-slate-400 flex-shrink-0 mt-0.5" />
+                <Icon className="h-4 w-4 text-slate-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{c.courseCode}</span>
                     <span className="text-sm font-semibold text-slate-800 truncate">{c.courseName}</span>
-                    <span className="text-xs text-slate-400 ml-auto flex-shrink-0">{c.units} units</span>
+                    <span className="text-xs text-slate-600 ml-auto flex-shrink-0">{c.units} units</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{c.description}</p>
+                  <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">{c.description}</p>
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     {c.igetcArea && (
                       <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-100 px-1.5 py-0.5 rounded-full">IGETC {c.igetcArea}</span>
@@ -401,7 +401,7 @@ function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerPr
                     {c.transferable && (
                       <span className="text-xs bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 py-0.5 rounded-full">Transferable</span>
                     )}
-                    {added && <span className="text-xs bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-full">Already added</span>}
+                    {added && <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full">Already added</span>}
                   </div>
                 </div>
                 {!added && <ChevronRight className="h-4 w-4 text-indigo-400 flex-shrink-0 mt-1" />}
@@ -547,7 +547,7 @@ function CatalogModal({
             <p className="text-sm font-medium text-slate-700 text-center">
               Loading your college&apos;s course catalog…
             </p>
-            <p className="text-xs text-slate-400 text-center">
+            <p className="text-xs text-slate-600 text-center">
               Fetching courses specific to your college and major. This takes about 15 seconds.
             </p>
           </div>
@@ -756,7 +756,7 @@ export default function Courses() {
             ].map(s => (
               <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-xl font-bold text-indigo-600">{s.value}</div>
-                <div className="text-xs text-slate-500">{s.label}</div>
+                <div className="text-xs text-slate-600">{s.label}</div>
               </div>
             ))}
           </div>
@@ -780,7 +780,7 @@ export default function Courses() {
                 style={{ width: `${Math.min(100, (gpa.totalUnits / 60) * 100)}%` }}
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1.5 flex justify-between">
+            <p className="text-xs text-slate-600 mt-1.5 flex justify-between">
               <span>{gpa.totalUnits >= 60 ? "✓ 60-unit minimum met! Great progress." : `${(60 - gpa.totalUnits).toFixed(1)} more units to reach transfer minimum`}</span>
               <span>Min: 60 semester units</span>
             </p>
@@ -792,7 +792,7 @@ export default function Courses() {
           <div className="text-center py-16">
             <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
             <p className="text-slate-600 font-medium mb-1">No courses added yet</p>
-            <p className="text-slate-400 text-sm mb-6">
+            <p className="text-slate-600 text-sm mb-6">
               Browse your college&apos;s actual course catalog and add the courses you&apos;ve completed or are taking.
             </p>
             <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
@@ -812,7 +812,7 @@ export default function Courses() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${group.statusClass}`}>{group.label}</span>
-                      <span className="text-slate-400 font-normal">{group.items.length} course{group.items.length !== 1 ? "s" : ""}</span>
+                      <span className="text-slate-600 font-normal">{group.items.length} course{group.items.length !== 1 ? "s" : ""}</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -826,7 +826,7 @@ export default function Courses() {
                               )}
                               <span className="text-sm font-medium text-slate-800">{course.courseName}</span>
                             </div>
-                            <div className="flex gap-3 mt-0.5 text-xs text-slate-400">
+                            <div className="flex gap-3 mt-0.5 text-xs text-slate-600">
                               {course.units && <span>{course.units} units</span>}
                               {course.grade && <span>Grade: <strong>{course.grade}</strong></span>}
                               {course.term && <span>{course.term}</span>}
@@ -883,7 +883,7 @@ export default function Courses() {
 
         {/* Footer nav */}
         <div className="py-6 border-b-2 border-slate-900 mb-6 flex items-center justify-between">
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600">
             GPA calculations are estimates. Verify your official GPA with your college transcript.
           </p>
           <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
