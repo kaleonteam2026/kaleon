@@ -51,31 +51,31 @@ interface CCOpportunitiesResult {
 }
 
 // ─── Type config for CC programs ──────────────────────────────────────────────
-const CC_TYPE_CONFIG: Record<string, { label: string; icon: React.ElementType; badge: string }> = {
-  honors:          { label: "Honors",           icon: Award,        badge: "bg-amber-100 text-amber-700 border-amber-200" },
-  equity_support:  { label: "Equity & Support",  icon: Heart,        badge: "bg-rose-100 text-rose-700 border-rose-200" },
-  equity_cohort:   { label: "Equity Program",    icon: Users,        badge: "bg-violet-100 text-violet-700 border-violet-200" },
-  academic_support:{ label: "Academic Support",  icon: BookOpen,     badge: "bg-sky-100 text-sky-700 border-sky-200" },
-  career_transfer: { label: "Career & Transfer", icon: Briefcase,    badge: "bg-indigo-100 text-indigo-700 border-indigo-200" },
-  student_gov:     { label: "Student Gov",       icon: Star,         badge: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  major_club:      { label: "Major Club",        icon: GraduationCap,badge: "bg-teal-100 text-teal-700 border-teal-200" },
-  cultural_org:    { label: "Cultural Org",      icon: Users,        badge: "bg-orange-100 text-orange-700 border-orange-200" },
-  health_wellness: { label: "Health & Wellness", icon: Stethoscope,  badge: "bg-green-100 text-green-700 border-green-200" },
-  arts_athletics:  { label: "Arts & Athletics",  icon: Palette,      badge: "bg-pink-100 text-pink-700 border-pink-200" },
-  stem_research:   { label: "STEM & Research",   icon: Sparkles,     badge: "bg-cyan-100 text-cyan-700 border-cyan-200" },
+const CC_TYPE_CONFIG: Record<string, { labelKey: string; icon: React.ElementType; badge: string }> = {
+  honors:          { labelKey: "pages.scholarships.cc_honors",           icon: Award,        badge: "bg-amber-100 text-amber-700 border-amber-200" },
+  equity_support:  { labelKey: "pages.scholarships.cc_equity_support",   icon: Heart,        badge: "bg-rose-100 text-rose-700 border-rose-200" },
+  equity_cohort:   { labelKey: "pages.scholarships.cc_equity_cohort",    icon: Users,        badge: "bg-violet-100 text-violet-700 border-violet-200" },
+  academic_support:{ labelKey: "pages.scholarships.cc_academic_support", icon: BookOpen,     badge: "bg-sky-100 text-sky-700 border-sky-200" },
+  career_transfer: { labelKey: "pages.scholarships.cc_career_transfer",  icon: Briefcase,    badge: "bg-indigo-100 text-indigo-700 border-indigo-200" },
+  student_gov:     { labelKey: "pages.scholarships.cc_student_gov",      icon: Star,         badge: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  major_club:      { labelKey: "pages.scholarships.cc_major_club",       icon: GraduationCap,badge: "bg-teal-100 text-teal-700 border-teal-200" },
+  cultural_org:    { labelKey: "pages.scholarships.cc_cultural_org",     icon: Users,        badge: "bg-orange-100 text-orange-700 border-orange-200" },
+  health_wellness: { labelKey: "pages.scholarships.cc_health_wellness",  icon: Stethoscope,  badge: "bg-green-100 text-green-700 border-green-200" },
+  arts_athletics:  { labelKey: "pages.scholarships.cc_arts_athletics",   icon: Palette,      badge: "bg-pink-100 text-pink-700 border-pink-200" },
+  stem_research:   { labelKey: "pages.scholarships.cc_stem_research",    icon: Sparkles,     badge: "bg-cyan-100 text-cyan-700 border-cyan-200" },
 };
 
 const CC_FILTER_TYPES = [
-  { key: "all",            label: "All" },
-  { key: "honors",         label: "Honors" },
-  { key: "equity_support", label: "Equity & Support" },
-  { key: "equity_cohort",  label: "Equity Programs" },
-  { key: "academic_support",label: "Academic Support" },
-  { key: "career_transfer",label: "Career & Transfer" },
-  { key: "major_club",     label: "Major Clubs" },
-  { key: "cultural_org",   label: "Cultural Orgs" },
-  { key: "health_wellness",label: "Health & Wellness" },
-  { key: "stem_research",  label: "STEM & Research" },
+  { key: "all",             labelKey: "pages.scholarships.filter_all" },
+  { key: "honors",          labelKey: "pages.scholarships.filter_honors" },
+  { key: "equity_support",  labelKey: "pages.scholarships.filter_equity_support" },
+  { key: "equity_cohort",   labelKey: "pages.scholarships.filter_equity_cohort" },
+  { key: "academic_support",labelKey: "pages.scholarships.filter_academic_support" },
+  { key: "career_transfer", labelKey: "pages.scholarships.filter_career_transfer" },
+  { key: "major_club",      labelKey: "pages.scholarships.filter_major_club" },
+  { key: "cultural_org",    labelKey: "pages.scholarships.filter_cultural_org" },
+  { key: "health_wellness", labelKey: "pages.scholarships.filter_health_wellness" },
+  { key: "stem_research",   labelKey: "pages.scholarships.filter_stem_research" },
 ];
 
 // ─── Live Scholarship Search (Perplexity) ─────────────────────────────────────
@@ -216,7 +216,8 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
 
 // ─── CC Program Card ──────────────────────────────────────────────────────────
 function CCProgramCard({ program }: { program: CCOpportunityItem }) {
-  const cfg = CC_TYPE_CONFIG[program.type] ?? { label: program.type, icon: Star, badge: "bg-slate-100 text-slate-600 border-slate-200" };
+  const { t } = useTranslation();
+  const cfg = CC_TYPE_CONFIG[program.type] ?? { labelKey: `pages.scholarships.cc_${program.type}`, icon: Star, badge: "bg-slate-100 text-slate-600 border-slate-200" };
   const Icon = cfg.icon;
 
   return (
@@ -230,7 +231,7 @@ function CCProgramCard({ program }: { program: CCOpportunityItem }) {
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h3 className="font-semibold text-slate-900 text-sm">{program.name}</h3>
               <span className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", cfg.badge)}>
-                {cfg.label}
+                {t(cfg.labelKey)}
               </span>
             </div>
             <p className="text-sm text-slate-600 mb-2 leading-relaxed">{program.description}</p>
@@ -250,7 +251,7 @@ function CCProgramCard({ program }: { program: CCOpportunityItem }) {
           </div>
           {program.website && (
             <a href={program.website} target="_blank" rel="noopener noreferrer"
-              aria-label={`Open ${program.name} in a new tab`}
+              aria-label={t("pages.scholarships.openInNewTab", { name: program.name })}
               className="text-indigo-700 hover:text-indigo-900 flex-shrink-0 mt-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 p-1">
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
@@ -345,7 +346,7 @@ export default function Scholarships() {
         </div>
 
         {/* Tab bar */}
-        <div role="tablist" aria-label="Opportunity categories" className="flex gap-1 mb-6 bg-slate-100 rounded-lg p-1 w-fit">
+        <div role="tablist" aria-label={t("pages.scholarships.opportunityCategories")} className="flex gap-1 mb-6 bg-slate-100 rounded-lg p-1 w-fit">
           <button
             role="tab"
             aria-selected={tab === "scholarships"}
@@ -404,7 +405,7 @@ export default function Scholarships() {
                       </div>
                       <div className="flex flex-col items-end gap-2 flex-shrink-0">
                         <a href={s.sourceUrl} target="_blank" rel="noopener noreferrer"
-                          aria-label={`Open ${s.name} in a new tab`}
+                          aria-label={t("pages.scholarships.openInNewTab", { name: s.name })}
                           className="text-indigo-700 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 p-1">
                           <ExternalLink className="h-4 w-4" aria-hidden="true" />
                         </a>
@@ -461,7 +462,7 @@ export default function Scholarships() {
 
                 {/* Filter row */}
                 <div className="flex flex-wrap gap-1.5">
-                  {CC_FILTER_TYPES.map(({ key, label }) => {
+                  {CC_FILTER_TYPES.map(({ key, labelKey }) => {
                     const count = typeCounts[key] ?? 0;
                     if (key !== "all" && count === 0) return null;
                     return (
@@ -474,7 +475,7 @@ export default function Scholarships() {
                             : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                         )}
                       >
-                        {label} ({key === "all" ? typeCounts.all : count})
+                        {t(labelKey)} ({key === "all" ? typeCounts.all : count})
                       </button>
                     );
                   })}

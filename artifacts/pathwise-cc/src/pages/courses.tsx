@@ -99,11 +99,11 @@ interface TransferabilityResult {
 // ─── Constants ────────────────────────────────────────────────────────────────
 const GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F", "P", "NP", "W", "IP"];
 
-const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle2; color: string; bg: string; border: string }> = {
-  transferable: { label: "Transfers",  icon: CheckCircle2, color: "text-emerald-700", bg: "bg-emerald-50",  border: "border-emerald-200" },
-  likely:       { label: "Likely",     icon: CheckCircle2, color: "text-blue-700",    bg: "bg-blue-50",     border: "border-blue-200" },
-  uncertain:    { label: "Uncertain",  icon: HelpCircle,   color: "text-amber-700",   bg: "bg-amber-50",    border: "border-amber-200" },
-  unlikely:     { label: "Unlikely",   icon: XCircle,      color: "text-rose-700",    bg: "bg-rose-50",     border: "border-rose-200" },
+const STATUS_CONFIG: Record<string, { labelKey: string; icon: typeof CheckCircle2; color: string; bg: string; border: string }> = {
+  transferable: { labelKey: "pages.courses.status_transferable", icon: CheckCircle2, color: "text-emerald-700", bg: "bg-emerald-50",  border: "border-emerald-200" },
+  likely:       { labelKey: "pages.courses.status_likely",       icon: CheckCircle2, color: "text-blue-700",    bg: "bg-blue-50",     border: "border-blue-200" },
+  uncertain:    { labelKey: "pages.courses.status_uncertain",    icon: HelpCircle,   color: "text-amber-700",   bg: "bg-amber-50",    border: "border-amber-200" },
+  unlikely:     { labelKey: "pages.courses.status_unlikely",     icon: XCircle,      color: "text-rose-700",    bg: "bg-rose-50",     border: "border-rose-200" },
 };
 
 const SYSTEM_COLOR: Record<string, string> = {
@@ -111,13 +111,13 @@ const SYSTEM_COLOR: Record<string, string> = {
 };
 
 const IGETC_AREAS = [
-  { key: "area1AEnglish",          label: "Area 1A – English Composition" },
-  { key: "area1BCriticalThinking", label: "Area 1B – Critical Thinking" },
-  { key: "area2Math",              label: "Area 2 – Math & Quantitative Reasoning" },
-  { key: "area3Arts",              label: "Area 3 – Arts & Humanities" },
-  { key: "area4Social",            label: "Area 4 – Social & Behavioral Sciences" },
-  { key: "area5Science",           label: "Area 5 – Physical & Biological Sciences" },
-  { key: "area6Language",          label: "Area 6 – Languages Other Than English" },
+  { key: "area1AEnglish",          labelKey: "pages.courses.igetc_1A" },
+  { key: "area1BCriticalThinking", labelKey: "pages.courses.igetc_1B" },
+  { key: "area2Math",              labelKey: "pages.courses.igetc_2" },
+  { key: "area3Arts",              labelKey: "pages.courses.igetc_3" },
+  { key: "area4Social",            labelKey: "pages.courses.igetc_4" },
+  { key: "area5Science",           labelKey: "pages.courses.igetc_5" },
+  { key: "area6Language",          labelKey: "pages.courses.igetc_6" },
 ] as const;
 
 const CATEGORY_ICON: Record<string, typeof BookOpen> = {
@@ -134,7 +134,7 @@ function StatusBadge({ status }: { status: CourseTransferResult["status"] }) {
   return (
     <span className={cn("inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border", cfg.color, cfg.bg, cfg.border)}>
       <Icon className="h-3 w-3" />
-      {cfg.label}
+      {t(cfg.labelKey)}
     </span>
   );
 }
@@ -196,7 +196,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
       <div>
         <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
           <School className="h-4 w-4 text-indigo-500" />
-          Best University Matches for Your Course List
+          {t("pages.courses.bestUniMatches")}
         </h2>
         <div className="space-y-3">
           {result.bestMatches.map((m, i) => (
@@ -229,7 +229,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
       <div>
         <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-          IGETC Completion — {completedCount}/{IGETC_AREAS.length} areas
+          {t("pages.courses.igetcCompletion", { count: completedCount, total: IGETC_AREAS.length })}
         </h2>
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           {IGETC_AREAS.map((area, i) => {
@@ -237,9 +237,9 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
             return (
               <div key={area.key} className={cn("flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0", i % 2 === 0 ? "bg-white" : "bg-slate-50/60")}>
                 {done ? <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" /> : <AlertCircle className="h-4 w-4 text-slate-300 flex-shrink-0" />}
-                <span className={cn("text-sm", done ? "text-slate-800 font-medium" : "text-slate-600")}>{area.label}</span>
+                <span className={cn("text-sm", done ? "text-slate-800 font-medium" : "text-slate-600")}>{t(area.labelKey)}</span>
                 <span className={cn("ml-auto text-xs font-semibold px-2 py-0.5 rounded-full", done ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600")}>
-                  {done ? "Complete" : "Needed"}
+                  {done ? t("pages.courses.complete") : t("pages.courses.needed")}
                 </span>
               </div>
             );
@@ -254,7 +254,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
       <div>
         <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-slate-600" />
-          Course-by-Course Analysis
+          {t("pages.courses.analysisHeader")}
           <span className="text-xs font-normal text-slate-600">— tap any row for details</span>
         </h2>
         <div className="space-y-2">
@@ -759,7 +759,7 @@ export default function Courses() {
             {[
               { label: t("pages.courses.estimatedGpa"),  value: gpa.estimatedGpa > 0 ? gpa.estimatedGpa.toFixed(2) : "—" },
               { label: t("pages.courses.totalUnits"),    value: gpa.totalUnits },
-              { label: "Completed",      value: `${gpa.completedUnits} units` },
+              { label: t("pages.courses.sectionCompleted"),      value: `${gpa.completedUnits} ${t("pages.courses.totalUnits").toLowerCase()}` },
               { label: t("pages.courses.inProgressUnits"),    value: `${gpa.inProgressUnits} ${t("pages.courses.totalUnits").toLowerCase()}` },
             ].map(s => (
               <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-3 text-center">
@@ -812,9 +812,9 @@ export default function Courses() {
             {/* Course lists */}
             <div className="space-y-5">
               {[
-                { label: "Completed",   items: completed,  statusClass: "bg-emerald-100 text-emerald-700" },
+                { label: t("pages.courses.sectionCompleted"),   items: completed,  statusClass: "bg-emerald-100 text-emerald-700" },
                 { label: t("pages.courses.sectionInProgress"), items: inProgress, statusClass: "bg-blue-100 text-blue-700" },
-                { label: "Planned",     items: planned,    statusClass: "bg-slate-100 text-slate-600" },
+                { label: t("pages.courses.sectionPlanned"),     items: planned,    statusClass: "bg-slate-100 text-slate-600" },
               ].filter(g => g.items.length > 0).map(group => (
                 <Card key={group.label}>
                   <CardHeader className="pb-2">

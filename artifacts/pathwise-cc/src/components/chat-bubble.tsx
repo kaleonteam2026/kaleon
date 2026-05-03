@@ -59,6 +59,7 @@ function formatMessage(text: string) {
 }
 
 function SummaryCard({ text, onRestart }: { text: string; onRestart: () => void }) {
+  const { t } = useTranslation();
   const { score, strengths, improvements, closing } = parseSummary(text);
   return (
     <div className="bg-white border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] p-3 max-w-[90%]">
@@ -67,13 +68,13 @@ function SummaryCard({ text, onRestart }: { text: string; onRestart: () => void 
           <Trophy className="h-3.5 w-3.5 text-slate-900" />
         </div>
         <div className="flex-1">
-          <p className="text-[11px] uppercase tracking-widest font-bold text-slate-900" style={{ fontFamily: "JetBrains Mono, monospace" }}>// Interview Summary</p>
-          {score && <p className="text-base font-bold text-slate-900 leading-none mt-0.5">Score {score}/10</p>}
+          <p className="text-[11px] uppercase tracking-widest font-bold text-slate-900" style={{ fontFamily: "JetBrains Mono, monospace" }}>// {t("chat.interviewSummary")}</p>
+          {score && <p className="text-base font-bold text-slate-900 leading-none mt-0.5">{t("chat.scoreLabel", { score })}</p>}
         </div>
       </div>
       {strengths.length > 0 && (
         <div className="mt-2.5">
-          <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-700 mb-1">Strengths</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-700 mb-1">{t("chat.strengths")}</p>
           <ul className="space-y-1">
             {strengths.map((s, i) => (
               <li key={i} className="text-[11px] text-slate-700 flex gap-1.5"><span className="text-emerald-600 font-bold">+</span><span>{s}</span></li>
@@ -83,7 +84,7 @@ function SummaryCard({ text, onRestart }: { text: string; onRestart: () => void 
       )}
       {improvements.length > 0 && (
         <div className="mt-2.5">
-          <p className="text-[10px] uppercase tracking-wider font-bold text-rose-700 mb-1">Improve Next</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-rose-700 mb-1">{t("chat.improveNext")}</p>
           <ul className="space-y-1">
             {improvements.map((s, i) => (
               <li key={i} className="text-[11px] text-slate-700 flex gap-1.5"><span className="text-rose-600 font-bold">→</span><span>{s}</span></li>
@@ -98,7 +99,7 @@ function SummaryCard({ text, onRestart }: { text: string; onRestart: () => void 
         onClick={onRestart}
         className="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-900 border-2 border-slate-900 text-white text-[11px] uppercase tracking-wider font-bold hover:bg-slate-700"
       >
-        <RotateCcw className="h-3 w-3" /> New session
+        <RotateCcw className="h-3 w-3" /> {t("chat.newSession")}
       </button>
     </div>
   );
@@ -322,7 +323,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
           </div>
 
           {/* Messages */}
-          <div aria-live="polite" aria-atomic="false" aria-label="Conversation" className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-[#f4f4f5]">
+          <div aria-live="polite" aria-atomic="false" aria-label={t("chat.conversation")} className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-[#f4f4f5]">
             {/* Empty / setup states */}
             {mode === "ask" && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center px-4 pb-4">
@@ -350,7 +351,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                       <Sparkles className="h-4 w-4 text-slate-900" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">Practice Interview</p>
+                      <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">{t("chat.practiceInterview")}</p>
                       <p className="text-[10px] text-slate-500 uppercase tracking-widest" style={{ fontFamily: "JetBrains Mono, monospace" }}>// 5 questions · rubric feedback</p>
                     </div>
                   </div>
@@ -364,7 +365,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                     value={pendingTarget}
                     onChange={e => setPendingTarget(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void startInterview(); } }}
-                    placeholder="e.g. UCLA Honors Program, Hispanic Scholarship Fund"
+                    placeholder={t("chat.interviewTargetPlaceholder")}
                     className="w-full mt-1 text-xs px-3 py-2 border-2 border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
                     data-testid="interview-target-input"
                   />
@@ -414,7 +415,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
               );
             })}
             {loading && (
-              <div className="flex gap-2" role="status" aria-label="Advisor is responding">
+              <div className="flex gap-2" role="status" aria-label={t("chat.advisorResponding")}>
                 <div className="w-6 h-6 bg-white border-2 border-slate-900 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Bot className="h-3.5 w-3.5 text-slate-900" aria-hidden="true" />
                 </div>

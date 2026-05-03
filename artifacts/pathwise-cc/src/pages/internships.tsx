@@ -48,14 +48,14 @@ interface SearchResult {
 
 // ─── Type config ──────────────────────────────────────────────────────────────
 const TYPE_CONFIG: Record<InternshipType, {
-  label: string; icon: React.ElementType;
+  labelKey: string; icon: React.ElementType;
   bg: string; text: string; border: string; badge: string;
 }> = {
-  federal:          { label: "Federal Gov't",  icon: Landmark,  bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    badge: "bg-blue-100 text-blue-700 border-blue-200" },
-  california_state: { label: "CA State",       icon: Shield,    bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", badge: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  research:         { label: "Research",       icon: Beaker,    bg: "bg-violet-50",  text: "text-violet-700",  border: "border-violet-200",  badge: "bg-violet-100 text-violet-700 border-violet-200" },
-  private:          { label: "Private Sector", icon: Building2, bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   badge: "bg-amber-100 text-amber-700 border-amber-200" },
-  nonprofit:        { label: "Nonprofit",      icon: Heart,     bg: "bg-rose-50",    text: "text-rose-700",    border: "border-rose-200",    badge: "bg-rose-100 text-rose-700 border-rose-200" },
+  federal:          { labelKey: "pages.internships.type_federal_full",  icon: Landmark,  bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    badge: "bg-blue-100 text-blue-700 border-blue-200" },
+  california_state: { labelKey: "pages.internships.type_caState_full",   icon: Shield,    bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", badge: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  research:         { labelKey: "pages.internships.type_research_full",  icon: Beaker,    bg: "bg-violet-50",  text: "text-violet-700",  border: "border-violet-200",  badge: "bg-violet-100 text-violet-700 border-violet-200" },
+  private:          { labelKey: "pages.internships.type_private_full",   icon: Building2, bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   badge: "bg-amber-100 text-amber-700 border-amber-200" },
+  nonprofit:        { labelKey: "pages.internships.type_nonprofit_full", icon: Heart,     bg: "bg-rose-50",    text: "text-rose-700",    border: "border-rose-200",    badge: "bg-rose-100 text-rose-700 border-rose-200" },
 };
 
 const TERM_COLORS: Record<string, string> = {
@@ -88,7 +88,7 @@ function InternshipCard({ internship }: { internship: InternshipMatch }) {
         <div className="flex items-center gap-2 min-w-0">
           <Icon className={cn("h-4 w-4 flex-shrink-0", cfg.text)} />
           <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full border", cfg.badge)}>
-            {cfg.label}
+            {t(cfg.labelKey)}
           </span>
           <span className="text-xs text-slate-600 truncate">{internship.category}</span>
         </div>
@@ -117,14 +117,14 @@ function InternshipCard({ internship }: { internship: InternshipMatch }) {
 
         {/* Term + deadline */}
         <div className="flex flex-wrap items-center gap-1.5">
-          {internship.terms.map(t => (
-            <span key={t} className={cn("text-xs px-2 py-0.5 rounded-full border font-semibold", TERM_COLORS[t] ?? "bg-slate-100 text-slate-600 border-slate-200")}>
-              {t}
+          {internship.terms.map(term => (
+            <span key={term} className={cn("text-xs px-2 py-0.5 rounded-full border font-semibold", TERM_COLORS[term] ?? "bg-slate-100 text-slate-600 border-slate-200")}>
+              {t(`pages.internships.season_${term.toLowerCase()}`, { defaultValue: term })}
             </span>
           ))}
           {internship.applicationDeadline && (
             <span className="flex items-center gap-1 text-xs text-slate-600 ml-1">
-              <CalendarDays className="h-3 w-3" />Deadline: {internship.applicationDeadline}
+              <CalendarDays className="h-3 w-3" />{t("pages.internships.deadlineLabel")} {internship.applicationDeadline}
             </span>
           )}
         </div>
