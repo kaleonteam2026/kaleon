@@ -3,6 +3,8 @@ import { db, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { generateTransferabilityAnalysis, generateCourseCatalog } from "../services/aiService.js";
 import { getOwnedProfile, getOwnedCourse } from "../lib/ownership";
+import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { invalidateIgetcAnalysis } from "../lib/igetc-cache";
 
 const router = Router();
 
@@ -59,6 +61,7 @@ router.post("/profiles/:profileId/courses", async (req, res) => {
       term: body.term as string | undefined,
     }).returning();
 
+    invalidateIgetcAnalysis(profileId);
     res.status(201).json(course[0]);
   } catch (err) {
     req.log.error({ err }, "Error adding course");
@@ -92,6 +95,7 @@ router.patch("/courses/:courseId", async (req, res) => {
       .where(eq(coursesTable.id, courseId))
       .returning();
 
+    invalidateIgetcAnalysis(owner.course.profileId);
     res.json(updated[0]);
   } catch (err) {
     req.log.error({ err }, "Error updating course");
@@ -112,6 +116,7 @@ router.delete("/courses/:courseId", async (req, res) => {
     if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Course not found" }); return; }
 
     await db.delete(coursesTable).where(eq(coursesTable.id, courseId));
+    invalidateIgetcAnalysis(owner.course.profileId);
     res.status(204).send();
   } catch (err) {
     req.log.error({ err }, "Error deleting course");
@@ -178,6 +183,37 @@ router.get("/profiles/:profileId/gpa-summary", async (req, res) => {
 const catalogCache = new Map<string, { data: unknown; cachedAt: number }>();
 const CATALOG_TTL = 24 * 60 * 60 * 1000;
 
+// Per-user hourly rate limit for catalog and transferability endpoints
+const CATALOG_PER_USER_HOURLY = 3;
+const catalogRateLimiter = new Map<string, { count: number; resetAt: number }>();
+
+function checkCatalogRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = catalogRateLimiter.get(userId);
+  if (!entry || entry.resetAt < now) {
+    catalogRateLimiter.set(userId, { count: 1, resetAt: now + 3600000 });
+    return true;
+  }
+  if (entry.count >= CATALOG_PER_USER_HOURLY) return false;
+  entry.count++;
+  return true;
+}
+
+const TRANSFER_PER_USER_HOURLY = 3;
+const transferRateLimiter = new Map<string, { count: number; resetAt: number }>();
+
+function checkTransferRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = transferRateLimiter.get(userId);
+  if (!entry || entry.resetAt < now) {
+    transferRateLimiter.set(userId, { count: 1, resetAt: now + 3600000 });
+    return true;
+  }
+  if (entry.count >= TRANSFER_PER_USER_HOURLY) return false;
+  entry.count++;
+  return true;
+}
+
 router.get("/profiles/:profileId/course-catalog", async (req, res) => {
   if (!req.isAuthenticated()) {
     res.status(401).json({ error: "Unauthorized" });
@@ -207,6 +243,18 @@ router.get("/profiles/:profileId/course-catalog", async (req, res) => {
       return;
     }
 
+    // Rate limit only applies when an actual AI call is about to be made
+    if (!checkCatalogRateLimit(req.user.id)) {
+      res.status(429).json({ error: `Rate limit exceeded. You can request up to ${CATALOG_PER_USER_HOURLY} course catalogs per hour. Please try again later.` });
+      return;
+    }
+
+    const cap = await incrementGlobalAi();
+    if (!cap.allowed) {
+      res.status(429).json({ error: globalCapMessage(cap.cap) });
+      return;
+    }
+
     const catalog = await generateCourseCatalog(college, major);
     catalogCache.set(cacheKey, { data: catalog, cachedAt: Date.now() });
     res.json(catalog);
@@ -217,7 +265,7 @@ router.get("/profiles/:profileId/course-catalog", async (req, res) => {
 });
 
 // POST /api/profiles/:profileId/transferability-analysis
-// Rate-limit: one AI call per profile per 10 minutes
+// Rate-limit: one AI call per profile per 10 minutes (plus per-user hourly cap)
 const transferabilityCache = new Map<number, { data: unknown; cachedAt: number }>();
 const TRANSFER_TTL = 10 * 60 * 1000;
 
@@ -246,6 +294,18 @@ router.post("/profiles/:profileId/transferability-analysis", async (req, res) =>
     const courses = await db.select().from(coursesTable).where(eq(coursesTable.profileId, profileId));
     if (courses.length === 0) {
       res.status(400).json({ error: "No courses found. Add your courses before running the analysis." });
+      return;
+    }
+
+    // Rate limit only applies when an actual AI call is about to be made
+    if (!checkTransferRateLimit(req.user.id)) {
+      res.status(429).json({ error: `Rate limit exceeded. You can request up to ${TRANSFER_PER_USER_HOURLY} transferability analyses per hour. Please try again later.` });
+      return;
+    }
+
+    const cap = await incrementGlobalAi();
+    if (!cap.allowed) {
+      res.status(429).json({ error: globalCapMessage(cap.cap) });
       return;
     }
 

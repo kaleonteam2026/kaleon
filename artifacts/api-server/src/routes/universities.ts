@@ -2,6 +2,7 @@ import { Router } from "express";
 import universities from "../data/universities.json" assert { type: "json" };
 import { generateCampusOpportunities, generateCCOpportunities } from "../services/aiService.js";
 import { getOwnedProfile } from "../lib/ownership";
+import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
 
 const router = Router();
 
@@ -9,6 +10,22 @@ const router = Router();
 const opportunitiesCache = new Map<string, { data: unknown; cachedAt: number }>();
 const ccOppsCache = new Map<string, { data: unknown; cachedAt: number }>();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+// Per-user hourly rate limit for CC campus opportunities (profile-keyed, mutable fields)
+const CC_OPPS_PER_USER_HOURLY = 3;
+const ccOppsRateLimiter = new Map<string, { count: number; resetAt: number }>();
+
+function checkCCOppsRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = ccOppsRateLimiter.get(userId);
+  if (!entry || entry.resetAt < now) {
+    ccOppsRateLimiter.set(userId, { count: 1, resetAt: now + 3600000 });
+    return true;
+  }
+  if (entry.count >= CC_OPPS_PER_USER_HOURLY) return false;
+  entry.count++;
+  return true;
+}
 
 // GET /api/universities
 router.get("/universities", (_req, res) => {
@@ -36,10 +53,16 @@ router.get("/universities/:uniId/campus-opportunities", async (req, res) => {
     return;
   }
 
-  // Check cache
+  // Check cache — keyed by fixed curated university ID, 24-hour TTL
   const cached = opportunitiesCache.get(uniId);
   if (cached && Date.now() - cached.cachedAt < CACHE_TTL) {
     res.json(cached.data);
+    return;
+  }
+
+  const cap = await incrementGlobalAi();
+  if (!cap.allowed) {
+    res.status(429).json({ error: globalCapMessage(cap.cap) });
     return;
   }
 
@@ -71,6 +94,18 @@ router.get("/profiles/:profileId/cc-campus-opportunities", async (req, res) => {
     const cached = ccOppsCache.get(cacheKey);
     if (cached && Date.now() - cached.cachedAt < CACHE_TTL) {
       res.json(cached.data);
+      return;
+    }
+
+    // Rate limit only applies when an actual AI call is about to be made
+    if (!checkCCOppsRateLimit(req.user.id)) {
+      res.status(429).json({ error: `Rate limit exceeded. You can request up to ${CC_OPPS_PER_USER_HOURLY} CC opportunity lookups per hour. Please try again later.` });
+      return;
+    }
+
+    const cap = await incrementGlobalAi();
+    if (!cap.allowed) {
+      res.status(429).json({ error: globalCapMessage(cap.cap) });
       return;
     }
 

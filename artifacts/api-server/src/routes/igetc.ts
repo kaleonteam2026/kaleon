@@ -3,8 +3,26 @@ import { db, igetcProgressTable, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { getOwnedProfile } from "../lib/ownership";
+import { incrementGlobalAi, globalCapMessage } from "../lib/global-cap";
+import { igetcAnalysisCache, IGETC_ANALYSIS_TTL } from "../lib/igetc-cache";
 
 const router = Router();
+
+// Per-user hourly rate limit for IGETC analyze endpoint
+const IGETC_PER_USER_HOURLY = 3;
+const igetcRateLimiter = new Map<string, { count: number; resetAt: number }>();
+
+function checkIgetcRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = igetcRateLimiter.get(userId);
+  if (!entry || entry.resetAt < now) {
+    igetcRateLimiter.set(userId, { count: 1, resetAt: now + 3600000 });
+    return true;
+  }
+  if (entry.count >= IGETC_PER_USER_HOURLY) return false;
+  entry.count++;
+  return true;
+}
 
 router.get("/profiles/:profileId/igetc", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
@@ -47,6 +65,7 @@ router.put("/profiles/:profileId/igetc", async (req, res) => {
 
 router.post("/profiles/:profileId/igetc/analyze", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+
   const profileId = parseInt(req.params.profileId);
   const owner = await getOwnedProfile(profileId, req.user.id);
   if (!owner.ok) { res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" }); return; }
@@ -56,6 +75,26 @@ router.post("/profiles/:profileId/igetc/analyze", async (req, res) => {
       res.json({ areas: {}, note: "Add courses first to enable AI analysis." });
       return;
     }
+
+    // Return cached result — cache is invalidated whenever courses are mutated
+    const cachedAnalysis = igetcAnalysisCache.get(profileId);
+    if (cachedAnalysis && Date.now() - cachedAnalysis.cachedAt < IGETC_ANALYSIS_TTL) {
+      res.json(cachedAnalysis.data);
+      return;
+    }
+
+    // Rate limit only applies when an actual AI call is about to be made
+    if (!checkIgetcRateLimit(req.user.id)) {
+      res.status(429).json({ error: `Rate limit exceeded. You can request up to ${IGETC_PER_USER_HOURLY} IGETC analyses per hour. Please try again later.` });
+      return;
+    }
+
+    const cap = await incrementGlobalAi();
+    if (!cap.allowed) {
+      res.status(429).json({ error: globalCapMessage(cap.cap) });
+      return;
+    }
+
     const courseList = courses
       .map(c => `${c.courseCode ?? ""} ${c.courseName} (${c.units ?? 3} units, ${c.status ?? "unknown"}, grade: ${c.grade ?? "unknown"})`)
       .join("\n");
@@ -73,7 +112,9 @@ router.post("/profiles/:profileId/igetc/analyze", async (req, res) => {
     const text = response.content[0].type === "text" ? response.content[0].text : "{}";
     const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
     const areas = JSON.parse(cleaned) as Record<string, boolean>;
-    res.json({ areas });
+    const result = { areas };
+    igetcAnalysisCache.set(profileId, { data: result, cachedAt: Date.now() });
+    res.json(result);
   } catch (err) {
     req.log.error({ err }, "Error analyzing IGETC courses");
     res.status(500).json({ error: "Failed to analyze courses" });
