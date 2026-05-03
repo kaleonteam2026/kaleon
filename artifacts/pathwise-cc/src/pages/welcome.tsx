@@ -190,13 +190,16 @@ export default function Welcome({ persona }: WelcomeProps) {
           {content.headline}
         </h1>
 
-        <p
+        <motion.p
+          initial={motionOn ? { opacity: 0, y: 8 } : false}
+          animate={motionOn ? { opacity: 1, y: 0 } : undefined}
+          transition={{ duration: DUR.base, ease: [0.16, 1, 0.3, 1] }}
           className={`text-lg md:text-xl mb-8 max-w-2xl leading-relaxed ${
             isDark ? "text-slate-300" : "text-slate-700"
           }`}
         >
           {content.subhead}
-        </p>
+        </motion.p>
 
         <motion.ul
           className="space-y-3 mb-10 max-w-2xl"

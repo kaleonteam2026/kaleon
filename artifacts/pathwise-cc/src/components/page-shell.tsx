@@ -1,8 +1,6 @@
 import { ReactNode } from "react";
-import { motion } from "framer-motion";
 import Nav from "@/components/nav";
 import { cn } from "@/lib/utils";
-import { fadeUp, useMotionEnabled } from "@/lib/motion";
 
 const FONT_STYLES = `
   .pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
@@ -24,9 +22,8 @@ export function PageShell({
   const widthClass =
     maxWidth === "narrow" ? "max-w-3xl" :
     maxWidth === "wide" ? "max-w-[1280px]" : "max-w-5xl";
-  const motionEnabled = useMotionEnabled();
-  const variants = fadeUp(8, 0.22);
-
+  // Children render statically so each page can compose its own scoped motion
+  // beneath the static LCP header.
   return (
     <div className="min-h-screen bg-[#f4f4f5] text-slate-900 pwc-font-sans">
       <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
@@ -43,13 +40,7 @@ export function PageShell({
             </div>
             {action && <div className="flex-shrink-0">{action}</div>}
           </header>
-          {motionEnabled ? (
-            <motion.div initial="hidden" animate="show" variants={variants}>
-              {children}
-            </motion.div>
-          ) : (
-            children
-          )}
+          {children}
         </div>
       </main>
     </div>
