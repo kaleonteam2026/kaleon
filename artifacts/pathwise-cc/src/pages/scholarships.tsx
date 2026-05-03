@@ -85,6 +85,7 @@ interface PplxResult {
 }
 
 function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -109,14 +110,14 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
         body: JSON.stringify({ profileId, query: overrideQuery ?? query }),
       });
       if (!r.ok) {
-        const err = await r.json().catch(() => ({ error: "Search failed" }));
-        throw new Error(err.error ?? "Search failed");
+        const err = await r.json().catch(() => ({ error: t("pages.scholarships.searchFailed") }));
+        throw new Error(err.error ?? t("pages.scholarships.searchFailed"));
       }
       setResult(await r.json());
       setOpen(true);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Search failed";
-      toast({ title: "Live search unavailable", description: msg, variant: "destructive" });
+      const msg = e instanceof Error ? e.message : t("pages.scholarships.searchFailed");
+      toast({ title: t("pages.scholarships.liveUnavailable"), description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
       void refreshQuota();
@@ -131,17 +132,17 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-            Live Scholarship Search
-            <span className="text-[10px] uppercase tracking-wider bg-violet-200 text-violet-800 px-1.5 py-0.5 rounded-full font-bold">Beta</span>
+            {t("pages.scholarships.liveSearchTitle")}
+            <span className="text-[10px] uppercase tracking-wider bg-violet-200 text-violet-800 px-1.5 py-0.5 rounded-full font-bold">{t("common.beta", { defaultValue: "Beta" })}</span>
           </h3>
           <p className="text-xs text-slate-600 mt-0.5">
-            Search the live web for currently-open scholarships matching your profile, with cited sources.
+            {t("pages.scholarships.liveSearchDesc")}
           </p>
         </div>
       </div>
       <div className="flex flex-col sm:flex-row gap-2">
         <Input
-          placeholder='e.g. "STEM scholarships for transfer students" or leave blank for personalized results'
+          placeholder={t("pages.scholarships.livePlaceholder")}
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !loading) void runSearch(); }}
@@ -153,12 +154,12 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
           className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-          {loading ? "Searching..." : "Search"}
+          {loading ? t("pages.scholarships.searching") : t("pages.scholarships.searchBtn")}
         </button>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
         <p className="text-[10px] text-slate-500 italic">
-          Each search uses one live web-search credit. Repeat searches within 24 hours are served from cache for free.
+          {t("pages.scholarships.liveCreditNote")}
         </p>
         {quota && (
           <p
@@ -169,8 +170,8 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
             data-testid="live-quota-scholarships"
           >
             {onCooldown
-              ? `Cooldown: ${quota.cooldownSecondsLeft}s`
-              : `${quota.remainingToday} of ${quota.dailyCap} live searches left today`}
+              ? t("pages.scholarships.cooldown", { seconds: quota.cooldownSecondsLeft })
+              : t("pages.scholarships.searchesLeft", { remaining: quota.remainingToday, total: quota.dailyCap })}
           </p>
         )}
       </div>
@@ -179,16 +180,16 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
         <div className="mt-4 bg-white border border-violet-200 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold text-violet-700 uppercase tracking-wide flex items-center gap-1">
-              <Sparkles className="h-3 w-3" /> Live Results
+              <Sparkles className="h-3 w-3" /> {t("pages.scholarships.liveResults")}
             </p>
-            <button onClick={() => setOpen(false)} className="text-xs text-slate-700 hover:text-slate-900 underline focus:outline-none focus:ring-2 focus:ring-violet-500 px-1">Hide</button>
+            <button onClick={() => setOpen(false)} className="text-xs text-slate-700 hover:text-slate-900 underline focus:outline-none focus:ring-2 focus:ring-violet-500 px-1">{t("pages.scholarships.hide")}</button>
           </div>
           <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed text-sm">
             {result.answer}
           </div>
           {result.citations.length > 0 && (
             <div className="pt-3 border-t border-slate-100">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Sources</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">{t("pages.scholarships.sourcesLabel")}</p>
               <ul className="space-y-1.5">
                 {result.citations.slice(0, 8).map((c, i) => (
                   <li key={i} className="text-xs">
@@ -284,7 +285,7 @@ export default function Scholarships() {
     fetch(scholarshipUrl, { method: scholarshipMethod, credentials: "include" })
       .then(r => r.json())
       .then((s: Scholarship[]) => setScholarships(s))
-      .catch(() => toast({ title: "Error loading scholarships", variant: "destructive" }))
+      .catch(() => toast({ title: t("pages.scholarships.toastErrorScholarships"), variant: "destructive" }))
       .finally(() => setLoading(false));
   }, [pid]);
 
@@ -298,7 +299,7 @@ export default function Scholarships() {
     fetch(`/api/profiles/${pid}/cc-campus-opportunities`, { credentials: "include" })
       .then(r => r.json())
       .then((d: CCOpportunitiesResult) => setCcOpps(d))
-      .catch(() => toast({ title: "Could not load CC programs", variant: "destructive" }))
+      .catch(() => toast({ title: t("pages.scholarships.toastErrorCC"), variant: "destructive" }))
       .finally(() => setCcLoading(false));
   };
 
@@ -337,9 +338,9 @@ export default function Scholarships() {
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.scholarships.pageTitle")}</h1>
           <p className="text-slate-600 text-sm mt-1">
             {pid
-              ? "Personalized scholarship recommendations + on-campus programs at your community college."
-              : "Browse scholarships and community college campus resources."}{" "}
-            Always verify deadlines and requirements on official sites.
+              ? t("pages.scholarships.personalizedDesc")
+              : t("pages.scholarships.browseDesc")}{" "}
+            {t("pages.scholarships.verifyOfficial")}
           </p>
         </div>
 
@@ -353,7 +354,7 @@ export default function Scholarships() {
               tab === "scholarships" ? "bg-white text-indigo-800 shadow-sm" : "text-slate-700 hover:text-slate-900")}
           >
             <Award className="inline h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-            Scholarships ({filteredScholarships.length})
+            {t("pages.scholarships.scholarshipsTab")} ({filteredScholarships.length})
           </button>
           <button
             role="tab"
@@ -363,7 +364,7 @@ export default function Scholarships() {
               tab === "cc_programs" ? "bg-white text-indigo-800 shadow-sm" : "text-slate-700 hover:text-slate-900")}
           >
             <Building2 className="inline h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-            My CC Programs
+            {t("pages.scholarships.myCCPrograms")}
           </button>
         </div>
 
@@ -387,13 +388,13 @@ export default function Scholarships() {
                         <div className="flex flex-wrap items-center gap-2 mb-1">
                           <h3 className="font-semibold text-slate-900">{s.name}</h3>
                           {s.minGpa && (
-                            <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">GPA {s.minGpa}+</span>
+                            <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{t("pages.scholarships.gpaPrefix")} {s.minGpa}+</span>
                           )}
                         </div>
                         <p className="text-sm text-slate-600 mb-2">{s.description}</p>
                         <div className="flex flex-wrap gap-3 text-xs text-slate-500">
                           <span className="font-semibold text-emerald-600">{s.amount}</span>
-                          <span>Deadline: {s.deadline}</span>
+                          <span>{t("pages.scholarships.deadline")} {s.deadline}</span>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-2">
                           {s.eligibilityTags.slice(0, 5).map(tag => (
@@ -410,10 +411,10 @@ export default function Scholarships() {
                         <button
                           onClick={() => window.dispatchEvent(new CustomEvent("dyp:start-interview", { detail: { target: s.name } }))}
                           className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-1 bg-amber-100 text-slate-900 border border-amber-300 hover:bg-amber-200 rounded-full"
-                          title="Practice an interview for this scholarship"
+                          title={t("pages.scholarships.practiceTitle")}
                           data-testid={`practice-interview-${s.id}`}
                         >
-                          <Mic className="h-3 w-3" /> Practice
+                          <Mic className="h-3 w-3" /> {t("pages.scholarships.practice")}
                         </button>
                       </div>
                     </div>
@@ -438,7 +439,7 @@ export default function Scholarships() {
                 <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mx-auto mb-3" />
                 <p className="text-slate-600 font-medium">{t("pages.scholarships.loadingPrograms")}</p>
                 <p className="text-slate-400 text-sm mt-1">
-                  AI is compiling programs, clubs, and resources at your specific community college.
+                  {t("pages.scholarships.compilingPrograms")}
                 </p>
               </div>
             ) : ccOpps ? (

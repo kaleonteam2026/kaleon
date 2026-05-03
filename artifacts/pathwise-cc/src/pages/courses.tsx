@@ -128,6 +128,7 @@ const CATEGORY_ICON: Record<string, typeof BookOpen> = {
 
 // ─── Transferability sub-components ──────────────────────────────────────────
 function StatusBadge({ status }: { status: CourseTransferResult["status"] }) {
+  const { t } = useTranslation();
   const cfg = STATUS_CONFIG[status];
   const Icon = cfg.icon;
   return (
@@ -139,6 +140,7 @@ function StatusBadge({ status }: { status: CourseTransferResult["status"] }) {
 }
 
 function CourseAnalysisRow({ c }: { c: CourseTransferResult }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const cfg = STATUS_CONFIG[c.status];
   return (
@@ -174,6 +176,7 @@ function CourseAnalysisRow({ c }: { c: CourseTransferResult }) {
 }
 
 function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
+  const { t } = useTranslation();
   const igetc = result.igetcSummary;
   const completedCount = IGETC_AREAS.filter(a => igetc[a.key]).length;
   return (
@@ -244,7 +247,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
         </div>
         <p className="text-xs text-slate-600 mt-2">
           IGETC completion qualifies you for any UC or CSU with GE satisfied.{" "}
-          <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">Verify on assist.org →</a>
+          <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">{t("pages.courses.verifyAssist")}</a>
         </p>
       </div>
 
@@ -293,6 +296,7 @@ interface CoursePickerProps {
 }
 
 function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -335,7 +339,7 @@ function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerPr
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by course code or name…"
+            placeholder={t("pages.courses.catalogSearchPlaceholder")}
             className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:bg-white"
           />
           {search && (
@@ -367,7 +371,7 @@ function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerPr
       {/* Course list */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
         {filtered.length === 0 ? (
-          <div className="text-center py-10 text-slate-600 text-sm">No courses match your search.</div>
+          <div className="text-center py-10 text-slate-600 text-sm">{t("pages.courses.noCoursesMatch")}</div>
         ) : (
           filtered.map(c => {
             const added = alreadyAdded.has(`${c.courseCode}::${c.courseName}`);
@@ -400,9 +404,9 @@ function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerPr
                       <span className="text-xs bg-teal-50 text-teal-600 border border-teal-100 px-1.5 py-0.5 rounded-full">CSU GE {c.csuGEArea}</span>
                     )}
                     {c.transferable && (
-                      <span className="text-xs bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 py-0.5 rounded-full">Transferable</span>
+                      <span className="text-xs bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 py-0.5 rounded-full">{t("pages.courses.transferable")}</span>
                     )}
-                    {added && <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full">Already added</span>}
+                    {added && <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full">{t("pages.courses.alreadyAdded")}</span>}
                   </div>
                 </div>
                 {!added && <ChevronRight className="h-4 w-4 text-indigo-400 flex-shrink-0 mt-1" />}
@@ -469,7 +473,7 @@ function CourseDetailForm({ course, onSave, onBack, saving }: CourseDetailFormPr
           <div className="space-y-1.5">
             <Label>Grade</Label>
             <Select value={grade} onValueChange={setGrade}>
-              <SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("pages.courses.gradePlaceholder")} /></SelectTrigger>
               <SelectContent>
                 {GRADES.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
               </SelectContent>
@@ -480,7 +484,7 @@ function CourseDetailForm({ course, onSave, onBack, saving }: CourseDetailFormPr
 
       <div className="space-y-1.5">
         <Label>Term (optional)</Label>
-        <Input value={term} onChange={e => setTerm(e.target.value)} placeholder="e.g. Fall 2024" />
+        <Input value={term} onChange={e => setTerm(e.target.value)} placeholder={t("pages.courses.termPlaceholder")} />
       </div>
 
       <Button
@@ -508,6 +512,7 @@ function CatalogModal({
   onAddCourse: (course: CatalogCourse, detail: { grade?: string; status: string; term: string }) => Promise<void>;
   pid: number;
 }) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<CatalogCourse | null>(null);
   const [saving, setSaving] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -541,7 +546,7 @@ function CatalogModal({
         tabIndex={-1}
         className="relative bg-white w-full sm:max-w-xl sm:mx-4 sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col overflow-hidden focus:outline-none"
         style={{ height: "85vh" }}>
-        <h2 id="catalog-modal-title" className="sr-only">Add a course from your college&apos;s catalog</h2>
+        <h2 id="catalog-modal-title" className="sr-only">{t("pages.courses.catalogModalTitle")}</h2>
 
         {catalogLoading && (
           <div className="flex flex-col items-center justify-center py-16 px-6 gap-4">
@@ -635,12 +640,12 @@ export default function Courses() {
       const r = await fetch(`/api/profiles/${pid}/course-catalog`, { credentials: "include" });
       if (!r.ok) {
         const err = await r.json() as { error?: string };
-        throw new Error(err.error ?? "Could not load catalog");
+        throw new Error(err.error ?? t("pages.courses.couldNotLoadCatalog"));
       }
       const data = await r.json() as CourseCatalog;
       setCatalog(data);
     } catch (err) {
-      setCatalogError(err instanceof Error ? err.message : "Failed to load course catalog");
+      setCatalogError(err instanceof Error ? err.message : t("pages.courses.failedLoadCatalog"));
     } finally {
       setCatalogLoading(false);
     }
@@ -663,13 +668,13 @@ export default function Courses() {
       }),
       credentials: "include",
     });
-    if (!r.ok) throw new Error("Failed to add course");
+    if (!r.ok) throw new Error(t("pages.courses.failedAddCourse"));
     const created = await r.json() as Course;
     setCourses(prev => [...prev, created]);
     setAnalysis(null);
     fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" })
       .then(r => r.json()).then((g: GpaSummary) => setGpa(g)).catch(() => {});
-    toast({ title: `${catalogCourse.courseCode} added!` });
+    toast({ title: t("pages.courses.toastAdded", { code: catalogCourse.courseCode }) });
   };
 
   const deleteCourse = async (courseId: number) => {
@@ -693,7 +698,7 @@ export default function Courses() {
       });
       if (!r.ok) {
         const err = await r.json() as { error?: string };
-        throw new Error(err.error ?? "Analysis failed");
+        throw new Error(err.error ?? t("pages.courses.analysisFailed"));
       }
       const data = await r.json() as TransferabilityResult;
       setAnalysis(data);
@@ -752,10 +757,10 @@ export default function Courses() {
         {gpa && gpa.courseCount > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             {[
-              { label: "Estimated GPA",  value: gpa.estimatedGpa > 0 ? gpa.estimatedGpa.toFixed(2) : "—" },
-              { label: "Total Units",    value: gpa.totalUnits },
+              { label: t("pages.courses.estimatedGpa"),  value: gpa.estimatedGpa > 0 ? gpa.estimatedGpa.toFixed(2) : "—" },
+              { label: t("pages.courses.totalUnits"),    value: gpa.totalUnits },
               { label: "Completed",      value: `${gpa.completedUnits} units` },
-              { label: "In Progress",    value: `${gpa.inProgressUnits} units` },
+              { label: t("pages.courses.inProgressUnits"),    value: `${gpa.inProgressUnits} ${t("pages.courses.totalUnits").toLowerCase()}` },
             ].map(s => (
               <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-xl font-bold text-indigo-600">{s.value}</div>
@@ -808,7 +813,7 @@ export default function Courses() {
             <div className="space-y-5">
               {[
                 { label: "Completed",   items: completed,  statusClass: "bg-emerald-100 text-emerald-700" },
-                { label: "In Progress", items: inProgress, statusClass: "bg-blue-100 text-blue-700" },
+                { label: t("pages.courses.sectionInProgress"), items: inProgress, statusClass: "bg-blue-100 text-blue-700" },
                 { label: "Planned",     items: planned,    statusClass: "bg-slate-100 text-slate-600" },
               ].filter(g => g.items.length > 0).map(group => (
                 <Card key={group.label}>
@@ -869,8 +874,8 @@ export default function Courses() {
               {analyzing && (
                 <div className="mt-4 bg-white/60 rounded-xl p-4 text-center">
                   <Loader2 className="h-8 w-8 animate-spin text-indigo-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-indigo-800">Checking articulation agreements…</p>
-                  <p className="text-xs text-indigo-500 mt-1">AI is cross-referencing your courses with ASSIST.org data. This takes ~20 seconds.</p>
+                  <p className="text-sm font-medium text-indigo-800">{t("pages.courses.checkingArticulation")}</p>
+                  <p className="text-xs text-indigo-500 mt-1">{t("pages.courses.crossReferencing")}</p>
                 </div>
               )}
             </div>

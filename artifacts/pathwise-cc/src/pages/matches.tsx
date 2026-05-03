@@ -44,8 +44,11 @@ const SCORE_BAR: Record<string, string> = {
   red: "bg-red-500",
 };
 
-const COST_LABELS: Record<string, string> = {
-  low: "Low (CSU rate)", medium: "Medium", high: "High (UC rate)", very_high: "High (Private)",
+const COST_KEYS: Record<string, string> = {
+  low: "pages.matches.cost_low",
+  medium: "pages.matches.cost_medium",
+  high: "pages.matches.cost_high",
+  very_high: "pages.matches.cost_very_high",
 };
 
 export default function Matches() {
@@ -63,7 +66,7 @@ export default function Matches() {
     fetch(`/api/profiles/${pid}/generate-matches`, { method: "POST", credentials: "include" })
       .then(r => r.json())
       .then((m: Match[]) => setMatches(m))
-      .catch(() => toast({ title: "Error loading matches", variant: "destructive" }))
+      .catch(() => toast({ title: t("pages.matches.toastError"), variant: "destructive" }))
       .finally(() => setLoading(false));
   }, [pid]);
 
@@ -112,7 +115,7 @@ export default function Matches() {
                   filterSystem === sys ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"
                 )}
               >
-                {sys === "all" ? "All" : sys}
+                {sys === "all" ? t("pages.matches.filterAll") : sys}
               </button>
             ))}
           </div>
@@ -159,10 +162,10 @@ export default function Matches() {
                     <div className="flex flex-wrap gap-3 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
                         <TrendingUp className="h-3 w-3" />
-                        GPA: {match.gpaRangeMin.toFixed(1)}–{match.gpaRangeRecommended.toFixed(1)}
+                        {t("pages.matches.gpaLabel")} {match.gpaRangeMin.toFixed(1)}–{match.gpaRangeRecommended.toFixed(1)}
                       </span>
-                      <span>Cost: {COST_LABELS[match.costCategory] ?? match.costCategory}</span>
-                      <span>Transfer-friendliness: {match.transferFriendliness}/100</span>
+                      <span>{t("pages.matches.costLabel")} {COST_KEYS[match.costCategory] ? t(COST_KEYS[match.costCategory]) : match.costCategory}</span>
+                      <span>{t("pages.matches.transferFriendliness")} {match.transferFriendliness}/100</span>
                     </div>
 
                     {match.notes && (
@@ -183,7 +186,7 @@ export default function Matches() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-500 hover:text-indigo-700 flex-shrink-0"
-                    title="Official transfer info"
+                    title={t("pages.matches.officialTransfer")}
                   >
                     <ExternalLink className="h-4 w-4" />
                   </a>
@@ -197,12 +200,11 @@ export default function Matches() {
         {/* Disclaimer + CTA */}
         <div className="border-t border-slate-200 py-8 space-y-4">
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700">
-            <strong>Disclaimer:</strong> Compatibility scores are AI estimates based on publicly available data as of early 2025.
-            They are not guarantees of admission. GPA ranges and requirements change — always verify with official sources.
+            <strong>{t("pages.matches.disclaimerTitle")}</strong> {t("pages.matches.disclaimerBody")}
           </div>
           <div className="text-right">
             <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
-              Generate AI Pathways <ArrowRight className="ml-2 h-4 w-4" />
+              {t("pages.matches.generatePathways")} <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>

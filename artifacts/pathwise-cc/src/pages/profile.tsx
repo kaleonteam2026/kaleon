@@ -274,8 +274,8 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
       const data = (await r.json()) as { remindersCreated: number };
       toast({
         title: data.remindersCreated > 0
-          ? `Created ${data.remindersCreated} new reminder${data.remindersCreated > 1 ? "s" : ""}`
-          : "No new reminders right now",
+          ? t(data.remindersCreated === 1 ? "pages.profile.createdRemindersOne" : "pages.profile.createdRemindersOther", { count: data.remindersCreated })
+          : t("pages.profile.noNewReminders"),
       });
     } catch {
       toast({ title: t("pages.profile.toastRefreshError"), variant: "destructive" });
