@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { PageMotion } from "@/components/page-motion";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import {
   Plus, Trash2, Loader2, ArrowRight, BookOpen, FlaskConical,
@@ -755,7 +754,6 @@ export default function Courses() {
           </Button>
         </div>
 
-        <PageMotion>
         {/* GPA Summary */}
         {gpa && gpa.courseCount > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -901,7 +899,6 @@ export default function Courses() {
             View My Pathway <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
-        </PageMotion>
       </main>
     </div>
   );

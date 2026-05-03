@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import Nav from "@/components/nav";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
-import { fadeUp, staggerContainer, useMotionEnabled } from "@/lib/motion";
+import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import {
   AlertCircle,
@@ -86,6 +86,9 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const reducedMotion = useReducedMotion();
+  const dashMotionOn = useMotionEnabled();
+  const dashDir = useDirSign();
+  const dashLift = hoverLift(dashDir);
   const motionEnabled = useMotionEnabled();
   const itemVariants = useMemo(() => fadeUp(8, 0.22), []);
   const containerVariants = useMemo(() => staggerContainer(0.05), []);
@@ -299,21 +302,29 @@ export default function Dashboard() {
               <h2 className="font-bold uppercase tracking-wider text-sm flex items-center gap-2 mb-4">
                 <Zap size={16} /> {t("dashboard.urgentActions")}
               </h2>
-              <div className="space-y-3">
-                {(summary?.nextActions ?? []).length === 0 ? (
-                  <p className="text-sm text-slate-600 italic">{t("dashboard.noUrgent")}</p>
-                ) : (
-                  summary!.nextActions.map((action, i) => (
-                    <div
+              {(summary?.nextActions ?? []).length === 0 ? (
+                <p className="text-sm text-slate-600 italic">{t("dashboard.noUrgent")}</p>
+              ) : (
+                <motion.div
+                  className="space-y-3"
+                  initial={dashMotionOn ? "hidden" : false}
+                  whileInView={dashMotionOn ? "show" : undefined}
+                  viewport={{ once: true, margin: "-50px" }}
+                  variants={dashMotionOn ? staggerContainer(0.05) : undefined}
+                >
+                  {summary!.nextActions.map((action, i) => (
+                    <motion.div
                       key={i}
+                      variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
+                      whileHover={dashMotionOn ? dashLift : undefined}
                       className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded"
                     >
                       <AlertCircle size={16} className="text-red-600 mt-0.5 shrink-0" />
                       <span className="text-sm font-medium text-red-900 leading-tight">{action}</span>
-                    </div>
-                  ))
-                )}
-              </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
             </div>
           </div>
 
@@ -381,10 +392,18 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 md:gap-6">
-              <button
+            <motion.div
+              className="grid grid-cols-2 gap-4 md:gap-6"
+              initial={dashMotionOn ? "hidden" : false}
+              whileInView={dashMotionOn ? "show" : undefined}
+              viewport={{ once: true, margin: "-50px" }}
+              variants={dashMotionOn ? staggerContainer(0.05) : undefined}
+            >
+              <motion.button
                 onClick={() => navigate(`/courses/${profile.id}`)}
-                className="bg-white border-2 border-slate-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-transform"
+                variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
+                whileHover={dashMotionOn ? dashLift : undefined}
+                className="bg-white border-2 border-slate-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]"
               >
                 <div className="text-xs pwc-font-mono text-slate-600 uppercase mb-2">{t("dashboard.estGpa")}</div>
                 <div className="flex items-baseline gap-2">
@@ -393,11 +412,13 @@ export default function Dashboard() {
                     <span className="text-xs text-slate-600">{t("dashboard.current")}: {profile.currentGpa}</span>
                   )}
                 </div>
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
                 onClick={() => navigate(`/courses/${profile.id}`)}
-                className="bg-white border-2 border-slate-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-transform"
+                variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
+                whileHover={dashMotionOn ? dashLift : undefined}
+                className="bg-white border-2 border-slate-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]"
               >
                 <div className="text-xs pwc-font-mono text-slate-600 uppercase mb-2">{t("dashboard.coursesLogged")}</div>
                 <div className="flex items-baseline gap-2">
@@ -406,29 +427,33 @@ export default function Dashboard() {
                     {t("dashboard.doneIp", { done: summary?.completedCourses ?? 0, ip: summary?.inProgressCourses ?? 0 })}
                   </span>
                 </div>
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
                 onClick={() => navigate(`/profile/${profile.id}`)}
-                className="bg-white border-2 border-slate-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-transform"
+                variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
+                whileHover={dashMotionOn ? dashLift : undefined}
+                className="bg-white border-2 border-slate-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]"
               >
                 <div className="text-xs pwc-font-mono text-slate-600 uppercase mb-2">{t("dashboard.profileComplete")}</div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl pwc-font-mono font-bold">{summary?.profileCompletionPercent ?? 0}%</span>
                 </div>
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
                 onClick={() => navigate(`/pathways/${profile.id}`)}
-                className="bg-blue-50 border-2 border-blue-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-transform"
+                variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
+                whileHover={dashMotionOn ? dashLift : undefined}
+                className="bg-blue-50 border-2 border-blue-900 p-4 text-left shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]"
               >
                 <div className="text-xs pwc-font-mono text-blue-800 uppercase mb-2">{t("dashboard.aiPathways")}</div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl pwc-font-mono font-bold text-blue-900">{summary?.savedPathwaysCount ?? 0}</span>
                   <span className="text-xs text-blue-700">{t("dashboard.saved")}</span>
                 </div>
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           </div>
 
           {/* Right: Roadmap + Disclaimer */}

@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Save, ArrowRight, Loader2, Search, ChevronDown, X, Check, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PageMotion } from "@/components/page-motion";
 
 // All 116 California Community Colleges
 const COLLEGES = [
@@ -529,7 +528,7 @@ export default function Profile() {
           <p className="text-slate-600 text-sm mt-1">{t("pages.profile.subtitle")}</p>
         </div>
 
-        <PageMotion className="space-y-6 pb-12">
+        <div className="space-y-6 pb-12">
           {/* Basic Info */}
           <Card>
             <CardHeader>
@@ -683,7 +682,7 @@ export default function Profile() {
           <p className="text-xs text-slate-400 text-center">
             {t("pages.profile.bottomDisclaimer")}
           </p>
-        </PageMotion>
+        </div>
       </main>
     </div>
   );
