@@ -66,6 +66,19 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    // When E2E_API_TARGET is set (used by the Playwright `webServer` setup),
+    // proxy `/api` to the dedicated test api-server so the spec drives an
+    // isolated stack rather than the long-running dev workflow.
+    ...(process.env.E2E_API_TARGET
+      ? {
+          proxy: {
+            "/api": {
+              target: process.env.E2E_API_TARGET,
+              changeOrigin: true,
+            },
+          },
+        }
+      : {}),
   },
   preview: {
     port,

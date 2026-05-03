@@ -20,6 +20,7 @@ import deepDiveRouter from "./deep-dive";
 import exportsRouter from "./exports";
 import remindersRouter from "./reminders";
 import adminRouter from "./admin";
+import testAuthRouter from "./test-auth";
 
 const router: IRouter = Router();
 
@@ -44,5 +45,6 @@ router.use(deepDiveRouter);
 router.use(exportsRouter);
 router.use(remindersRouter);
 router.use(adminRouter);
+router.use(testAuthRouter);
 
 export default router;
