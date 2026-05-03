@@ -21,6 +21,7 @@ import TagChecker from "@/pages/tag-checker";
 import IgetcTracker from "@/pages/igetc";
 import ExportsPage from "@/pages/exports";
 import AdminUsage from "@/pages/admin-usage";
+import AdminSeoConversions from "@/pages/admin-seo-conversions";
 import Onboarding from "@/pages/onboarding";
 import Welcome from "@/pages/welcome";
 import ChatBubble from "@/components/chat-bubble";
@@ -138,6 +139,7 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/admin/usage" component={AdminUsage} />
+        <Route path="/admin/seo-conversions" component={AdminSeoConversions} />
         <Route component={NotFound} />
       </Switch>
       <ChatBubbleWrapper />
