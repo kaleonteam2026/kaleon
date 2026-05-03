@@ -5,7 +5,7 @@ generated = []
 id = "2LYm2neWpLcSa_MJUqCD7"
 uri = "file://.local/exports/ad-bundle/BRIEF.md"
 type = "text"
-title = "Ad Brief — Personas, Hooks, Audiences, Copy"
+title = "Ad Brief — Updated (compliant AB540 copy + targeting)"
 
 [[outputs]]
 id = "6RWAyRRhZbYxbQgAP1tDF"
@@ -29,7 +29,7 @@ title = "Feed 1080×1350 — First-Gen · Hook B"
 id = "bGCHXkg0E_RieIrk0M8Kt"
 uri = "file://.local/exports/ad-bundle/feed/ab540-a.jpg"
 type = "image"
-title = "Feed 1080×1350 — AB540 · Hook A"
+title = "Feed 1080×1350 — AB540 · Hook A (revised)"
 
 [[outputs]]
 id = "NwlMKWaFFaOLdB9RDzJJ6"
@@ -65,7 +65,7 @@ title = "Story 1080×1920 — First-Gen · Hook B"
 id = "9CHzuT35-9UXD6ZccjR2Z"
 uri = "file://.local/exports/ad-bundle/story/ab540-a.jpg"
 type = "image"
-title = "Story 1080×1920 — AB540 · Hook A"
+title = "Story 1080×1920 — AB540 · Hook A (revised)"
 
 [[outputs]]
 id = "Dx009RSUMghLk3bIpt15g"
@@ -95,7 +95,7 @@ title = "Motion Clip — First-Gen (14s, 1080×1080)"
 id = "8WThv6wYGMtCLmsITwKLC"
 uri = "file://.local/exports/ad-bundle/motion/ab540.mp4"
 type = "video"
-title = "Motion Clip — AB540 / Dream Act (14s, 1080×1080)"
+title = "Motion Clip — AB540 (revised, 14s)"
 
 [[outputs]]
 id = "rO0uLVTYoJfCwuX_3rq4D"
