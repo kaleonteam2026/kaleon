@@ -62,10 +62,10 @@ const FONT_STYLES = `
 `;
 
 function readinessAccent(score: number) {
-  if (score >= 80) return { stroke: "#10b981", chip: "bg-emerald-500", label: "On Track" };
-  if (score >= 60) return { stroke: "#10b981", chip: "bg-emerald-500", label: "On Track" };
-  if (score >= 40) return { stroke: "#f59e0b", chip: "bg-amber-500", label: "Needs Focus" };
-  return { stroke: "#ef4444", chip: "bg-red-500", label: "At Risk" };
+  if (score >= 80) return { stroke: "#10b981", chip: "bg-emerald-500", labelKey: "dashboard.onTrack" };
+  if (score >= 60) return { stroke: "#10b981", chip: "bg-emerald-500", labelKey: "dashboard.onTrack" };
+  if (score >= 40) return { stroke: "#f59e0b", chip: "bg-amber-500", labelKey: "dashboard.needsFocus" };
+  return { stroke: "#ef4444", chip: "bg-red-500", labelKey: "dashboard.atRisk" };
 }
 
 function estimatedTransferTerm(totalUnits: number): string {
@@ -115,6 +115,7 @@ export default function Dashboard() {
     Active: t("dashboard.active"),
     "Action Needed": t("dashboard.actionNeeded"),
     "Not Started": t("dashboard.notStarted"),
+    "Pathway Active": t("dashboard.pathwayActive"),
   } as const;
   const roadmapItems = useMemo(() => {
     if (!profile) return [];
@@ -319,7 +320,7 @@ export default function Dashboard() {
                   <Compass size={16} /> {t("dashboard.readinessRadar")}
                 </h2>
                 <div className={`${accent.chip} text-slate-900 pwc-font-mono text-xs px-2 py-1 font-bold uppercase`}>
-                  {summary?.readinessLabel ?? accent.label}
+                  {summary?.readinessLabel ?? t(accent.labelKey)}
                 </div>
               </div>
 
@@ -342,16 +343,16 @@ export default function Dashboard() {
 
                 <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 w-full">
                   {[
-                    { label: "Profile", val: breakdown?.profile ?? 0, max: 20 },
-                    { label: "GPA", val: breakdown?.gpa ?? 0, max: 25 },
-                    { label: "Units", val: breakdown?.units ?? 0, max: 25 },
-                    { label: "Pathway", val: breakdown?.pathway ?? 0, max: 15 },
-                    { label: "Guidebook", val: breakdown?.guidebook ?? 0, max: 5 },
-                    { label: "Progress", val: breakdown?.progress ?? 0, max: 10 },
+                    { labelKey: "dashboard.breakdown_profile", val: breakdown?.profile ?? 0, max: 20 },
+                    { labelKey: "dashboard.breakdown_gpa", val: breakdown?.gpa ?? 0, max: 25 },
+                    { labelKey: "dashboard.breakdown_units", val: breakdown?.units ?? 0, max: 25 },
+                    { labelKey: "dashboard.breakdown_pathway", val: breakdown?.pathway ?? 0, max: 15 },
+                    { labelKey: "dashboard.breakdown_guidebook", val: breakdown?.guidebook ?? 0, max: 5 },
+                    { labelKey: "dashboard.breakdown_progress", val: breakdown?.progress ?? 0, max: 10 },
                   ].map(item => (
-                    <div key={item.label} className="flex flex-col gap-1">
+                    <div key={item.labelKey} className="flex flex-col gap-1">
                       <div className="flex justify-between text-xs">
-                        <span className="text-slate-300 uppercase tracking-wider">{item.label}</span>
+                        <span className="text-slate-300 uppercase tracking-wider">{t(item.labelKey)}</span>
                         <span className="pwc-font-mono text-slate-300">{item.val}/{item.max}</span>
                       </div>
                       <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useLocation } from "wouter";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import Nav from "@/components/nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -153,7 +153,7 @@ function CourseAnalysisRow({ c }: { c: CourseTransferResult }) {
           <div className="flex flex-wrap items-center gap-2">
             {c.courseCode && <span className="text-xs font-mono bg-white/70 border border-slate-200 px-1.5 py-0.5 rounded text-slate-600">{c.courseCode}</span>}
             <span className="text-sm font-semibold text-slate-800">{c.courseName}</span>
-            <span className="text-xs text-slate-600">{c.units} units</span>
+            <span className="text-xs text-slate-600">{t("pages.courses.unitsLabel", { count: c.units })}</span>
           </div>
           <div className="flex flex-wrap gap-2 mt-1">
             <StatusBadge status={c.status} />
@@ -167,7 +167,7 @@ function CourseAnalysisRow({ c }: { c: CourseTransferResult }) {
         <div className="px-4 py-3 bg-white border-t border-slate-100 text-sm text-slate-600 leading-relaxed">
           <p className="mb-2">{c.assistNote}</p>
           <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-            <ExternalLink className="h-3 w-3" /> Verify on assist.org
+            <ExternalLink className="h-3 w-3" /> {t("pages.courses.verifyOnAssist")}
           </a>
         </div>
       )}
@@ -186,7 +186,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
           <FlaskConical className="h-5 w-5 text-indigo-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-indigo-900 mb-1">
-              {result.totalTransferableUnits} transferable units · analyzed from {result.communityCollege}
+              {t("pages.courses.transferableUnitsFrom", { units: result.totalTransferableUnits, college: result.communityCollege })}
             </p>
             <p className="text-sm text-indigo-700 leading-relaxed">{result.summary}</p>
           </div>
@@ -209,7 +209,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
                     <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", SYSTEM_COLOR[m.system] ?? "bg-slate-100 text-slate-600")}>{m.system}</span>
                     <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full",
                       m.matchScore >= 80 ? "bg-emerald-100 text-emerald-700" : m.matchScore >= 65 ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
-                    )}>{m.matchScore}% match</span>
+                    )}>{t("pages.courses.percentMatch", { score: m.matchScore })}</span>
                   </div>
                   <p className="text-xs text-slate-600 mb-1.5">{m.matchReason}</p>
                   <div className="flex items-center gap-2">
@@ -217,7 +217,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
                       <div className={cn("h-full rounded-full", m.matchScore >= 80 ? "bg-emerald-400" : m.matchScore >= 65 ? "bg-amber-400" : "bg-rose-400")}
                         style={{ width: `${(m.transferableCount / Math.max(m.totalCourses, 1)) * 100}%` }} />
                     </div>
-                    <span className="text-xs text-slate-600 whitespace-nowrap">{m.transferableCount}/{m.totalCourses} courses transfer</span>
+                    <span className="text-xs text-slate-600 whitespace-nowrap">{t("pages.courses.coursesTransferRatio", { transferable: m.transferableCount, total: m.totalCourses })}</span>
                   </div>
                 </div>
               </div>
@@ -246,7 +246,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
           })}
         </div>
         <p className="text-xs text-slate-600 mt-2">
-          IGETC completion qualifies you for any UC or CSU with GE satisfied.{" "}
+          {t("pages.courses.igetcQualifies")}{" "}
           <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">{t("pages.courses.verifyAssist")}</a>
         </p>
       </div>
@@ -255,7 +255,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
         <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-slate-600" />
           {t("pages.courses.analysisHeader")}
-          <span className="text-xs font-normal text-slate-600">— tap any row for details</span>
+          <span className="text-xs font-normal text-slate-600">{t("pages.courses.tapRowDetails")}</span>
         </h2>
         <div className="space-y-2">
           {result.courseAnalysis.map((c, i) => <CourseAnalysisRow key={i} c={c} />)}
@@ -266,7 +266,7 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <h2 className="text-sm font-bold text-amber-900 mb-3 flex items-center gap-2">
             <Star className="h-4 w-4 text-amber-500" />
-            Next Steps to Strengthen Your Transfer Application
+            {t("pages.courses.nextStepsHeader")}
           </h2>
           <ul className="space-y-2">
             {result.recommendations.map((r, i) => (
@@ -280,8 +280,12 @@ function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
       )}
 
       <p className="text-xs text-slate-600 text-center">
-        Analysis is AI-generated based on typical ASSIST.org articulation patterns. Always verify at{" "}
-        <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline">assist.org</a> and with your counselor.
+        <Trans
+          i18nKey="pages.courses.aiAnalysisDisclaimer"
+          components={[
+            <a key="0" href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline" />,
+          ]}
+        />
       </p>
     </div>
   );
@@ -393,7 +397,7 @@ function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerPr
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{c.courseCode}</span>
                     <span className="text-sm font-semibold text-slate-800 truncate">{c.courseName}</span>
-                    <span className="text-xs text-slate-600 ml-auto flex-shrink-0">{c.units} units</span>
+                    <span className="text-xs text-slate-600 ml-auto flex-shrink-0">{t("pages.courses.unitsLabel", { count: c.units })}</span>
                   </div>
                   <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">{c.description}</p>
                   <div className="flex flex-wrap gap-1.5 mt-1">

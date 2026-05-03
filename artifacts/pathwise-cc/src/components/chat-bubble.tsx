@@ -200,13 +200,13 @@ export default function ChatBubble({ userId }: { userId?: string }) {
         }),
       });
       const data = await r.json() as { message?: string; error?: string };
-      const replyText = data.message ?? data.error ?? "Sorry, I couldn't respond.";
+      const replyText = data.message ?? data.error ?? t("chat.defaultError");
       const reply: Message = { role: "assistant", content: replyText };
       const withReply = [...next, reply];
       setMessages(withReply);
       persistAsk(withReply);
     } catch {
-      const errMsg: Message = { role: "assistant", content: "Something went wrong. Please try again." };
+      const errMsg: Message = { role: "assistant", content: t("chat.somethingWentWrong") };
       const withErr = [...next, errMsg];
       setMessages(withErr);
       persistAsk(withErr);
@@ -221,7 +221,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
     setInterviewTarget(target);
     const kickoff: Message = {
       role: "user",
-      content: `Please begin the mock interview. Target: ${target}.`,
+      content: t("chat.kickoffPrompt", { target }),
     };
     setMessages([kickoff]);
     await callApi([kickoff], { id: sessionId, target, start: true });
@@ -292,8 +292,8 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                 <p className="text-white font-bold text-sm uppercase tracking-tight">{t("chat.title")}</p>
                 <p className="text-slate-400 text-[10px] uppercase tracking-widest" style={{ fontFamily: "JetBrains Mono, monospace" }}>
                   {mode === "interview"
-                    ? interviewActive ? `// Interview · Q${currentQ ?? 1}/5` : "// Practice Interview"
-                    : "// CC Transfer Help"}
+                    ? interviewActive ? `// ${t("chat.interviewLabel", { q: currentQ ?? 1 })}` : `// ${t("chat.practiceInterview")}`
+                    : `// ${t("chat.ccTransferHelp")}`}
                 </p>
               </div>
             </div>
@@ -333,7 +333,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                 <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">{t("chat.emptyTitle")}</p>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">{t("chat.emptySubtitle")}</p>
                 <div className="mt-4 space-y-1.5 w-full">
-                  {["What is IGETC and do I need it?", "How does the TAG program work?", "What GPA do I need to transfer to UC?"].map(q => (
+                  {[t("chat.sq_igetc"), t("chat.sq_tag"), t("chat.sq_gpa")].map(q => (
                     <button key={q} onClick={() => { setInput(q); inputRef.current?.focus(); }}
                       className="w-full text-left text-xs px-3 py-2 bg-white border-2 border-slate-900 text-slate-900 hover:bg-slate-900 hover:text-white transition-colors">
                       {q}
@@ -352,13 +352,13 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">{t("chat.practiceInterview")}</p>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest" style={{ fontFamily: "JetBrains Mono, monospace" }}>// 5 questions · rubric feedback</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest" style={{ fontFamily: "JetBrains Mono, monospace" }}>// {t("chat.interviewSubtitle")}</p>
                     </div>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed mb-3">
-                    Pick a target — a scholarship name, an honors program, or any opportunity you're prepping for. I'll ask 5 tailored questions, score each answer, and give you a closing summary.
+                    {t("chat.interviewSetupBody")}
                   </p>
-                  <label htmlFor="dyp-interview-target" className="text-[10px] uppercase tracking-widest font-bold text-slate-700">Target</label>
+                  <label htmlFor="dyp-interview-target" className="text-[10px] uppercase tracking-widest font-bold text-slate-700">{t("chat.interviewTargetLabel")}</label>
                   <input
                     id="dyp-interview-target"
                     ref={targetInputRef}
@@ -376,11 +376,11 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                     data-testid="interview-start-btn"
                   >
                     {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mic className="h-3.5 w-3.5" />}
-                    Start interview
+                    {t("chat.startInterview")}
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-500 mt-2 px-1 leading-relaxed">
-                  One session uses one daily AI credit, no matter how many turns it takes.
+                  {t("chat.creditNote")}
                 </p>
               </div>
             )}
@@ -388,7 +388,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
             {/* Messages list */}
             {messages.map((m, i) => {
               // Hide synthetic kickoff from view in interview mode
-              if (mode === "interview" && i === 0 && m.role === "user" && m.content.startsWith("Please begin the mock interview")) {
+              if (mode === "interview" && i === 0 && m.role === "user" && /mock interview|entrevista simulada|模拟面试|phỏng vấn mô phỏng|mock interview na pagsasanay|모의 인터뷰/i.test(m.content)) {
                 return null;
               }
               if (mode === "interview" && m.role === "assistant" && isSummary(m.content)) {
@@ -421,7 +421,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                 </div>
                 <div className="bg-white border-2 border-slate-900 px-3 py-2.5">
                   <Loader2 className="h-3.5 w-3.5 text-slate-900 animate-spin" aria-hidden="true" />
-                  <span className="sr-only">Loading response…</span>
+                  <span className="sr-only">{t("chat.loadingResponse")}</span>
                 </div>
               </div>
             )}

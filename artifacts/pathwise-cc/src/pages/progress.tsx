@@ -64,14 +64,14 @@ interface PathwayInfo {
 }
 
 // ─── Entry type config ────────────────────────────────────────────────────────
-const ENTRY_TYPES: Record<EntryType, { label: string; icon: React.ElementType; color: string; bg: string; border: string; description: string }> = {
-  gpa_update:    { label: "GPA Update",    icon: BarChart3,     color: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200",    description: "Log a semester or cumulative GPA" },
-  certification: { label: "Certification", icon: Award,         color: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200",   description: "A certificate or credential earned" },
-  opportunity:   { label: "Opportunity",   icon: Briefcase,     color: "text-teal-700",    bg: "bg-teal-50",    border: "border-teal-200",    description: "Club joined, research, internship, etc." },
-  milestone:     { label: "Milestone",     icon: CheckCircle2,  color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", description: "Transfer checklist item or program completed" },
-  achievement:   { label: "Achievement",   icon: Star,          color: "text-violet-700",  bg: "bg-violet-50",  border: "border-violet-200",  description: "Award, honor, Dean's List, etc." },
-  setback:       { label: "Setback",       icon: AlertCircle,   color: "text-rose-700",    bg: "bg-rose-50",    border: "border-rose-200",    description: "Grade concern, dropped class, etc." },
-  note:          { label: "Note",          icon: FileText,      color: "text-slate-700",   bg: "bg-slate-50",   border: "border-slate-200",   description: "General note or reflection" },
+const ENTRY_TYPES: Record<EntryType, { labelKey: string; icon: React.ElementType; color: string; bg: string; border: string; descKey: string }> = {
+  gpa_update:    { labelKey: "pages.progress.et_gpa_label",         icon: BarChart3,     color: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200",    descKey: "pages.progress.et_gpa_desc" },
+  certification: { labelKey: "pages.progress.et_cert_label",        icon: Award,         color: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200",   descKey: "pages.progress.et_cert_desc" },
+  opportunity:   { labelKey: "pages.progress.et_opp_label",         icon: Briefcase,     color: "text-teal-700",    bg: "bg-teal-50",    border: "border-teal-200",    descKey: "pages.progress.et_opp_desc" },
+  milestone:     { labelKey: "pages.progress.et_milestone_label",   icon: CheckCircle2,  color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", descKey: "pages.progress.et_milestone_desc" },
+  achievement:   { labelKey: "pages.progress.et_achievement_label", icon: Star,          color: "text-violet-700",  bg: "bg-violet-50",  border: "border-violet-200",  descKey: "pages.progress.et_achievement_desc" },
+  setback:       { labelKey: "pages.progress.et_setback_label",     icon: AlertCircle,   color: "text-rose-700",    bg: "bg-rose-50",    border: "border-rose-200",    descKey: "pages.progress.et_setback_desc" },
+  note:          { labelKey: "pages.progress.et_note_label",        icon: FileText,      color: "text-slate-700",   bg: "bg-slate-50",   border: "border-slate-200",   descKey: "pages.progress.et_note_desc" },
 };
 
 // ─── Score ring ───────────────────────────────────────────────────────────────
@@ -82,7 +82,7 @@ function ScoreRing({ score }: { score: number }) {
   const circ = 2 * Math.PI * radius;
   const offset = circ - (score / 100) * circ;
   const color = score >= 75 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
-  const label = score >= 75 ? "On Track" : score >= 50 ? "Needs Attention" : "At Risk";
+  const label = score >= 75 ? t("pages.progress.onTrack") : score >= 50 ? t("pages.progress.needsAttention") : t("pages.progress.atRisk");
   const labelColor = score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-rose-600";
   return (
     <div className="flex items-center gap-5">
@@ -98,7 +98,7 @@ function ScoreRing({ score }: { score: number }) {
       <div>
         <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-0.5">{t("pages.progress.trajectoryScore")}</p>
         <p className={cn("text-lg font-bold", labelColor)}>{label}</p>
-        <p className="text-xs text-slate-600 mt-0.5">out of 100 points</p>
+        <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.outOf100")}</p>
       </div>
     </div>
   );
@@ -106,6 +106,7 @@ function ScoreRing({ score }: { score: number }) {
 
 // ─── Admission chance badge ───────────────────────────────────────────────────
 function AdmissionBadge({ chance, delta }: { chance: number; delta: number }) {
+  const { t } = useTranslation();
   const color = chance >= 70 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
     : chance >= 45 ? "bg-amber-50 border-amber-200 text-amber-700"
     : "bg-rose-50 border-rose-200 text-rose-700";
@@ -114,10 +115,10 @@ function AdmissionBadge({ chance, delta }: { chance: number; delta: number }) {
   return (
     <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full border font-semibold text-sm", color)}>
       <GraduationCap className="h-4 w-4" />
-      <span>{chance}% est. admission chance</span>
+      <span>{t("pages.progress.admissionChanceLabel", { chance })}</span>
       {delta !== 0 && (
         <span className={cn("text-xs font-bold", deltaColor)}>
-          ({deltaPrefix}{delta}% from this update)
+          {t("pages.progress.deltaFromUpdate", { prefix: deltaPrefix, delta })}
         </span>
       )}
     </div>
@@ -133,9 +134,9 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const severityConfig = {
-    positive: { bg: "bg-emerald-50", border: "border-emerald-300", icon: CheckCheck, iconColor: "text-emerald-600", label: "Aligned with Guidebook", labelBg: "bg-emerald-100 text-emerald-700" },
-    caution:  { bg: "bg-amber-50",   border: "border-amber-300",   icon: Info,       iconColor: "text-amber-600",   label: "Review Recommended",    labelBg: "bg-amber-100 text-amber-700" },
-    concern:  { bg: "bg-rose-50",    border: "border-rose-300",    icon: XCircle,    iconColor: "text-rose-600",    label: "Needs Attention",        labelBg: "bg-rose-100 text-rose-700" },
+    positive: { bg: "bg-emerald-50", border: "border-emerald-300", icon: CheckCheck, iconColor: "text-emerald-600", label: t("pages.progress.alignedWithGuidebook"), labelBg: "bg-emerald-100 text-emerald-700" },
+    caution:  { bg: "bg-amber-50",   border: "border-amber-300",   icon: Info,       iconColor: "text-amber-600",   label: t("pages.progress.reviewRecommended"),    labelBg: "bg-amber-100 text-amber-700" },
+    concern:  { bg: "bg-rose-50",    border: "border-rose-300",    icon: XCircle,    iconColor: "text-rose-600",    label: t("pages.progress.needsAttentionLabel"),  labelBg: "bg-rose-100 text-rose-700" },
   };
   const cfg = severityConfig[feedback.severity];
   const Icon = cfg.icon;
@@ -182,10 +183,10 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
       {/* Action steps — label and color changes based on severity */}
       {feedback.reconciliationSteps.length > 0 && (() => {
         const stepConfig = feedback.severity === "positive"
-          ? { label: "Ways to Maximize This", border: "border-emerald-200", labelColor: "text-emerald-700", arrowColor: "text-emerald-500", icon: TrendingUp }
+          ? { label: t("pages.progress.waysToMaximize"), border: "border-emerald-200", labelColor: "text-emerald-700", arrowColor: "text-emerald-500", icon: TrendingUp }
           : feedback.severity === "caution"
-          ? { label: "Alignment Suggestions", border: "border-amber-200", labelColor: "text-amber-700", arrowColor: "text-amber-500", icon: Info }
-          : { label: "California Reconciliation Options", border: "border-rose-200", labelColor: "text-rose-700", arrowColor: "text-rose-400", icon: RefreshCcw };
+          ? { label: t("pages.progress.alignmentSuggestions"), border: "border-amber-200", labelColor: "text-amber-700", arrowColor: "text-amber-500", icon: Info }
+          : { label: t("pages.progress.caReconciliation"), border: "border-rose-200", labelColor: "text-rose-700", arrowColor: "text-rose-400", icon: RefreshCcw };
         const StepIcon = stepConfig.icon;
         return (
           <div className={cn("bg-white/80 rounded-xl border p-4", stepConfig.border)}>
@@ -208,7 +209,7 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
       {feedback.nextAlignedActions.length > 0 && (
         <div className="bg-white/80 rounded-xl border border-emerald-200 p-4">
           <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-2 flex items-center gap-1">
-            <BookOpen className="h-3 w-3" /> Next Steps per Your Guidebook
+            <BookOpen className="h-3 w-3" /> {t("pages.progress.nextStepsGuidebook")}
           </p>
           <ul className="space-y-2">
             {feedback.nextAlignedActions.map((action, i) => (
@@ -222,7 +223,7 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
       )}
 
       <Button variant="outline" size="sm" onClick={onDismiss} className="w-full">
-        <Plus className="h-3.5 w-3.5 mr-1" />Log Another Update
+        <Plus className="h-3.5 w-3.5 mr-1" />{t("pages.progress.logAnotherUpdate")}
       </Button>
     </div>
   );
@@ -242,7 +243,7 @@ function EntryCard({ entry, onDelete }: { entry: ProgressEntry; onDelete: (id: n
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <span className={cn("text-xs font-semibold px-1.5 py-0.5 rounded-full border", cfg.bg, cfg.color, cfg.border)}>{cfg.label}</span>
+            <span className={cn("text-xs font-semibold px-1.5 py-0.5 rounded-full border", cfg.bg, cfg.color, cfg.border)}>{t(cfg.labelKey)}</span>
             <p className="mt-1 text-sm font-semibold text-slate-800 leading-tight">{entry.title}</p>
             {entry.numericValue != null && (
               <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.gpaLabel")} <strong className="text-slate-800">{entry.numericValue.toFixed(2)}</strong></p>
@@ -256,7 +257,7 @@ function EntryCard({ entry, onDelete }: { entry: ProgressEntry; onDelete: (id: n
               onClick={async () => { setDeleting(true); await onDelete(entry.id); setDeleting(false); }}
               disabled={deleting}
               className="text-slate-300 hover:text-rose-400 transition p-0.5"
-              title="Delete entry"
+              title={t("pages.progress.deleteEntry")}
             >
               {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
             </button>
@@ -270,6 +271,7 @@ function EntryCard({ entry, onDelete }: { entry: ProgressEntry; onDelete: (id: n
 
 // ─── Analysis history card ────────────────────────────────────────────────────
 function AnalysisCard({ analysis, isActive, onClick }: { analysis: ProgressAnalysis; isActive: boolean; onClick: () => void }) {
+  const { i18n } = useTranslation();
   const score = analysis.overallScore ?? 0;
   const color = score >= 75 ? "text-emerald-600 bg-emerald-50 border-emerald-200"
     : score >= 50 ? "text-amber-600 bg-amber-50 border-amber-200"
@@ -283,7 +285,7 @@ function AnalysisCard({ analysis, isActive, onClick }: { analysis: ProgressAnaly
     >
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-slate-600">
-          {new Date(analysis.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          {new Date(analysis.createdAt).toLocaleDateString(i18n.language, { month: "short", day: "numeric", year: "numeric" })}
         </span>
         <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full border", color)}>{score}/100</span>
       </div>
@@ -302,25 +304,25 @@ function PathwayLockScreen({ profileId }: { profileId: number }) {
       </div>
       <h2 className="text-xl font-bold text-slate-800 mb-2">{t("pages.progress.selectPathwayFirst")}</h2>
       <p className="text-slate-600 max-w-md leading-relaxed mb-2">
-        The Progress Tracker is activated once you've committed to a transfer pathway. Your AI advisor needs to know your target university and guidebook before it can evaluate your updates and predict your admission chances.
+        {t("pages.progress.pathwayLockBody")}
       </p>
       <p className="text-sm text-slate-600 mb-8">{t("pages.progress.goToPathway")}</p>
       <Link href={`/pathways/${profileId}`}>
         <Button className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none gap-2">
           <Target className="h-4 w-4" />
-          Go to My Pathway
+          {t("pages.progress.goToMyPathway")}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </Link>
       <div className="mt-8 grid grid-cols-3 gap-4 max-w-sm text-center">
         {[
-          { icon: GraduationCap, label: "Admission prediction", color: "text-indigo-500" },
-          { icon: BookOpen,      label: "Guidebook alignment",  color: "text-violet-500" },
-          { icon: TrendingUp,    label: "Live trajectory score", color: "text-emerald-500" },
-        ].map(({ icon: Icon, label, color }) => (
-          <div key={label} className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+          { icon: GraduationCap, labelKey: "pages.progress.lockFeat_admission", color: "text-indigo-500" },
+          { icon: BookOpen,      labelKey: "pages.progress.lockFeat_guidebook", color: "text-violet-500" },
+          { icon: TrendingUp,    labelKey: "pages.progress.lockFeat_trajectory", color: "text-emerald-500" },
+        ].map(({ icon: Icon, labelKey, color }) => (
+          <div key={labelKey} className="bg-slate-50 rounded-xl p-3 border border-slate-200">
             <Icon className={cn("h-5 w-5 mx-auto mb-1.5", color)} />
-            <p className="text-xs text-slate-600 font-medium">{label}</p>
+            <p className="text-xs text-slate-600 font-medium">{t(labelKey)}</p>
           </div>
         ))}
       </div>
@@ -332,7 +334,7 @@ function PathwayLockScreen({ profileId }: { profileId: number }) {
 type Tab = "log" | "timeline" | "assessment";
 
 export default function ProgressTracker() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const { toast } = useToast();
   const pid = parseInt(profileId);
@@ -392,7 +394,7 @@ export default function ProgressTracker() {
   }, [pid]);
 
   const handleLogEntry = async () => {
-    if (!title.trim()) { toast({ title: "Title is required", variant: "destructive" }); return; }
+    if (!title.trim()) { toast({ title: t("pages.progress.titleRequired"), variant: "destructive" }); return; }
     setSaving(true);
     try {
       const payload: Record<string, unknown> = {
@@ -414,7 +416,7 @@ export default function ProgressTracker() {
 
       // Kick off instant AI feedback
       setPendingFeedback({ loading: true, data: null, entryTitle: loggedTitle });
-      toast({ title: "Update logged! Analyzing with AI…", description: "Checking alignment with your guidebook." });
+      toast({ title: t("pages.progress.updateLogged"), description: t("pages.progress.updateLoggedDesc") });
 
       fetch(`/api/profiles/${pid}/progress/entry-feedback`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -424,10 +426,10 @@ export default function ProgressTracker() {
         .then((fb: EntryFeedback) => setPendingFeedback({ loading: false, data: fb, entryTitle: loggedTitle }))
         .catch(() => {
           setPendingFeedback({ loading: false, data: null, entryTitle: loggedTitle });
-          toast({ title: "Could not load AI feedback", variant: "destructive" });
+          toast({ title: t("pages.progress.aiFeedbackError"), variant: "destructive" });
         });
     } catch {
-      toast({ title: "Error saving entry", variant: "destructive" });
+      toast({ title: t("pages.progress.entrySaveError"), variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -437,9 +439,9 @@ export default function ProgressTracker() {
     try {
       await fetch(`/api/progress/${entryId}`, { method: "DELETE", credentials: "include" });
       setEntries(prev => prev.filter(e => e.id !== entryId));
-      toast({ title: "Entry deleted" });
+      toast({ title: t("pages.progress.entryDeleted") });
     } catch {
-      toast({ title: "Error deleting entry", variant: "destructive" });
+      toast({ title: t("pages.progress.entryDeleteError"), variant: "destructive" });
     }
   };
 
@@ -447,15 +449,15 @@ export default function ProgressTracker() {
     setGenerating(true);
     try {
       const r = await fetch(`/api/profiles/${pid}/progress/analyze`, { method: "POST", credentials: "include" });
-      if (r.status === 429) { toast({ title: "Rate limit reached", description: "Up to 5 analyses per hour.", variant: "destructive" }); return; }
+      if (r.status === 429) { toast({ title: t("pages.progress.rateLimitReached"), description: t("pages.progress.rateLimitDesc"), variant: "destructive" }); return; }
       if (!r.ok) throw new Error();
       const analysis = await r.json() as ProgressAnalysis;
       setAnalyses(prev => [analysis, ...prev]);
       setActiveAnalysis(analysis);
-      toast({ title: "Assessment ready!" });
+      toast({ title: t("pages.progress.assessmentReady") });
       setTimeout(() => analysisRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch {
-      toast({ title: "Error generating assessment", variant: "destructive" });
+      toast({ title: t("pages.progress.assessmentError"), variant: "destructive" });
     } finally {
       setGenerating(false);
     }
@@ -502,12 +504,12 @@ export default function ProgressTracker() {
             {pathwayInfo?.hasSelectedPathway && (
               <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
-                {String(pathwayInfo.pathway?.university ?? "Pathway Active")}
+                {String(pathwayInfo.pathway?.university ?? t("pages.progress.pathwayActiveFallback"))}
               </span>
             )}
           </div>
           <p className="text-slate-600 text-sm">
-            Log certifications, GPA updates, opportunities, and milestones. Your AI advisor checks every update against your guidebook and predicts your updated admission chances in real time.
+            {t("pages.progress.intro")}
           </p>
         </div>
 
@@ -541,24 +543,24 @@ export default function ProgressTracker() {
             {/* Tab bar */}
             <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-6 border border-slate-200">
               {([
-                { id: "log",        label: "Log Update",    icon: Plus,      badge: undefined as number | undefined },
-                { id: "timeline",   label: "My Timeline",   icon: Activity,  badge: entries.length as number | undefined },
-                { id: "assessment", label: "AI Assessment", icon: Sparkles,  badge: analyses.length as number | undefined },
-              ]).map(t => (
+                { id: "log",        label: t("pages.progress.tab_log"),        icon: Plus,      badge: undefined as number | undefined },
+                { id: "timeline",   label: t("pages.progress.tab_timeline"),   icon: Activity,  badge: entries.length as number | undefined },
+                { id: "assessment", label: t("pages.progress.tab_assessment"), icon: Sparkles,  badge: analyses.length as number | undefined },
+              ]).map(tabCfg => (
                 <button
-                  key={t.id}
-                  onClick={() => setTab(t.id as Tab)}
+                  key={tabCfg.id}
+                  onClick={() => setTab(tabCfg.id as Tab)}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
-                    tab === t.id ? "bg-white text-indigo-700 shadow-sm border border-slate-200" : "text-slate-600 hover:text-slate-700"
+                    tab === tabCfg.id ? "bg-white text-indigo-700 shadow-sm border border-slate-200" : "text-slate-600 hover:text-slate-700"
                   )}
                 >
-                  <t.icon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{t.label}</span>
-                  {t.badge !== undefined && t.badge > 0 && (
+                  <tabCfg.icon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{tabCfg.label}</span>
+                  {tabCfg.badge !== undefined && tabCfg.badge > 0 && (
                     <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-semibold",
-                      tab === t.id ? "bg-indigo-100 text-indigo-600" : "bg-slate-200 text-slate-600"
-                    )}>{t.badge}</span>
+                      tab === tabCfg.id ? "bg-indigo-100 text-indigo-600" : "bg-slate-200 text-slate-600"
+                    )}>{tabCfg.badge}</span>
                   )}
                 </button>
               ))}
@@ -609,12 +611,12 @@ export default function ProgressTracker() {
                                 active ? cn("border-2 shadow-sm", cfg.border, cfg.bg) : "border-slate-200 bg-white hover:border-slate-300"
                               )}>
                               <Icon className={cn("h-5 w-5", active ? cfg.color : "text-slate-600")} />
-                              <span className={cn("text-xs font-semibold leading-tight", active ? cfg.color : "text-slate-600")}>{cfg.label}</span>
+                              <span className={cn("text-xs font-semibold leading-tight", active ? cfg.color : "text-slate-600")}>{t(cfg.labelKey)}</span>
                             </button>
                           );
                         })}
                       </div>
-                      <p className="text-xs text-slate-600">{ENTRY_TYPES[entryType].description}</p>
+                      <p className="text-xs text-slate-600">{t(ENTRY_TYPES[entryType].descKey)}</p>
                     </div>
 
                     {entryType === "gpa_update" && (
@@ -623,21 +625,21 @@ export default function ProgressTracker() {
                         <Input id="gpaValue" type="number" min="0" max="4" step="0.01"
                           value={numericValue} onChange={e => setNumericValue(e.target.value)}
                           placeholder={t("pages.progress.gpaPlaceholder")} className="max-w-xs" />
-                        <p className="text-xs text-slate-600">0.00 – 4.00. The AI will compare this against your pathway's GPA requirements.</p>
+                        <p className="text-xs text-slate-600">{t("pages.progress.gpaRange")}</p>
                       </div>
                     )}
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="entryTitle">{entryType === "gpa_update" ? "Semester / Term" : "Title"}</Label>
+                      <Label htmlFor="entryTitle">{entryType === "gpa_update" ? t("pages.progress.semesterTerm") : t("pages.progress.titleLabel")}</Label>
                       <Input id="entryTitle" value={title} onChange={e => setTitle(e.target.value)}
                         placeholder={
-                          entryType === "gpa_update" ? "e.g. Fall 2025 GPA" :
-                          entryType === "certification" ? "e.g. AWS Cloud Practitioner" :
-                          entryType === "opportunity" ? "e.g. Joined Psychology Research Lab" :
-                          entryType === "milestone" ? "e.g. Completed IGETC Area 1A" :
-                          entryType === "achievement" ? "e.g. Dean's List — Spring 2025" :
-                          entryType === "setback" ? "e.g. Received C in MATH 2" :
-                          "e.g. Met with transfer counselor"
+                          entryType === "gpa_update" ? t("pages.progress.ph_gpa") :
+                          entryType === "certification" ? t("pages.progress.ph_cert") :
+                          entryType === "opportunity" ? t("pages.progress.ph_opp") :
+                          entryType === "milestone" ? t("pages.progress.ph_milestone") :
+                          entryType === "achievement" ? t("pages.progress.ph_achievement") :
+                          entryType === "setback" ? t("pages.progress.ph_setback") :
+                          t("pages.progress.ph_note")
                         } />
                     </div>
 
@@ -654,11 +656,11 @@ export default function ProgressTracker() {
 
                     <div className="flex items-center gap-3 flex-wrap">
                       <Button onClick={handleLogEntry} disabled={saving || !title.trim()} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
-                        {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : <><Plus className="h-4 w-4 mr-2" />Log & Analyze</>}
+                        {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("pages.progress.savingDots")}</> : <><Plus className="h-4 w-4 mr-2" />{t("pages.progress.logAnalyze")}</>}
                       </Button>
                       <p className="text-xs text-slate-600 flex items-center gap-1">
                         <Sparkles className="h-3 w-3 text-indigo-400" />
-                        AI will check this against your {String(pathwayInfo?.pathway?.university ?? "university")} guidebook instantly
+                        {t("pages.progress.aiCheckPath", { uni: String(pathwayInfo?.pathway?.university ?? t("pages.progress.pathwayActiveFallback")) })}
                       </p>
                     </div>
                   </div>
@@ -674,7 +676,7 @@ export default function ProgressTracker() {
                     className={cn("px-3 py-1 rounded-full text-xs font-semibold border transition",
                       filterType === "all" ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                     )}>
-                    All ({entries.length})
+                    {t("pages.progress.filterAll")} ({entries.length})
                   </button>
                   {(Object.entries(ENTRY_TYPES) as [EntryType, typeof ENTRY_TYPES[EntryType]][]).map(([type, cfg]) => {
                     const count = entries.filter(e => e.entryType === type).length;
@@ -684,7 +686,7 @@ export default function ProgressTracker() {
                         className={cn("px-3 py-1 rounded-full text-xs font-semibold border transition",
                           filterType === type ? cn("border", cfg.border, cfg.bg, cfg.color) : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                         )}>
-                        {cfg.label} ({count})
+                        {t(cfg.labelKey)} ({count})
                       </button>
                     );
                   })}
@@ -698,7 +700,7 @@ export default function ProgressTracker() {
                     <p className="text-slate-600 font-medium">{t("pages.progress.noUpdates")}</p>
                     <p className="text-slate-600 text-sm mt-1">{t("pages.progress.useLogTab")}</p>
                     <Button variant="outline" size="sm" onClick={() => setTab("log")} className="mt-4">
-                      <Plus className="h-3.5 w-3.5 mr-1" />Log Your First Update
+                      <Plus className="h-3.5 w-3.5 mr-1" />{t("pages.progress.logFirstUpdate")}
                     </Button>
                   </div>
                 ) : (
@@ -722,20 +724,20 @@ export default function ProgressTracker() {
                     <div className="flex-1">
                       <h2 className="text-base font-bold text-slate-900">{t("pages.progress.aiAssessment")}</h2>
                       <p className="text-sm text-slate-600 mt-1">
-                        Your AI advisor reviews your full profile, courses, <strong>{String(pathwayInfo?.pathway?.university ?? "selected university")}</strong> guidebook, and all {entries.length} logged updates to predict your admission chances and give precise next steps.
+                        {t("pages.progress.aiAssessmentBody", { uni: String(pathwayInfo?.pathway?.university ?? t("pages.progress.pathwayActiveFallback")), count: entries.length })}
                       </p>
                       <div className="flex flex-wrap gap-2 mt-3 text-xs text-slate-600">
-                        <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> Courses</span>
-                        <span className="flex items-center gap-1"><Target className="h-3 w-3" /> Guidebook</span>
-                        <span className="flex items-center gap-1"><Activity className="h-3 w-3" /> {entries.length} updates</span>
-                        <span className="flex items-center gap-1"><GraduationCap className="h-3 w-3" /> Admission prediction</span>
-                        <span className="flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Risk flags</span>
+                        <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {t("pages.progress.chip_courses")}</span>
+                        <span className="flex items-center gap-1"><Target className="h-3 w-3" /> {t("pages.progress.chip_guidebook")}</span>
+                        <span className="flex items-center gap-1"><Activity className="h-3 w-3" /> {t("pages.progress.chip_updates", { count: entries.length })}</span>
+                        <span className="flex items-center gap-1"><GraduationCap className="h-3 w-3" /> {t("pages.progress.chip_admission")}</span>
+                        <span className="flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> {t("pages.progress.chip_riskFlags")}</span>
                       </div>
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3 items-center">
                     <Button onClick={handleGenerateAnalysis} disabled={generating} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
-                      {generating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Analyzing your journey…</> : <><Sparkles className="h-4 w-4 mr-2" />{analyses.length > 0 ? "Regenerate Assessment" : "Generate My Assessment"}</>}
+                      {generating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("pages.progress.analyzingJourneyDots")}</> : <><Sparkles className="h-4 w-4 mr-2" />{analyses.length > 0 ? t("pages.progress.regenerateAssessment") : t("pages.progress.generateMyAssessment")}</>}
                     </Button>
                     <p className="text-xs text-slate-600">{t("pages.progress.rateLimit")}</p>
                   </div>
@@ -774,16 +776,16 @@ export default function ProgressTracker() {
                             <div className="flex-1">
                               {activeAnalysis.summary && <p className="text-sm text-slate-600 leading-relaxed">{activeAnalysis.summary}</p>}
                               <p className="text-xs text-slate-600 mt-2">
-                                Generated {new Date(activeAnalysis.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                {t("pages.progress.generatedAt", { date: new Date(activeAnalysis.createdAt).toLocaleDateString(i18n.language, { month: "long", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) })}
                               </p>
                             </div>
                             <Button variant="outline" size="sm" onClick={downloadAnalysis} className="flex-shrink-0">
-                              <Download className="h-4 w-4 mr-1" />Download
+                              <Download className="h-4 w-4 mr-1" />{t("pages.progress.download")}
                             </Button>
                           </div>
                         </div>
                         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm px-6 md:px-10 py-8">
-                          <MarkdownContent markdown={activeAnalysis.contentMarkdown ?? "No content available."} setSection={setCurrentSection} />
+                          <MarkdownContent markdown={activeAnalysis.contentMarkdown ?? t("pages.progress.noContent")} setSection={setCurrentSection} />
                         </div>
                       </div>
                     )}
@@ -795,7 +797,7 @@ export default function ProgressTracker() {
         )}
 
         <p className="text-xs text-slate-600 text-center pb-10">
-          DYP Progress Tracker · AI assessments are not a substitute for official academic advising
+          {t("pages.progress.footerDisclaimer")}
         </p>
       </main>
     </div>

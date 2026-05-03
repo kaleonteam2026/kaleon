@@ -13,71 +13,71 @@ import {
 // ─── IGETC Area definitions ───────────────────────────────────────────────────
 interface IgetcSubArea {
   key: string;
-  label: string;
+  labelKey: string;
   required: boolean;
-  note?: string;
+  noteKey?: string;
 }
 interface IgetcArea {
   key: string;
-  label: string;
-  description: string;
+  labelKey: string;
+  descKey: string;
   subAreas: IgetcSubArea[];
   required: boolean;
 }
 
 const IGETC_AREAS: IgetcArea[] = [
   {
-    key: "area1", label: "Area 1 — English Communication", description: "Required for all UC and most CSU transfers.",
+    key: "area1", labelKey: "pages.igetc.area1_label", descKey: "pages.igetc.area1_desc",
     required: true,
     subAreas: [
-      { key: "1a", label: "1A: English Composition", required: true },
-      { key: "1b", label: "1B: Critical Thinking & Composition", required: true },
-      { key: "1c", label: "1C: Oral Communication (CSU only)", required: false, note: "Required for CSU; not required for UC IGETC" },
+      { key: "1a", labelKey: "pages.igetc.sub_1a", required: true },
+      { key: "1b", labelKey: "pages.igetc.sub_1b", required: true },
+      { key: "1c", labelKey: "pages.igetc.sub_1c", required: false, noteKey: "pages.igetc.sub_1c_note" },
     ],
   },
   {
-    key: "area2", label: "Area 2 — Mathematical Concepts & Quantitative Reasoning", description: "One course in college-level math with a C or better.",
+    key: "area2", labelKey: "pages.igetc.area2_label", descKey: "pages.igetc.area2_desc",
     required: true,
     subAreas: [
-      { key: "2", label: "Area 2: Math / Quantitative Reasoning", required: true },
+      { key: "2", labelKey: "pages.igetc.sub_2", required: true },
     ],
   },
   {
-    key: "area3", label: "Area 3 — Arts and Humanities", description: "At least one course from 3A and one from 3B (or two from one area).",
+    key: "area3", labelKey: "pages.igetc.area3_label", descKey: "pages.igetc.area3_desc",
     required: true,
     subAreas: [
-      { key: "3a", label: "3A: Arts", required: true },
-      { key: "3b", label: "3B: Humanities", required: true },
+      { key: "3a", labelKey: "pages.igetc.sub_3a", required: true },
+      { key: "3b", labelKey: "pages.igetc.sub_3b", required: true },
     ],
   },
   {
-    key: "area4", label: "Area 4 — Social and Behavioral Sciences", description: "At least one course required.",
+    key: "area4", labelKey: "pages.igetc.area4_label", descKey: "pages.igetc.area4_desc",
     required: true,
     subAreas: [
-      { key: "4", label: "Area 4: Social & Behavioral Sciences", required: true },
+      { key: "4", labelKey: "pages.igetc.sub_4", required: true },
     ],
   },
   {
-    key: "area5", label: "Area 5 — Physical and Biological Sciences", description: "Requires at least one Physical or Biological Science plus a lab.",
+    key: "area5", labelKey: "pages.igetc.area5_label", descKey: "pages.igetc.area5_desc",
     required: true,
     subAreas: [
-      { key: "5a", label: "5A: Physical Science", required: false },
-      { key: "5b", label: "5B: Biological Science", required: false },
-      { key: "5c", label: "5C: Laboratory Activity", required: true, note: "Must be combined with either 5A or 5B" },
+      { key: "5a", labelKey: "pages.igetc.sub_5a", required: false },
+      { key: "5b", labelKey: "pages.igetc.sub_5b", required: false },
+      { key: "5c", labelKey: "pages.igetc.sub_5c", required: true, noteKey: "pages.igetc.sub_5c_note" },
     ],
   },
   {
-    key: "area6", label: "Area 6 — Languages Other Than English", description: "Proficiency at 2nd-year college level or by exam. Waivable for many majors.",
+    key: "area6", labelKey: "pages.igetc.area6_label", descKey: "pages.igetc.area6_desc",
     required: false,
     subAreas: [
-      { key: "6", label: "Area 6: Language Other Than English", required: false, note: "May be waived — verify with your campus" },
+      { key: "6", labelKey: "pages.igetc.sub_6", required: false, noteKey: "pages.igetc.sub_6_note" },
     ],
   },
   {
-    key: "area7", label: "Area 7 — CSU US History, Constitution & American Ideals", description: "CSU-only requirement. Not part of UC IGETC.",
+    key: "area7", labelKey: "pages.igetc.area7_label", descKey: "pages.igetc.area7_desc",
     required: false,
     subAreas: [
-      { key: "7", label: "Area 7: US History / Government (CSU only)", required: false, note: "CSU-only — not needed for UC transfers" },
+      { key: "7", labelKey: "pages.igetc.sub_7", required: false, noteKey: "pages.igetc.sub_7_note" },
     ],
   },
 ];
@@ -128,9 +128,9 @@ export default function IgetcTracker() {
         body: JSON.stringify({ areas }),
       });
       setDirty(false);
-      toast({ title: "IGETC progress saved!" });
+      toast({ title: t("pages.igetc.savedToast") });
     } catch {
-      toast({ title: "Save failed", variant: "destructive" });
+      toast({ title: t("pages.igetc.saveFailed"), variant: "destructive" });
     } finally { setSaving(false); }
   };
 
@@ -148,9 +148,9 @@ export default function IgetcTracker() {
         return merged;
       });
       setDirty(true);
-      toast({ title: "AI analysis complete! Review suggestions below.", description: "Areas marked in green may be satisfied by your courses. Verify with your counselor." });
+      toast({ title: t("pages.igetc.analysisComplete"), description: t("pages.igetc.analysisDescription") });
     } catch {
-      toast({ title: "Analysis failed", variant: "destructive" });
+      toast({ title: t("pages.igetc.analysisFailed"), variant: "destructive" });
     } finally { setAnalyzing(false); }
   };
 
@@ -175,7 +175,7 @@ export default function IgetcTracker() {
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.igetc.title")}</h1>
           </div>
           <p className="text-slate-500 text-sm max-w-xl">
-            IGETC is a set of general education courses completed at your CC that satisfies GE requirements at all UC campuses (and most CSUs). Track your progress here.
+            {t("pages.igetc.intro")}
           </p>
         </div>
 
@@ -184,7 +184,7 @@ export default function IgetcTracker() {
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-sm font-bold text-slate-800">{t("pages.igetc.completion")}</p>
-              <p className="text-xs text-slate-500">{doneRequired}/{REQUIRED_KEYS.length} required areas complete</p>
+              <p className="text-xs text-slate-500">{t("pages.igetc.requiredAreasComplete", { count: doneRequired, total: REQUIRED_KEYS.length })}</p>
             </div>
             <div className="text-3xl font-bold text-indigo-600">{pct}%</div>
           </div>
@@ -194,7 +194,7 @@ export default function IgetcTracker() {
           </div>
           {pct === 100 && (
             <p className="text-xs text-emerald-700 font-bold mt-2 flex items-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5" />All required IGETC areas complete! Verify with your CC counselor and ASSIST.org.
+              <CheckCircle2 className="h-3.5 w-3.5" />{t("pages.igetc.allComplete")}
             </p>
           )}
         </div>
@@ -202,7 +202,7 @@ export default function IgetcTracker() {
         {/* AI + Save bar */}
         <div className="flex flex-wrap gap-3 mb-6">
           <Button onClick={analyze} disabled={analyzing} variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50">
-            {analyzing ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Analyzing courses…</> : <><Sparkles className="h-4 w-4 mr-2" />AI: Analyze My Courses</>}
+            {analyzing ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("pages.igetc.analyzing")}</> : <><Sparkles className="h-4 w-4 mr-2" />{t("pages.igetc.aiAnalyze")}</>}
           </Button>
           {dirty && (
             <Button onClick={save} disabled={saving} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
@@ -226,12 +226,12 @@ export default function IgetcTracker() {
                       ? <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
                       : <Circle className="h-5 w-5 text-slate-300 flex-shrink-0" />}
                     <div>
-                      <p className="text-sm font-bold text-slate-900">{area.label}</p>
-                      <p className="text-xs text-slate-500">{area.description}</p>
+                      <p className="text-sm font-bold text-slate-900">{t(area.labelKey)}</p>
+                      <p className="text-xs text-slate-500">{t(area.descKey)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {!area.required && <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-semibold">Optional</span>}
+                    {!area.required && <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-semibold">{t("pages.igetc.optional")}</span>}
                     {isOpen ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
                   </div>
                 </button>
@@ -250,9 +250,9 @@ export default function IgetcTracker() {
                           {areas[sub.key] && <CheckCircle2 className="h-3 w-3 text-white" />}
                         </button>
                         <div>
-                          <p className={cn("text-sm font-medium", areas[sub.key] ? "text-emerald-700 line-through" : "text-slate-800")}>{sub.label}</p>
-                          {sub.note && <p className="text-xs text-slate-500 mt-0.5">{sub.note}</p>}
-                          {!sub.required && <span className="text-[10px] bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-full font-semibold">Optional</span>}
+                          <p className={cn("text-sm font-medium", areas[sub.key] ? "text-emerald-700 line-through" : "text-slate-800")}>{t(sub.labelKey)}</p>
+                          {sub.noteKey && <p className="text-xs text-slate-500 mt-0.5">{t(sub.noteKey)}</p>}
+                          {!sub.required && <span className="text-[10px] bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-full font-semibold">{t("pages.igetc.optional")}</span>}
                         </div>
                       </label>
                     ))}
@@ -268,15 +268,15 @@ export default function IgetcTracker() {
           <p className="text-sm font-bold text-slate-800 mb-3">{t("pages.igetc.verifyTitle")}</p>
           <div className="space-y-2">
             {[
-              { label: "ASSIST.org — Official Articulation Agreements", url: "https://assist.org", desc: "See which CC courses satisfy IGETC at your target UC/CSU" },
-              { label: "UC IGETC Info", url: "https://admission.universityofcalifornia.edu/admission-requirements/transfer-requirements/uc-transferable-courses.html", desc: "Official UC IGETC overview" },
-              { label: "CSU GE Breadth / IGETC", url: "https://www.calstate.edu/apply/transfer/pages/csu-ge-igetc.aspx", desc: "CSU-specific GE and IGETC info" },
+              { labelKey: "pages.igetc.resource_assist_label", url: "https://assist.org", descKey: "pages.igetc.resource_assist_desc" },
+              { labelKey: "pages.igetc.resource_uc_label", url: "https://admission.universityofcalifornia.edu/admission-requirements/transfer-requirements/uc-transferable-courses.html", descKey: "pages.igetc.resource_uc_desc" },
+              { labelKey: "pages.igetc.resource_csu_label", url: "https://www.calstate.edu/apply/transfer/pages/csu-ge-igetc.aspx", descKey: "pages.igetc.resource_csu_desc" },
             ].map(r => (
               <a key={r.url} href={r.url} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-between gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs hover:border-indigo-200 hover:bg-indigo-50 transition group">
                 <div>
-                  <p className="font-semibold text-slate-800">{r.label}</p>
-                  <p className="text-slate-400">{r.desc}</p>
+                  <p className="font-semibold text-slate-800">{t(r.labelKey)}</p>
+                  <p className="text-slate-400">{t(r.descKey)}</p>
                 </div>
                 <ExternalLink className="h-3.5 w-3.5 text-slate-300 group-hover:text-indigo-500 flex-shrink-0" />
               </a>
@@ -287,7 +287,7 @@ export default function IgetcTracker() {
         <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-2">
           <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-amber-700 leading-relaxed">
-            IGETC completion must be verified officially with your CC counselor and ASSIST.org. AI analysis is a suggestion based on course names only — not an official determination. Always get a certified IGETC completion form from your CC.
+            {t("pages.igetc.footerWarning")}
           </p>
         </div>
       </main>
