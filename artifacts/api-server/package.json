@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "generate:seo": "tsx src/scripts/generate-seo-pages.ts",
-    "audit:seo": "tsx src/scripts/seo-audit.ts"
+    "audit:seo": "tsx src/scripts/seo-audit.ts",
+    "refresh:articulations": "tsx src/scripts/refresh-articulations.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.19.0",

@@ -2,12 +2,36 @@ import communityColleges from "../data/community-colleges.json" assert { type: "
 import universitiesRaw from "../data/universities.json" assert { type: "json" };
 import majors from "../data/transfer-majors.json" assert { type: "json" };
 import articulationsRaw from "../data/articulations.json" assert { type: "json" };
+import gpaRangesRaw from "../data/gpa-admit-ranges.json" assert { type: "json" };
 
-interface ArticulationEntry {
+export interface GpaRange {
+  p25: number;
+  median: number;
+  p75: number;
+  minEligible: number;
+}
+export const GPA_RANGES_CYCLE: string =
+  ((gpaRangesRaw as Record<string, unknown>)._cycle as string | undefined) ?? "Fall 2024";
+export const GPA_RANGES_SOURCE: string =
+  ((gpaRangesRaw as Record<string, unknown>)._source as string | undefined) ??
+  "UC Infocenter Transfer Admit by Major";
+export const GPA_RANGES: Record<string, GpaRange> = Object.fromEntries(
+  Object.entries(gpaRangesRaw as Record<string, unknown>).filter(
+    (entry): entry is [string, GpaRange] =>
+      !entry[0].startsWith("_") &&
+      typeof entry[1] === "object" &&
+      entry[1] !== null &&
+      typeof (entry[1] as GpaRange).median === "number",
+  ),
+);
+
+export interface ArticulationEntry {
   agreementCycle: string;
   rows: string[][];
+  sourceUrl?: string;
+  fetchedAt?: string;
 }
-const ARTICULATIONS: Record<string, ArticulationEntry> = Object.fromEntries(
+export const SEED_ARTICULATIONS: Record<string, ArticulationEntry> = Object.fromEntries(
   Object.entries(articulationsRaw as Record<string, unknown>).filter(
     (entry): entry is [string, ArticulationEntry] =>
       !entry[0].startsWith("_") &&
@@ -82,6 +106,18 @@ export function findMajor(slug: string): Major | undefined {
   return ALL_MAJORS.find((m) => m.slug === slug);
 }
 
+export function articulationKey(cc: CC, uni: Uni, major: Major): string {
+  return `${cc.slug}__${uniSlug(uni)}__${major.slug}`;
+}
+
+export function hasVerifiedArticulation(cc: CC, uni: Uni, major: Major): boolean {
+  return Boolean(SEED_ARTICULATIONS[articulationKey(cc, uni, major)]);
+}
+
+export function gpaRangeFor(uni: Uni, major: Major): GpaRange | null {
+  return GPA_RANGES[`${uni.id}__${major.slug}`] ?? null;
+}
+
 function gpaTarget(uni: Uni, major: Major): number {
   const base = uni.gpaRangeRecommended ?? 3.5;
   const bump = major.impacted ? 0.1 : 0;
@@ -110,9 +146,13 @@ function honorsParagraph(cc: CC, uni: Uni): string {
 }
 
 function gpaParagraph(uni: Uni, major: Major): string {
+  const range = gpaRangeFor(uni, major);
+  if (range) {
+    return `Per ${escapeHtml(GPA_RANGES_SOURCE)} for the ${escapeHtml(GPA_RANGES_CYCLE)} cohort, admitted ${major.name} transfers at ${uni.name} had a mid-50% GPA of <strong>${range.p25.toFixed(2)}–${range.p75.toFixed(2)}</strong> (median ${range.median.toFixed(2)}), with the published eligibility minimum at ${range.minEligible.toFixed(2)}. Plan for the median or above; the 25th-percentile number is the floor, not the goal.`;
+  }
   const target = gpaTarget(uni, major);
   const minBase = (uni.gpaRangeMin ?? 3.0).toFixed(1);
-  return `Recent ${uni.name} transfer admits in ${major.name} have generally landed around a ${target.toFixed(2)} cumulative transferable GPA, with the published minimum closer to a ${minBase}${major.impacted ? "  Because " + major.name + " is an impacted or selective major, the realistic working target is well above the minimum, and major-prep GPA is weighted especially heavily." : "  This major is not currently flagged as impacted, but a strong major-prep GPA still meaningfully improves admission odds."}`;
+  return `Recent ${uni.name} transfer admits in ${major.name} have generally landed around a ${target.toFixed(2)} cumulative transferable GPA, with the published minimum closer to a ${minBase} (estimate from campus-level publications — published per-major data is not yet ingested for this combo).${major.impacted ? " Because " + major.name + " is an impacted or selective major, the realistic working target is well above the minimum, and major-prep GPA is weighted especially heavily." : " This major is not currently flagged as impacted, but a strong major-prep GPA still meaningfully improves admission odds."}`;
 }
 
 function pathwayParagraph(cc: CC, uni: Uni, major: Major): string {
@@ -155,7 +195,13 @@ export interface GeneratedPage {
   canonicalPath: string;
 }
 
-export function generatePage(cc: CC, uni: Uni, major: Major, origin: string): GeneratedPage {
+export function generatePage(
+  cc: CC,
+  uni: Uni,
+  major: Major,
+  origin: string,
+  articulation?: ArticulationEntry | null,
+): GeneratedPage {
   const target = gpaTarget(uni, major);
   const canonicalPath = `/transfer/${cc.slug}/${uniSlug(uni)}/${major.slug}`;
   const title = `Transfer from ${cc.name} to ${uni.name} ${major.name} | DYP`;
@@ -163,20 +209,22 @@ export function generatePage(cc: CC, uni: Uni, major: Major, origin: string): Ge
 
   const intro = `<p>This guide walks ${cc.name} students through the transfer pathway to <strong>${uni.name}</strong> for a <strong>${major.name}</strong> major. ${cc.name} sits in ${cc.city} and serves roughly ${cc.enrollment.toLocaleString()} students, with ${cc.strengths.includes(major.name) || cc.strengths.some((s) => major.name.toLowerCase().includes(s.toLowerCase())) ? `documented strength in ${major.name}` : `transfer strength in ${cc.strengths.slice(0, 3).join(", ")}`}. ${uni.name} (${uni.system}, ${uni.location}) is one of the more common transfer destinations for students in this region, and the ${major.name} pathway has its own quirks worth planning around.</p>`;
 
-  const articulationKey = `${cc.slug}__${uniSlug(uni)}__${major.slug}`;
-  const articulation = ARTICULATIONS[articulationKey];
-  const articulationTable = articulation
-    ? `<table style="width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:14px"><thead><tr style="background:#0f172a;color:#fff"><th style="padding:8px;text-align:left">${escapeHtml(cc.name)} course</th><th style="padding:8px;text-align:left">Title</th><th style="padding:8px;text-align:left">${escapeHtml(uni.name)} equivalent</th></tr></thead><tbody>${articulation.rows
+  const art = articulation ?? SEED_ARTICULATIONS[articulationKey(cc, uni, major)] ?? null;
+  const sourceLine = art
+    ? `Articulation cycle: ${escapeHtml(art.agreementCycle)}${art.fetchedAt ? ` · refreshed ${escapeHtml(art.fetchedAt.slice(0, 10))}` : ""}${art.sourceUrl ? ` · <a href="${escapeHtml(art.sourceUrl)}" rel="nofollow noopener" target="_blank">source agreement on ASSIST.org</a>` : ""}. Always confirm against the latest ASSIST.org agreement before enrolling.`
+    : "";
+  const articulationTable = art
+    ? `<table style="width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:14px"><thead><tr style="background:#0f172a;color:#fff"><th style="padding:8px;text-align:left">${escapeHtml(cc.name)} course</th><th style="padding:8px;text-align:left">Title</th><th style="padding:8px;text-align:left">${escapeHtml(uni.name)} equivalent</th></tr></thead><tbody>${art.rows
         .map(
           (r, i) =>
             `<tr style="background:${i % 2 ? "#fff" : "#f1f5f9"}"><td style="padding:8px;border:1px solid #cbd5e1"><strong>${escapeHtml(r[0] ?? "")}</strong></td><td style="padding:8px;border:1px solid #cbd5e1">${escapeHtml(r[1] ?? "")}</td><td style="padding:8px;border:1px solid #cbd5e1">${escapeHtml(r[2] ?? "")}</td></tr>`,
         )
-        .join("")}</tbody></table><p style="font-size:12px;color:#64748b">Articulation cycle: ${escapeHtml(articulation.agreementCycle)}. Always confirm against the latest ASSIST.org agreement before enrolling.</p>`
+        .join("")}</tbody></table><p style="font-size:12px;color:#64748b">${sourceLine}</p>`
     : "";
 
   const sections = [
     `<h2>GPA target and competitiveness</h2><p>${gpaParagraph(uni, major)}</p>`,
-    `<h2>Prerequisites and major preparation</h2><p>The core ${major.name} prerequisites typically include: ${major.prereqHint}. From ${cc.name}, you will translate these to the locally numbered courses through ASSIST.org. ${articulationParagraph(cc, uni, major)}</p>${articulation ? `<p><strong>Verified articulation (${escapeHtml(articulation.agreementCycle)} cycle):</strong> the table below reflects the published ASSIST.org agreement for this combo.</p>${articulationTable}` : `<p><em>This combo does not yet have a verified course-level articulation table on this page; the prerequisites above describe the typical major-prep pattern. Always pull the latest agreement from ASSIST.org for the exact ${cc.name} → ${uni.name} ${major.name} course numbers.</em></p>`}`,
+    `<h2>Prerequisites and major preparation</h2><p>The core ${major.name} prerequisites typically include: ${major.prereqHint}. From ${cc.name}, you will translate these to the locally numbered courses through ASSIST.org. ${articulationParagraph(cc, uni, major)}</p>${art ? `<p><strong>Verified articulation (${escapeHtml(art.agreementCycle)} cycle):</strong> the table below reflects the published ASSIST.org agreement for this combo.</p>${articulationTable}` : `<p><em>This combo does not yet have a verified course-level articulation table on this page; the prerequisites above describe the typical major-prep pattern. Always pull the latest agreement from ASSIST.org for the exact ${cc.name} → ${uni.name} ${major.name} course numbers.</em></p>`}`,
     `<h2>IGETC vs CSU GE-Breadth</h2><p>${igetcGuidance(major)}</p>`,
     `<h2>2-year pathway from ${cc.name}</h2><p>${pathwayParagraph(cc, uni, major)}</p>`,
     `<h2>Honors and selectivity boosts</h2><p>${honorsParagraph(cc, uni)}</p>`,
@@ -220,7 +268,16 @@ export function generatePage(cc: CC, uni: Uni, major: Major, origin: string): Ge
         {
           "@type": "Question",
           name: `What GPA do I need to transfer from ${cc.name} to ${uni.name} for ${major.name}?`,
-          acceptedAnswer: { "@type": "Answer", text: `Recent admits typically present around a ${target.toFixed(2)} cumulative transferable GPA, with the published minimum closer to ${(uni.gpaRangeMin ?? 3.0).toFixed(1)}.` },
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: (() => {
+              const r = gpaRangeFor(uni, major);
+              if (r) {
+                return `Per ${GPA_RANGES_SOURCE} for the ${GPA_RANGES_CYCLE} cohort, admitted ${major.name} transfers at ${uni.name} had a mid-50% GPA of ${r.p25.toFixed(2)}–${r.p75.toFixed(2)} (median ${r.median.toFixed(2)}), with the published eligibility minimum at ${r.minEligible.toFixed(2)}.`;
+              }
+              return `Recent admits typically present around a ${target.toFixed(2)} cumulative transferable GPA, with the published minimum closer to ${(uni.gpaRangeMin ?? 3.0).toFixed(1)}. (Estimate from campus-level publications — published per-major data not yet ingested for this combo.)`;
+            })(),
+          },
         },
         {
           "@type": "Question",
