@@ -148,6 +148,22 @@ export const igetcProgressTable = pgTable("igetc_progress", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const roadmapInfographicsTable = pgTable(
+  "roadmap_infographics",
+  {
+    id: serial("id").primaryKey(),
+    roadmapId: integer("roadmap_id").notNull().references(() => academicRoadmapsTable.id),
+    profileId: integer("profile_id").notNull().references(() => studentProfilesTable.id),
+    versionHash: text("version_hash").notNull(),
+    pngObjectPath: text("png_object_path").notNull(),
+    pdfObjectPath: text("pdf_object_path").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    roadmapVersionIdx: uniqueIndex("roadmap_infographics_roadmap_version_idx").on(t.roadmapId, t.versionHash),
+  }),
+);
+
 export const insertStudentProgressSchema = createInsertSchema(studentProgressTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProgressAnalysisSchema = createInsertSchema(progressAnalysesTable).omit({ id: true, createdAt: true });
 

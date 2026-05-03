@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Download, Loader2, MapPin, AlertTriangle,
-  CheckSquare, Square, CheckCircle2,
+  CheckSquare, Square, CheckCircle2, Image as ImageIcon, FileText, Sparkles,
 } from "lucide-react";
 import { MarkdownContent } from "@/components/markdown-renderer";
 
@@ -24,6 +24,8 @@ export default function Roadmap() {
   const [roadmap, setRoadmap] = useState<AcademicRoadmap | null>(null);
   const [loading, setLoading] = useState(true);
   const [, setCurrentSection] = useState("");
+  const [infographicLoading, setInfographicLoading] = useState(false);
+  const [infographicReady, setInfographicReady] = useState<{ pngUrl: string; pdfUrl: string; cached: boolean } | null>(null);
   const rid = parseInt(roadmapId);
 
   useEffect(() => {
@@ -33,6 +35,41 @@ export default function Roadmap() {
       .catch(() => toast({ title: "Error loading roadmap", variant: "destructive" }))
       .finally(() => setLoading(false));
   }, [rid]);
+
+  const generateInfographic = async () => {
+    setInfographicLoading(true);
+    try {
+      const res = await fetch(`/api/roadmaps/${rid}/infographic`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast({ title: json.error ?? "Could not generate infographic", variant: "destructive" });
+        return;
+      }
+      setInfographicReady({ pngUrl: json.pngUrl, pdfUrl: json.pdfUrl, cached: !!json.cached });
+      toast({
+        title: json.cached ? "Infographic ready (cached)" : "Infographic generated!",
+        description: json.cached ? "Re-downloads are free." : "Future downloads of this version are free.",
+      });
+    } catch {
+      toast({ title: "Network error generating infographic", variant: "destructive" });
+    } finally {
+      setInfographicLoading(false);
+    }
+  };
+
+  const downloadInfographic = (format: "png" | "pdf") => {
+    const url = format === "png" ? infographicReady?.pngUrl : infographicReady?.pdfUrl;
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pathwise-roadmap-${rid}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
 
   const downloadMarkdown = () => {
     if (!roadmap?.contentMarkdown) return;
@@ -99,6 +136,48 @@ export default function Roadmap() {
           <Button onClick={downloadMarkdown} variant="outline" size="sm" className="flex-shrink-0">
             <Download className="h-4 w-4 mr-2" /> Download
           </Button>
+        </div>
+
+        {/* Infographic generator */}
+        <div className="bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-xl p-5 mb-5 shadow-sm">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="h-4 w-4 text-violet-100" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-violet-100">Shareable infographic</span>
+              </div>
+              <h2 className="text-lg font-bold">One-page visual roadmap</h2>
+              <p className="text-xs text-violet-100 mt-1 max-w-md leading-relaxed">
+                Generate a printable PNG/PDF with your terms, IGETC progress, and key deadlines. Cached per roadmap version &mdash; re-downloads are free.
+              </p>
+            </div>
+            {!infographicReady ? (
+              <Button
+                onClick={generateInfographic}
+                disabled={infographicLoading}
+                size="sm"
+                className="bg-white text-indigo-700 hover:bg-violet-50"
+              >
+                {infographicLoading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
+                ) : (
+                  <><Sparkles className="h-4 w-4 mr-2" /> Generate Infographic</>
+                )}
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button onClick={() => downloadInfographic("png")} size="sm" className="bg-white text-indigo-700 hover:bg-violet-50">
+                  <ImageIcon className="h-4 w-4 mr-2" /> PNG
+                </Button>
+                <Button onClick={() => downloadInfographic("pdf")} size="sm" className="bg-white text-indigo-700 hover:bg-violet-50">
+                  <FileText className="h-4 w-4 mr-2" /> PDF
+                </Button>
+                <Button onClick={generateInfographic} disabled={infographicLoading} size="sm" variant="outline" className="border-white/40 text-white hover:bg-white/10 bg-transparent">
+                  {infographicLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Disclaimer */}

@@ -50,6 +50,8 @@ async function buildAll() {
       "pdfkit",
       "exceljs",
       "pptxgenjs",
+      "@resvg/resvg-js",
+      "@resvg/*",
       "oracledb",
       "mongodb-client-encryption",
       "nodemailer",
