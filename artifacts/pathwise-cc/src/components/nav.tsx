@@ -76,12 +76,11 @@ export default function Nav({ profileId }: Props) {
 
   const Brand = (
     <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg tracking-tight uppercase">
-      <div
-        className="h-7 w-7 flex items-center justify-center pwc-font-mono font-bold text-sm"
-        style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", borderRadius: 6, color: "#050c18" }}
-      >
-        D
-      </div>
+      <img
+        src="/logo.png"
+        alt="Logo"
+        style={{ width: 30, height: 30, borderRadius: 6, mixBlendMode: "screen" as const }}
+      />
       <span style={{ color: "#f8fafc" }}>DYP</span>
       <span className="hidden lg:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium" style={{ color: "#4ECCA3", opacity: 0.6 }}>// {t("common.tagline")}</span>
     </Link>

@@ -169,12 +169,11 @@ export default function Landing() {
         }}
       >
         <div className="flex items-center gap-2 font-bold text-lg uppercase tracking-tight">
-          <div
-            className="h-7 w-7 flex items-center justify-center pwc-font-mono font-bold text-sm"
-            style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", borderRadius: 6, color: "#050c18" }}
-          >
-            D
-          </div>
+          <img
+            src="/logo.png"
+            alt="Logo"
+            style={{ width: 30, height: 30, borderRadius: 6, mixBlendMode: "screen" as const }}
+          />
           <span style={{ color: "#f8fafc" }}>{t("brand.name")}</span>
           <span className="hidden md:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium" style={{ color: "#4ECCA3", opacity: 0.7 }}>{t("brand.tagline")}</span>
         </div>
@@ -204,15 +203,15 @@ export default function Landing() {
               <span>{t("landing.badge")}</span>
             </motion.div>
 
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 leading-[0.95] uppercase" style={{ color: "#f8fafc" }}>
-              {t("landing.heroTitle1")}<br />
+            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 leading-[1.05] uppercase" style={{ color: "#f8fafc" }}>
+              Transfers Made<br />
               <motion.span
                 {...mountProps}
                 variants={stamp}
                 className={`inline-block px-3 ${isRtl ? "origin-right" : "origin-left"}`}
                 style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18", textShadow: "0 0 30px rgba(78,204,163,0.4)" }}
               >
-                {t("landing.heroTitle2")}
+                Easy.
               </motion.span>
             </h1>
 
@@ -272,8 +271,8 @@ export default function Landing() {
                 <div key={i} style={{ position: "absolute", top: "50%", left: "50%", width: size, height: size, marginTop: -size / 2, marginLeft: -size / 2, borderRadius: "50%", border: `1px solid rgba(78,204,163,${0.1 - i * 0.025})` }} />
               ))}
               {/* Center core */}
-              <div style={{ position: "absolute", top: "50%", left: "50%", width: 72, height: 72, marginTop: -36, marginLeft: -36, borderRadius: "50%", background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 900, color: "#050c18", boxShadow: "0 0 40px rgba(78,204,163,0.5)" }}>
-                D
+              <div style={{ position: "absolute", top: "50%", left: "50%", width: 80, height: 80, marginTop: -40, marginLeft: -40, borderRadius: "50%", boxShadow: "0 0 40px rgba(78,204,163,0.5)", overflow: "hidden" }}>
+                <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover", mixBlendMode: "screen" as const }} />
               </div>
               {/* Orbiting dots */}
               <div className="orbit-ring-1" style={{ position: "absolute", top: "50%", left: "50%", marginTop: -5, marginLeft: -5 }}>
