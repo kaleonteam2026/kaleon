@@ -121,7 +121,7 @@ export default function Onboarding() {
         {/* Logo */}
         <div className="flex items-center gap-2 justify-center mb-8">
           <Map className="h-6 w-6 text-indigo-600" />
-          <span className="text-xl font-bold text-slate-900 uppercase tracking-tight" style={{ fontFamily: "Inter, sans-serif" }}>DYP</span>
+          <span className="text-xl font-bold text-slate-900 uppercase tracking-tight" style={{ fontFamily: "Inter, sans-serif" }}>Kaleon</span>
         </div>
 
         {/* Progress bar */}

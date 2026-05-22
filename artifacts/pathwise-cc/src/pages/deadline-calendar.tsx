@@ -343,7 +343,7 @@ export default function DeadlineCalendar() {
         </div>
 
         <p className="text-xs text-slate-400 text-center mt-6 pb-4">
-          DYP Transfer Calendar · {cycleYear}–{nextCycleYear} cycle · Verify all dates officially
+          Kaleon Transfer Calendar · {cycleYear}–{nextCycleYear} cycle · Verify all dates officially
         </p>
         </PageMotion>
       </main>

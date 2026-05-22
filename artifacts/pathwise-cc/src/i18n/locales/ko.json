@@ -1,6 +1,6 @@
 {
   "brand": {
-    "name": "DYP",
+    "name": "Kaleon",
     "tagline": "// 너의 길을 가라",
     "fullName": "Pathwise CC"
   },
@@ -34,7 +34,7 @@
     "days": "일",
     "pending": "보류 중",
     "done": "완료",
-    "verifyFooter": "DYP · AI 생성 · 항상 공식 출처로 확인하세요",
+    "verifyFooter": "Kaleon · AI 생성 · 항상 공식 출처로 확인하세요",
     "season_fall": "가을",
     "season_spring": "봄",
     "season_summer": "여름",
@@ -56,7 +56,7 @@
     "intern": "인턴"
   },
   "landing": {
-    "seoTitle": "DYP — Pathwise CC | 캘리포니아 커뮤니티 칼리지 학생을 위한 편입 계획",
+    "seoTitle": "Kaleon — Pathwise CC | 캘리포니아 커뮤니티 칼리지 학생을 위한 편입 계획",
     "seoDescription": "DYP는 캘리포니아 커뮤니티 칼리지 학생이 자신의 CC에서 좋은 성과를 내고, IGETC·전공 선이수·코스 연계·GPA·학점 등 UC/CSU의 모든 편입 요건을 충족하는 로드맵을 세워, 4년제로 옮겨서도 계속 잘 해낼 수 있도록 돕습니다.",
     "badge": "캘리포니아 CC 학생을 위해",
     "heroTitle1": "너의",
@@ -82,7 +82,7 @@
     "step5Desc": "이정표를 기록하고, AI 피드백을 받고, 완전한 편입 준비 타임라인을 구축하세요.",
     "disclaimerEyebrow": "// 중요 면책 조항",
     "disclaimerBody": "DYP는 AI 기반 계획 도구이며, 공식 학업 상담사가 아닙니다. 모든 권장사항, GPA 목표, 프로그램 정보는 AI가 생성한 추정치입니다. 항상 커뮤니티 칼리지 상담사 및 각 기관의 공식 자료로 확인하세요.",
-    "footerLine1": "// DYP — 당신의 길을 가세요",
+    "footerLine1": "// Kaleon — 당신의 길을 가세요",
     "footerLine2": "UC, CSU 또는 캘리포니아 기관과 제휴되어 있지 않습니다. 표시된 데이터는 AI가 생성한 것입니다. 모든 정보를 공식 출처로 확인하세요.",
     "footerGuides": "// CC → UC/CSU 편입 가이드 보기",
     "featureCcProgramsTitle": "CC 프로그램",
@@ -219,7 +219,7 @@
     "finNotSure": "잘 모르겠음"
   },
   "chat": {
-    "title": "DYP 어드바이저",
+    "title": "Kaleon 어드바이저",
     "askAnything": "무엇이든 물어보세요",
     "practiceInterview": "면접 연습",
     "askPlaceholder": "편입, IGETC, TAG에 대해 물어보세요…",
@@ -472,7 +472,7 @@
       "handshakeTips": "Handshake 검색 팁",
       "availableAtCollege": "당신의 대학에서 이용 가능",
       "openHandshake": "Handshake 열기",
-      "finderFooter": "DYP 인턴십 파인더 · AI 생성 · 항상 프로그램에 직접 확인",
+      "finderFooter": "Kaleon 인턴십 파인더 · AI 생성 · 항상 프로그램에 직접 확인",
       "matchesCount": "{{count}}개 매칭",
       "type_federal_full": "연방 정부",
       "type_caState_full": "CA 주",
@@ -657,7 +657,7 @@
       "noContent": "사용 가능한 콘텐츠가 없습니다.",
       "generatedAt": "생성됨 {{date}}",
       "download": "다운로드",
-      "footerDisclaimer": "DYP Progress Tracker · AI 평가는 공식 학업 상담을 대체하지 않습니다",
+      "footerDisclaimer": "Kaleon Progress Tracker · AI 평가는 공식 학업 상담을 대체하지 않습니다",
       "pathwayLockBody": "Pathway에 헌신하면 진행 추적기가 활성화됩니다. AI 어드바이저는 목표 대학과 가이드북을 알아야 합니다.",
       "goToMyPathway": "내 Pathway로 이동",
       "lockFeat_admission": "합격 예측",
@@ -829,7 +829,7 @@
       "legend_note": "메모",
       "noContent": "사용 가능한 내용이 없습니다.",
       "downloadFull": "가이드북 다운로드",
-      "footer": "DYP · AI 생성 · 항상 공식 출처에서 확인하세요",
+      "footer": "Kaleon · AI 생성 · 항상 공식 출처에서 확인하세요",
       "toast_loadError": "가이드북 로딩 오류",
       "toast_downloaded": "가이드북 다운로드 완료!"
     },

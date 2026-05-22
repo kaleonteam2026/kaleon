@@ -199,7 +199,7 @@ export default function DreamAct() {
         </div>
 
         <p className="text-xs text-slate-400 text-center mt-6 pb-4">
-          DYP · AB 540 & Dream Act Guide · Information current as of early 2025 · Always verify with official sources
+          Kaleon · AB 540 & Dream Act Guide · Information current as of early 2025 · Always verify with official sources
         </p>
         </PageMotion>
       </main>

@@ -10,7 +10,7 @@ import { MessageCircle, X, Send, Loader2, Bot, User, MessagesSquare, Mic, Trophy
 type Mode = "ask" | "interview";
 interface Message { role: "user" | "assistant"; content: string; kind?: "kickoff" }
 
-const STORAGE_KEY = (userId: string | null) => `dyp_chat_${userId ?? "guest"}`;
+const STORAGE_KEY = (userId: string | null) => `kaleon_chat_${userId ?? "guest"}`;
 
 declare global {
   interface WindowEventMap {

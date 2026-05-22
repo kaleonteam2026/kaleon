@@ -13,7 +13,7 @@ import { useFocusTrap } from "@/hooks/use-focus-trap";
 import NotificationBell from "@/components/notification-bell";
 import LanguageSwitcher from "@/components/language-switcher";
 
-const PROFILE_ID_KEY = "dyp_active_profile_id";
+const PROFILE_ID_KEY = "kaleon_active_profile_id";
 
 export function storeProfileId(id: number) {
   localStorage.setItem(PROFILE_ID_KEY, String(id));
@@ -81,7 +81,7 @@ export default function Nav({ profileId }: Props) {
         alt="Logo"
         style={{ width: 30, height: 30, borderRadius: 6, mixBlendMode: "screen" as const }}
       />
-      <span style={{ color: "#f8fafc" }}>DYP</span>
+      <span style={{ color: "#f8fafc" }}>Kaleon</span>
       <span className="hidden lg:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium" style={{ color: "#4ECCA3", opacity: 0.6 }}>// {t("common.tagline")}</span>
     </Link>
   );

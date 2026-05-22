@@ -32,7 +32,7 @@ const PERSONAS: Record<PersonaSlug, PersonaContent> = {
       </>
     ),
     subhead:
-      "DYP is the AI transfer counselor your high school never had. Build the CC → UCLA / UC / CSU plan in minutes — courses, scholarships, and deadlines, mapped for you.",
+      "Kaleon is the AI transfer counselor your high school never had. Build the CC → UCLA / UC / CSU plan in minutes — courses, scholarships, and deadlines, mapped for you.",
     bullets: [
       "From CC to UCLA in 24 months — pathway mapped by AI",
       "EOPS, TRIO, Puente, MESA programs at YOUR college",
@@ -50,7 +50,7 @@ const PERSONAS: Record<PersonaSlug, PersonaContent> = {
       </>
     ),
     subhead:
-      "DYP shows you every program, Cal Grant / Dream Act scholarship, and UC / CSU pathway — with real eligibility and real deadlines. No paywall.",
+      "Kaleon shows you every program, Cal Grant / Dream Act scholarship, and UC / CSU pathway — with real eligibility and real deadlines. No paywall.",
     bullets: [
       "AB540, Dream Act, CADAA, Cal Grant — sorted",
       "40+ scholarships filtered for AB540 eligibility",
@@ -68,7 +68,7 @@ const PERSONAS: Record<PersonaSlug, PersonaContent> = {
       </>
     ),
     subhead:
-      "Working parent + 12 units = future you. DYP plans your transfer around shifts, kids, and night classes — track GPA, scholarships, and the CC → 4-year path on your schedule.",
+      "Working parent + 12 units = future you. Kaleon plans your transfer around shifts, kids, and night classes — track GPA, scholarships, and the CC → 4-year path on your schedule.",
     bullets: [
       "Semester plans built around shifts and night classes",
       "Scholarships for working parents and adult learners",
@@ -150,13 +150,13 @@ export default function Welcome({ persona }: WelcomeProps) {
           >
             D
           </div>
-          <span>DYP</span>
+          <span>Kaleon</span>
           <span
             className={`hidden md:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium ${
               isDark ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            // DO YOUR PATH
+            // Kaleon
           </span>
         </div>
         <button
@@ -251,7 +251,7 @@ export default function Welcome({ persona }: WelcomeProps) {
           isDark ? "text-slate-400" : "text-slate-500"
         }`}
       >
-        <p className="pwc-font-mono uppercase tracking-wider mb-2">// DYP — DO YOUR PATH</p>
+        <p className="pwc-font-mono uppercase tracking-wider mb-2">// Kaleon — Transfers Made Easy</p>
         <p>
           Not affiliated with UC, CSU, or any California institution. Always verify with your
           community college counselor.

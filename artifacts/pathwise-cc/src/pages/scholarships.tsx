@@ -548,7 +548,7 @@ export default function Scholarships() {
 
         <p className="text-xs text-slate-400 text-center pb-8">
           Program availability varies by campus. Always confirm with your college's student services office.
-          DYP is not affiliated with any institution or scholarship program.
+          Kaleon is not affiliated with any institution or scholarship program.
         </p>
       </main>
     </div>

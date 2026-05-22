@@ -23,7 +23,7 @@ export function isRtlLocale(locale: string): boolean {
   return RTL_LOCALES.has(locale as SupportedLocale);
 }
 
-export const LOCALE_STORAGE_KEY = "dyp_locale";
+export const LOCALE_STORAGE_KEY = "kaleon_locale";
 
 export function getStoredLocale(): SupportedLocale {
   if (typeof window === "undefined") return "en";
