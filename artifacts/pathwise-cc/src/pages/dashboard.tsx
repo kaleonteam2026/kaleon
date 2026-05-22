@@ -243,6 +243,12 @@ export default function Dashboard() {
 
   const transferTerm = estimatedTransferTerm(breakdown?.totalUnits ?? 0, t);
   const greeting = user?.firstName ?? profile.fullName?.split(" ")[0] ?? t("common.student");
+  const totalUnits = breakdown?.totalUnits ?? 0;
+  const kaleonSemesters = Math.max(1, Math.ceil(Math.max(0, 60 - totalUnits) / 15));
+  const typicalSemesters = 7;
+  const semestersSaved = Math.max(0, typicalSemesters - kaleonSemesters);
+  const moneySaved = semestersSaved * 2300;
+  const targetSchool = summary?.chosenTransferSchool ?? summary?.topMatchUniversity;
 
   return (
     <div className="min-h-screen pwc-font-sans" style={{ background: "linear-gradient(160deg, #050c18 0%, #070d1a 100%)", color: "#e2e8f0" }}>
@@ -251,6 +257,46 @@ export default function Dashboard() {
 
       <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none">
         <div className="max-w-[1280px] mx-auto p-4 md:p-6 grid grid-cols-12 gap-4 md:gap-6">
+
+          {/* Your Path Hero Card */}
+          {targetSchool && (
+            <div className="col-span-12 p-5 md:p-6 rounded-xl" style={{ background: "rgba(13,26,46,0.85)", border: "1px solid rgba(78,204,163,0.25)" }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-1 pwc-font-mono" style={{ color: "#4ECCA3" }}>YOUR DASHBOARD</p>
+              <h2 className="text-xl md:text-2xl font-bold leading-snug" style={{ color: "#f8fafc" }}>
+                Your path to{" "}
+                <span style={{ color: "#4ECCA3" }}>{targetSchool}</span>
+              </h2>
+              {(profile.intendedMajor || transferTerm) && (
+                <p className="text-sm mt-1" style={{ color: "#64748b" }}>
+                  {[profile.intendedMajor, `Transfer ${transferTerm}`].filter(Boolean).join(" · ")}
+                </p>
+              )}
+              <div className="flex gap-3 mt-4">
+                <div className="flex-1 p-3 rounded-lg" style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.12)" }}>
+                  <p className="text-[10px] pwc-font-mono uppercase tracking-wider mb-1" style={{ color: "#475569" }}>Current College</p>
+                  <p className="font-bold text-sm" style={{ color: "#cbd5e1" }}>{profile.communityCollege ?? "—"}</p>
+                </div>
+                <div className="flex-1 p-3 rounded-lg" style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.12)" }}>
+                  <p className="text-[10px] pwc-font-mono uppercase tracking-wider mb-1" style={{ color: "#475569" }}>Completed Units</p>
+                  <p className="font-bold text-sm" style={{ color: "#cbd5e1" }}>{breakdown?.totalUnits ?? 0} units</p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="flex justify-between text-xs mb-1.5">
+                  <span className="pwc-font-mono uppercase tracking-wider" style={{ color: "#475569" }}>Current Progress</span>
+                  <span className="pwc-font-mono" style={{ color: "#4ECCA3" }}>
+                    {summary?.completedCourses ?? 0} of {Math.max(summary?.totalCourses ?? 0, summary?.completedCourses ?? 0, 1)} courses
+                  </span>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(78,204,163,0.1)" }}>
+                  <div className="h-full rounded-full transition-all duration-700" style={{
+                    background: "linear-gradient(90deg, #4ECCA3, #38b2ac)",
+                    width: `${summary?.totalCourses ? Math.min(100, ((summary.completedCourses ?? 0) / summary.totalCourses) * 100) : 0}%`,
+                  }} />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Header */}
           <header className="col-span-12 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(78,204,163,0.2)" }}>
@@ -496,6 +542,32 @@ export default function Dashboard() {
                 </div>
               </motion.button>
             </motion.div>
+
+            {/* Semester Comparison + Money Saved */}
+            <div className="grid grid-cols-2 gap-4 md:gap-6">
+              <div className="dash-stat-card">
+                <div className="text-xs pwc-font-mono uppercase mb-1" style={{ color: "#475569" }}>With Kaleon</div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>{kaleonSemesters}</span>
+                  <span className="text-sm" style={{ color: "#4ECCA3" }}>semesters</span>
+                </div>
+                <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(78,204,163,0.08)" }}>
+                  <div className="text-[10px] pwc-font-mono uppercase tracking-wider mb-0.5" style={{ color: "#334155" }}>Typical Student</div>
+                  <div className="text-sm pwc-font-mono font-bold" style={{ color: "#475569" }}>{typicalSemesters}+ semesters</div>
+                </div>
+              </div>
+              <div className="dash-stat-card">
+                <div className="text-xs pwc-font-mono uppercase mb-1" style={{ color: "#475569" }}>Money Saved</div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>${moneySaved.toLocaleString()}</span>
+                </div>
+                <div className="text-xs mt-1" style={{ color: "#64748b" }}>Fewer semesters = less tuition</div>
+                <div className="mt-2 pt-2" style={{ borderTop: "1px solid rgba(78,204,163,0.08)" }}>
+                  <div className="text-[10px] pwc-font-mono uppercase tracking-wider mb-0.5" style={{ color: "#334155" }}>Time Saved</div>
+                  <div className="text-sm pwc-font-mono font-bold" style={{ color: "#475569" }}>{semestersSaved} fewer semesters</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Right: Modules + Disclaimer */}

@@ -61,6 +61,7 @@ export default function Onboarding() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [phase, setPhase] = useState<"form" | "calculating" | "ready">("form");
   const [form, setForm] = useState<FormData>({
     fullName: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.firstName ?? ""),
     communityCollege: "",
@@ -103,7 +104,8 @@ export default function Onboarding() {
         body: JSON.stringify(payload),
       });
       if (!r.ok) throw new Error("Failed to create profile");
-      navigate("/dashboard");
+      setPhase("calculating");
+      setTimeout(() => setPhase("ready"), 2800);
     } catch (e) {
       console.error(e);
       setSubmitting(false);
@@ -114,6 +116,63 @@ export default function Onboarding() {
   const StepIcon = STEPS[step].icon;
   const motionOn = useMotionEnabled();
   const dir = useDirSign();
+
+  if (phase === "calculating") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: "#070d1a" }}>
+        <img src="/logo.png" alt="Kaleon" style={{ width: 56, height: 56, borderRadius: 10, mixBlendMode: "screen" as const }} />
+        <div className="mt-8 mb-2" style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid rgba(78,204,163,0.2)", borderTopColor: "#4ECCA3", animation: "spin 0.9s linear infinite" }} />
+        <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
+        <h1 className="mt-4 text-2xl font-bold text-white text-center">Calculating your transfer path...</h1>
+        <p className="mt-2 text-sm text-center max-w-xs" style={{ color: "#64748b" }}>This usually takes a few seconds, feel free to leave the page and come back in a bit!</p>
+        <div className="mt-8 w-full max-w-sm rounded-2xl p-6" style={{ background: "rgba(13,26,46,0.9)", border: "1px solid rgba(78,204,163,0.2)" }}>
+          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ fontFamily: "JetBrains Mono, monospace", color: "#4ECCA3" }}>Loved by Transfer Students</p>
+          <p className="text-3xl mb-1" style={{ color: "#4ECCA3", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</p>
+          <p className="font-bold -mt-1 text-white">"Took me 2 minutes to get a plan that would've taken me 3 appointments to figure out."</p>
+          <div className="flex items-center gap-3 mt-5">
+            <div className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: "rgba(78,204,163,0.15)", color: "#4ECCA3" }}>M</div>
+            <div>
+              <p className="text-sm font-bold text-white">Maria Hernandez</p>
+              <p className="text-xs" style={{ color: "#64748b" }}>Student @ East Los Angeles College</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "ready") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "#070d1a" }}>
+        <img src="/logo.png" alt="Kaleon" style={{ width: 52, height: 52, borderRadius: 10, mixBlendMode: "screen" as const }} />
+        <h1 className="mt-6 text-3xl font-bold text-white text-center leading-tight">Your Transfer Plan<br />is Ready.</h1>
+        <p className="mt-2 text-sm" style={{ color: "#64748b" }}>We've computed your transfer path.</p>
+        <div className="mt-8 w-full max-w-sm space-y-3">
+          {[
+            { title: "One Wrong Class Can Ruin Everything", body: "Classes that don't transfer can prevent you from being admitted." },
+            { title: "Save Money", body: "Save hundreds by avoiding private counselors and wasted tuition." },
+          ].map(card => (
+            <div key={card.title} className="p-4 rounded-xl" style={{ background: "rgba(13,26,46,0.85)", border: "1px solid rgba(78,204,163,0.18)" }}>
+              <p className="font-bold text-sm text-white">{card.title}</p>
+              <p className="text-xs mt-1" style={{ color: "#64748b" }}>{card.body}</p>
+            </div>
+          ))}
+          <div className="p-4 rounded-xl text-center" style={{ background: "rgba(78,204,163,0.07)", border: "1px solid rgba(78,204,163,0.2)" }}>
+            <p className="font-bold text-sm text-white">70% of students take 3+ years to transfer.</p>
+            <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Students who use Kaleon are more likely to transfer on-time.</p>
+          </div>
+        </div>
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="mt-8 px-10 py-3.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-opacity hover:opacity-90"
+          style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
+        >
+          Go To Dashboard <ArrowRight size={16} />
+        </button>
+        <p className="mt-3 text-xs" style={{ color: "#475569" }}>Join students who secured their transfer plan this week</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50 flex items-center justify-center px-4 py-12">

@@ -211,10 +211,26 @@ export default function Pathways() {
 
         <PageMotion>
         {generating && (
-          <div className="text-center py-16">
-            <Loader2 className="h-12 w-12 animate-spin text-indigo-500 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-slate-800">{t("pages.pathways.generatingTitle")}</h2>
-            <p className="text-slate-500 text-sm mt-1">{t("pages.pathways.generatingBody")}</p>
+          <div className="flex flex-col items-center py-12">
+            <div className="flex items-center justify-center mb-4" style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(78,204,163,0.08)", border: "1px solid rgba(78,204,163,0.25)" }}>
+              <img src="/logo.png" alt="Kaleon" style={{ width: 36, height: 36, borderRadius: 6, mixBlendMode: "screen" as const }} />
+            </div>
+            <div className="mb-5" style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid rgba(78,204,163,0.2)", borderTopColor: "#4ECCA3", animation: "spin 0.9s linear infinite" }} />
+            <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
+            <h2 className="text-lg font-semibold text-center" style={{ color: "#f1f5f9" }}>{t("pages.pathways.generatingTitle")}</h2>
+            <p className="text-sm mt-1 text-center max-w-sm" style={{ color: "#64748b" }}>{t("pages.pathways.generatingBody")}</p>
+            <div className="mt-8 w-full max-w-md rounded-2xl p-6" style={{ background: "rgba(13,26,46,0.9)", border: "1px solid rgba(78,204,163,0.2)" }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-3 pwc-font-mono" style={{ color: "#4ECCA3" }}>Loved by Transfer Students</p>
+              <p className="text-3xl mb-1" style={{ color: "#4ECCA3", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</p>
+              <p className="font-bold -mt-1" style={{ color: "#f1f5f9" }}>"Took me 2 minutes to get a plan that would've taken me 3 appointments to figure out."</p>
+              <div className="flex items-center gap-3 mt-5">
+                <div className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: "rgba(78,204,163,0.15)", color: "#4ECCA3" }}>M</div>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Maria Hernandez</p>
+                  <p className="text-xs" style={{ color: "#64748b" }}>Student @ East Los Angeles College</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
