@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/auth-context";
@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Map, GraduationCap, Target, ArrowRight, ArrowLeft,
-  BookOpen, CheckCircle2, User, Loader2,
+  BookOpen, CheckCircle2, User, Loader2, FileText, Upload, X,
 } from "lucide-react";
+import { parseTranscriptPDF, type ExtractedCourse } from "@/lib/parse-transcript";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMotionEnabled, useDirSign, DUR, EASE_OUT } from "@/lib/motion";
 
@@ -62,6 +63,11 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [phase, setPhase] = useState<"form" | "calculating" | "ready">("form");
+  const [extractedCourses, setExtractedCourses] = useState<ExtractedCourse[]>([]);
+  const [transcriptParsing, setTranscriptParsing] = useState(false);
+  const [transcriptError, setTranscriptError] = useState<string | null>(null);
+  const [transcriptFileName, setTranscriptFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<FormData>({
     fullName: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.firstName ?? ""),
     communityCollege: "",
@@ -74,6 +80,29 @@ export default function Onboarding() {
   });
 
   const set = (k: keyof FormData, v: string) => setForm(prev => ({ ...prev, [k]: v }));
+
+  const handleTranscriptUpload = async (file: File) => {
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      setTranscriptError("Please upload a PDF file.");
+      return;
+    }
+    setTranscriptFileName(file.name);
+    setTranscriptParsing(true);
+    setTranscriptError(null);
+    setExtractedCourses([]);
+    try {
+      const courses = await parseTranscriptPDF(file);
+      if (courses.length === 0) {
+        setTranscriptError("No course codes found. This may be a scanned PDF — you can add courses manually later.");
+      } else {
+        setExtractedCourses(courses);
+      }
+    } catch {
+      setTranscriptError("Could not read this PDF. Try a different file or add courses manually later.");
+    } finally {
+      setTranscriptParsing(false);
+    }
+  };
 
   const canProceed = () => {
     if (step === 1) return form.communityCollege.trim().length > 0 && form.intendedMajor.trim().length > 0;
@@ -104,6 +133,21 @@ export default function Onboarding() {
         body: JSON.stringify(payload),
       });
       if (!r.ok) throw new Error("Failed to create profile");
+      const created = (await r.json()) as { id: number };
+      if (extractedCourses.length > 0 && created?.id) {
+        await fetch(`/api/profiles/${created.id}/courses/bulk`, {
+          method: "POST", credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            courses: extractedCourses.map(c => ({
+              courseCode: c.code,
+              courseName: c.name,
+              units: c.units,
+              status: "completed",
+            })),
+          }),
+        });
+      }
       setPhase("calculating");
       setTimeout(() => setPhase("ready"), 2800);
     } catch (e) {
@@ -241,6 +285,95 @@ export default function Onboarding() {
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
+                {/* Transcript Upload */}
+                <div>
+                  <div className="flex items-center gap-3 my-1">
+                    <div className="flex-1 h-px bg-slate-200" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">or upload transcript</span>
+                    <div className="flex-1 h-px bg-slate-200" />
+                  </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf"
+                    className="sr-only"
+                    aria-label="Upload transcript PDF"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) void handleTranscriptUpload(f); }}
+                  />
+
+                  {!transcriptFileName ? (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) void handleTranscriptUpload(f); }}
+                      className="w-full border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center hover:border-indigo-300 hover:bg-indigo-50/50 transition-all cursor-pointer"
+                    >
+                      <FileText className="h-8 w-8 text-indigo-400 mx-auto mb-2" aria-hidden />
+                      <p className="text-sm text-slate-600 font-medium">Upload your transcript PDF</p>
+                      <p className="text-xs text-slate-400 mt-0.5">and we'll extract your courses automatically</p>
+                      <span className="inline-flex items-center gap-1.5 mt-3 px-4 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 text-slate-600 bg-white hover:bg-slate-50">
+                        <Upload className="h-3.5 w-3.5" aria-hidden /> Choose PDF File
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="h-4 w-4 text-indigo-500 shrink-0" aria-hidden />
+                          <span className="text-xs text-slate-700 font-medium truncate">{transcriptFileName}</span>
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="Remove transcript"
+                          onClick={() => { setTranscriptFileName(null); setExtractedCourses([]); setTranscriptError(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                          className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      {transcriptParsing && (
+                        <div className="flex items-center gap-2 text-xs text-indigo-600">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> Extracting courses…
+                        </div>
+                      )}
+
+                      {transcriptError && (
+                        <p className="text-xs text-amber-600">{transcriptError}</p>
+                      )}
+
+                      {extractedCourses.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-slate-600 mb-1.5">
+                            {extractedCourses.length} course{extractedCourses.length !== 1 ? "s" : ""} found — tap × to remove any
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                            {extractedCourses.map(c => (
+                              <span
+                                key={c.code}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200"
+                              >
+                                {c.code}
+                                {c.units && <span className="opacity-60">{c.units}u</span>}
+                                <button
+                                  type="button"
+                                  aria-label={`Remove ${c.code}`}
+                                  onClick={() => setExtractedCourses(prev => prev.filter(x => x.code !== c.code))}
+                                  className="ml-0.5 text-indigo-500 hover:text-indigo-800"
+                                >
+                                  <X className="h-2.5 w-2.5" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <p className="text-xs text-slate-400 text-center">{t("onboarding.timeNote")}</p>
               </fieldset>
             )}

@@ -70,6 +70,43 @@ router.post("/profiles/:profileId/courses", async (req, res) => {
   }
 });
 
+// POST /api/profiles/:profileId/courses/bulk
+router.post("/profiles/:profileId/courses/bulk", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    const profileId = parseInt(req.params.profileId);
+    const owner = await getOwnedProfile(profileId, req.user.id);
+    if (!owner.ok) {
+      res.status(owner.status).json({ error: owner.status === 403 ? "Forbidden" : "Profile not found" });
+      return;
+    }
+    const body = req.body as { courses?: unknown };
+    if (!Array.isArray(body.courses) || body.courses.length === 0) {
+      res.status(400).json({ error: "courses array required" });
+      return;
+    }
+    type RawCourse = { courseCode?: unknown; courseName?: unknown; units?: unknown; status?: unknown };
+    const values = (body.courses as RawCourse[]).slice(0, 150).map(c => ({
+      profileId,
+      courseCode: typeof c.courseCode === "string" ? c.courseCode : undefined,
+      courseName: typeof c.courseName === "string" && c.courseName
+        ? c.courseName
+        : typeof c.courseCode === "string" ? c.courseCode : "Unknown",
+      units: typeof c.units === "number" ? c.units : undefined,
+      status: typeof c.status === "string" ? c.status : "completed",
+    }));
+    const inserted = await db.insert(coursesTable).values(values).returning();
+    invalidateIgetcAnalysis(profileId);
+    res.status(201).json(inserted);
+  } catch (err) {
+    req.log.error({ err }, "Error bulk-adding courses");
+    res.status(500).json({ error: "Failed to bulk-add courses" });
+  }
+});
+
 // PATCH /api/courses/:courseId
 router.patch("/courses/:courseId", async (req, res) => {
   if (!req.isAuthenticated()) {

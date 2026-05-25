@@ -63,102 +63,105 @@ function Router() {
           exit={animateRoutes ? { opacity: 0 } : undefined}
           transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
         >
-      <Switch>
-        <Route path="/" component={Landing} />
-        <Route path="/s/:token" component={ShareRoadmap} />
-        <Route path="/welcome/first-gen">
-          <Welcome persona="first-gen" />
-        </Route>
-        <Route path="/welcome/ab540">
-          <Welcome persona="ab540" />
-        </Route>
-        <Route path="/welcome/returning">
-          <Welcome persona="returning" />
-        </Route>
-        <Route path="/dashboard">
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/onboarding">
-          <ProtectedRoute>
-            <Onboarding />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/profile/:profileId?">
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/courses/:profileId">
-          <ProtectedRoute>
-            <Courses />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/matches/:profileId">
-          <ProtectedRoute>
-            <Matches />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/pathways/:profileId">
-          <ProtectedRoute>
-            <Pathways />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/guidebook/:guidebookId">
-          <ProtectedRoute>
-            <Guidebook />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/roadmap/:roadmapId">
-          <ProtectedRoute>
-            <Roadmap />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/progress/:profileId">
-          <ProtectedRoute>
-            <Progress />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/internships/:profileId">
-          <ProtectedRoute>
-            <Internships />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/deadline-calendar/:profileId?">
-          <ProtectedRoute>
-            <DeadlineCalendar />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/dream-act">
-          <ProtectedRoute>
-            <DreamAct />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/scholarships/:profileId?">
-          <ProtectedRoute>
-            <Scholarships />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/tag-checker/:profileId?">
-          <ProtectedRoute>
-            <TagChecker />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/igetc/:profileId">
-          <ProtectedRoute>
-            <IgetcTracker />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/exports/:profileId?">
-          <ProtectedRoute>
-            <ExportsPage />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/admin/usage" component={AdminUsage} />
-        <Route path="/admin/seo-conversions" component={AdminSeoConversions} />
-        <Route component={NotFound} />
-      </Switch>
+          <Switch>
+            <Route path="/" component={Landing} />
+            <Route path="/s/:token" component={ShareRoadmap} />
+            <Route path="/welcome/first-gen">
+              <Welcome persona="first-gen" />
+            </Route>
+            <Route path="/welcome/ab540">
+              <Welcome persona="ab540" />
+            </Route>
+            <Route path="/welcome/returning">
+              <Welcome persona="returning" />
+            </Route>
+            <Route path="/dashboard">
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/onboarding">
+              <ProtectedRoute>
+                <Onboarding />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/profile/:profileId?">
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/courses/:profileId">
+              <ProtectedRoute>
+                <Courses />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/matches/:profileId">
+              <ProtectedRoute>
+                <Matches />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/pathways/:profileId">
+              <ProtectedRoute>
+                <Pathways />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/guidebook/:guidebookId">
+              <ProtectedRoute>
+                <Guidebook />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/roadmap/:roadmapId">
+              <ProtectedRoute>
+                <Roadmap />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/progress/:profileId">
+              <ProtectedRoute>
+                <Progress />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/internships/:profileId">
+              <ProtectedRoute>
+                <Internships />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/deadline-calendar/:profileId?">
+              <ProtectedRoute>
+                <DeadlineCalendar />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/dream-act">
+              <ProtectedRoute>
+                <DreamAct />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/scholarships/:profileId?">
+              <ProtectedRoute>
+                <Scholarships />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/tag-checker/:profileId?">
+              <ProtectedRoute>
+                <TagChecker />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/igetc/:profileId">
+              <ProtectedRoute>
+                <IgetcTracker />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/exports/:profileId?">
+              <ProtectedRoute>
+                <ExportsPage />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/admin/usage" component={AdminUsage} />
+            <Route
+              path="/admin/seo-conversions"
+              component={AdminSeoConversions}
+            />
+            <Route component={NotFound} />
+          </Switch>
         </motion.div>
       </AnimatePresence>
       <ChatBubbleWrapper />
