@@ -1,5 +1,5 @@
 FROM node:24-bookworm-slim AS build
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@11.2.2 --activate
 WORKDIR /app
 
 COPY . .
