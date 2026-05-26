@@ -671,7 +671,7 @@ export default function Profile() {
 
           {/* Save */}
           <div className="flex gap-3 justify-end">
-            <Button onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
+            <Button onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
               {saving ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("pages.profile.saving")}</>
               ) : (

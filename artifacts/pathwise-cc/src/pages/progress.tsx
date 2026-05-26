@@ -311,7 +311,7 @@ function PathwayLockScreen({ profileId }: { profileId: number }) {
       </p>
       <p className="text-sm text-slate-600 mb-8">{t("pages.progress.goToPathway")}</p>
       <Link href={`/pathways/${profileId}`}>
-        <Button className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none gap-2">
+        <Button className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none gap-2">
           <Target className="h-4 w-4" />
           {t("pages.progress.goToMyPathway")}
           <ArrowRight className="h-4 w-4" />
@@ -662,7 +662,7 @@ export default function ProgressTracker() {
                     </div>
 
                     <div className="flex items-center gap-3 flex-wrap">
-                      <Button onClick={handleLogEntry} disabled={saving || !title.trim()} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
+                      <Button onClick={handleLogEntry} disabled={saving || !title.trim()} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
                         {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("pages.progress.savingDots")}</> : <><Plus className="h-4 w-4 mr-2" />{t("pages.progress.logAnalyze")}</>}
                       </Button>
                       <p className="text-xs text-slate-600 flex items-center gap-1">
@@ -755,7 +755,7 @@ export default function ProgressTracker() {
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3 items-center">
-                    <Button onClick={handleGenerateAnalysis} disabled={generating} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
+                    <Button onClick={handleGenerateAnalysis} disabled={generating} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
                       {generating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("pages.progress.analyzingJourneyDots")}</> : <><Sparkles className="h-4 w-4 mr-2" />{analyses.length > 0 ? t("pages.progress.regenerateAssessment") : t("pages.progress.generateMyAssessment")}</>}
                     </Button>
                     <p className="text-xs text-slate-600">{t("pages.progress.rateLimit")}</p>

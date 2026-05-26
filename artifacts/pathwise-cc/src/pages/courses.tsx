@@ -492,7 +492,7 @@ function CourseDetailForm({ course, onSave, onBack, saving }: CourseDetailFormPr
       <Button
         onClick={() => onSave({ grade: grade || undefined, status, term })}
         disabled={saving}
-        className="w-full bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none"
+        className="w-full bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none"
       >
         {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
         Add to My Courses
@@ -750,7 +750,7 @@ export default function Courses() {
               Select courses directly from your college&apos;s catalog to ensure accurate course codes and unit counts.
             </p>
           </div>
-          <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none flex-shrink-0">
+          <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none flex-shrink-0">
             <Plus className="h-4 w-4 mr-2" /> Add Course
           </Button>
         </div>
@@ -806,7 +806,7 @@ export default function Courses() {
             <p className="text-slate-600 text-sm mb-6">
               Browse your college&apos;s actual course catalog and add the courses you&apos;ve completed or are taking.
             </p>
-            <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
+            <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
               <Plus className="h-4 w-4 mr-2" /> Browse Course Catalog
             </Button>
           </div>
@@ -866,7 +866,7 @@ export default function Courses() {
                     AI will cross-reference your {courses.length} course{courses.length !== 1 ? "s" : ""} against ASSIST.org articulation agreements to identify which California universities best match your coursework and show your IGETC progress.
                   </p>
                 </div>
-                <Button onClick={runAnalysis} disabled={analyzing} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none flex-shrink-0 min-w-[180px]">
+                <Button onClick={runAnalysis} disabled={analyzing} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none flex-shrink-0 min-w-[180px]">
                   {analyzing ? (
                     <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Analyzing…</>
                   ) : (
@@ -897,7 +897,7 @@ export default function Courses() {
           <p className="text-xs text-slate-600">
             GPA calculations are estimates. Verify your official GPA with your college transcript.
           </p>
-          <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
+          <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
             View My Pathway <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>

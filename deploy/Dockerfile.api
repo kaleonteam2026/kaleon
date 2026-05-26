@@ -1,0 +1,16 @@
+FROM node:24-bookworm-slim AS build
+RUN corepack enable && corepack prepare pnpm@9 --activate
+WORKDIR /app
+
+COPY . .
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @workspace/api-server run build
+
+FROM node:24-bookworm-slim
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/artifacts/api-server/dist ./dist
+COPY --from=build /app/artifacts/api-server/package.json ./
+
+EXPOSE 8080
+CMD ["node", "--enable-source-maps", "dist/index.mjs"]

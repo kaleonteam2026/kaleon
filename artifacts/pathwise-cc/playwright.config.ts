@@ -68,8 +68,11 @@ export default defineConfig({
       env: {
         PORT: API_PORT,
         ENABLE_E2E_TEST_ROUTES: "true",
-        // The secret is generated in globalSetup and passed through the env;
-        // playwright propagates parent-process env into webServer commands.
+        OIDC_CLIENT_ID: "e2e-test-client",
+        OIDC_ISSUER_URL: "https://example.com",
+        PUBLIC_ORIGIN: `http://localhost:${WEB_PORT}`,
+        ALLOWED_ORIGINS: `http://localhost:${WEB_PORT},http://localhost:${API_PORT}`,
+        PRIVATE_OBJECT_DIR: "/e2e-bucket/private",
         E2E_TEST_SECRET: E2E_SECRET,
         E2E_SECRET_FILE: SECRET_FILE,
       },

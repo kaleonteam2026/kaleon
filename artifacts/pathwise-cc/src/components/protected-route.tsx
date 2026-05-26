@@ -7,7 +7,12 @@ interface Props {
 }
 
 export default function ProtectedRoute({ children }: Props) {
+  const bypass = import.meta.env.VITE_AUTH_BYPASS === "true";
   const { isAuthenticated, isLoading, login } = useAuth();
+
+  if (bypass) {
+    return <>{children}</>;
+  }
 
   if (isLoading) {
     return (
@@ -27,7 +32,7 @@ export default function ProtectedRoute({ children }: Props) {
           <h2 className="text-xl font-semibold text-slate-800">Sign in to continue</h2>
           <p className="text-slate-500 text-sm">You need to be signed in to access this page.</p>
           <Button onClick={login} className="bg-indigo-600 hover:bg-indigo-700">
-            Sign in with Replit
+            Sign in
           </Button>
         </div>
       </div>

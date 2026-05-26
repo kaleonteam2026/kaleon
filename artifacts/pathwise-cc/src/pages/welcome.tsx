@@ -118,10 +118,18 @@ export default function Welcome({ persona }: WelcomeProps) {
 
   const handleLogin = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
+    if (import.meta.env.VITE_AUTH_BYPASS === "true") {
+      login();
+      return;
+    }
     window.location.href = loginHref;
   };
 
   const headerLogin = () => {
+    if (import.meta.env.VITE_AUTH_BYPASS === "true") {
+      login();
+      return;
+    }
     window.location.href = loginHref;
   };
 

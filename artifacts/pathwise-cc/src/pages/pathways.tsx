@@ -199,7 +199,7 @@ export default function Pathways() {
           <Button
             onClick={generatePathways}
             disabled={generating}
-            className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 pwc-font-mono uppercase tracking-wider text-xs font-bold rounded-none"
+            className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 pwc-font-mono uppercase tracking-wider text-xs font-bold rounded-none"
           >
             {generating ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("pages.pathways.generating")}</>
@@ -241,7 +241,7 @@ export default function Pathways() {
             <p className="text-slate-500 text-sm mt-1 max-w-md mx-auto">
               {t("pages.pathways.noPathwaysBody")}
             </p>
-            <Button onClick={generatePathways} className="mt-6 bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
+            <Button onClick={generatePathways} className="mt-6 bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
               <Sparkles className="mr-2 h-4 w-4" /> {t("pages.pathways.generatePathways")}
             </Button>
           </div>
@@ -457,7 +457,7 @@ export default function Pathways() {
                           size="sm"
                           onClick={() => generateGuidebook(pathway.id)}
                           disabled={generatingGuidebook === pathway.id || generatingRoadmap === pathway.id}
-                          className="bg-emerald-600 hover:bg-emerald-700"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
                         >
                           {generatingGuidebook === pathway.id ? (
                             <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />{t("pages.pathways.generating")}</>
@@ -469,7 +469,7 @@ export default function Pathways() {
                           size="sm"
                           onClick={() => generateRoadmap(pathway.id)}
                           disabled={generatingRoadmap === pathway.id || generatingGuidebook === pathway.id}
-                          className="bg-violet-600 hover:bg-violet-700"
+                          className="bg-violet-600 hover:bg-violet-700 text-white"
                         >
                           {generatingRoadmap === pathway.id ? (
                             <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />{t("pages.pathways.generating")}</>

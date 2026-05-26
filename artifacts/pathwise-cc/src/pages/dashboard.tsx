@@ -7,6 +7,7 @@ import Nav from "@/components/nav";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
+import { getDevDashboardSummary, getDevProfiles, isAuthBypass } from "@/lib/dev-profile";
 import {
   AlertCircle, BookOpen, Briefcase, ChevronRight, Compass,
   FileText, Info, LineChart, Map, Percent, Plus, Settings,
@@ -123,6 +124,18 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user?.id) return;
+
+    if (isAuthBypass()) {
+      const profiles = getDevProfiles();
+      if (profiles.length > 0) {
+        const p = profiles[0];
+        setProfile(p);
+        setSummary(getDevDashboardSummary(p));
+      }
+      setLoading(false);
+      return;
+    }
+
     fetch(`/api/profiles/user/${user.id}`, { credentials: "include" })
       .then(r => r.json())
       .then((profiles: Profile[]) => {

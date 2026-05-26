@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Pathwise CC is a pnpm TypeScript monorepo for California community-college transfer planning. The production application consists of a Vite React frontend in `artifacts/pathwise-cc`, an Express 5 API server in `artifacts/api-server`, shared generated API/type libraries under `lib/api-*`, a Drizzle/PostgreSQL data layer in `lib/db`, and external integrations for Replit Auth/OIDC, Anthropic AI, and Tavily search. Users authenticate with Replit Auth, create student profiles, track courses/progress, generate AI transfer guidance, and run live scholarship/deadline/internship searches.
+Pathwise CC is a pnpm TypeScript monorepo for California community-college transfer planning. The production application consists of a Vite React frontend in `artifacts/pathwise-cc`, an Express 5 API server in `artifacts/api-server`, shared generated API/type libraries under `lib/api-*`, a Drizzle/PostgreSQL data layer in `lib/db`, and external integrations for OIDC authentication, Anthropic AI, and Tavily search. Users authenticate via OIDC (cookie sessions), create student profiles, track courses/progress, generate AI transfer guidance, and run live scholarship/deadline/internship searches.
 
 The `artifacts/mockup-sandbox` package and `.agents`/skill assets are development or agent tooling areas and are not production application surfaces unless explicitly wired into a deployed production workflow. Production deployments are assumed to run with `NODE_ENV=production` and platform-managed TLS.
 
@@ -10,7 +10,7 @@ The `artifacts/mockup-sandbox` package and `.agents`/skill assets are developmen
 
 - **User accounts and sessions** -- OIDC identities, session IDs in the `sid` cookie, OIDC access/refresh tokens stored in the sessions table, and user profile metadata. Compromise allows account impersonation and access to student records.
 - **Student education and planning data** -- profile details, GPA/course history, financial situation, transfer goals, progress entries, saved internships, generated pathways, guidebooks, and roadmaps. This is sensitive personal and educational data.
-- **Application secrets** -- `DATABASE_URL`, `REPL_ID`, OIDC configuration, Anthropic API credentials, Tavily API keys, and other environment secrets. Disclosure can enable backend or third-party service abuse.
+- **Application secrets** -- `DATABASE_URL`, `OIDC_CLIENT_ID`, `OIDC_ISSUER_URL`, Anthropic API credentials, Tavily API keys, GCS credentials, and other environment secrets. Disclosure can enable backend or third-party service abuse.
 - **AI and search budgets** -- Anthropic and Tavily calls incur cost and quota usage. Public or weakly limited endpoints could be abused for denial of wallet.
 - **Generated advisory content** -- AI-generated recommendations, guidebooks, roadmaps, search results, and markdown rendered to the client. Malicious or untrusted content must not execute script or override authorization decisions.
 
@@ -19,7 +19,7 @@ The `artifacts/mockup-sandbox` package and `.agents`/skill assets are developmen
 - **Browser to API** -- all `/api/*` requests cross from an untrusted browser/client into the Express server. The server must authenticate requests, enforce resource ownership, validate inputs, and not rely on frontend checks.
 - **Authenticated user to another user's data** -- profile IDs, pathway IDs, course IDs, guidebook IDs, roadmap IDs, progress entry IDs, and saved internship slugs are attacker-controlled URL/body inputs. Each data access must verify ownership through the authenticated `req.user.id`.
 - **API to PostgreSQL** -- the API server has broad database access through Drizzle. Queries must remain parameterized and avoid returning rows outside the authorized user scope.
-- **API to OIDC provider** -- login/callback/logout flows trust Replit Auth claims only after state, nonce, and PKCE validation. Redirect/callback origins derived from request headers must not create open redirect or callback confusion.
+- **API to OIDC provider** -- login/callback/logout flows trust IdP claims only after state, nonce, and PKCE validation. Redirect/callback origins derived from request headers must not create open redirect or callback confusion.
 - **API to external AI/search services** -- student data and user-controlled prompts are sent to Anthropic/Tavily. Calls must be authenticated, rate limited/capped, avoid secret leakage in errors/logs, and treat external results as untrusted content.
 - **Markdown/HTML rendering boundary** -- guidebooks, roadmaps, AI responses, Tavily snippets, and user-entered text cross into React rendering. Markdown renderers and any `dangerouslySetInnerHTML` usage must prevent XSS.
 - **Production vs development tooling** -- mockup sandbox, agent skills, attached assets, and local workflow logs are out of production scope unless imported by production packages.
@@ -37,7 +37,7 @@ The `artifacts/mockup-sandbox` package and `.agents`/skill assets are developmen
 
 ### Spoofing
 
-Users authenticate via Replit Auth/OIDC. The API must validate OIDC state, nonce, and PKCE verifier before creating sessions; session IDs must be high entropy, stored only in HTTP-only secure cookies, and invalidated on expiry or allowlist removal. Login and logout redirect construction must not let attacker-controlled headers or parameters impersonate trusted origins or redirect users to malicious locations.
+Users authenticate via OIDC. The API must validate OIDC state, nonce, and PKCE verifier before creating sessions; session IDs must be high entropy, stored only in HTTP-only secure cookies, and invalidated on expiry or allowlist removal. Login and logout redirect construction must not let attacker-controlled headers or parameters impersonate trusted origins or redirect users to malicious locations.
 
 ### Tampering
 

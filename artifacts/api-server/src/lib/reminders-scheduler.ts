@@ -8,7 +8,7 @@ import {
   type StudentProfile,
 } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
-import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { getAnthropic, isAnthropicConfigured } from "@workspace/integrations-anthropic-ai";
 import { enforceAiCap } from "./global-cap";
 import { computeUpcomingDeadlines, todayKey, type UpcomingHit } from "./deadlines";
 import { sendEmail, isEmailConfigured } from "./email";
@@ -73,8 +73,19 @@ Return ONLY JSON of the form:
 { "messages": [ { "deadlineId": "...", "leadDays": 14, "title": "TAG due in 14 days", "body": "..." } ] }
 The "title" should be short (max 60 chars). Include exactly one entry per reminder.`;
 
+  if (!isAnthropicConfigured()) {
+    return hits.map((h) => ({
+      deadlineId: h.source.id,
+      leadDays: h.leadDays,
+      title: `${h.source.label} in ${h.daysUntil}d`,
+      body: `${h.source.label} is in ${h.daysUntil} days. ${
+        missing.length > 0 ? `Your ${missing.join(", ")} are still blank.` : "Stay on track."
+      }`,
+    }));
+  }
+
   try {
-    const r = await anthropic.messages.create({
+    const r = await getAnthropic().messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 1500,
       system,

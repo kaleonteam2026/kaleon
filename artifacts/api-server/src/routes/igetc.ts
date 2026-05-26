@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, igetcProgressTable, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { AiNotConfiguredError, isAnthropicConfigured, requireAnthropic } from "../lib/ai";
 import { getOwnedProfile } from "../lib/ownership";
 import { enforceAiCap } from "../lib/global-cap";
 import { igetcAnalysisCache, IGETC_ANALYSIS_TTL } from "../lib/igetc-cache";
@@ -65,6 +65,10 @@ router.put("/profiles/:profileId/igetc", async (req, res) => {
 
 router.post("/profiles/:profileId/igetc/analyze", async (req, res) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!isAnthropicConfigured()) {
+    res.status(503).json({ error: new AiNotConfiguredError().message });
+    return;
+  }
 
   const profileId = parseInt(req.params.profileId);
   const owner = await getOwnedProfile(profileId, req.user.id);
@@ -101,7 +105,7 @@ router.post("/profiles/:profileId/igetc/analyze", async (req, res) => {
 
     const { getRequestLocale, localeJsonPromptSuffix } = await import("../lib/locale");
     const locale = getRequestLocale(req);
-    const response = await anthropic.messages.create({
+    const response = await requireAnthropic().messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 512,
       system: "You are a California community college IGETC advisor. Given a list of courses, determine which IGETC areas they likely satisfy. Return ONLY valid JSON, no markdown fences, no explanation." + localeJsonPromptSuffix(locale),

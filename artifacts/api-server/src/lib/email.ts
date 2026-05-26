@@ -1,6 +1,5 @@
 // Graceful email dispatch. If a configured provider is available, send;
-// otherwise log and no-op. Wired to be replaced by a real Replit send-email
-// integration later without changing call sites.
+// otherwise log and no-op.
 
 import { logger } from "./logger";
 

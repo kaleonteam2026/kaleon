@@ -6,26 +6,9 @@ import router from "./routes";
 import seoRouter from "./routes/seo";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
+import { getAllowedOrigins } from "./lib/platform";
 
 const app: Express = express();
-
-function getAllowedOrigins(): Set<string> {
-  const origins = new Set<string>();
-  const replitDomains = process.env.REPLIT_DOMAINS;
-  if (replitDomains) {
-    for (const domain of replitDomains.split(",")) {
-      const trimmed = domain.trim();
-      if (trimmed) {
-        origins.add(`https://${trimmed}`);
-      }
-    }
-  }
-  const devDomain = process.env.REPLIT_DEV_DOMAIN;
-  if (devDomain) {
-    origins.add(`https://${devDomain}`);
-  }
-  return origins;
-}
 
 const allowedOrigins = getAllowedOrigins();
 

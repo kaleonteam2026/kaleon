@@ -286,7 +286,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
   const sessionCompleted = interviewActive && lastMsg?.role === "assistant" && isSummary(lastMsg.content);
 
   return (
-    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end gap-2 pwc-font-sans" style={{ fontFamily: "Inter, sans-serif" }}>
+    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 flex flex-col items-end gap-2 pwc-font-sans" style={{ fontFamily: "Inter, sans-serif" }}>
       <AnimatePresence>
       {open && (
         <motion.div

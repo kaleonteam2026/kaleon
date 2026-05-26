@@ -2,7 +2,7 @@ import { test, expect, type Page, type APIRequestContext } from "@playwright/tes
 
 // End-to-end coverage for the reminder system. This spec drives the real React
 // app served by Vite AND the real API server: it logs in (via a dev-only test
-// endpoint that bypasses the Replit OIDC round-trip), creates a profile, turns
+// endpoint that bypasses the OIDC round-trip), creates a profile, turns
 // reminder prefs on, hits POST /reminders/:id/run, then asserts the bell
 // reflects whatever the live GET /reminders/:id endpoint returns.
 //

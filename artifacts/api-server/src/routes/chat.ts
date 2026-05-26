@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { AiNotConfiguredError, isAnthropicConfigured, requireAnthropic } from "../lib/ai";
 import { enforceAiCap } from "../lib/global-cap";
 import { getOwnedProfile } from "../lib/ownership";
 import { getRequestLocale, localePromptSuffix } from "../lib/locale";
@@ -85,6 +85,10 @@ router.post("/chat", async (req, res) => {
   const userId = req.user.id;
   if (!checkChatLimit(userId)) {
     res.status(429).json({ error: `Chat rate limit reached (${CHAT_PER_USER_HOURLY}/hour). Please wait.` });
+    return;
+  }
+  if (!isAnthropicConfigured()) {
+    res.status(503).json({ error: new AiNotConfiguredError().message });
     return;
   }
   try {
@@ -220,7 +224,7 @@ router.post("/chat", async (req, res) => {
       modelMessages = messages.slice(-12);
     }
 
-    const response = await anthropic.messages.create({
+    const response = await requireAnthropic().messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: isInterview ? 800 : 512,
       system,

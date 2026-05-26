@@ -9,6 +9,7 @@ import {
   BookOpen, CheckCircle2, User, Loader2, FileText, Upload, X,
 } from "lucide-react";
 import { parseTranscriptPDF, type ExtractedCourse } from "@/lib/parse-transcript";
+import { isAuthBypass, saveDevProfile } from "@/lib/dev-profile";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMotionEnabled, useDirSign, DUR, EASE_OUT } from "@/lib/motion";
 
@@ -127,6 +128,24 @@ export default function Onboarding() {
         isFirstGen: form.isFirstGen,
         completionPercent: 60,
       };
+
+      if (isAuthBypass()) {
+        saveDevProfile({
+          fullName: payload.fullName,
+          communityCollege: payload.communityCollege,
+          intendedMajor: payload.intendedMajor,
+          careerGoal: payload.careerGoal,
+          currentGpa: payload.currentGpa,
+          transferTimeline: payload.transferTimeline,
+          financialSituation: payload.financialSituation,
+          isFirstGen: payload.isFirstGen,
+          completionPercent: payload.completionPercent,
+        });
+        setPhase("calculating");
+        setTimeout(() => setPhase("ready"), 2800);
+        return;
+      }
+
       const r = await fetch("/api/profiles", {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },

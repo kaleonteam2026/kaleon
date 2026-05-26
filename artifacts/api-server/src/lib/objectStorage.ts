@@ -1,24 +1,18 @@
 import { Storage } from "@google-cloud/storage";
 
-const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
+function createObjectStorageClient(): Storage {
+  const projectId = process.env.GCS_PROJECT_ID?.trim() || undefined;
+  const keyFilename = process.env.GCS_KEY_FILE?.trim() || undefined;
 
-export const objectStorageClient = new Storage({
-  credentials: {
-    audience: "replit",
-    subject_token_type: "access_token",
-    token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
-    type: "external_account",
-    credential_source: {
-      url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
-      format: {
-        type: "json",
-        subject_token_field_name: "access_token",
-      },
-    },
-    universe_domain: "googleapis.com",
-  },
-  projectId: "",
-});
+  if (keyFilename || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    return new Storage({ projectId, keyFilename });
+  }
+
+  // Application Default Credentials (GCE, Cloud Run, local gcloud auth, etc.)
+  return new Storage({ projectId });
+}
+
+export const objectStorageClient = createObjectStorageClient();
 
 export class ObjectNotFoundError extends Error {
   constructor() {
@@ -32,7 +26,7 @@ export function getPrivateObjectDir(): string {
   const dir = process.env.PRIVATE_OBJECT_DIR || "";
   if (!dir) {
     throw new Error(
-      "PRIVATE_OBJECT_DIR not set. Provision object storage and set PRIVATE_OBJECT_DIR.",
+      "PRIVATE_OBJECT_DIR not set. Set to your GCS object prefix (e.g. /bucket-name/private).",
     );
   }
   return dir;

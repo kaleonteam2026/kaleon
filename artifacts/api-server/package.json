@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
+    "dev": "export NODE_ENV=development OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-dev-client} OIDC_ISSUER_URL=${OIDC_ISSUER_URL:-https://example.com} PUBLIC_ORIGIN=${PUBLIC_ORIGIN:-http://localhost:19245} ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:19245} PRIVATE_OBJECT_DIR=${PRIVATE_OBJECT_DIR:-/dev-bucket/private} && pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",

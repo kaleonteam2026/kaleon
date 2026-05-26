@@ -1,8 +1,27 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+
+/** Full-page hits to /api/login must load the SPA when the API is not proxied. */
+function spaAuthRoutesPlugin(apiTarget: string | undefined): Plugin {
+  const authBypass = process.env.VITE_AUTH_BYPASS === "true";
+  if (apiTarget && !authBypass) return { name: "spa-auth-routes" };
+
+  return {
+    name: "spa-auth-routes",
+    enforce: "pre",
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        const url = req.url?.split("?")[0] ?? "";
+        if (url === "/api/login" || url === "/api/logout") {
+          req.url = "/index.html";
+        }
+        next();
+      });
+    },
+  };
+}
 
 const rawPort = process.env.PORT;
 
@@ -26,26 +45,12 @@ if (!basePath) {
   );
 }
 
+const apiTarget =
+  process.env.E2E_API_TARGET || process.env.VITE_API_TARGET;
+
 export default defineConfig({
   base: basePath,
-  plugins: [
-    react(),
-    tailwindcss(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({
-              root: path.resolve(import.meta.dirname, ".."),
-            }),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
-  ],
+  plugins: [react(), tailwindcss(), spaAuthRoutesPlugin(apiTarget)],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
@@ -66,14 +71,11 @@ export default defineConfig({
     fs: {
       strict: true,
     },
-    // When E2E_API_TARGET is set (used by the Playwright `webServer` setup),
-    // proxy `/api` to the dedicated test api-server so the spec drives an
-    // isolated stack rather than the long-running dev workflow.
-    ...(process.env.E2E_API_TARGET
+    ...(apiTarget
       ? {
           proxy: {
             "/api": {
-              target: process.env.E2E_API_TARGET,
+              target: apiTarget,
               changeOrigin: true,
             },
           },

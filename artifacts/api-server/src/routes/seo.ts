@@ -22,20 +22,11 @@ import { ssrShell, escapeHtml } from "../services/seoSsr";
 
 const router: IRouter = Router();
 
-// Trusted public origin for canonicals, OG, JSON-LD, and sitemap. Pinned via
-// SEO_PUBLIC_ORIGIN; falls back to the first $REPLIT_DOMAINS host on https.
-// Request Host/X-Forwarded-Proto are NEVER reflected, to prevent host-header
-// poisoning from leaking into the persisted JSON-LD.
-const ALLOWED_HOST_RE = /^[a-z0-9.-]+(?::\d{1,5})?$/i;
-const PUBLIC_ORIGIN = (() => {
-  const fromEnv = process.env.SEO_PUBLIC_ORIGIN?.trim();
-  if (fromEnv && /^https?:\/\/[a-z0-9.-]+(?::\d{1,5})?$/i.test(fromEnv)) {
-    return fromEnv.replace(/\/$/, "");
-  }
-  const firstDomain = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
-  if (firstDomain && ALLOWED_HOST_RE.test(firstDomain)) return `https://${firstDomain}`;
-  return "http://localhost";
-})();
+import { getPublicOrigin } from "../lib/platform";
+
+// Trusted public origin for canonicals, OG, JSON-LD, and sitemap.
+// Request Host/X-Forwarded-Proto are NEVER reflected, to prevent host-header poisoning.
+const PUBLIC_ORIGIN = getPublicOrigin();
 
 function getOrigin(_req: unknown): string {
   return PUBLIC_ORIGIN;

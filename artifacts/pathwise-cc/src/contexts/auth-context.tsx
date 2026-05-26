@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { useLocation } from "wouter";
 import { SUPPORTED_LOCALES, changeLocale, LOCALE_STORAGE_KEY, type SupportedLocale } from "@/i18n/config";
 
 interface AuthUser {
@@ -19,6 +20,8 @@ interface AuthState {
 }
 
 const AuthContext = createContext<AuthState | null>(null);
+
+const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
 
 async function syncLocaleWithServer(): Promise<void> {
   try {
@@ -50,10 +53,21 @@ async function syncLocaleWithServer(): Promise<void> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [, setLocation] = useLocation();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUser = useCallback(() => {
+    if (AUTH_BYPASS) {
+      setUser({
+        id: "dev",
+        email: "dev@local",
+        firstName: "Dev",
+        lastName: "User",
+      });
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     fetch("/api/auth/user", { credentials: "include" })
       .then((res) => {
@@ -74,12 +88,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => { fetchUser(); }, [fetchUser]);
 
   const login = useCallback(() => {
+    if (AUTH_BYPASS) {
+      setLocation("/dashboard");
+      return;
+    }
     window.location.href = `/api/login?returnTo=${encodeURIComponent("/")}`;
-  }, []);
+  }, [setLocation]);
 
   const logout = useCallback(() => {
+    if (AUTH_BYPASS) {
+      setUser(null);
+      setLocation("/");
+      return;
+    }
     window.location.href = "/api/logout";
-  }, []);
+  }, [setLocation]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, isAuthenticated: !!user, login, logout, refetch: fetchUser }}>

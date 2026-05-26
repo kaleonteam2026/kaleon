@@ -1,6 +1,6 @@
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -25,6 +25,7 @@ import AdminUsage from "@/pages/admin-usage";
 import AdminSeoConversions from "@/pages/admin-seo-conversions";
 import Onboarding from "@/pages/onboarding";
 import Welcome from "@/pages/welcome";
+import ApiLoginRedirect from "@/pages/api-login-redirect";
 import ChatBubble from "@/components/chat-bubble";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
 import ProtectedRoute from "@/components/protected-route";
@@ -51,20 +52,12 @@ function Router() {
   // transition vocabulary established on the landing page (Task #53).
   // Admin pages stay static per spec.
   const isAdmin = location.startsWith("/admin");
-  const transitionKey = isAdmin ? "admin-static" : location;
   const animateRoutes = !isAdmin && !reduced;
-  return (
-    <>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={transitionKey}
-          initial={animateRoutes ? { opacity: 0 } : false}
-          animate={animateRoutes ? { opacity: 1 } : undefined}
-          exit={animateRoutes ? { opacity: 0 } : undefined}
-          transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-        >
+
+  const routes = (
           <Switch>
             <Route path="/" component={Landing} />
+            <Route path="/api/login" component={ApiLoginRedirect} />
             <Route path="/s/:token" component={ShareRoadmap} />
             <Route path="/welcome/first-gen">
               <Welcome persona="first-gen" />
@@ -162,8 +155,22 @@ function Router() {
             />
             <Route component={NotFound} />
           </Switch>
+  );
+
+  return (
+    <>
+      {animateRoutes ? (
+        <motion.div
+          key={location}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {routes}
         </motion.div>
-      </AnimatePresence>
+      ) : (
+        routes
+      )}
       <ChatBubbleWrapper />
     </>
   );
