@@ -1,8 +1,27 @@
 export type ReminderStatus = "unread" | "read" | "snoozed" | "done";
 
+const REMINDER_STATUSES = new Set<ReminderStatus>([
+  "unread",
+  "read",
+  "snoozed",
+  "done",
+]);
+
 export interface ReminderFeedRow {
   status: ReminderStatus;
   snoozeUntil?: Date | null;
+}
+
+/** Map DB text `status` to the feed union (values are enforced by app writes). */
+export function toReminderFeedRows<T extends { status: string; snoozeUntil?: Date | null }>(
+  rows: T[],
+): Array<T & ReminderFeedRow> {
+  return rows.map((row) => {
+    if (!REMINDER_STATUSES.has(row.status as ReminderStatus)) {
+      throw new Error(`Invalid reminder status: ${row.status}`);
+    }
+    return row as T & ReminderFeedRow;
+  });
 }
 
 export interface FeedSummary<T extends ReminderFeedRow> {

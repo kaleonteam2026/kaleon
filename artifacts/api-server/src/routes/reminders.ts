@@ -3,7 +3,7 @@ import { db, reminderPrefsTable, remindersTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { getOwnedProfile } from "../lib/ownership";
 import { runReminderJob } from "../lib/reminders-scheduler";
-import { buildReminderFeed } from "../lib/reminder-feed";
+import { buildReminderFeed, toReminderFeedRows } from "../lib/reminder-feed";
 
 const router = Router();
 
@@ -104,7 +104,7 @@ router.get("/reminders/:profileId", async (req, res) => {
       .from(remindersTable)
       .where(eq(remindersTable.profileId, profileId))
       .orderBy(desc(remindersTable.createdAt));
-    res.json(buildReminderFeed(rows, new Date()));
+    res.json(buildReminderFeed(toReminderFeedRows(rows), new Date()));
   } catch (err) {
     req.log.error({ err }, "Failed to fetch reminders");
     res.status(500).json({ error: "Failed to fetch reminders" });
