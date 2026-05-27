@@ -1,5 +1,8 @@
-# Static Pathwise CC UI on GitHub Pages (API deployed separately later).
-# Demo mode: VITE_AUTH_BYPASS skips login/API until backend is wired up.
+# Deploy Pathwise CC static UI to the gh-pages branch.
+#
+# GitHub Pages is currently rendering README.md because the site uses
+# "Deploy from a branch" → main → / (Jekyll). After this workflow runs,
+# change Settings → Pages → Branch: gh-pages → / (root).
 #
 # Site URL: https://kaleonteam2026.github.io/kaleon/
 
@@ -7,13 +10,11 @@ name: Deploy GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/replit-decoupling]
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
@@ -22,9 +23,6 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -52,11 +50,9 @@ jobs:
 
       - run: touch artifacts/pathwise-cc/dist/public/.nojekyll
 
-      - uses: actions/configure-pages@v4
-
-      - uses: actions/upload-pages-artifact@v3
+      - name: Publish built app to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: artifacts/pathwise-cc/dist/public
-
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: artifacts/pathwise-cc/dist/public
+          publish_branch: gh-pages
