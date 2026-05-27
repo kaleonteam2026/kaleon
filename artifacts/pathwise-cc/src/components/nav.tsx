@@ -4,8 +4,8 @@ import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { DUR, EASE_OUT, useMotionEnabled } from "@/lib/motion";
 import {
-  LayoutDashboard, BookOpen, Target, Map, Award, LogOut, Menu, X,
-  User, TrendingUp, Search, ChevronRight, Download,
+  BookOpen, Target, Map, LogOut, Menu, X,
+  TrendingUp, Search, ChevronRight, Download,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -40,12 +40,6 @@ export default function Nav({ profileId }: Props) {
     else { const s = getStoredProfileId(); if (s) setResolvedId(s); }
   }, [profileId]);
 
-  const staticLinks = [
-    { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
-    { href: "/profile", label: t("nav.profile"), icon: User },
-    { href: resolvedId ? `/scholarships/${resolvedId}` : "/scholarships", label: t("nav.scholarships"), icon: Award },
-  ];
-
   const profileLinks = resolvedId ? [
     { href: `/courses/${resolvedId}`, label: t("nav.courses"), icon: BookOpen },
     { href: `/pathways/${resolvedId}`, label: t("nav.pathway"), icon: Target },
@@ -54,7 +48,7 @@ export default function Nav({ profileId }: Props) {
     { href: `/exports/${resolvedId}`, label: t("nav.exports"), icon: Download },
   ] : [];
 
-  const allLinks = [...staticLinks, ...profileLinks];
+  const allLinks = [...profileLinks];
 
   if (!isAuthenticated) return null;
 
@@ -64,15 +58,11 @@ export default function Nav({ profileId }: Props) {
   };
 
   const bottomTabs = resolvedId ? [
-    { href: "/dashboard", icon: LayoutDashboard, label: t("nav.home") },
     { href: `/courses/${resolvedId}`, icon: BookOpen, label: t("nav.courses") },
     { href: `/pathways/${resolvedId}`, icon: Target, label: t("nav.pathway") },
     { href: `/progress/${resolvedId}`, icon: TrendingUp, label: t("nav.progress") },
     { href: `/internships/${resolvedId}`, icon: Search, label: t("nav.intern") },
-  ] : [
-    { href: "/dashboard", icon: LayoutDashboard, label: t("nav.home") },
-    { href: "/profile", icon: User, label: t("nav.profile") },
-  ];
+  ] : [];
 
   const Brand = (
     <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg tracking-tight uppercase">

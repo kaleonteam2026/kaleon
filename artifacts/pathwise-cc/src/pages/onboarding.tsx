@@ -24,10 +24,10 @@ const TRANSFER_TIMELINE_VALUES: Record<string, string> = {
   timelineFall2028: "Fall 2028", timelineUndecided: "Undecided",
 };
 
-const GPA_RANGE_KEYS = ["4.0", "3.7–3.9", "3.3–3.6", "3.0–3.2", "2.7–2.9", "2.4–2.6", "gpaBelow", "gpaNotSure"] as const;
+const GPA_RANGE_KEYS = ["4.0", "3.7-3.9", "3.3-3.6", "3.0-3.2", "2.7-2.9", "2.4-2.6", "gpaBelow", "gpaNotSure"] as const;
 const GPA_RANGE_LABELS: Record<string, string> = {
-  "4.0": "4.0", "3.7–3.9": "3.7–3.9", "3.3–3.6": "3.3–3.6", "3.0–3.2": "3.0–3.2",
-  "2.7–2.9": "2.7–2.9", "2.4–2.6": "2.4–2.6", gpaBelow: "Below 2.4", gpaNotSure: "Not sure",
+  "4.0": "4.0", "3.7-3.9": "3.7-3.9", "3.3-3.6": "3.3-3.6", "3.0-3.2": "3.0-3.2",
+  "2.7-2.9": "2.7-2.9", "2.4-2.6": "2.4-2.6", gpaBelow: "Below 2.4", gpaNotSure: "Not sure",
 };
 
 const FINANCIAL_KEYS = ["finPell", "finDream", "finAb540", "finMiddle", "finFullPay", "finNotSure"] as const;
