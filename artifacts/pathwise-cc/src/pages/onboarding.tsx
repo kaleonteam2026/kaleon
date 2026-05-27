@@ -51,6 +51,36 @@ interface FormData {
 
 const STEP_ICONS = [Map, GraduationCap, BookOpen, User];
 
+const FONT_STYLES = `
+  .pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
+  .pwc-font-sans { font-family: 'Inter', sans-serif; }
+`;
+
+const ONBOARDING_PAGE_BG = {
+  background: "linear-gradient(160deg, #050c18 0%, #0a1628 50%, #061020 100%)",
+  color: "#e2e8f0",
+} as const;
+
+const ONBOARDING_CARD = {
+  background: "rgba(13,26,46,0.9)",
+  border: "1px solid rgba(78,204,163,0.22)",
+  borderRadius: 16,
+} as const;
+
+const ONBOARDING_INPUT =
+  "w-full px-4 py-2.5 rounded-xl text-sm text-slate-100 placeholder:text-slate-500 bg-[rgba(5,12,24,0.65)] border border-[rgba(78,204,163,0.25)] focus:outline-none focus:ring-2 focus:ring-[#4ECCA3]/40 focus:border-[rgba(78,204,163,0.5)]";
+
+const choiceBtn = (selected: boolean) =>
+  cn(
+    "text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
+    selected
+      ? "border-transparent text-[#050c18]"
+      : "bg-[rgba(5,12,24,0.5)] border-[rgba(78,204,163,0.2)] text-slate-300 hover:border-[rgba(78,204,163,0.45)]",
+  );
+
+const choiceBtnStyle = (selected: boolean) =>
+  selected ? { background: "linear-gradient(135deg, #4ECCA3, #38b2ac)" } : undefined;
+
 export default function Onboarding() {
   const { t } = useTranslation();
   const STEPS = [
@@ -238,33 +268,47 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50 flex items-center justify-center px-4 py-12">
+    <div
+      className="min-h-screen pwc-font-sans flex items-center justify-center px-4 py-12"
+      style={ONBOARDING_PAGE_BG}
+    >
+      <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="flex items-center gap-2 justify-center mb-8">
-          <Map className="h-6 w-6 text-indigo-600" />
-          <span className="text-xl font-bold text-slate-900 uppercase tracking-tight" style={{ fontFamily: "Inter, sans-serif" }}>Kaleon</span>
+          <Map className="h-6 w-6" style={{ color: "#4ECCA3" }} aria-hidden />
+          <span className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
+            Kaleon
+          </span>
         </div>
 
         {/* Progress bar */}
         <div className="mb-6">
-          <div className="flex justify-between text-xs text-slate-500 mb-1.5">
+          <div className="flex justify-between text-xs mb-1.5 pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>
             <span>{t("onboarding.stepOf", { current: step + 1, total: STEPS.length })}</span>
             <span>{Math.round(progress)}%</span>
           </div>
-          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-            <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(78,204,163,0.12)" }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${progress}%`, background: "linear-gradient(90deg, #4ECCA3, #38b2ac)" }}
+            />
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+        <div className="overflow-hidden shadow-xl" style={ONBOARDING_CARD}>
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-6 text-white">
+          <div
+            className="px-8 py-6"
+            style={{ borderBottom: "1px solid rgba(78,204,163,0.2)", background: "rgba(78,204,163,0.06)" }}
+          >
             <div className="flex items-center gap-3 mb-1">
-              <StepIcon className="h-5 w-5 text-indigo-200" />
-              <h1 className="text-xl font-bold">{STEPS[step].title}</h1>
+              <StepIcon className="h-5 w-5" style={{ color: "#4ECCA3" }} aria-hidden />
+              <h1 className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
+                {STEPS[step].title}
+              </h1>
             </div>
-            <p className="text-indigo-200 text-sm">{STEPS[step].subtitle}</p>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>{STEPS[step].subtitle}</p>
           </div>
 
           {/* Content */}
@@ -287,29 +331,37 @@ export default function Onboarding() {
                     { icon: BookOpen, label: t("onboarding.aiPathways"), desc: t("onboarding.aiPathwaysDesc") },
                     { icon: Target, label: t("onboarding.scholarships"), desc: t("onboarding.scholarshipsDesc") },
                   ].map(f => (
-                    <div key={f.label} className="bg-indigo-50 border border-indigo-100 rounded-2xl p-3 text-center">
-                      <f.icon className="h-5 w-5 text-indigo-600 mx-auto mb-1.5" />
-                      <p className="text-xs font-bold text-slate-800">{f.label}</p>
-                      <p className="text-[10px] text-slate-500">{f.desc}</p>
+                    <div
+                      key={f.label}
+                      className="rounded-2xl p-3 text-center"
+                      style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.18)" }}
+                    >
+                      <f.icon className="h-5 w-5 mx-auto mb-1.5" style={{ color: "#4ECCA3" }} aria-hidden />
+                      <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>{f.label}</p>
+                      <p className="text-[10px]" style={{ color: "#64748b" }}>{f.desc}</p>
                     </div>
                   ))}
                 </div>
                 <div>
-                  <label htmlFor="ob-fullname" className="block text-sm font-medium text-slate-700 mb-1.5">{t("onboarding.yourName")}</label>
+                  <label htmlFor="ob-fullname" className="block text-sm font-medium mb-1.5" style={{ color: "#cbd5e1" }}>
+                    {t("onboarding.yourName")}
+                  </label>
                   <input
                     id="ob-fullname"
                     value={form.fullName}
                     onChange={e => set("fullName", e.target.value)}
                     placeholder={t("onboarding.fullNamePlaceholder")}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={ONBOARDING_INPUT}
                   />
                 </div>
                 {/* Transcript Upload */}
                 <div>
                   <div className="flex items-center gap-3 my-1">
-                    <div className="flex-1 h-px bg-slate-200" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">or upload transcript</span>
-                    <div className="flex-1 h-px bg-slate-200" />
+                    <div className="flex-1 h-px" style={{ background: "rgba(78,204,163,0.2)" }} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest pwc-font-mono" style={{ color: "#64748b" }}>
+                      or upload transcript
+                    </span>
+                    <div className="flex-1 h-px" style={{ background: "rgba(78,204,163,0.2)" }} />
                   </div>
 
                   <input
@@ -327,52 +379,61 @@ export default function Onboarding() {
                       onClick={() => fileInputRef.current?.click()}
                       onDragOver={e => e.preventDefault()}
                       onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) void handleTranscriptUpload(f); }}
-                      className="w-full border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center hover:border-indigo-300 hover:bg-indigo-50/50 transition-all cursor-pointer"
+                      className="w-full border-2 border-dashed rounded-2xl p-5 text-center transition-all cursor-pointer hover:border-[rgba(78,204,163,0.5)]"
+                      style={{ borderColor: "rgba(78,204,163,0.25)", background: "rgba(5,12,24,0.4)" }}
                     >
-                      <FileText className="h-8 w-8 text-indigo-400 mx-auto mb-2" aria-hidden />
-                      <p className="text-sm text-slate-600 font-medium">Upload your transcript PDF</p>
-                      <p className="text-xs text-slate-400 mt-0.5">and we'll extract your courses automatically</p>
-                      <span className="inline-flex items-center gap-1.5 mt-3 px-4 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 text-slate-600 bg-white hover:bg-slate-50">
+                      <FileText className="h-8 w-8 mx-auto mb-2" style={{ color: "#4ECCA3" }} aria-hidden />
+                      <p className="text-sm font-medium" style={{ color: "#e2e8f0" }}>Upload your transcript PDF</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>and we'll extract your courses automatically</p>
+                      <span
+                        className="inline-flex items-center gap-1.5 mt-3 px-4 py-1.5 rounded-lg text-xs font-semibold"
+                        style={{ border: "1px solid rgba(78,204,163,0.35)", color: "#4ECCA3", background: "rgba(78,204,163,0.08)" }}
+                      >
                         <Upload className="h-3.5 w-3.5" aria-hidden /> Choose PDF File
                       </span>
                     </button>
                   ) : (
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div
+                      className="rounded-xl p-3"
+                      style={{ background: "rgba(5,12,24,0.5)", border: "1px solid rgba(78,204,163,0.2)" }}
+                    >
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="h-4 w-4 text-indigo-500 shrink-0" aria-hidden />
-                          <span className="text-xs text-slate-700 font-medium truncate">{transcriptFileName}</span>
+                          <FileText className="h-4 w-4 shrink-0" style={{ color: "#4ECCA3" }} aria-hidden />
+                          <span className="text-xs font-medium truncate" style={{ color: "#e2e8f0" }}>{transcriptFileName}</span>
                         </div>
                         <button
                           type="button"
                           aria-label="Remove transcript"
                           onClick={() => { setTranscriptFileName(null); setExtractedCourses([]); setTranscriptError(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                          className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
+                          className="shrink-0 transition-colors"
+                          style={{ color: "#64748b" }}
                         >
                           <X className="h-4 w-4" />
                         </button>
                       </div>
 
                       {transcriptParsing && (
-                        <div className="flex items-center gap-2 text-xs text-indigo-600">
+                        <div className="flex items-center gap-2 text-xs" style={{ color: "#4ECCA3" }}>
                           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> Extracting courses…
                         </div>
                       )}
 
                       {transcriptError && (
-                        <p className="text-xs text-amber-600">{transcriptError}</p>
+                        <p className="text-xs text-amber-400">{transcriptError}</p>
                       )}
 
                       {extractedCourses.length > 0 && (
                         <div>
-                          <p className="text-xs font-medium text-slate-600 mb-1.5">
+                          <p className="text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>
                             {extractedCourses.length} course{extractedCourses.length !== 1 ? "s" : ""} found — tap × to remove any
                           </p>
                           <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
                             {extractedCourses.map(c => (
                               <span
                                 key={c.code}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                                style={{ background: "rgba(78,204,163,0.12)", color: "#4ECCA3", border: "1px solid rgba(78,204,163,0.3)" }}
                               >
                                 {c.code}
                                 {c.units && <span className="opacity-60">{c.units}u</span>}
@@ -380,7 +441,8 @@ export default function Onboarding() {
                                   type="button"
                                   aria-label={`Remove ${c.code}`}
                                   onClick={() => setExtractedCourses(prev => prev.filter(x => x.code !== c.code))}
-                                  className="ml-0.5 text-indigo-500 hover:text-indigo-800"
+                                  className="ml-0.5 opacity-70 hover:opacity-100"
+                                  style={{ color: "#4ECCA3" }}
                                 >
                                   <X className="h-2.5 w-2.5" />
                                 </button>
@@ -393,7 +455,7 @@ export default function Onboarding() {
                   )}
                 </div>
 
-                <p className="text-xs text-slate-400 text-center">{t("onboarding.timeNote")}</p>
+                <p className="text-xs text-center" style={{ color: "#64748b" }}>{t("onboarding.timeNote")}</p>
               </fieldset>
             )}
 
@@ -401,34 +463,41 @@ export default function Onboarding() {
               <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
                 <legend className="sr-only">{t("pages.onboarding.legend_collegeMajor")}</legend>
                 <div>
-                  <label htmlFor="ob-cc" className="block text-sm font-medium text-slate-700 mb-1.5">{t("onboarding.ccLabel")} <span className="text-red-500">*</span></label>
+                  <label htmlFor="ob-cc" className="block text-sm font-medium mb-1.5" style={{ color: "#cbd5e1" }}>
+                    {t("onboarding.ccLabel")} <span className="text-red-400">*</span>
+                  </label>
                   <input
                     id="ob-cc"
                     value={form.communityCollege}
                     onChange={e => set("communityCollege", e.target.value)}
                     placeholder={t("onboarding.ccPlaceholder")}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={ONBOARDING_INPUT}
                   />
-                  <p className="text-xs text-slate-400 mt-1">{t("onboarding.ccHelp")}</p>
+                  <p className="text-xs mt-1" style={{ color: "#64748b" }}>{t("onboarding.ccHelp")}</p>
                 </div>
                 <div>
-                  <label htmlFor="ob-major" className="block text-sm font-medium text-slate-700 mb-1.5">{t("onboarding.majorLabel")} <span className="text-red-500">*</span></label>
+                  <label htmlFor="ob-major" className="block text-sm font-medium mb-1.5" style={{ color: "#cbd5e1" }}>
+                    {t("onboarding.majorLabel")} <span className="text-red-400">*</span>
+                  </label>
                   <input
                     id="ob-major"
                     value={form.intendedMajor}
                     onChange={e => set("intendedMajor", e.target.value)}
                     placeholder={t("onboarding.majorPlaceholder")}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={ONBOARDING_INPUT}
                   />
                 </div>
                 <div>
-                  <label htmlFor="ob-career" className="block text-sm font-medium text-slate-700 mb-1.5">{t("onboarding.careerLabel")} <span className="text-slate-400 font-normal">{t("onboarding.careerOptional")}</span></label>
+                  <label htmlFor="ob-career" className="block text-sm font-medium mb-1.5" style={{ color: "#cbd5e1" }}>
+                    {t("onboarding.careerLabel")}{" "}
+                    <span className="font-normal" style={{ color: "#64748b" }}>{t("onboarding.careerOptional")}</span>
+                  </label>
                   <input
                     id="ob-career"
                     value={form.careerGoal}
                     onChange={e => set("careerGoal", e.target.value)}
                     placeholder={t("onboarding.careerPlaceholder")}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={ONBOARDING_INPUT}
                   />
                 </div>
               </fieldset>
@@ -438,17 +507,20 @@ export default function Onboarding() {
               <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
                 <legend className="sr-only">{t("pages.onboarding.legend_academic")}</legend>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
-                  <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.currentGpa")} <span className="text-red-500">*</span></legend>
+                  <legend className="block text-sm font-medium mb-2" style={{ color: "#cbd5e1" }}>
+                    {t("onboarding.currentGpa")} <span className="text-red-400">*</span>
+                  </legend>
                   <div className="grid grid-cols-2 gap-2">
                     {GPA_RANGE_KEYS.map(k => {
                       const value = GPA_RANGE_LABELS[k];
                       const label = (k === "gpaBelow" || k === "gpaNotSure") ? t(`onboarding.${k}`) : k;
+                      const selected = form.currentGpa === value;
                       return (
                         <button type="button" key={k} onClick={() => set("currentGpa", value)}
-                          aria-pressed={form.currentGpa === value}
-                          className={cn("text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
-                            form.currentGpa === value ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
-                          )}>
+                          aria-pressed={selected}
+                          className={choiceBtn(selected)}
+                          style={choiceBtnStyle(selected)}
+                        >
                           {label}
                         </button>
                       );
@@ -456,16 +528,17 @@ export default function Onboarding() {
                   </div>
                 </fieldset>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
-                  <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.transferWhen")}</legend>
+                  <legend className="block text-sm font-medium mb-2" style={{ color: "#cbd5e1" }}>{t("onboarding.transferWhen")}</legend>
                   <div className="grid grid-cols-2 gap-2">
                     {TRANSFER_TIMELINE_KEYS.map(k => {
                       const value = TRANSFER_TIMELINE_VALUES[k];
+                      const selected = form.transferTimeline === value;
                       return (
                         <button type="button" key={k} onClick={() => set("transferTimeline", value)}
-                          aria-pressed={form.transferTimeline === value}
-                          className={cn("text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
-                            form.transferTimeline === value ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
-                          )}>
+                          aria-pressed={selected}
+                          className={choiceBtn(selected)}
+                          style={choiceBtnStyle(selected)}
+                        >
                           {t(`onboarding.${k}`)}
                         </button>
                       );
@@ -479,16 +552,17 @@ export default function Onboarding() {
               <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
                 <legend className="sr-only">{t("pages.onboarding.legend_background")}</legend>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
-                  <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.financialSituation")}</legend>
+                  <legend className="block text-sm font-medium mb-2" style={{ color: "#cbd5e1" }}>{t("onboarding.financialSituation")}</legend>
                   <div className="space-y-2">
                     {FINANCIAL_KEYS.map(k => {
                       const value = FINANCIAL_VALUES[k];
+                      const selected = form.financialSituation === value;
                       return (
                         <button type="button" key={k} onClick={() => set("financialSituation", value)}
-                          aria-pressed={form.financialSituation === value}
-                          className={cn("w-full text-sm px-3 py-2.5 rounded-xl border text-left font-medium transition-all",
-                            form.financialSituation === value ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
-                          )}>
+                          aria-pressed={selected}
+                          className={cn("w-full", choiceBtn(selected))}
+                          style={choiceBtnStyle(selected)}
+                        >
                           {t(`onboarding.${k}`)}
                         </button>
                       );
@@ -496,21 +570,24 @@ export default function Onboarding() {
                   </div>
                 </fieldset>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
-                  <legend className="block text-sm font-medium text-slate-700 mb-2">{t("onboarding.firstGen")}</legend>
+                  <legend className="block text-sm font-medium mb-2" style={{ color: "#cbd5e1" }}>{t("onboarding.firstGen")}</legend>
                   <div className="flex gap-2">
                     {[
                       { v: "Yes", label: t("onboarding.yes") },
                       { v: "No", label: t("onboarding.no") },
                       { v: "Not sure", label: t("onboarding.notSure") },
-                    ].map(({ v, label }) => (
+                    ].map(({ v, label }) => {
+                      const selected = form.isFirstGen === v;
+                      return (
                       <button type="button" key={v} onClick={() => set("isFirstGen", v)}
-                        aria-pressed={form.isFirstGen === v}
-                        className={cn("flex-1 text-sm px-3 py-2.5 rounded-xl border font-medium transition-all",
-                          form.isFirstGen === v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
-                        )}>
+                        aria-pressed={selected}
+                        className={cn("flex-1", choiceBtn(selected))}
+                        style={choiceBtnStyle(selected)}
+                      >
                         {label}
                       </button>
-                    ))}
+                    );
+                    })}
                   </div>
                 </fieldset>
               </fieldset>
@@ -520,9 +597,17 @@ export default function Onboarding() {
           </div>
 
           {/* Footer buttons */}
-          <div className="px-8 pb-8 flex items-center justify-between gap-3">
+          <div
+            className="px-8 pb-8 flex items-center justify-between gap-3"
+            style={{ borderTop: "1px solid rgba(78,204,163,0.15)" }}
+          >
             {step > 0 ? (
-              <Button variant="ghost" onClick={() => setStep(s => s - 1)} className="text-slate-600">
+              <Button
+                variant="ghost"
+                onClick={() => setStep(s => s - 1)}
+                className="hover:bg-[rgba(78,204,163,0.08)]"
+                style={{ color: "#94a3b8" }}
+              >
                 <ArrowLeft className="h-4 w-4 mr-1" />{t("onboarding.back")}
               </Button>
             ) : (
@@ -533,7 +618,8 @@ export default function Onboarding() {
               <Button
                 onClick={() => setStep(s => s + 1)}
                 disabled={!canProceed()}
-                className="bg-indigo-600 hover:bg-indigo-700 ml-auto"
+                className="ml-auto border-0 hover:opacity-90 disabled:opacity-40"
+                style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
               >
                 {t("onboarding.continue")} <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
@@ -541,7 +627,8 @@ export default function Onboarding() {
               <Button
                 onClick={() => void submit()}
                 disabled={submitting}
-                className="bg-indigo-600 hover:bg-indigo-700 ml-auto"
+                className="ml-auto border-0 hover:opacity-90 disabled:opacity-40"
+                style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
               >
                 {submitting
                   ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("onboarding.creating")}</>
@@ -552,7 +639,7 @@ export default function Onboarding() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-400 mt-6">
+        <p className="text-center text-xs mt-6 pwc-font-mono" style={{ color: "#475569" }}>
           {t("onboarding.updateLater")}
         </p>
       </div>
