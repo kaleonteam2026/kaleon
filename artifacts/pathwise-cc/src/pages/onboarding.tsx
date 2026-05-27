@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  Map, GraduationCap, Target, ArrowRight, ArrowLeft,
+  GraduationCap, Target, ArrowRight, ArrowLeft,
   BookOpen, CheckCircle2, User, Loader2, FileText, Upload, X,
 } from "lucide-react";
 import { parseTranscriptPDF, type ExtractedCourse } from "@/lib/parse-transcript";
@@ -49,7 +49,23 @@ interface FormData {
   isFirstGen: string;
 }
 
-const STEP_ICONS = [Map, GraduationCap, BookOpen, User];
+const KALEON_MARK_SRC = "/kaleon-mark.png";
+
+const STEP_ICONS = [GraduationCap, BookOpen, User] as const;
+
+function KaleonMark({ size, className }: { size: number; className?: string }) {
+  return (
+    <img
+      src={KALEON_MARK_SRC}
+      alt=""
+      width={size}
+      height={size}
+      className={cn("shrink-0 object-contain", className)}
+      style={{ mixBlendMode: "screen" }}
+      aria-hidden
+    />
+  );
+}
 
 const FONT_STYLES = `
   .pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
@@ -83,11 +99,15 @@ const choiceBtnStyle = (selected: boolean) =>
 
 export default function Onboarding() {
   const { t } = useTranslation();
-  const STEPS = [
-    { title: t("onboarding.step1Title"), subtitle: t("onboarding.step1Subtitle"), icon: STEP_ICONS[0] },
-    { title: t("onboarding.step2Title"), subtitle: t("onboarding.step2Subtitle"), icon: STEP_ICONS[1] },
-    { title: t("onboarding.step3Title"), subtitle: t("onboarding.step3Subtitle"), icon: STEP_ICONS[2] },
-    { title: t("onboarding.step4Title"), subtitle: t("onboarding.step4Subtitle"), icon: STEP_ICONS[3] },
+  const STEPS: {
+    title: string;
+    subtitle: string;
+    icon: (typeof STEP_ICONS)[number] | null;
+  }[] = [
+    { title: t("onboarding.step1Title"), subtitle: t("onboarding.step1Subtitle"), icon: null },
+    { title: t("onboarding.step2Title"), subtitle: t("onboarding.step2Subtitle"), icon: STEP_ICONS[0] },
+    { title: t("onboarding.step3Title"), subtitle: t("onboarding.step3Subtitle"), icon: STEP_ICONS[1] },
+    { title: t("onboarding.step4Title"), subtitle: t("onboarding.step4Subtitle"), icon: STEP_ICONS[2] },
   ];
   const { user } = useAuth();
   const [, navigate] = useLocation();
@@ -276,7 +296,7 @@ export default function Onboarding() {
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="flex items-center gap-2 justify-center mb-8">
-          <Map className="h-6 w-6" style={{ color: "#4ECCA3" }} aria-hidden />
+          <KaleonMark size={28} />
           <span className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
             Kaleon
           </span>
@@ -303,7 +323,11 @@ export default function Onboarding() {
             style={{ borderBottom: "1px solid rgba(78,204,163,0.2)", background: "rgba(78,204,163,0.06)" }}
           >
             <div className="flex items-center gap-3 mb-1">
-              <StepIcon className="h-5 w-5" style={{ color: "#4ECCA3" }} aria-hidden />
+              {step === 0 ? (
+                <KaleonMark size={22} />
+              ) : (
+                StepIcon && <StepIcon className="h-5 w-5" style={{ color: "#4ECCA3" }} aria-hidden />
+              )}
               <h1 className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
                 {STEPS[step].title}
               </h1>
