@@ -1,0 +1,62 @@
+# Static Pathwise CC UI on GitHub Pages (API deployed separately later).
+# Demo mode: VITE_AUTH_BYPASS skips login/API until backend is wired up.
+#
+# Site URL: https://kaleonteam2026.github.io/kaleon/
+
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.2.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web (static demo)
+        env:
+          BASE_PATH: /kaleon/
+          PORT: "19245"
+          VITE_AUTH_BYPASS: "true"
+        run: pnpm --filter @workspace/pathwise-cc run build
+
+      - name: SPA fallback for client-side routes
+        run: cp artifacts/pathwise-cc/dist/public/index.html artifacts/pathwise-cc/dist/public/404.html
+
+      - run: touch artifacts/pathwise-cc/dist/public/.nojekyll
+
+      - uses: actions/configure-pages@v4
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: artifacts/pathwise-cc/dist/public
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
