@@ -25,7 +25,7 @@ export function PageShell({
     maxWidth === "wide" ? "max-w-[1280px]" : "max-w-5xl";
 
   return (
-    <div className="min-h-screen pwc-font-sans" style={{ background: "linear-gradient(160deg, #050c18 0%, #070d1a 100%)", color: "#e2e8f0" }}>
+    <div className="min-h-screen pwc-font-sans" style={{ background: "var(--app-page-bg)", color: "var(--app-text)" }}>
       <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
       <Nav profileId={profileId} />
       <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none">

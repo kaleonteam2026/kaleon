@@ -71,18 +71,18 @@ const FONT_STYLES = `
 `;
 
 const ONBOARDING_PAGE_BG = {
-  background: "linear-gradient(160deg, #050c18 0%, #0a1628 50%, #061020 100%)",
-  color: "#e2e8f0",
+  background: "var(--app-page-bg)",
+  color: "var(--app-text)",
 } as const;
 
 const ONBOARDING_CARD = {
-  background: "rgba(13,26,46,0.9)",
-  border: "1px solid rgba(78,204,163,0.22)",
+  background: "var(--app-card-bg)",
+  border: "1px solid var(--app-border-strong)",
   borderRadius: 16,
 } as const;
 
 const ONBOARDING_INPUT =
-  "w-full px-4 py-2.5 rounded-xl text-sm text-slate-100 placeholder:text-slate-500 bg-[rgba(5,12,24,0.65)] border border-[rgba(78,204,163,0.25)] focus:outline-none focus:ring-2 focus:ring-[#4ECCA3]/40 focus:border-[rgba(78,204,163,0.5)]";
+  "w-full px-4 py-2.5 rounded-xl text-sm text-[var(--app-input-text)] placeholder:text-[var(--app-input-placeholder)] bg-[var(--app-input-bg)] border border-[var(--app-border-strong)] focus:outline-none focus:ring-2 focus:ring-[#4ECCA3]/40 focus:border-[#4ECCA3]";
 
 const choiceBtn = (selected: boolean) =>
   cn(
@@ -620,7 +620,7 @@ export default function Onboarding() {
 
           {/* Footer buttons */}
           <div
-            className="px-8 pb-8 flex items-center justify-between gap-3"
+            className="px-8 pb-8 flex items-end justify-between gap-3"
             style={{ borderTop: "1px solid rgba(78,204,163,0.15)" }}
           >
             {step > 0 ? (
@@ -633,7 +633,7 @@ export default function Onboarding() {
                 <ArrowLeft className="h-4 w-4 mr-1" />{t("onboarding.back")}
               </Button>
             ) : (
-              <div />
+              <div className="h-10" />
             )}
 
             {step < STEPS.length - 1 ? (

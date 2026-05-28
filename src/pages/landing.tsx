@@ -166,9 +166,9 @@ export default function Landing() {
           scrolled && motionOn ? "h-12" : "h-14"
         }`}
         style={{
-          background: "rgba(5,12,24,0.9)",
+          background: "rgba(5,12,24,0.85)",
           backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(78,204,163,0.15)",
+          borderBottom: "1px solid rgba(78,204,163,0.12)",
         }}
       >
         <div className="flex items-center gap-2 font-bold text-lg uppercase tracking-tight">

@@ -1,6 +1,13 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { SUPPORTED_LOCALES, changeLocale, LOCALE_STORAGE_KEY, type SupportedLocale } from "@/i18n/config";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import {
+  getCurrentSession,
+  mapSupabaseUser,
+  signInWithMagicLink,
+  verifyMagicLinkFromUrl,
+} from "@/lib/supabase-auth";
 
 interface AuthUser {
   id: string;
@@ -14,7 +21,13 @@ interface AuthState {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isLoginOpen: boolean;
+  authVerifying: boolean;
+  authError: string | null;
   login: () => void;
+  closeLogin: () => void;
+  clearAuthError: () => void;
+  signInWithEmail: (email: string) => Promise<{ error?: string }>;
   logout: () => void;
   refetch: () => void;
 }
@@ -22,6 +35,7 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null);
 
 const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
+const USE_SUPABASE = isSupabaseConfigured && !AUTH_BYPASS;
 
 async function syncLocaleWithServer(): Promise<void> {
   try {
@@ -34,8 +48,6 @@ async function syncLocaleWithServer(): Promise<void> {
     const valid = (l: unknown): l is SupportedLocale =>
       typeof l === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(l);
     if (valid(explicitStored) && explicitStored !== locale) {
-      // Explicit guest/device choice exists: push it up so the freshly
-      // chosen language carries through sign-in.
       await fetch("/api/me/locale", {
         method: "PATCH",
         credentials: "include",
@@ -43,8 +55,6 @@ async function syncLocaleWithServer(): Promise<void> {
         body: JSON.stringify({ locale: explicitStored }),
       });
     } else if (valid(locale)) {
-      // No explicit device choice — adopt the server's per-user preference
-      // (this also persists across fresh browsers/devices).
       await changeLocale(locale);
     }
   } catch {
@@ -56,8 +66,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [authVerifying, setAuthVerifying] = useState(() => {
+    if (!USE_SUPABASE) return false;
+    return new URLSearchParams(window.location.search).has("token_hash");
+  });
+  const [authError, setAuthError] = useState<string | null>(null);
 
-  const fetchUser = useCallback(() => {
+  const applySession = useCallback(async (session: Awaited<ReturnType<typeof getCurrentSession>>) => {
+    if (session?.user) {
+      setUser(mapSupabaseUser(session.user));
+      await syncLocaleWithServer();
+    } else {
+      setUser(null);
+    }
+  }, []);
+
+  const fetchUser = useCallback(async () => {
     if (AUTH_BYPASS) {
       setUser({
         id: "dev",
@@ -68,6 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return;
     }
+
+    if (USE_SUPABASE) {
+      const session = await getCurrentSession();
+      await applySession(session);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     fetch("/api/auth/user", { credentials: "include" })
       .then((res) => {
@@ -83,20 +116,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setIsLoading(false);
       });
-  }, []);
+  }, [applySession]);
 
-  useEffect(() => { fetchUser(); }, [fetchUser]);
+  useEffect(() => {
+    if (!USE_SUPABASE) {
+      fetchUser();
+      return;
+    }
+
+    let mounted = true;
+
+    async function initSupabaseAuth() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("token_hash")) {
+        setAuthVerifying(true);
+        const { error } = await verifyMagicLinkFromUrl();
+        if (!mounted) return;
+        if (error) setAuthError(error);
+        setAuthVerifying(false);
+      }
+
+      const session = await getCurrentSession();
+      if (!mounted) return;
+      await applySession(session);
+      setIsLoading(false);
+    }
+
+    initSupabaseAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      await applySession(session);
+      setIsLoading(false);
+      if (session?.user) {
+        setIsLoginOpen(false);
+        setAuthError(null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [applySession, fetchUser]);
 
   const login = useCallback(() => {
     if (AUTH_BYPASS) {
       setLocation("/dashboard");
       return;
     }
+    if (USE_SUPABASE) {
+      setAuthError(null);
+      setIsLoginOpen(true);
+      return;
+    }
     window.location.href = `/api/login?returnTo=${encodeURIComponent("/")}`;
   }, [setLocation]);
 
-  const logout = useCallback(() => {
+  const closeLogin = useCallback(() => {
+    setIsLoginOpen(false);
+  }, []);
+
+  const clearAuthError = useCallback(() => {
+    setAuthError(null);
+  }, []);
+
+  const signInWithEmail = useCallback(async (email: string) => {
+    return signInWithMagicLink(email);
+  }, []);
+
+  const logout = useCallback(async () => {
     if (AUTH_BYPASS) {
+      setUser(null);
+      setLocation("/");
+      return;
+    }
+    if (USE_SUPABASE) {
+      await supabase.auth.signOut();
       setUser(null);
       setLocation("/");
       return;
@@ -105,7 +200,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setLocation]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAuthenticated: !!user, login, logout, refetch: fetchUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        isLoginOpen,
+        authVerifying,
+        authError,
+        login,
+        closeLogin,
+        clearAuthError,
+        signInWithEmail,
+        logout,
+        refetch: fetchUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

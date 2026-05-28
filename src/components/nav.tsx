@@ -4,15 +4,61 @@ import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { DUR, EASE_OUT, useMotionEnabled } from "@/lib/motion";
 import {
-  BookOpen, Target, Map, LogOut, Menu, X,
-  TrendingUp, ChevronRight, Download,
+  Map, LogOut, Menu, X, ChevronRight, Download,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import NotificationBell from "@/components/notification-bell";
-import { KALEON_LOGO_SRC } from "@/lib/brand";
+import { KALEON_LOGO_SRC, NAV_ICON_SRC, NAV_LOGO_SIZE_PX } from "@/lib/brand";
 const PROFILE_ID_KEY = "kaleon_active_profile_id";
+
+const NAV_FONT_CLASS = "pwc-font-mono uppercase tracking-wider font-bold";
+const NAV_LINK_CLASS = `text-xs ${NAV_FONT_CLASS}`;
+
+type NavIconSrc = { default: string; active: string };
+
+type NavItem = {
+  href: string;
+  label: string;
+  iconSrc?: NavIconSrc;
+  icon?: LucideIcon;
+};
+
+const NAV_ICON_DIM = { sm: 16, md: 22, lg: 28 } as const;
+const LUCIDE_ICON_CLASS = { sm: "h-4 w-4", md: "h-5 w-5", lg: "h-7 w-7" } as const;
+
+function NavItemIcon({
+  iconSrc,
+  icon: Icon,
+  active,
+  size = "md",
+}: {
+  iconSrc?: NavIconSrc;
+  icon?: LucideIcon;
+  active: boolean;
+  size?: keyof typeof NAV_ICON_DIM;
+}) {
+  const dim = NAV_ICON_DIM[size];
+  if (iconSrc) {
+    return (
+      <img
+        src={active ? iconSrc.active : iconSrc.default}
+        alt=""
+        className="shrink-0"
+        width={dim}
+        height={dim}
+        style={{ objectFit: "contain" }}
+        aria-hidden
+      />
+    );
+  }
+  if (Icon) {
+    return <Icon className={cn("shrink-0", LUCIDE_ICON_CLASS[size])} aria-hidden />;
+  }
+  return null;
+}
 
 export function storeProfileId(id: number) {
   localStorage.setItem(PROFILE_ID_KEY, String(id));
@@ -39,10 +85,10 @@ export default function Nav({ profileId }: Props) {
     else { const s = getStoredProfileId(); if (s) setResolvedId(s); }
   }, [profileId]);
 
-  const profileLinks = resolvedId ? [
-    { href: `/courses/${resolvedId}`, label: t("nav.courses"), icon: BookOpen },
-    { href: `/pathways/${resolvedId}`, label: t("nav.pathway"), icon: Target },
-    { href: `/progress/${resolvedId}`, label: t("nav.progress"), icon: TrendingUp },
+  const profileLinks: NavItem[] = resolvedId ? [
+    { href: `/courses/${resolvedId}`, label: t("nav.courses"), iconSrc: NAV_ICON_SRC.courses },
+    { href: `/pathways/${resolvedId}`, label: t("nav.pathway"), iconSrc: NAV_ICON_SRC.pathways },
+    { href: `/progress/${resolvedId}`, label: t("nav.progress"), iconSrc: NAV_ICON_SRC.progress },
     { href: `/exports/${resolvedId}`, label: t("nav.exports"), icon: Download },
   ] : [];
 
@@ -55,11 +101,11 @@ export default function Nav({ profileId }: Props) {
     return location.startsWith(base);
   };
 
-  const bottomTabs = resolvedId ? [
-    { href: `/courses/${resolvedId}`, icon: BookOpen, label: t("nav.courses") },
-    { href: `/pathways/${resolvedId}`, icon: Target, label: t("nav.pathway") },
-    { href: `/progress/${resolvedId}`, icon: TrendingUp, label: t("nav.progress") },
-    { href: `/exports/${resolvedId}`, icon: Download, label: t("nav.exports") },
+  const bottomTabs: NavItem[] = resolvedId ? [
+    { href: `/courses/${resolvedId}`, label: t("nav.courses"), iconSrc: NAV_ICON_SRC.courses },
+    { href: `/pathways/${resolvedId}`, label: t("nav.pathway"), iconSrc: NAV_ICON_SRC.pathways },
+    { href: `/progress/${resolvedId}`, label: t("nav.progress"), iconSrc: NAV_ICON_SRC.progress },
+    { href: `/exports/${resolvedId}`, label: t("nav.exports"), icon: Download },
   ] : [];
 
   const Brand = (
@@ -67,7 +113,16 @@ export default function Nav({ profileId }: Props) {
       <img
         src={KALEON_LOGO_SRC}
         alt="Logo"
-        style={{ width: 30, height: 30, borderRadius: 6, objectFit: "contain" }}
+        width={NAV_LOGO_SIZE_PX}
+        height={NAV_LOGO_SIZE_PX}
+        className="shrink-0 object-contain"
+        style={{
+          width: NAV_LOGO_SIZE_PX,
+          height: NAV_LOGO_SIZE_PX,
+          maxWidth: NAV_LOGO_SIZE_PX,
+          maxHeight: NAV_LOGO_SIZE_PX,
+          borderRadius: 6,
+        }}
       />
       <span style={{ color: "#f8fafc" }}>Kaleon</span>
       <span className="hidden lg:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium" style={{ color: "#f8fafc" }}>
@@ -91,7 +146,7 @@ export default function Nav({ profileId }: Props) {
       <nav
         aria-label={t("common.primaryNav")}
         className="hidden md:flex fixed top-0 left-0 right-0 z-50 px-6 h-14 items-center justify-between"
-        style={{ background: "rgba(5,12,24,0.95)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(78,204,163,0.15)" }}
+        style={{ background: "var(--app-nav-bg)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--app-border-subtle)" }}
       >
         {Brand}
         <div className="flex items-center gap-1 flex-nowrap overflow-x-auto min-w-0">
@@ -105,7 +160,8 @@ export default function Nav({ profileId }: Props) {
                 aria-label={link.label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-xs pwc-font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-1",
+                  "flex items-center gap-1.5 px-2 lg:px-3 py-1.5 transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-1",
+                  NAV_LINK_CLASS,
                   "focus:ring-[#4ECCA3]",
                 )}
                 style={{
@@ -117,7 +173,7 @@ export default function Nav({ profileId }: Props) {
                 onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "rgba(78,204,163,0.07)"; (e.currentTarget as HTMLElement).style.color = "#cbd5e1"; } }}
                 onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#94a3b8"; } }}
               >
-                <link.icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <NavItemIcon iconSrc={link.iconSrc} icon={link.icon} active={active} />
                 <span className="hidden lg:inline">{link.label}</span>
                 <span className="lg:hidden sr-only">{link.label}</span>
               </Link>
@@ -146,7 +202,7 @@ export default function Nav({ profileId }: Props) {
       <nav
         aria-label={t("common.primaryNav")}
         className="md:hidden fixed top-0 left-0 right-0 z-50 px-4 h-14 flex items-center justify-between"
-        style={{ background: "rgba(5,12,24,0.95)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(78,204,163,0.15)" }}
+        style={{ background: "var(--app-nav-bg)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--app-border-subtle)" }}
       >
         {Brand}
         <div className="flex items-center gap-1">
@@ -198,7 +254,10 @@ export default function Nav({ profileId }: Props) {
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
                     aria-current={active ? "page" : undefined}
-                    className="flex items-center justify-between px-4 py-3.5 text-sm font-medium mb-1 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#4ECCA3] transition-all"
+                    className={cn(
+                      "flex items-center justify-between px-4 py-3.5 mb-1 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#4ECCA3] transition-all",
+                      NAV_LINK_CLASS,
+                    )}
                     style={{
                       borderRadius: 8,
                       border: active ? "1px solid rgba(78,204,163,0.3)" : "1px solid transparent",
@@ -207,7 +266,8 @@ export default function Nav({ profileId }: Props) {
                     }}
                   >
                     <span className="flex items-center gap-3">
-                      <link.icon className="h-5 w-5" aria-hidden="true" />{link.label}
+                      <NavItemIcon iconSrc={link.iconSrc} icon={link.icon} active={active} />
+                      {link.label}
                     </span>
                     <ChevronRight className="h-4 w-4 opacity-60" aria-hidden="true" />
                   </Link>
@@ -264,8 +324,10 @@ export default function Nav({ profileId }: Props) {
               {active && !motionEnabled && (
                 <span className="absolute inset-0" style={{ background: "rgba(78,204,163,0.1)" }} aria-hidden="true" />
               )}
-              <tab.icon className="h-5 w-5 relative" aria-hidden="true" />
-              <span className="text-[10px] pwc-font-mono uppercase font-bold relative">{tab.label}</span>
+              <span className="relative">
+                <NavItemIcon iconSrc={tab.iconSrc} icon={tab.icon} active={active} />
+              </span>
+              <span className={cn("text-[10px] relative", NAV_FONT_CLASS)}>{tab.label}</span>
             </Link>
           );
         })}

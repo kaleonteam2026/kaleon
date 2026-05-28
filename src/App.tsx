@@ -18,6 +18,7 @@ import ExportsPage from "@/pages/exports";
 import Onboarding from "@/pages/onboarding";
 import Welcome from "@/pages/welcome";
 import ChatBubble from "@/components/chat-bubble";
+import SupabaseAuthModal from "@/components/supabase-auth-modal";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
 import ProtectedRoute from "@/components/protected-route";
 
@@ -137,6 +138,7 @@ function App() {
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <AuthProvider>
+            <SupabaseAuthModal />
             <Router />
           </AuthProvider>
         </WouterRouter>

@@ -216,7 +216,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#070d1a" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--app-page-bg)" }}>
         <div className="h-8 w-8 animate-spin rounded-full border-4" style={{ borderColor: "rgba(78,204,163,0.3)", borderTopColor: "transparent" }} />
       </div>
     );
@@ -225,7 +225,7 @@ export default function Dashboard() {
   if (!profile) {
     const emptyStateGreeting = user?.firstName ?? user?.email?.split("@")[0] ?? t("common.student");
     return (
-      <div className="min-h-screen" style={{ background: "linear-gradient(160deg, #050c18 0%, #0a1628 100%)" }}>
+      <div className="min-h-screen pwc-font-sans" style={{ background: "var(--app-page-bg)" }}>
         <Nav profileId={undefined} />
         <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto focus:outline-none">
           <div className="py-16 text-center">
@@ -268,7 +268,7 @@ export default function Dashboard() {
   const targetSchool = summary?.chosenTransferSchool ?? summary?.topMatchUniversity;
 
   return (
-    <div className="min-h-screen pwc-font-sans" style={{ background: "linear-gradient(160deg, #050c18 0%, #070d1a 100%)", color: "#e2e8f0" }}>
+    <div className="min-h-screen pwc-font-sans" style={{ background: "var(--app-page-bg)", color: "var(--app-text)" }}>
       <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
       <Nav profileId={profile.id} />
 

@@ -142,7 +142,7 @@
 
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
-  --app-font-mono: Menlo, monospace;
+  --app-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --radius: .5rem; /* 8px */
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00); /*replace with H S L */
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00); /*replace with H S L */
@@ -391,10 +391,48 @@
     inset: -1px;
   }
 }
+
+/* App-wide page theming tokens.
+ * dark => existing dashboard palette
+ * light => existing courses-page palette
+ */
+:root {
+  --app-page-bg: #f4f4f5;
+  --app-text: #0f172a;
+  --app-text-muted: #475569;
+  --app-nav-bg: rgba(244, 244, 245, 0.95);
+  --app-card-bg: rgba(255, 255, 255, 0.92);
+  --app-border-subtle: rgba(15, 23, 42, 0.12);
+  --app-border-strong: rgba(15, 23, 42, 0.22);
+  --app-input-bg: rgba(255, 255, 255, 0.85);
+  --app-input-text: #0f172a;
+  --app-input-placeholder: #64748b;
+}
+
+.dark {
+  --app-page-bg: linear-gradient(160deg, #050c18 0%, #0a1628 50%, #061020 100%);
+  --app-text: #e2e8f0;
+  --app-text-muted: #64748b;
+  --app-nav-bg: rgba(5, 12, 24, 0.95);
+  --app-card-bg: rgba(13, 26, 46, 0.9);
+  --app-border-subtle: rgba(78, 204, 163, 0.15);
+  --app-border-strong: rgba(78, 204, 163, 0.22);
+  --app-input-bg: rgba(5, 12, 24, 0.65);
+  --app-input-text: #f8fafc;
+  --app-input-placeholder: #64748b;
+}
 /* WCAG 2.3.3 — Honor OS-level prefers-reduced-motion.
    Disables transforms/animations and shortens transitions to a near-instant
    opacity-only swap. Uses !important to override inline styles set by
    components (e.g. SVG stroke-dashoffset transitions on radar/score rings). */
+.pwc-font-sans {
+  font-family: var(--app-font-sans);
+}
+
+.pwc-font-mono {
+  font-family: var(--app-font-mono);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
