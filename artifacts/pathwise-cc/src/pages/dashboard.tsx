@@ -223,12 +223,16 @@ export default function Dashboard() {
   }
 
   if (!profile) {
+    const emptyStateGreeting = user?.firstName ?? user?.email?.split("@")[0] ?? t("common.student");
     return (
       <div className="min-h-screen" style={{ background: "linear-gradient(160deg, #050c18 0%, #0a1628 100%)" }}>
         <Nav profileId={undefined} />
         <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto focus:outline-none">
           <div className="py-16 text-center">
             <Map className="h-16 w-16 mx-auto mb-4" style={{ color: "rgba(78,204,163,0.3)" }} />
+            <p className="text-sm pwc-font-mono uppercase tracking-wider mb-2" style={{ color: "#94a3b8" }}>
+              {t("dashboard.hello", { name: emptyStateGreeting })}
+            </p>
             <h2 className="text-xl font-semibold mb-2" style={{ color: "#f1f5f9" }}>{t("dashboard.letsGetStarted")}</h2>
             <p className="mb-6 max-w-md mx-auto text-sm" style={{ color: "#64748b" }}>
               {t("dashboard.letsGetStartedBody")}

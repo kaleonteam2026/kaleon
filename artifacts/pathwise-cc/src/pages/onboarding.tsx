@@ -12,6 +12,7 @@ import { parseTranscriptPDF, type ExtractedCourse } from "@/lib/parse-transcript
 import { isAuthBypass, saveDevProfile } from "@/lib/dev-profile";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMotionEnabled, useDirSign, DUR, EASE_OUT } from "@/lib/motion";
+import { KALEON_LOGO_SRC } from "@/lib/brand";
 
 const TRANSFER_TIMELINE_KEYS = [
   "timelineFall2025", "timelineSpring2026", "timelineFall2026", "timelineSpring2027",
@@ -49,19 +50,16 @@ interface FormData {
   isFirstGen: string;
 }
 
-const KALEON_MARK_SRC = "/kaleon-mark.png";
-
 const STEP_ICONS = [GraduationCap, BookOpen, User] as const;
 
 function KaleonMark({ size, className }: { size: number; className?: string }) {
   return (
     <img
-      src={KALEON_MARK_SRC}
+      src={KALEON_LOGO_SRC}
       alt=""
       width={size}
       height={size}
       className={cn("shrink-0 object-contain", className)}
-      style={{ mixBlendMode: "screen" }}
       aria-hidden
     />
   );
@@ -233,7 +231,7 @@ export default function Onboarding() {
   if (phase === "calculating") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: "#070d1a" }}>
-        <img src="/logo.png" alt="Kaleon" style={{ width: 56, height: 56, borderRadius: 10, mixBlendMode: "screen" as const }} />
+        <img src={KALEON_LOGO_SRC} alt="Kaleon" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "contain" }} />
         <div className="mt-8 mb-2" style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid rgba(78,204,163,0.2)", borderTopColor: "#4ECCA3", animation: "spin 0.9s linear infinite" }} />
         <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
         <h1 className="mt-4 text-2xl font-bold text-white text-center">Calculating your transfer path...</h1>
@@ -257,7 +255,7 @@ export default function Onboarding() {
   if (phase === "ready") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "#070d1a" }}>
-        <img src="/logo.png" alt="Kaleon" style={{ width: 52, height: 52, borderRadius: 10, mixBlendMode: "screen" as const }} />
+        <img src={KALEON_LOGO_SRC} alt="Kaleon" style={{ width: 52, height: 52, borderRadius: 10, objectFit: "contain" }} />
         <h1 className="mt-6 text-3xl font-bold text-white text-center leading-tight">Your Transfer Plan<br />is Ready.</h1>
         <p className="mt-2 text-sm" style={{ color: "#64748b" }}>We've computed your transfer path.</p>
         <div className="mt-8 w-full max-w-sm space-y-3">

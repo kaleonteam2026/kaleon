@@ -3,7 +3,6 @@ import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { useTranslation, Trans } from "react-i18next";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
-import LanguageSwitcher from "@/components/language-switcher";
 import {
   GraduationCap, Target, BookOpen, Award, ArrowRight,
   TrendingUp, Search, Building2, Users, Map, Compass,
@@ -19,6 +18,7 @@ import {
   EASE_OUT,
   DUR,
 } from "@/lib/motion";
+import { KALEON_LOGO_SRC } from "@/lib/brand";
 
 const FONT_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -91,6 +91,8 @@ const FONT_STYLES = `
   }
 `;
 
+const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
+
 export default function Landing() {
   const { isAuthenticated, isLoading, login } = useAuth();
   const [, navigate] = useLocation();
@@ -107,8 +109,9 @@ export default function Landing() {
     if (next !== scrolled) setScrolled(next);
   });
 
+  // With auth bypass, stay on landing so local UI changes are visible at /.
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading && isAuthenticated && !AUTH_BYPASS) {
       navigate("/dashboard");
     }
   }, [isAuthenticated, isLoading, navigate]);
@@ -170,15 +173,16 @@ export default function Landing() {
       >
         <div className="flex items-center gap-2 font-bold text-lg uppercase tracking-tight">
           <img
-            src="/logo.png"
+            src={KALEON_LOGO_SRC}
             alt="Logo"
-            style={{ width: 30, height: 30, borderRadius: 6, mixBlendMode: "screen" as const }}
+            style={{ width: 30, height: 30, borderRadius: 6, objectFit: "contain" }}
           />
           <span style={{ color: "#f8fafc" }}>{t("brand.name")}</span>
-          <span className="hidden md:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium" style={{ color: "#4ECCA3", opacity: 0.7 }}>{t("brand.tagline")}</span>
+          <span className="hidden md:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium" style={{ color: "#f8fafc" }}>
+            {t("common.tagline")}
+          </span>
         </div>
         <div className="flex items-center gap-2">
-          <LanguageSwitcher />
           <button
             onClick={login}
             className="kaleon-btn-primary px-4 py-1.5 text-xs pwc-font-mono uppercase tracking-wider font-bold"
@@ -272,7 +276,7 @@ export default function Landing() {
               ))}
               {/* Center core */}
               <div style={{ position: "absolute", top: "50%", left: "50%", width: 80, height: 80, marginTop: -40, marginLeft: -40, borderRadius: "50%", boxShadow: "0 0 40px rgba(78,204,163,0.5)", overflow: "hidden" }}>
-                <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover", mixBlendMode: "screen" as const }} />
+                <img src={KALEON_LOGO_SRC} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               </div>
               {/* Orbiting dots */}
               <div className="orbit-ring-1" style={{ position: "absolute", top: "50%", left: "50%", marginTop: -5, marginLeft: -5 }}>

@@ -11,8 +11,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import NotificationBell from "@/components/notification-bell";
-import LanguageSwitcher from "@/components/language-switcher";
-
+import { KALEON_LOGO_SRC } from "@/lib/brand";
 const PROFILE_ID_KEY = "kaleon_active_profile_id";
 
 export function storeProfileId(id: number) {
@@ -67,12 +66,14 @@ export default function Nav({ profileId }: Props) {
   const Brand = (
     <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg tracking-tight uppercase">
       <img
-        src="/logo.png"
+        src={KALEON_LOGO_SRC}
         alt="Logo"
-        style={{ width: 30, height: 30, borderRadius: 6, mixBlendMode: "screen" as const }}
+        style={{ width: 30, height: 30, borderRadius: 6, objectFit: "contain" }}
       />
       <span style={{ color: "#f8fafc" }}>Kaleon</span>
-      <span className="hidden lg:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium" style={{ color: "#4ECCA3", opacity: 0.6 }}>// {t("common.tagline")}</span>
+      <span className="hidden lg:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium" style={{ color: "#f8fafc" }}>
+        {t("common.tagline")}
+      </span>
     </Link>
   );
 
@@ -126,7 +127,6 @@ export default function Nav({ profileId }: Props) {
         </div>
         <div className="flex items-center gap-3">
           {resolvedId && <NotificationBell profileId={resolvedId} />}
-          <LanguageSwitcher />
           <span className="text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>
             {user?.firstName ?? user?.email ?? t("common.student")}
           </span>
@@ -152,7 +152,6 @@ export default function Nav({ profileId }: Props) {
         {Brand}
         <div className="flex items-center gap-1">
           {resolvedId && <NotificationBell profileId={resolvedId} />}
-          <LanguageSwitcher />
         </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -219,7 +218,6 @@ export default function Nav({ profileId }: Props) {
             <div className="p-4 space-y-3" style={{ borderTop: "1px solid rgba(78,204,163,0.1)" }}>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs pwc-font-mono uppercase truncate" style={{ color: "#64748b" }}>{user?.firstName ?? user?.email ?? t("common.student")}</span>
-                <LanguageSwitcher />
               </div>
               <button
                 onClick={logout}

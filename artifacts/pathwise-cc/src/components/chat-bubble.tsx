@@ -299,8 +299,13 @@ export default function ChatBubble({ userId }: { userId?: string }) {
           animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
           exit={reducedMotion ? undefined : { opacity: 0, y: 4 }}
           transition={{ duration: 0.16, ease: EASE_OUT }}
-          className="bg-white border-2 border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] flex flex-col overflow-hidden focus:outline-none origin-bottom-right"
-          style={{ width: "min(90vw, 380px)", height: "min(75vh, 560px)" }}>
+          className="bg-white border-2 border-slate-900 flex flex-col overflow-hidden focus:outline-none origin-bottom-right"
+          style={{
+            width: "min(90vw, 380px)",
+            height: "min(75vh, 560px)",
+            boxShadow: "0 0 0 3px #ffffff, 6px 6px 0 0 #0f172a",
+          }}
+        >
           {/* Header */}
           <div className="bg-slate-900 px-4 py-3 flex items-center justify-between flex-shrink-0 border-b-2 border-slate-900">
             <div className="flex items-center gap-2">
@@ -476,7 +481,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
         onClick={() => setOpen(!open)}
         aria-label={open ? t("chat.close") : t("chat.open")}
         className={cn(
-          "border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] flex items-center justify-center",
+          "border-2 border-white shadow-[3px_3px_0px_0px_rgba(15,23,42,1),0_0_0_2px_#ffffff] flex items-center justify-center",
           reducedMotion
             ? ""
             : "transition-all duration-200 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]",

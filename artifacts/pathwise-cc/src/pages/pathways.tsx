@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
+import { KALEON_LOGO_SRC } from "@/lib/brand";
 
 interface CampusOpportunityItem {
   name: string;
@@ -213,7 +214,7 @@ export default function Pathways() {
         {generating && (
           <div className="flex flex-col items-center py-12">
             <div className="flex items-center justify-center mb-4" style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(78,204,163,0.08)", border: "1px solid rgba(78,204,163,0.25)" }}>
-              <img src="/logo.png" alt="Kaleon" style={{ width: 36, height: 36, borderRadius: 6, mixBlendMode: "screen" as const }} />
+              <img src={KALEON_LOGO_SRC} alt="Kaleon" style={{ width: 36, height: 36, borderRadius: 6, objectFit: "contain" }} />
             </div>
             <div className="mb-5" style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid rgba(78,204,163,0.2)", borderTopColor: "#4ECCA3", animation: "spin 0.9s linear infinite" }} />
             <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
