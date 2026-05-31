@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useReducedMotion, type Transition, type Variants } from "framer-motion";
 
 export const EASE_STAMP: [number, number, number, number] = [0.2, 0.8, 0.2, 1];
@@ -89,4 +89,22 @@ export function hoverLift(dirSign: 1 | -1 = 1) {
     boxShadow: "6px 6px 0 0 rgba(15,23,42,1)",
     transition: { duration: DUR.fast, ease: EASE_OUT },
   };
+}
+
+export function useBrutalistMotion() {
+  const enabled = useMotionEnabled();
+  const dirSign = useDirSign();
+  const lift = useMemo(
+    () => (enabled ? hoverLift(dirSign) : undefined),
+    [enabled, dirSign],
+  );
+  const itemVariants = useMemo(
+    () => (enabled ? fadeUp(8, 0.22) : undefined),
+    [enabled],
+  );
+  const containerVariants = useMemo(
+    () => (enabled ? staggerContainer(0.06) : undefined),
+    [enabled],
+  );
+  return { enabled, dirSign, lift, itemVariants, containerVariants };
 }

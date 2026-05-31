@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useParams } from "wouter";
-import Nav from "@/components/nav";
+import { AppPageLayout } from "@/components/app-page-layout";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLiveQuota } from "@/hooks/use-live-quota";
 import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
-import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
+import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
   CalendarDays, CheckCircle2, Clock, AlertCircle, ExternalLink,
   ChevronRight, Info, GraduationCap, DollarSign, FileText,
@@ -56,9 +56,7 @@ interface VerifyResult {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DeadlineCalendar() {
-  const dcMotionOn = useMotionEnabled();
-  const dcDir = useDirSign();
-  const dcLift = hoverLift(dcDir);
+  const { enabled: dcMotionOn, lift: dcLift, itemVariants, containerVariants } = useBrutalistMotion();
   const { profileId } = useParams<{ profileId?: string }>();
   const pid = profileId ? parseInt(profileId) : undefined;
   const { toast } = useToast();
@@ -118,10 +116,7 @@ export default function DeadlineCalendar() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-      <Nav profileId={pid} />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-3xl mx-auto">
+    <AppPageLayout profileId={pid} maxWidth="3xl">
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <CalendarDays className="h-5 w-5 text-indigo-600" />
@@ -240,7 +235,7 @@ export default function DeadlineCalendar() {
             initial={dcMotionOn ? "hidden" : false}
             whileInView={dcMotionOn ? "show" : undefined}
             viewport={{ once: true, margin: "-50px" }}
-            variants={dcMotionOn ? staggerContainer(0.06) : undefined}
+            variants={containerVariants}
           >
           {upcoming.map(d => {
             const date = getDeadlineDate(d, cycleYear);
@@ -253,7 +248,7 @@ export default function DeadlineCalendar() {
             return (
               <motion.div
                 key={d.id}
-                variants={dcMotionOn ? fadeUp(6, DUR.base) : undefined}
+                variants={itemVariants ?? fadeUp(6, DUR.base)}
                 whileHover={dcMotionOn ? dcLift : undefined}
                 className={cn(
                   "bg-white border rounded-2xl p-4 flex gap-3 hover:shadow-sm transition-shadow",
@@ -306,7 +301,7 @@ export default function DeadlineCalendar() {
               initial={dcMotionOn ? "hidden" : false}
               whileInView={dcMotionOn ? "show" : undefined}
               viewport={{ once: true, margin: "-50px" }}
-              variants={dcMotionOn ? staggerContainer(0.06) : undefined}
+              variants={containerVariants}
             >
             {past.map(d => {
               const cfg = CATEGORY_CONFIG[d.category] ?? CATEGORY_CONFIG.decision;
@@ -314,7 +309,7 @@ export default function DeadlineCalendar() {
               return (
                 <motion.div
                   key={d.id}
-                  variants={dcMotionOn ? fadeUp(6, DUR.base) : undefined}
+                  variants={itemVariants ?? fadeUp(6, DUR.base)}
                   className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex gap-3 opacity-60"
                 >
                   <CheckCircle2 className="h-4 w-4 text-slate-400 flex-shrink-0 mt-0.5" />
@@ -346,7 +341,6 @@ export default function DeadlineCalendar() {
           Kaleon Transfer Calendar · {cycleYear}–{nextCycleYear} cycle · Verify all dates officially
         </p>
         </PageMotion>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

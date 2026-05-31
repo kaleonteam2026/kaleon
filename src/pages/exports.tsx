@@ -7,10 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { FileText, FileSpreadsheet, Presentation, Loader2, Download, CheckCircle2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
+import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
+import type { ProfileSummary } from "@/types/profile";
+import { getPrimaryProfileForUser } from "@/lib/api/profiles";
 
 interface ExportPreview {
-  profile: { fullName: string | null; communityCollege: string | null; intendedMajor: string | null; currentGpa: number | null };
+  profile: ProfileSummary;
   counts: {
     courses: number;
     savedInternships: number;
@@ -85,16 +87,14 @@ function ExportGrid({
   done: Record<ExportKey, boolean>;
   onGenerate: (spec: ExportSpec) => void;
 }) {
-  const motionOn = useMotionEnabled();
-  const dir = useDirSign();
-  const lift = hoverLift(dir);
+  const { enabled, lift, itemVariants, containerVariants } = useBrutalistMotion();
   return (
     <motion.div
       className="grid grid-cols-1 md:grid-cols-3 gap-5"
-      initial={motionOn ? "hidden" : false}
-      whileInView={motionOn ? "show" : undefined}
+      initial={enabled ? "hidden" : false}
+      whileInView={enabled ? "show" : undefined}
       viewport={{ once: true, margin: "-50px" }}
-      variants={motionOn ? staggerContainer(0.06) : undefined}
+      variants={containerVariants}
     >
       {specs.map((spec) => {
         const Icon = spec.icon;
@@ -103,8 +103,8 @@ function ExportGrid({
         return (
           <motion.div
             key={spec.key}
-            variants={motionOn ? fadeUp(8, DUR.base) : undefined}
-            whileHover={motionOn ? lift : undefined}
+            variants={itemVariants ?? fadeUp(8, DUR.base)}
+            whileHover={lift}
           >
             <Card className="border-2 border-slate-900 rounded-none flex flex-col h-full">
               <CardHeader>
@@ -166,10 +166,9 @@ export default function ExportsPage() {
   useEffect(() => {
     if (profileId) return;
     if (!user?.id) return;
-    fetch(`/api/profiles/user/${user.id}`, { credentials: "include" })
-      .then((r) => r.json())
-      .then((profiles: { id: number }[]) => {
-        if (profiles.length > 0) setProfileId(profiles[0].id);
+    getPrimaryProfileForUser(user.id)
+      .then((profile) => {
+        if (profile) setProfileId(profile.id);
         else { setLoading(false); navigate("/profile"); }
       })
       .catch(() => setLoading(false));

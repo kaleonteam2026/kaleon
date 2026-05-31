@@ -1,17 +1,18 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "wouter";
-import { useTranslation } from "react-i18next";
-import Nav from "@/components/nav";
+import { AppPageLayout } from "@/components/app-page-layout";
+import { PageLoadingState } from "@/components/page-loading-state";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
-import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
+import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
   CheckCircle2, Circle, Sparkles, Loader2, Info, ExternalLink, Save,
   BookOpen, AlertCircle, ChevronDown, ChevronUp,
 } from "lucide-react";
+import { t } from "@/lib/copy";
 
 // ─── IGETC Area definitions ───────────────────────────────────────────────────
 interface IgetcSubArea {
@@ -94,10 +95,7 @@ function completionPercent(areas: Record<string, boolean>): number {
 }
 
 export default function IgetcTracker() {
-  const igMotionOn = useMotionEnabled();
-  const igDir = useDirSign();
-  const igLift = hoverLift(igDir);
-  const { t } = useTranslation();
+  const { enabled: igMotionOn, lift: igLift, itemVariants, containerVariants } = useBrutalistMotion();
   const { profileId } = useParams<{ profileId: string }>();
   const pid = parseInt(profileId);
   const { toast } = useToast();
@@ -163,17 +161,10 @@ export default function IgetcTracker() {
   const pct = completionPercent(areas);
   const doneRequired = REQUIRED_KEYS.filter(k => areas[k]).length;
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-900 border-t-transparent" />
-    </div>
-  );
+  if (loading) return <PageLoadingState />;
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-      <Nav profileId={pid} />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-3xl mx-auto">
+    <AppPageLayout profileId={pid} maxWidth="3xl">
         {/* Header */}
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
@@ -224,7 +215,7 @@ export default function IgetcTracker() {
           initial={igMotionOn ? "hidden" : false}
           whileInView={igMotionOn ? "show" : undefined}
           viewport={{ once: true, margin: "-50px" }}
-          variants={igMotionOn ? staggerContainer(0.06) : undefined}
+          variants={containerVariants}
         >
           {IGETC_AREAS.map(area => {
             const allDone = area.subAreas.filter(s => s.required).every(s => areas[s.key]);
@@ -232,7 +223,7 @@ export default function IgetcTracker() {
             return (
               <motion.div
                 key={area.key}
-                variants={igMotionOn ? fadeUp(6, DUR.base) : undefined}
+                variants={itemVariants ?? fadeUp(6, DUR.base)}
                 whileHover={igMotionOn ? igLift : undefined}
                 className={cn("bg-white border rounded-2xl overflow-hidden", allDone ? "border-emerald-200" : "border-slate-200")}
               >
@@ -309,7 +300,6 @@ export default function IgetcTracker() {
           </p>
         </div>
         </PageMotion>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

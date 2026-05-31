@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useLocation } from "wouter";
-import { useTranslation } from "react-i18next";
-import Nav from "@/components/nav";
+import { AppPageLayout } from "@/components/app-page-layout";
+import { PageLoadingState } from "@/components/page-loading-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,12 @@ import {
   ExternalLink, ChevronDown, ChevronUp, School, Search,
   X, ChevronRight, GraduationCap, Library,
 } from "lucide-react";
+import { t } from "@/lib/copy";
+import {
+  GRADUATION_UNITS,
+  graduationProgressPercent,
+  unitsRemaining,
+} from "@/lib/course-progress";
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
 interface Course {
@@ -129,7 +135,6 @@ const CATEGORY_ICON: Record<string, typeof BookOpen> = {
 
 // ─── Transferability sub-components ──────────────────────────────────────────
 function StatusBadge({ status }: { status: CourseTransferResult["status"] }) {
-  const { t } = useTranslation();
   const cfg = STATUS_CONFIG[status];
   const Icon = cfg.icon;
   return (
@@ -141,7 +146,6 @@ function StatusBadge({ status }: { status: CourseTransferResult["status"] }) {
 }
 
 function CourseAnalysisRow({ c }: { c: CourseTransferResult }) {
-  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const cfg = STATUS_CONFIG[c.status];
   return (
@@ -177,7 +181,6 @@ function CourseAnalysisRow({ c }: { c: CourseTransferResult }) {
 }
 
 function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
-  const { t } = useTranslation();
   const igetc = result.igetcSummary;
   const completedCount = IGETC_AREAS.filter(a => igetc[a.key]).length;
   return (
@@ -298,7 +301,6 @@ interface CoursePickerProps {
 }
 
 function CoursePicker({ catalog, alreadyAdded, onPick, onClose }: CoursePickerProps) {
-  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -430,7 +432,6 @@ interface CourseDetailFormProps {
 }
 
 function CourseDetailForm({ course, onSave, onBack, saving }: CourseDetailFormProps) {
-  const { t } = useTranslation();
   const [status, setStatus] = useState("completed");
   const [grade, setGrade] = useState("");
   const [term, setTerm] = useState("");
@@ -514,7 +515,6 @@ function CatalogModal({
   onAddCourse: (course: CatalogCourse, detail: { grade?: string; status: string; term: string }) => Promise<void>;
   pid: number;
 }) {
-  const { t } = useTranslation();
   const [selected, setSelected] = useState<CatalogCourse | null>(null);
   const [saving, setSaving] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -594,7 +594,6 @@ function CatalogModal({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Courses() {
-  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -717,18 +716,11 @@ export default function Courses() {
   const planned    = courses.filter(c => c.status === "planned");
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-900 border-t-transparent" />
-      </div>
-    );
+    return <PageLoadingState />;
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-      <Nav profileId={pid} />
-
+    <AppPageLayout profileId={pid} maxWidth="4xl">
       <CatalogModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -739,8 +731,6 @@ export default function Courses() {
         onAddCourse={addCourseFromCatalog}
         pid={pid}
       />
-
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-4xl mx-auto">
 
         {/* Header */}
         <div className="py-6 border-b-2 border-slate-900 mb-6 flex items-start justify-between gap-4">
@@ -773,27 +763,31 @@ export default function Courses() {
           </div>
         )}
 
-        {/* 60-Unit Transfer Progress */}
+        {/* Graduation unit progress */}
         {gpa && (
           <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 mb-5">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
                 <GraduationCap className="h-4 w-4 text-indigo-600" />
-                Units Toward Transfer
+                {t("pages.courses.graduationProgress")}
               </span>
-              <span className={`text-sm font-bold ${gpa.totalUnits >= 60 ? "text-emerald-600" : "text-indigo-600"}`}>
-                {gpa.totalUnits} / 60
+              <span className={`text-sm font-bold ${gpa.totalUnits >= GRADUATION_UNITS ? "text-emerald-600" : "text-indigo-600"}`}>
+                {gpa.totalUnits} / {GRADUATION_UNITS}
               </span>
             </div>
             <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-700 ${gpa.totalUnits >= 60 ? "bg-emerald-500" : "bg-indigo-500"}`}
-                style={{ width: `${Math.min(100, (gpa.totalUnits / 60) * 100)}%` }}
+                className={`h-full rounded-full transition-all duration-700 ${gpa.totalUnits >= GRADUATION_UNITS ? "bg-emerald-500" : "bg-indigo-500"}`}
+                style={{ width: `${graduationProgressPercent(gpa.totalUnits)}%` }}
               />
             </div>
             <p className="text-xs text-slate-600 mt-1.5 flex justify-between">
-              <span>{gpa.totalUnits >= 60 ? "✓ 60-unit minimum met! Great progress." : `${(60 - gpa.totalUnits).toFixed(1)} more units to reach transfer minimum`}</span>
-              <span>Min: 60 semester units</span>
+              <span>
+                {gpa.totalUnits >= GRADUATION_UNITS
+                  ? t("pages.courses.graduationComplete")
+                  : t("pages.courses.graduationRemaining", { units: unitsRemaining(gpa.totalUnits).toFixed(1) })}
+              </span>
+              <span>{t("pages.courses.graduationRequirement", { units: GRADUATION_UNITS })}</span>
             </p>
           </div>
         )}
@@ -902,7 +896,6 @@ export default function Courses() {
           </Button>
         </div>
         </PageMotion>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

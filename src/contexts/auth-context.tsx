@@ -1,11 +1,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { useLocation } from "wouter";
-import { SUPPORTED_LOCALES, changeLocale, LOCALE_STORAGE_KEY, type SupportedLocale } from "@/i18n/config";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import {
   getCurrentSession,
   mapSupabaseUser,
   signInWithMagicLink,
+  updateUserMetadata,
   verifyMagicLinkFromUrl,
 } from "@/lib/supabase-auth";
 
@@ -27,7 +27,11 @@ interface AuthState {
   login: () => void;
   closeLogin: () => void;
   clearAuthError: () => void;
-  signInWithEmail: (email: string) => Promise<{ error?: string }>;
+  signInWithEmail: (
+    email: string,
+    options?: { firstName?: string; returnTo?: string },
+  ) => Promise<{ error?: string }>;
+  updateProfileName: (firstName: string) => Promise<{ error?: string }>;
   logout: () => void;
   refetch: () => void;
 }
@@ -37,29 +41,10 @@ const AuthContext = createContext<AuthState | null>(null);
 const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
 const USE_SUPABASE = isSupabaseConfigured && !AUTH_BYPASS;
 
-async function syncLocaleWithServer(): Promise<void> {
-  try {
-    const res = await fetch("/api/me/locale", { credentials: "include" });
-    if (!res.ok) return;
-    const { locale } = await res.json() as { locale?: string | null };
-    const explicitStored = typeof window !== "undefined"
-      ? window.localStorage.getItem(LOCALE_STORAGE_KEY)
-      : null;
-    const valid = (l: unknown): l is SupportedLocale =>
-      typeof l === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(l);
-    if (valid(explicitStored) && explicitStored !== locale) {
-      await fetch("/api/me/locale", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json", "x-dyp-locale": explicitStored },
-        body: JSON.stringify({ locale: explicitStored }),
-      });
-    } else if (valid(locale)) {
-      await changeLocale(locale);
-    }
-  } catch {
-    /* offline or unauthenticated — no-op */
-  }
+if (AUTH_BYPASS && import.meta.env.DEV) {
+  console.warn(
+    "[Kaleon] VITE_AUTH_BYPASS is enabled — auth uses a fake Dev user. Disable for real Supabase sign-in.",
+  );
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -76,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const applySession = useCallback(async (session: Awaited<ReturnType<typeof getCurrentSession>>) => {
     if (session?.user) {
       setUser(mapSupabaseUser(session.user));
-      await syncLocaleWithServer();
     } else {
       setUser(null);
     }
@@ -110,7 +94,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(async (data) => {
         setUser(data.user ?? null);
         setIsLoading(false);
-        if (data.user) await syncLocaleWithServer();
       })
       .catch(() => {
         setUser(null);
@@ -166,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     if (USE_SUPABASE) {
       setAuthError(null);
-      setIsLoginOpen(true);
+      setLocation("/auth");
       return;
     }
     window.location.href = `/api/login?returnTo=${encodeURIComponent("/")}`;
@@ -180,9 +163,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthError(null);
   }, []);
 
-  const signInWithEmail = useCallback(async (email: string) => {
-    return signInWithMagicLink(email);
-  }, []);
+  const signInWithEmail = useCallback(
+    async (email: string, options?: { firstName?: string; returnTo?: string }) => {
+      return signInWithMagicLink(email, options);
+    },
+    [],
+  );
+
+  const updateProfileName = useCallback(async (firstName: string) => {
+    const trimmed = firstName.trim();
+    if (!trimmed) return { error: "Name is required" };
+    const result = await updateUserMetadata({ first_name: trimmed });
+    if (!result.error) {
+      const session = await getCurrentSession();
+      await applySession(session);
+    }
+    return result;
+  }, [applySession]);
 
   const logout = useCallback(async () => {
     if (AUTH_BYPASS) {
@@ -212,6 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         closeLogin,
         clearAuthError,
         signInWithEmail,
+        updateProfileName,
         logout,
         refetch: fetchUser,
       }}

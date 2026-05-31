@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
-import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useReducedMotion } from "framer-motion";
 import { DUR, EASE_OUT } from "@/lib/motion";
 import { MessageCircle, X, Send, Loader2, Bot, User, MessagesSquare, Mic, Trophy, Sparkles, RotateCcw } from "lucide-react";
+import { t } from "@/lib/copy";
 
 type Mode = "ask" | "interview";
 interface Message { role: "user" | "assistant"; content: string; kind?: "kickoff" }
@@ -72,7 +72,6 @@ function formatMessage(text: string) {
 }
 
 function SummaryCard({ text, onRestart }: { text: string; onRestart: () => void }) {
-  const { t } = useTranslation();
   const { score, strengths, improvements, closing } = parseSummary(text);
   return (
     <div className="bg-white border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] p-3 max-w-[90%]">
@@ -119,7 +118,6 @@ function SummaryCard({ text, onRestart }: { text: string; onRestart: () => void 
 }
 
 export default function ChatBubble({ userId }: { userId?: string }) {
-  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const reducedMotion = useReducedMotion();

@@ -2,7 +2,9 @@ import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "next-themes";
 import App from "./App";
 import "./index.css";
-import "./i18n/config";
+import { initEnglishDocument } from "@/lib/copy";
+
+initEnglishDocument();
 import { installMockApi } from "./mocks/mock-api";
 
 installMockApi();

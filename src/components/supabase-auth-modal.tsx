@@ -1,10 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { Loader2, Mail, X } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
-import { useTranslation } from "react-i18next";
+import { t } from "@/lib/copy";
 
 export default function SupabaseAuthModal() {
-  const { t } = useTranslation();
   const {
     isLoginOpen,
     closeLogin,

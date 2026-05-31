@@ -13,15 +13,19 @@ export function mapSupabaseUser(user: User): AuthUser {
   };
 }
 
-export function getAuthRedirectUrl(): string {
+export function getAuthRedirectUrl(returnTo?: string): string {
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-  return `${window.location.origin}${base || ""}`;
+  const origin = `${window.location.origin}${base || ""}`;
+  const path = `${origin}/auth`;
+  if (!returnTo) return path;
+  return `${path}?returnTo=${encodeURIComponent(returnTo)}`;
 }
 
 export async function verifyMagicLinkFromUrl(): Promise<{ error?: string }> {
   const params = new URLSearchParams(window.location.search);
   const tokenHash = params.get("token_hash");
   const type = params.get("type");
+  const returnTo = params.get("returnTo");
 
   if (!tokenHash) return {};
 
@@ -31,17 +35,38 @@ export async function verifyMagicLinkFromUrl(): Promise<{ error?: string }> {
   });
 
   if (!error) {
-    window.history.replaceState({}, document.title, window.location.pathname);
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    const next = returnTo
+      ? `${base}/auth?returnTo=${encodeURIComponent(returnTo)}`
+      : `${base}/auth`;
+    window.history.replaceState({}, document.title, next);
   }
 
   return error ? { error: error.message } : {};
 }
 
-export async function signInWithMagicLink(email: string): Promise<{ error?: string }> {
+export async function signInWithMagicLink(
+  email: string,
+  options?: { firstName?: string; returnTo?: string },
+): Promise<{ error?: string }> {
+  const data = options?.firstName?.trim()
+    ? { first_name: options.firstName.trim() }
+    : undefined;
+
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: getAuthRedirectUrl() },
+    options: {
+      emailRedirectTo: getAuthRedirectUrl(options?.returnTo),
+      data,
+    },
   });
+  return error ? { error: error.message } : {};
+}
+
+export async function updateUserMetadata(
+  metadata: { first_name?: string; last_name?: string },
+): Promise<{ error?: string }> {
+  const { error } = await supabase.auth.updateUser({ data: metadata });
   return error ? { error: error.message } : {};
 }
 

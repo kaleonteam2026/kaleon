@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams } from "wouter";
-import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import Nav from "@/components/nav";
-import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
+import { AppPageLayout } from "@/components/app-page-layout";
+import { PageLoadingState } from "@/components/page-loading-state";
+import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLiveQuota } from "@/hooks/use-live-quota";
+import { t } from "@/lib/copy";
 
 interface Scholarship {
   id: string;
@@ -87,7 +88,6 @@ interface PplxResult {
 }
 
 function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -218,10 +218,7 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
 
 // ─── CC Program List (motion-aware container) ─────────────────────────────────
 function CCProgramList({ programs }: { programs: CCOpportunityItem[] }) {
-  const { t } = useTranslation();
-  const motionOn = useMotionEnabled();
-  const dir = useDirSign();
-  const lift = hoverLift(dir);
+  const { enabled: motionOn, lift, itemVariants, containerVariants } = useBrutalistMotion();
   if (programs.length === 0) {
     return <div className="text-center py-8 text-slate-400 text-sm">{t("pages.scholarships.noProgramsMatch")}</div>;
   }
@@ -231,13 +228,13 @@ function CCProgramList({ programs }: { programs: CCOpportunityItem[] }) {
       initial={motionOn ? "hidden" : false}
       whileInView={motionOn ? "show" : undefined}
       viewport={{ once: true, margin: "-50px" }}
-      variants={motionOn ? staggerContainer(0.06) : undefined}
+      variants={containerVariants}
     >
       {programs.map((program, i) => (
         <motion.div
           key={i}
-          variants={motionOn ? fadeUp(6, DUR.base) : undefined}
-          whileHover={motionOn ? lift : undefined}
+          variants={itemVariants ?? fadeUp(6, DUR.base)}
+          whileHover={lift}
         >
           <CCProgramCard program={program} />
         </motion.div>
@@ -248,7 +245,6 @@ function CCProgramList({ programs }: { programs: CCOpportunityItem[] }) {
 
 // ─── CC Program Card ──────────────────────────────────────────────────────────
 function CCProgramCard({ program }: { program: CCOpportunityItem }) {
-  const { t } = useTranslation();
   const cfg = CC_TYPE_CONFIG[program.type] ?? { labelKey: `pages.scholarships.cc_${program.type}`, icon: Star, badge: "bg-slate-100 text-slate-600 border-slate-200" };
   const Icon = cfg.icon;
 
@@ -296,7 +292,6 @@ function CCProgramCard({ program }: { program: CCOpportunityItem }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Scholarships() {
-  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId?: string }>();
   const { toast } = useToast();
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
@@ -310,11 +305,12 @@ export default function Scholarships() {
   const [ccFilter, setCcFilter] = useState("all");
 
   const pid = profileId ? parseInt(profileId) : null;
-  const schMotionEnabled = useMotionEnabled();
-  const schDirSign = useDirSign();
-  const schItemVariants = useMemo(() => fadeUp(8, 0.22), []);
-  const schContainerVariants = useMemo(() => staggerContainer(0.06), []);
-  const schLift = useMemo(() => (schMotionEnabled ? hoverLift(schDirSign) : undefined), [schMotionEnabled, schDirSign]);
+  const {
+    enabled: schMotionEnabled,
+    lift: schLift,
+    itemVariants: schItemVariants,
+    containerVariants: schContainerVariants,
+  } = useBrutalistMotion();
 
   useEffect(() => {
     const scholarshipUrl = pid ? `/api/profiles/${pid}/recommended-scholarships` : "/api/scholarships";
@@ -360,18 +356,11 @@ export default function Scholarships() {
   }, [ccOpps]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-900 border-t-transparent" />
-      </div>
-    );
+    return <PageLoadingState />;
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-      <Nav profileId={pid ?? undefined} />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-5xl mx-auto">
+    <AppPageLayout profileId={pid ?? undefined} maxWidth="5xl">
         <div className="py-6 border-b-2 border-slate-900 mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.scholarships.pageTitle")}</h1>
           <p className="text-slate-600 text-sm mt-1">
@@ -550,7 +539,6 @@ export default function Scholarships() {
           Program availability varies by campus. Always confirm with your college's student services office.
           Kaleon is not affiliated with any institution or scholarship program.
         </p>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

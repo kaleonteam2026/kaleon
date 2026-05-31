@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import fs from "fs";
 import tailwindcss from "@tailwindcss/vite";
+import { pathwaysApiPlugin } from "./server/pathways-api-plugin.ts";
 
 /** Root-level static files kept in `dist/` (logo, nav icons, etc.). */
 const DIST_STATIC_FILES = new Set([
@@ -59,7 +60,7 @@ function serveDistStatic(): Plugin {
 export default defineConfig({
   base: process.env.BASE_PATH ?? "/",
   publicDir: false,
-  plugins: [react(), tailwindcss(), serveDistStatic()],
+  plugins: [react(), tailwindcss(), serveDistStatic(), pathwaysApiPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

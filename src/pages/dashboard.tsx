@@ -1,11 +1,12 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import Nav from "@/components/nav";
-import { useReducedMotion } from "@/hooks/use-reduced-motion";
-import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
+import { AppPageLayout } from "@/components/app-page-layout";
+import { PageLoadingState } from "@/components/page-loading-state";
+import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
+import { getProfilesForUser } from "@/lib/api/profiles";
+import { displayName } from "@/lib/display-name";
 import { Button } from "@/components/ui/button";
 import { getDevDashboardSummary, getDevProfiles, isAuthBypass } from "@/lib/dev-profile";
 import {
@@ -13,6 +14,9 @@ import {
   FileText, Info, LineChart, Map, Percent, Plus, Settings,
   Target, TrendingUp, User, Zap,
 } from "lucide-react";
+import { t } from "@/lib/copy";
+import { GRADUATION_UNITS, graduationProgressPercent } from "@/lib/course-progress";
+import type { DashboardSummary, StudentProfile } from "@/types/profile";
 
 const FONT_STYLES = `
   .pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
@@ -58,38 +62,6 @@ const FONT_STYLES = `
   .bar-fill { background: linear-gradient(90deg, #4ECCA3, #38b2ac); border-radius: 4px; height: 100%; transition: width 0.8s ease; }
 `;
 
-interface Profile {
-  id: number;
-  fullName?: string;
-  communityCollege?: string;
-  intendedMajor?: string;
-  careerGoal?: string;
-  currentGpa?: number;
-}
-
-interface ReadinessBreakdown {
-  profile: number; gpa: number; units: number;
-  pathway: number; guidebook: number; progress: number; totalUnits: number;
-}
-
-interface DashboardSummary {
-  profileCompletionPercent: number;
-  totalCourses: number;
-  completedCourses: number;
-  inProgressCourses: number;
-  estimatedGpa: number | null;
-  savedPathwaysCount: number;
-  guidebooksCount: number;
-  topMatchUniversity: string | null;
-  topMatchScore: number | null;
-  chosenTransferSchool: string | null;
-  chosenTransferScore: number | null;
-  nextActions: string[];
-  readinessScore: number;
-  readinessLabel: string;
-  readinessBreakdown: ReadinessBreakdown;
-}
-
 function readinessAccent(score: number) {
   if (score >= 60) return { stroke: "#4ECCA3", labelKey: "pages.progress.onTrack", color: "#4ECCA3" };
   if (score >= 40) return { stroke: "#f59e0b", labelKey: "pages.progress.needsFocus", color: "#f59e0b" };
@@ -108,17 +80,15 @@ function estimatedTransferTerm(totalUnits: number, t: (k: string) => string): st
 }
 
 export default function Dashboard() {
-  const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
-  const reducedMotion = useReducedMotion();
-  const dashMotionOn = useMotionEnabled();
-  const dashDir = useDirSign();
-  const dashLift = hoverLift(dashDir);
-  const motionEnabled = useMotionEnabled();
-  const itemVariants = useMemo(() => fadeUp(8, 0.22), []);
-  const containerVariants = useMemo(() => staggerContainer(0.06), []);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const {
+    enabled: dashMotionOn,
+    lift: dashLift,
+    itemVariants,
+    containerVariants,
+  } = useBrutalistMotion();
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -136,9 +106,8 @@ export default function Dashboard() {
       return;
     }
 
-    fetch(`/api/profiles/user/${user.id}`, { credentials: "include" })
-      .then(r => r.json())
-      .then((profiles: Profile[]) => {
+    getProfilesForUser(user.id)
+      .then((profiles: StudentProfile[]) => {
         if (profiles.length > 0) {
           const p = profiles[0];
           setProfile(p);
@@ -215,19 +184,13 @@ export default function Dashboard() {
   }, [profile, summary, t]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--app-page-bg)" }}>
-        <div className="h-8 w-8 animate-spin rounded-full border-4" style={{ borderColor: "rgba(78,204,163,0.3)", borderTopColor: "transparent" }} />
-      </div>
-    );
+    return <PageLoadingState variant="dark" />;
   }
 
   if (!profile) {
-    const emptyStateGreeting = user?.firstName ?? user?.email?.split("@")[0] ?? t("common.student");
+    const emptyStateGreeting = displayName(user, undefined, t("common.student"));
     return (
-      <div className="min-h-screen pwc-font-sans" style={{ background: "var(--app-page-bg)" }}>
-        <Nav profileId={undefined} />
-        <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto focus:outline-none">
+      <AppPageLayout variant="dark" maxWidth="3xl">
           <div className="py-16 text-center">
             <Map className="h-16 w-16 mx-auto mb-4" style={{ color: "rgba(78,204,163,0.3)" }} />
             <p className="text-sm pwc-font-mono uppercase tracking-wider mb-2" style={{ color: "#94a3b8" }}>
@@ -239,27 +202,34 @@ export default function Dashboard() {
             </p>
             <div className="flex gap-3 justify-center">
               <Button
-                onClick={() => navigate("/onboarding")}
+                onClick={() =>
+                  navigate(
+                    isAuthenticated
+                      ? "/onboarding"
+                      : "/auth?mode=signup&returnTo=/onboarding",
+                  )
+                }
                 style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18", border: "none", borderRadius: 8 }}
               >
                 <Plus className="h-4 w-4 mr-2" />{t("dashboard.quickSetup")}
               </Button>
               <Button
                 variant="outline"
-                onClick={() => navigate("/profile")}
+                onClick={() =>
+                  navigate(isAuthenticated ? "/profile" : "/auth?returnTo=/profile")
+                }
                 style={{ borderColor: "rgba(78,204,163,0.3)", color: "#4ECCA3", background: "transparent", borderRadius: 8 }}
               >
                 {t("dashboard.manualSetup")}
               </Button>
             </div>
           </div>
-        </main>
-      </div>
+      </AppPageLayout>
     );
   }
 
   const transferTerm = estimatedTransferTerm(breakdown?.totalUnits ?? 0, t);
-  const greeting = user?.firstName ?? profile.fullName?.split(" ")[0] ?? t("common.student");
+  const greeting = displayName(user, profile.fullName, t("common.student"));
   const totalUnits = breakdown?.totalUnits ?? 0;
   const kaleonSemesters = Math.max(1, Math.ceil(Math.max(0, 60 - totalUnits) / 15));
   const typicalSemesters = 7;
@@ -268,12 +238,9 @@ export default function Dashboard() {
   const targetSchool = summary?.chosenTransferSchool ?? summary?.topMatchUniversity;
 
   return (
-    <div className="min-h-screen pwc-font-sans" style={{ background: "var(--app-page-bg)", color: "var(--app-text)" }}>
+    <AppPageLayout variant="dark" profileId={profile.id} maxWidth="wide" bareContent>
       <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
-      <Nav profileId={profile.id} />
-
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none">
-        <div className="max-w-[1280px] mx-auto p-4 md:p-6 grid grid-cols-12 gap-4 md:gap-6">
+        <div className="grid grid-cols-12 gap-4 md:gap-6">
 
           {/* Your Path Hero Card */}
           {targetSchool && (
@@ -302,13 +269,13 @@ export default function Dashboard() {
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="pwc-font-mono uppercase tracking-wider" style={{ color: "#475569" }}>Current Progress</span>
                   <span className="pwc-font-mono" style={{ color: "#4ECCA3" }}>
-                    {summary?.completedCourses ?? 0} of {Math.max(summary?.totalCourses ?? 0, summary?.completedCourses ?? 0, 1)} courses
+                    {breakdown?.totalUnits ?? 0} / {GRADUATION_UNITS} units
                   </span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(78,204,163,0.1)" }}>
                   <div className="h-full rounded-full transition-all duration-700" style={{
                     background: "linear-gradient(90deg, #4ECCA3, #38b2ac)",
-                    width: `${summary?.totalCourses ? Math.min(100, ((summary.completedCourses ?? 0) / summary.totalCourses) * 100) : 0}%`,
+                    width: `${graduationProgressPercent(breakdown?.totalUnits ?? 0)}%`,
                   }} />
                 </div>
               </div>
@@ -316,9 +283,9 @@ export default function Dashboard() {
           )}
 
           {/* Header */}
-          <header className="col-span-12 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(78,204,163,0.2)" }}>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight uppercase" style={{ color: "#f8fafc" }}>{t("dashboard.missionControl")}</h1>
+          <header className="col-span-12 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 pb-4 mb-2 pt-1" style={{ borderBottom: "1px solid rgba(78,204,163,0.2)" }}>
+            <div className="min-w-0">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight uppercase leading-tight" style={{ color: "#f8fafc" }}>{t("dashboard.missionControl")}</h1>
               <p className="text-base md:text-lg mt-1" style={{ color: "#64748b" }}>{t("dashboard.welcomeBack", { name: greeting })}</p>
             </div>
             <div className="flex items-center gap-4">
@@ -415,7 +382,7 @@ export default function Dashboard() {
                     initial={dashMotionOn ? "hidden" : false}
                     whileInView={dashMotionOn ? "show" : undefined}
                     viewport={{ once: true, margin: "-50px" }}
-                    variants={dashMotionOn ? staggerContainer(0.06) : undefined}
+                    variants={containerVariants}
                   >
                     {summary!.nextActions.map((action, i) => (
                       <motion.div
@@ -455,7 +422,7 @@ export default function Dashboard() {
                       cx="50" cy="50" r="45" fill="none"
                       stroke={accent.stroke} strokeWidth="10"
                       strokeDasharray={dashOffset}
-                      className={reducedMotion ? "" : "transition-all duration-1000 ease-out"}
+                      className={dashMotionOn ? "transition-all duration-1000 ease-out" : ""}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -501,7 +468,7 @@ export default function Dashboard() {
               initial={dashMotionOn ? "hidden" : false}
               whileInView={dashMotionOn ? "show" : undefined}
               viewport={{ once: true, margin: "-50px" }}
-              variants={dashMotionOn ? staggerContainer(0.06) : undefined}
+              variants={containerVariants}
             >
               <motion.button
                 onClick={() => navigate(`/courses/${profile.id}`)}
@@ -597,8 +564,8 @@ export default function Dashboard() {
               </div>
               <motion.div
                 className="flex-grow flex flex-col"
-                initial={motionEnabled ? "hidden" : false}
-                whileInView={motionEnabled ? "show" : undefined}
+                initial={dashMotionOn ? "hidden" : false}
+                whileInView={dashMotionOn ? "show" : undefined}
                 viewport={{ once: true, margin: "-50px" }}
                 variants={containerVariants}
               >
@@ -657,7 +624,6 @@ export default function Dashboard() {
           </div>
 
         </div>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

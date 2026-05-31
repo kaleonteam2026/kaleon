@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useTranslation, Trans } from "react-i18next";
-import Nav from "@/components/nav";
+import { AppPageLayout } from "@/components/app-page-layout";
+import { PageLoadingState } from "@/components/page-loading-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -13,8 +13,32 @@ import {
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
-import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
+import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
+import { CopyTrans } from "@/components/copy-trans";
+import { t } from "@/lib/copy";
+import { GRADUATION_UNITS, graduationProgressPercent } from "@/lib/course-progress";
+
+interface ProfileCourse {
+  id: number;
+  courseCode?: string;
+  courseName: string;
+  units?: number;
+  term?: string;
+  status?: string;
+}
+
+function courseCodeKey(code?: string): string {
+  return (code ?? "").replace(/\s+/g, " ").trim().toUpperCase();
+}
+
+function remainingCourseGaps(gaps: string[] | undefined, completedCodes: Set<string>): string[] {
+  if (!gaps) return [];
+  return gaps.filter((gap) => {
+    const normalizedGap = courseCodeKey(gap);
+    return ![...completedCodes].some((code) => normalizedGap.includes(code) || code.includes(normalizedGap));
+  });
+}
 
 interface CampusOpportunityItem {
   name: string;
@@ -29,8 +53,10 @@ interface PathwayReport {
   compatibilityScore: number;
   whyItFits: string;
   concerns: string;
+  riskAnalysis?: string;
   gpaTarget: number;
   courseGaps: string[];
+  coursesAnalyzed?: string[];
   transferTimeline: string;
   scholarshipOptions: string[];
   internshipRecommendations: string[];
@@ -38,6 +64,14 @@ interface PathwayReport {
   campusOpportunities: CampusOpportunityItem[];
   risks: string[];
   nextSteps: string[];
+}
+
+interface PathwayGenerationResponse {
+  pathways?: Pathway[];
+  progressSummary?: {
+    completedUnits?: number;
+    courseAnalysis?: string;
+  };
 }
 
 interface Pathway {
@@ -81,11 +115,14 @@ const OPP_COLORS: Record<string, string> = {
 };
 
 export default function Pathways() {
-  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [pathways, setPathways] = useState<Pathway[]>([]);
+  const [profileCourses, setProfileCourses] = useState<ProfileCourse[]>([]);
+  const [profileGpa, setProfileGpa] = useState<number | null>(null);
+  const [totalUnits, setTotalUnits] = useState(0);
+  const [courseAnalysis, setCourseAnalysis] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -93,34 +130,82 @@ export default function Pathways() {
   const [generatingGuidebook, setGeneratingGuidebook] = useState<number | null>(null);
   const [generatingRoadmap, setGeneratingRoadmap] = useState<number | null>(null);
   const pid = parseInt(profileId);
-  const pwMotionOn = useMotionEnabled();
-  const pwDir = useDirSign();
-  const pwLift = hoverLift(pwDir);
+  const { enabled: pwMotionOn, lift: pwLift, itemVariants, containerVariants } = useBrutalistMotion();
 
   const loadPathways = () => {
-    fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" })
-      .then(r => r.json())
-      .then((p: Pathway[]) => setPathways(p))
+    Promise.all([
+      fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" }).then(r => r.json()),
+      fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }).then(r => r.json()),
+      fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }).then(r => r.json()),
+    ])
+      .then(([pathwayData, courseData, gpaData]: [Pathway[], ProfileCourse[], { estimatedGpa?: number; totalUnits?: number }]) => {
+        setPathways(pathwayData);
+        setProfileCourses(courseData);
+        setProfileGpa(gpaData.estimatedGpa && gpaData.estimatedGpa > 0 ? gpaData.estimatedGpa : null);
+        setTotalUnits(gpaData.totalUnits ?? 0);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { loadPathways(); }, [pid]);
 
+  const completedCourseCodes = new Set(
+    profileCourses
+      .filter(c => c.status === "completed")
+      .map(c => courseCodeKey(c.courseCode ?? c.courseName)),
+  );
+
   const generatePathways = async () => {
     setGenerating(true);
     try {
-      const r = await fetch(`/api/profiles/${pid}/generate-pathways`, { method: "POST", credentials: "include" });
+      const [profileRes, coursesRes, gpaRes] = await Promise.all([
+        fetch(`/api/profiles/${pid}`, { credentials: "include" }),
+        fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }),
+        fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }),
+      ]);
+      const profile = profileRes.ok ? await profileRes.json() : {};
+      const courses = coursesRes.ok ? await coursesRes.json() : [];
+      const gpaSummary = gpaRes.ok ? await gpaRes.json() : {};
+
+      const r = await fetch(`/api/profiles/${pid}/generate-pathways`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: profile.fullName,
+          communityCollege: profile.communityCollege,
+          intendedMajor: profile.intendedMajor,
+          careerGoal: profile.careerGoal,
+          currentGpa: profile.currentGpa,
+          transferTimeline: profile.transferTimeline,
+          financialSituation: profile.financialSituation,
+          isFirstGen: profile.isFirstGen,
+          courses,
+          totalUnits: gpaSummary.totalUnits,
+        }),
+      });
       if (r.status === 429) {
         toast({ title: t("pages.pathways.toast_rateLimit"), description: t("pages.pathways.toast_rateLimitDesc"), variant: "destructive" });
         return;
       }
-      if (!r.ok) throw new Error();
-      const p = await r.json() as Pathway[];
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error ?? "Generation failed");
+      }
+      const data = await r.json() as Pathway[] | PathwayGenerationResponse;
+      const p = Array.isArray(data) ? data : (data.pathways ?? []);
+      if (!Array.isArray(data) && data.progressSummary?.completedUnits != null) {
+        setTotalUnits(data.progressSummary.completedUnits);
+      }
+      if (!Array.isArray(data) && data.progressSummary?.courseAnalysis) {
+        setCourseAnalysis(data.progressSummary.courseAnalysis);
+      }
       setPathways(p);
       toast({ title: t("pages.pathways.toast_generated"), description: t("pages.pathways.toast_generatedDesc") });
-    } catch {
-      toast({ title: t("pages.pathways.toast_genError"), description: t("pages.pathways.toast_genErrorDesc"), variant: "destructive" });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : t("pages.pathways.toast_genErrorDesc");
+      toast({ title: t("pages.pathways.toast_genError"), description: msg, variant: "destructive" });
     } finally {
       setGenerating(false);
     }
@@ -178,23 +263,16 @@ export default function Pathways() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-900 border-t-transparent" />
-      </div>
-    );
+    return <PageLoadingState />;
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] pwc-font-sans" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: `.pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }` }} />
-      <Nav profileId={pid} />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-6 max-w-4xl mx-auto">
+    <AppPageLayout profileId={pid} maxWidth="4xl">
         <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 border-b-2 border-slate-900 pb-4 mb-6 mt-4 md:mt-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.pathways.title")}</h1>
             <p className="text-slate-600 text-sm mt-1">
-              <Trans i18nKey="pages.pathways.intro" components={{ strong: <strong /> }} />
+              <CopyTrans i18nKey="pages.pathways.intro" components={{ strong: <strong /> }} />
             </p>
           </div>
           <Button
@@ -209,6 +287,53 @@ export default function Pathways() {
             )}
           </Button>
         </header>
+
+        {profileCourses.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-indigo-600" />
+                  {t("pages.pathways.completedCoursesTitle")}
+                </h2>
+                <p className="text-xs text-slate-600 mt-1">{t("pages.pathways.completedCoursesBody")}</p>
+              </div>
+              <div className="flex flex-wrap gap-4 text-sm">
+                {profileGpa != null && (
+                  <div className="text-center">
+                    <div className="font-bold text-indigo-600">{profileGpa.toFixed(2)}</div>
+                    <div className="text-[10px] uppercase tracking-wide text-slate-500">{t("pages.courses.estimatedGpa")}</div>
+                  </div>
+                )}
+                <div className="text-center">
+                  <div className="font-bold text-indigo-600">{totalUnits} / {GRADUATION_UNITS}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-slate-500">{t("pages.courses.totalUnits")}</div>
+                </div>
+              </div>
+            </div>
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
+              <div
+                className="h-full bg-indigo-500 rounded-full transition-all duration-700"
+                style={{ width: `${graduationProgressPercent(totalUnits)}%` }}
+              />
+            </div>
+            {courseAnalysis && (
+              <p className="text-sm text-slate-600 mb-4">{courseAnalysis}</p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              {profileCourses.map(course => (
+                <span
+                  key={course.id}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+                >
+                  {course.courseCode ?? course.courseName}
+                  {course.term && <span className="opacity-70">{course.term}</span>}
+                  {course.units && <span className="opacity-70">{course.units}u</span>}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         <PageMotion>
         {generating && (
@@ -254,7 +379,7 @@ export default function Pathways() {
             initial={pwMotionOn ? "hidden" : false}
             whileInView={pwMotionOn ? "show" : undefined}
             viewport={{ once: true, margin: "-50px" }}
-            variants={pwMotionOn ? staggerContainer(0.06) : undefined}
+            variants={containerVariants}
           >
             {["least_compatible", "moderately_compatible", "most_compatible"].map(type => {
               const pathway = pathways.find(p => p.pathwayType === type);
@@ -267,7 +392,7 @@ export default function Pathways() {
               return (
                 <motion.div
                   key={pathway.id}
-                  variants={pwMotionOn ? fadeUp(8, DUR.base) : undefined}
+                  variants={itemVariants ?? fadeUp(8, DUR.base)}
                   whileHover={pwMotionOn ? pwLift : undefined}
                 >
                 <Card className={cn(
@@ -322,17 +447,30 @@ export default function Pathways() {
                         </div>
                       </div>
 
+                      {report.riskAnalysis && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-rose-700 flex items-center gap-1 mb-1">
+                            <AlertTriangle className="h-3.5 w-3.5" /> Risk analysis
+                          </h4>
+                          <p className="text-sm text-slate-600">{report.riskAnalysis}</p>
+                        </div>
+                      )}
+
                       {/* Course gaps */}
-                      {report.courseGaps && report.courseGaps.length > 0 && (
+                      {(() => {
+                        const openGaps = remainingCourseGaps(report.courseGaps, completedCourseCodes);
+                        if (openGaps.length === 0) return null;
+                        return (
                         <div>
                           <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-1 mb-1">
                             <BookOpen className="h-3.5 w-3.5" /> {t("pages.pathways.courseGaps")}
                           </h4>
                           <ul className="text-sm text-slate-600 space-y-0.5">
-                            {report.courseGaps.map((gap, i) => <li key={i}>• {gap}</li>)}
+                            {openGaps.map((gap, i) => <li key={i}>• {gap}</li>)}
                           </ul>
                         </div>
-                      )}
+                        );
+                      })()}
 
                       {/* University On-Site Opportunities */}
                       {report.campusOpportunities && report.campusOpportunities.length > 0 && (
@@ -487,12 +625,11 @@ export default function Pathways() {
             })}
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700">
-              <Trans i18nKey="pages.pathways.disclaimer" components={{ strong: <strong /> }} />
+              <CopyTrans i18nKey="pages.pathways.disclaimer" components={{ strong: <strong /> }} />
             </div>
           </motion.div>
         )}
         </PageMotion>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

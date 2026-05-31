@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -9,10 +8,13 @@ import {
   BookOpen, CheckCircle2, User, Loader2, FileText, Upload, X,
 } from "lucide-react";
 import { parseTranscriptPDF, type ExtractedCourse } from "@/lib/parse-transcript";
-import { isAuthBypass, saveDevProfile } from "@/lib/dev-profile";
+import { appendDevCourses } from "@/lib/dev-courses";
+import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile } from "@/lib/dev-profile";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMotionEnabled, useDirSign, DUR, EASE_OUT } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
+import { t } from "@/lib/copy";
 
 const TRANSFER_TIMELINE_KEYS = [
   "timelineFall2025", "timelineSpring2026", "timelineFall2026", "timelineSpring2027",
@@ -23,12 +25,6 @@ const TRANSFER_TIMELINE_VALUES: Record<string, string> = {
   timelineFall2025: "Fall 2025", timelineSpring2026: "Spring 2026", timelineFall2026: "Fall 2026",
   timelineSpring2027: "Spring 2027", timelineFall2027: "Fall 2027", timelineSpring2028: "Spring 2028",
   timelineFall2028: "Fall 2028", timelineUndecided: "Undecided",
-};
-
-const GPA_RANGE_KEYS = ["4.0", "3.7-3.9", "3.3-3.6", "3.0-3.2", "2.7-2.9", "2.4-2.6", "gpaBelow", "gpaNotSure"] as const;
-const GPA_RANGE_LABELS: Record<string, string> = {
-  "4.0": "4.0", "3.7-3.9": "3.7-3.9", "3.3-3.6": "3.3-3.6", "3.0-3.2": "3.0-3.2",
-  "2.7-2.9": "2.7-2.9", "2.4-2.6": "2.4-2.6", gpaBelow: "Below 2.4", gpaNotSure: "Not sure",
 };
 
 const FINANCIAL_KEYS = ["finPell", "finDream", "finAb540", "finMiddle", "finFullPay", "finNotSure"] as const;
@@ -44,7 +40,6 @@ interface FormData {
   communityCollege: string;
   intendedMajor: string;
   careerGoal: string;
-  currentGpa: string;
   transferTimeline: string;
   financialSituation: string;
   isFirstGen: string;
@@ -96,7 +91,6 @@ const choiceBtnStyle = (selected: boolean) =>
   selected ? { background: "linear-gradient(135deg, #4ECCA3, #38b2ac)" } : undefined;
 
 export default function Onboarding() {
-  const { t } = useTranslation();
   const STEPS: {
     title: string;
     subtitle: string;
@@ -107,12 +101,14 @@ export default function Onboarding() {
     { title: t("onboarding.step3Title"), subtitle: t("onboarding.step3Subtitle"), icon: STEP_ICONS[1] },
     { title: t("onboarding.step4Title"), subtitle: t("onboarding.step4Subtitle"), icon: STEP_ICONS[2] },
   ];
-  const { user } = useAuth();
+  const { user, updateProfileName } = useAuth();
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [phase, setPhase] = useState<"form" | "calculating" | "ready">("form");
   const [extractedCourses, setExtractedCourses] = useState<ExtractedCourse[]>([]);
+  const [extractedLatestGpa, setExtractedLatestGpa] = useState<number | null>(null);
+  const [extractedTotalUnits, setExtractedTotalUnits] = useState(0);
   const [transcriptParsing, setTranscriptParsing] = useState(false);
   const [transcriptError, setTranscriptError] = useState<string | null>(null);
   const [transcriptFileName, setTranscriptFileName] = useState<string | null>(null);
@@ -122,7 +118,6 @@ export default function Onboarding() {
     communityCollege: "",
     intendedMajor: "",
     careerGoal: "",
-    currentGpa: "",
     transferTimeline: "",
     financialSituation: "",
     isFirstGen: "",
@@ -139,12 +134,16 @@ export default function Onboarding() {
     setTranscriptParsing(true);
     setTranscriptError(null);
     setExtractedCourses([]);
+    setExtractedLatestGpa(null);
+    setExtractedTotalUnits(0);
     try {
-      const courses = await parseTranscriptPDF(file);
-      if (courses.length === 0) {
+      const result = await parseTranscriptPDF(file);
+      if (result.courses.length === 0) {
         setTranscriptError("No course codes found. This may be a scanned PDF — you can add courses manually later.");
       } else {
-        setExtractedCourses(courses);
+        setExtractedCourses(result.courses);
+        setExtractedLatestGpa(result.latestGpa ?? null);
+        setExtractedTotalUnits(result.totalUnits);
       }
     } catch {
       setTranscriptError("Could not read this PDF. Try a different file or add courses manually later.");
@@ -155,7 +154,6 @@ export default function Onboarding() {
 
   const canProceed = () => {
     if (step === 1) return form.communityCollege.trim().length > 0 && form.intendedMajor.trim().length > 0;
-    if (step === 2) return form.currentGpa.length > 0;
     return true;
   };
 
@@ -163,14 +161,13 @@ export default function Onboarding() {
     if (!user?.id) return;
     setSubmitting(true);
     try {
-      const gpaMap: Record<string, number> = { "4.0": 4.0, "3.7–3.9": 3.8, "3.3–3.6": 3.5, "3.0–3.2": 3.1, "2.7–2.9": 2.8, "2.4–2.6": 2.5, "Below 2.4": 2.2, "Not sure": 0 };
       const payload = {
         userId: user.id,
         fullName: form.fullName || user.firstName || t("common.student"),
         communityCollege: form.communityCollege,
         intendedMajor: form.intendedMajor,
         careerGoal: form.careerGoal,
-        currentGpa: gpaMap[form.currentGpa] ?? 0,
+        currentGpa: extractedLatestGpa ?? 0,
         transferTimeline: form.transferTimeline,
         financialSituation: form.financialSituation,
         isFirstGen: form.isFirstGen,
@@ -189,6 +186,15 @@ export default function Onboarding() {
           isFirstGen: payload.isFirstGen,
           completionPercent: payload.completionPercent,
         });
+        if (extractedCourses.length > 0) {
+          appendDevCourses(DEV_PROFILE_ID, extractedCourses.map(c => ({
+            courseCode: c.code,
+            courseName: c.name,
+            units: c.units,
+            term: c.term,
+            status: "completed",
+          })));
+        }
         setPhase("calculating");
         setTimeout(() => setPhase("ready"), 2800);
         return;
@@ -201,15 +207,23 @@ export default function Onboarding() {
       });
       if (!r.ok) throw new Error("Failed to create profile");
       const created = (await r.json()) as { id: number };
+
+      if (isSupabaseConfigured && !isAuthBypass() && !user.firstName?.trim()) {
+        const first = (form.fullName || payload.fullName).trim().split(/\s+/)[0];
+        if (first) await updateProfileName(first);
+      }
+
       if (extractedCourses.length > 0 && created?.id) {
         await fetch(`/api/profiles/${created.id}/courses/bulk`, {
           method: "POST", credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            latestGpa: extractedLatestGpa ?? undefined,
             courses: extractedCourses.map(c => ({
               courseCode: c.code,
               courseName: c.name,
               units: c.units,
+              term: c.term,
               status: "completed",
             })),
           }),
@@ -364,18 +378,18 @@ export default function Onboarding() {
                     </div>
                   ))}
                 </div>
-                <div>
-                  <label htmlFor="ob-fullname" className="block text-sm font-medium mb-1.5" style={{ color: "#cbd5e1" }}>
-                    {t("onboarding.yourName")}
-                  </label>
-                  <input
-                    id="ob-fullname"
-                    value={form.fullName}
-                    onChange={e => set("fullName", e.target.value)}
-                    placeholder={t("onboarding.fullNamePlaceholder")}
-                    className={ONBOARDING_INPUT}
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => null}
+                  className="w-full text-sm px-4 py-3 rounded-xl border text-left font-medium transition-all bg-[rgba(5,12,24,0.5)] border-[rgba(78,204,163,0.2)] text-slate-300 hover:border-[rgba(78,204,163,0.45)]"
+                >
+                  <span className="block font-semibold" style={{ color: "#f1f5f9" }}>
+                    {t("onboarding.manualSetup")}
+                  </span>
+                  <span className="block text-xs mt-0.5" style={{ color: "#64748b" }}>
+                    {t("onboarding.manualSetupDesc")}
+                  </span>
+                </button>
                 {/* Transcript Upload */}
                 <div>
                   <div className="flex items-center gap-3 my-1">
@@ -427,7 +441,7 @@ export default function Onboarding() {
                         <button
                           type="button"
                           aria-label="Remove transcript"
-                          onClick={() => { setTranscriptFileName(null); setExtractedCourses([]); setTranscriptError(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                          onClick={() => { setTranscriptFileName(null); setExtractedCourses([]); setExtractedLatestGpa(null); setExtractedTotalUnits(0); setTranscriptError(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
                           className="shrink-0 transition-colors"
                           style={{ color: "#64748b" }}
                         >
@@ -447,6 +461,16 @@ export default function Onboarding() {
 
                       {extractedCourses.length > 0 && (
                         <div>
+                          {(extractedLatestGpa != null || extractedTotalUnits > 0) && (
+                            <div className="flex flex-wrap gap-3 mb-2 text-xs" style={{ color: "#94a3b8" }}>
+                              {extractedLatestGpa != null && (
+                                <span>Latest GPA: <strong style={{ color: "#4ECCA3" }}>{extractedLatestGpa.toFixed(2)}</strong></span>
+                              )}
+                              {extractedTotalUnits > 0 && (
+                                <span>Units: <strong style={{ color: "#4ECCA3" }}>{extractedTotalUnits}</strong></span>
+                              )}
+                            </div>
+                          )}
                           <p className="text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>
                             {extractedCourses.length} course{extractedCourses.length !== 1 ? "s" : ""} found — tap × to remove any
                           </p>
@@ -458,6 +482,7 @@ export default function Onboarding() {
                                 style={{ background: "rgba(78,204,163,0.12)", color: "#4ECCA3", border: "1px solid rgba(78,204,163,0.3)" }}
                               >
                                 {c.code}
+                                {c.term && <span className="opacity-60">{c.term}</span>}
                                 {c.units && <span className="opacity-60">{c.units}u</span>}
                                 <button
                                   type="button"
@@ -528,27 +553,6 @@ export default function Onboarding() {
             {step === 2 && (
               <fieldset className="space-y-4 border-0 p-0 m-0 min-w-0">
                 <legend className="sr-only">{t("pages.onboarding.legend_academic")}</legend>
-                <fieldset className="border-0 p-0 m-0 min-w-0">
-                  <legend className="block text-sm font-medium mb-2" style={{ color: "#cbd5e1" }}>
-                    {t("onboarding.currentGpa")} <span className="text-red-400">*</span>
-                  </legend>
-                  <div className="grid grid-cols-2 gap-2">
-                    {GPA_RANGE_KEYS.map(k => {
-                      const value = GPA_RANGE_LABELS[k];
-                      const label = (k === "gpaBelow" || k === "gpaNotSure") ? t(`onboarding.${k}`) : k;
-                      const selected = form.currentGpa === value;
-                      return (
-                        <button type="button" key={k} onClick={() => set("currentGpa", value)}
-                          aria-pressed={selected}
-                          className={choiceBtn(selected)}
-                          style={choiceBtnStyle(selected)}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </fieldset>
                 <fieldset className="border-0 p-0 m-0 min-w-0">
                   <legend className="block text-sm font-medium mb-2" style={{ color: "#cbd5e1" }}>{t("onboarding.transferWhen")}</legend>
                   <div className="grid grid-cols-2 gap-2">

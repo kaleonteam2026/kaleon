@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import Nav from "@/components/nav";
-import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift } from "@/lib/motion";
+import { AppPageLayout } from "@/components/app-page-layout";
+import { PageLoadingState } from "@/components/page-loading-state";
+import { useBrutalistMotion } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, ExternalLink, Search, Loader2, GraduationCap, MapPin, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeepDivePanel from "@/components/deep-dive-panel";
+import { t } from "@/lib/copy";
 
 interface Match {
   universityId: string;
@@ -54,7 +55,6 @@ const COST_KEYS: Record<string, string> = {
 };
 
 export default function Matches() {
-  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -63,11 +63,7 @@ export default function Matches() {
   const [search, setSearch] = useState("");
   const [filterSystem, setFilterSystem] = useState("all");
   const pid = parseInt(profileId);
-  const motionEnabled = useMotionEnabled();
-  const dirSign = useDirSign();
-  const itemVariants = useMemo(() => fadeUp(8, 0.22), []);
-  const lift = useMemo(() => (motionEnabled ? hoverLift(dirSign) : undefined), [motionEnabled, dirSign]);
-  const containerVariants = useMemo(() => staggerContainer(0.06), []);
+  const { enabled: motionEnabled, lift, itemVariants, containerVariants } = useBrutalistMotion();
 
   useEffect(() => {
     fetch(`/api/profiles/${pid}/generate-matches`, { method: "POST", credentials: "include" })
@@ -84,21 +80,11 @@ export default function Matches() {
   });
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-900" />
-          <p className="text-sm text-slate-500">{t("pages.matches.calculating")}</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingState message={t("pages.matches.calculating")} />;
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-      <Nav profileId={pid} />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-5xl mx-auto">
+    <AppPageLayout profileId={pid} maxWidth="5xl">
         <div className="py-6 border-b-2 border-slate-900 mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.matches.title")}</h1>
           <p className="text-slate-600 text-sm mt-1">
@@ -223,7 +209,6 @@ export default function Matches() {
             </Button>
           </div>
         </div>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

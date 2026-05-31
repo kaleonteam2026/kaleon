@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "wouter";
-import { useTranslation } from "react-i18next";
-import Nav from "@/components/nav";
-import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { AppPageLayout } from "@/components/app-page-layout";
+import { PageLoadingState } from "@/components/page-loading-state";
+import { useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,13 +12,14 @@ import { MarkdownContent } from "@/components/markdown-renderer";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
-import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
+import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
   TrendingUp, Plus, Loader2, Trash2, AlertTriangle, Download,
   GraduationCap, Award, Briefcase, CheckCircle2, Star, AlertCircle,
   FileText, BarChart3, Clock, Sparkles, Activity, Target, BookOpen,
   Lock, ArrowRight, CheckCheck, XCircle, Info, RefreshCcw, ChevronRight,
 } from "lucide-react";
+import { t } from "@/lib/copy";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type EntryType =
@@ -79,7 +80,6 @@ const ENTRY_TYPES: Record<EntryType, { labelKey: string; icon: React.ElementType
 
 // ─── Score ring ───────────────────────────────────────────────────────────────
 function ScoreRing({ score }: { score: number }) {
-  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const radius = 36;
   const circ = 2 * Math.PI * radius;
@@ -109,7 +109,6 @@ function ScoreRing({ score }: { score: number }) {
 
 // ─── Admission chance badge ───────────────────────────────────────────────────
 function AdmissionBadge({ chance, delta }: { chance: number; delta: number }) {
-  const { t } = useTranslation();
   const color = chance >= 70 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
     : chance >= 45 ? "bg-amber-50 border-amber-200 text-amber-700"
     : "bg-rose-50 border-rose-200 text-rose-700";
@@ -134,7 +133,6 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
   onDismiss: () => void;
   entryTitle: string;
 }) {
-  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const severityConfig = {
     positive: { bg: "bg-emerald-50", border: "border-emerald-300", icon: CheckCheck, iconColor: "text-emerald-600", label: t("pages.progress.alignedWithGuidebook"), labelBg: "bg-emerald-100 text-emerald-700" },
@@ -234,7 +232,6 @@ function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
 
 // ─── Timeline entry card ──────────────────────────────────────────────────────
 function EntryCard({ entry, onDelete }: { entry: ProgressEntry; onDelete: (id: number) => void }) {
-  const { t } = useTranslation();
   const cfg = ENTRY_TYPES[entry.entryType] ?? ENTRY_TYPES.note;
   const Icon = cfg.icon;
   const [deleting, setDeleting] = useState(false);
@@ -274,7 +271,6 @@ function EntryCard({ entry, onDelete }: { entry: ProgressEntry; onDelete: (id: n
 
 // ─── Analysis history card ────────────────────────────────────────────────────
 function AnalysisCard({ analysis, isActive, onClick }: { analysis: ProgressAnalysis; isActive: boolean; onClick: () => void }) {
-  const { i18n } = useTranslation();
   const score = analysis.overallScore ?? 0;
   const color = score >= 75 ? "text-emerald-600 bg-emerald-50 border-emerald-200"
     : score >= 50 ? "text-amber-600 bg-amber-50 border-amber-200"
@@ -288,7 +284,7 @@ function AnalysisCard({ analysis, isActive, onClick }: { analysis: ProgressAnaly
     >
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-slate-600">
-          {new Date(analysis.createdAt).toLocaleDateString(i18n.language, { month: "short", day: "numeric", year: "numeric" })}
+          {new Date(analysis.createdAt).toLocaleDateString('en-US', { month: "short", day: "numeric", year: "numeric" })}
         </span>
         <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full border", color)}>{score}/100</span>
       </div>
@@ -299,7 +295,6 @@ function AnalysisCard({ analysis, isActive, onClick }: { analysis: ProgressAnaly
 
 // ─── Pathway lock screen ──────────────────────────────────────────────────────
 function PathwayLockScreen({ profileId }: { profileId: number }) {
-  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
       <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center mb-5">
@@ -337,10 +332,7 @@ function PathwayLockScreen({ profileId }: { profileId: number }) {
 type Tab = "log" | "timeline" | "assessment";
 
 export default function ProgressTracker() {
-  const prMotionOn = useMotionEnabled();
-  const prDir = useDirSign();
-  const prLift = hoverLift(prDir);
-  const { t, i18n } = useTranslation();
+  const { enabled: prMotionOn, lift: prLift, itemVariants, containerVariants } = useBrutalistMotion();
   const { profileId } = useParams<{ profileId: string }>();
   const { toast } = useToast();
   const pid = parseInt(profileId);
@@ -486,21 +478,11 @@ export default function ProgressTracker() {
   const achievementCount = entries.filter(e => e.entryType === "achievement").length;
 
   if (pathwayLoading) {
-    return (
-      <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-        <Nav profileId={pid} />
-        <div className="pt-14 flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-        </div>
-      </div>
-    );
+    return <PageLoadingState showNav profileId={pid} />;
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <Nav profileId={pid} />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-4xl mx-auto">
+    <AppPageLayout profileId={pid} maxWidth="4xl">
 
         {/* Page header */}
         <div className="py-7">
@@ -716,12 +698,12 @@ export default function ProgressTracker() {
                     initial={prMotionOn ? "hidden" : false}
                     whileInView={prMotionOn ? "show" : undefined}
                     viewport={{ once: true, margin: "-50px" }}
-                    variants={prMotionOn ? staggerContainer(0.06) : undefined}
+                    variants={containerVariants}
                   >
                     {filteredEntries.map(entry => (
                       <motion.div
                         key={entry.id}
-                        variants={prMotionOn ? fadeUp(6, DUR.base) : undefined}
+                        variants={itemVariants ?? fadeUp(6, DUR.base)}
                         whileHover={prMotionOn ? prLift : undefined}
                       >
                         <EntryCard entry={entry} onDelete={handleDelete} />
@@ -788,12 +770,12 @@ export default function ProgressTracker() {
                         initial={prMotionOn ? "hidden" : false}
                         whileInView={prMotionOn ? "show" : undefined}
                         viewport={{ once: true, margin: "-50px" }}
-                        variants={prMotionOn ? staggerContainer(0.06) : undefined}
+                        variants={containerVariants}
                       >
                         {analyses.map(a => (
                           <motion.div
                             key={a.id}
-                            variants={prMotionOn ? fadeUp(6, DUR.base) : undefined}
+                            variants={itemVariants ?? fadeUp(6, DUR.base)}
                             whileHover={prMotionOn ? prLift : undefined}
                           >
                             <AnalysisCard analysis={a} isActive={activeAnalysis?.id === a.id} onClick={() => setActiveAnalysis(a)} />
@@ -809,7 +791,7 @@ export default function ProgressTracker() {
                             <div className="flex-1">
                               {activeAnalysis.summary && <p className="text-sm text-slate-600 leading-relaxed">{activeAnalysis.summary}</p>}
                               <p className="text-xs text-slate-600 mt-2">
-                                {t("pages.progress.generatedAt", { date: new Date(activeAnalysis.createdAt).toLocaleDateString(i18n.language, { month: "long", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) })}
+                                {t("pages.progress.generatedAt", { date: new Date(activeAnalysis.createdAt).toLocaleDateString('en-US', { month: "long", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) })}
                               </p>
                             </div>
                             <Button variant="outline" size="sm" onClick={downloadAnalysis} className="flex-shrink-0">
@@ -833,7 +815,6 @@ export default function ProgressTracker() {
           {t("pages.progress.footerDisclaimer")}
         </p>
         </PageMotion>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

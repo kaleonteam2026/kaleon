@@ -1,7 +1,6 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
-import { useTranslation, Trans } from "react-i18next";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import {
   GraduationCap, Target, BookOpen, Award, ArrowRight,
@@ -19,6 +18,8 @@ import {
   DUR,
 } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
+import { CopyTrans } from "@/components/copy-trans";
+import { t } from "@/lib/copy";
 
 const FONT_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -96,12 +97,10 @@ const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
 export default function Landing() {
   const { isAuthenticated, isLoading, login } = useAuth();
   const [, navigate] = useLocation();
-  const { t, i18n } = useTranslation();
   const motionOn = useMotionEnabled();
   const [scrolled, setScrolled] = useState(false);
   const [ctaHover, setCtaHover] = useState(false);
-  const isRtl = i18n.dir() === "rtl";
-  const dirSign = isRtl ? -1 : 1;
+  const dirSign = 1;
 
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", (v) => {
@@ -135,12 +134,8 @@ export default function Landing() {
     ensure(`meta[property="og:title"]`, { property: "og:title" }).content = title;
     ensure(`meta[property="og:description"]`, { property: "og:description" }).content = desc;
 
-    const localeMap: Record<string, string> = {
-      en: "en_US", es: "es_MX", zh: "zh_CN", vi: "vi_VN", tl: "tl_PH", ko: "ko_KR", ar: "ar_SA", ru: "ru_RU", fa: "fa_IR",
-    };
-    const lang = (i18n.language?.split("-")[0] ?? "en");
-    ensure(`meta[property="og:locale"]`, { property: "og:locale" }).content = localeMap[lang] ?? "en_US";
-  }, [t, i18n.language]);
+    ensure(`meta[property="og:locale"]`, { property: "og:locale" }).content = "en_US";
+  }, []);
 
   const revealProps = motionOn
     ? { initial: "hidden" as const, whileInView: "show" as const, viewport: { once: true, margin: "-10% 0px" } }
@@ -212,7 +207,7 @@ export default function Landing() {
               <motion.span
                 {...mountProps}
                 variants={stamp}
-                className={`inline-block px-3 ${isRtl ? "origin-right" : "origin-left"}`}
+                className="inline-block px-3 origin-left"
                 style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18", textShadow: "0 0 30px rgba(78,204,163,0.4)" }}
               >
                 Easy.
@@ -226,7 +221,7 @@ export default function Landing() {
               className="text-lg md:text-xl mb-8 max-w-2xl leading-relaxed"
               style={{ color: "#94a3b8" }}
             >
-              <Trans i18nKey="landing.heroSubtitle" components={{ strong: <strong style={{ color: "#4ECCA3" }} /> }} />
+              <CopyTrans i18nKey="landing.heroSubtitle" components={{ strong: <strong style={{ color: "#4ECCA3" }} /> }} />
             </motion.p>
 
             <motion.div
@@ -248,7 +243,7 @@ export default function Landing() {
                   transition={motionOn && !ctaHover ? arrowShimmer : undefined}
                   className="inline-flex"
                 >
-                  <ArrowRight className={`h-4 w-4 ${isRtl ? "rotate-180" : ""}`} />
+                  <ArrowRight className="h-4 w-4" />
                 </motion.span>
               </button>
               <p className="text-xs pwc-font-mono uppercase tracking-wider self-center" style={{ color: "#4ECCA3", opacity: 0.6 }}>
@@ -447,7 +442,7 @@ export default function Landing() {
             style={{ borderRadius: 8, ...(!motionOn || ctaHover ? { boxShadow: "0 0 20px rgba(78,204,163,0.3)" } : {}) }}
           >
             {t("landing.heroCta")}
-            <ArrowRight className={`h-4 w-4 ${isRtl ? "rotate-180" : ""}`} />
+            <ArrowRight className="h-4 w-4" />
           </motion.button>
         </div>
       </section>

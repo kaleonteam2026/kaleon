@@ -4,27 +4,21 @@ import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { DUR, EASE_OUT, useMotionEnabled } from "@/lib/motion";
 import {
-  Map, LogOut, Menu, X, ChevronRight, Download,
+  Map, LogOut, Menu, X, ChevronRight, Lock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import NotificationBell from "@/components/notification-bell";
-import { KALEON_LOGO_SRC, NAV_ICON_SRC, NAV_LOGO_SIZE_PX } from "@/lib/brand";
-const PROFILE_ID_KEY = "kaleon_active_profile_id";
+import { KALEON_LOGO_SRC, NAV_LOGO_SIZE_PX } from "@/lib/brand";
+import { t } from "@/lib/copy";
+import { buildProfileNavItems, type NavIconSrc, type NavItem } from "@/lib/nav-links";
+import { getStoredProfileId, storeProfileId } from "@/lib/profile-storage";
+
+export { storeProfileId } from "@/lib/profile-storage";
 
 const NAV_FONT_CLASS = "pwc-font-mono uppercase tracking-wider font-bold";
 const NAV_LINK_CLASS = `text-xs ${NAV_FONT_CLASS}`;
-
-type NavIconSrc = { default: string; active: string };
-
-type NavItem = {
-  href: string;
-  label: string;
-  iconSrc?: NavIconSrc;
-  icon?: LucideIcon;
-};
 
 const NAV_ICON_DIM = { sm: 16, md: 22, lg: 28 } as const;
 const LUCIDE_ICON_CLASS = { sm: "h-4 w-4", md: "h-5 w-5", lg: "h-7 w-7" } as const;
@@ -60,12 +54,32 @@ function NavItemIcon({
   return null;
 }
 
-export function storeProfileId(id: number) {
-  localStorage.setItem(PROFILE_ID_KEY, String(id));
-}
-function getStoredProfileId(): number | null {
-  const v = localStorage.getItem(PROFILE_ID_KEY) ?? localStorage.getItem("pathwise_active_profile_id");
-  return v ? parseInt(v) : null;
+const LOCKED_NAV_STYLE = {
+  color: "#64748b",
+  cursor: "not-allowed" as const,
+  opacity: 0.55,
+};
+
+function LockedNavItem({
+  link,
+  className,
+  children,
+}: {
+  link: NavItem;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      title={t("nav.scholarshipsLocked")}
+      aria-label={`${link.label} — ${t("nav.scholarshipsLocked")}`}
+      aria-disabled="true"
+      className={className}
+      style={LOCKED_NAV_STYLE}
+    >
+      {children}
+    </span>
+  );
 }
 
 interface Props { profileId?: number; }
@@ -73,7 +87,6 @@ interface Props { profileId?: number; }
 export default function Nav({ profileId }: Props) {
   const [location] = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
-  const { t } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [resolvedId, setResolvedId] = useState<number | null>(profileId ?? null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -85,14 +98,8 @@ export default function Nav({ profileId }: Props) {
     else { const s = getStoredProfileId(); if (s) setResolvedId(s); }
   }, [profileId]);
 
-  const profileLinks: NavItem[] = resolvedId ? [
-    { href: `/courses/${resolvedId}`, label: t("nav.courses"), iconSrc: NAV_ICON_SRC.courses },
-    { href: `/pathways/${resolvedId}`, label: t("nav.pathway"), iconSrc: NAV_ICON_SRC.pathways },
-    { href: `/progress/${resolvedId}`, label: t("nav.progress"), iconSrc: NAV_ICON_SRC.progress },
-    { href: `/exports/${resolvedId}`, label: t("nav.exports"), icon: Download },
-  ] : [];
-
-  const allLinks = [...profileLinks];
+  const profileLinks: NavItem[] = resolvedId ? buildProfileNavItems(resolvedId) : [];
+  const allLinks = profileLinks;
 
   if (!isAuthenticated) return null;
 
@@ -101,12 +108,7 @@ export default function Nav({ profileId }: Props) {
     return location.startsWith(base);
   };
 
-  const bottomTabs: NavItem[] = resolvedId ? [
-    { href: `/courses/${resolvedId}`, label: t("nav.courses"), iconSrc: NAV_ICON_SRC.courses },
-    { href: `/pathways/${resolvedId}`, label: t("nav.pathway"), iconSrc: NAV_ICON_SRC.pathways },
-    { href: `/progress/${resolvedId}`, label: t("nav.progress"), iconSrc: NAV_ICON_SRC.progress },
-    { href: `/exports/${resolvedId}`, label: t("nav.exports"), icon: Download },
-  ] : [];
+  const bottomTabs: NavItem[] = profileLinks;
 
   const Brand = (
     <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg tracking-tight uppercase">
@@ -151,7 +153,29 @@ export default function Nav({ profileId }: Props) {
         {Brand}
         <div className="flex items-center gap-1 flex-nowrap overflow-x-auto min-w-0">
           {allLinks.map((link) => {
-            const active = isActive(link.href);
+            const active = !link.locked && isActive(link.href);
+            const inner = (
+              <>
+                <NavItemIcon iconSrc={link.iconSrc} icon={link.icon} active={active} />
+                {link.locked && <Lock className="h-3 w-3 shrink-0 opacity-80" aria-hidden />}
+                <span className="hidden lg:inline">{link.label}</span>
+                <span className="lg:hidden sr-only">{link.label}</span>
+              </>
+            );
+            if (link.locked) {
+              return (
+                <LockedNavItem
+                  key={link.href}
+                  link={link}
+                  className={cn(
+                    "flex items-center gap-1.5 px-2 lg:px-3 py-1.5 whitespace-nowrap",
+                    NAV_LINK_CLASS,
+                  )}
+                >
+                  {inner}
+                </LockedNavItem>
+              );
+            }
             return (
               <Link
                 key={link.href}
@@ -173,9 +197,7 @@ export default function Nav({ profileId }: Props) {
                 onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "rgba(78,204,163,0.07)"; (e.currentTarget as HTMLElement).style.color = "#cbd5e1"; } }}
                 onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#94a3b8"; } }}
               >
-                <NavItemIcon iconSrc={link.iconSrc} icon={link.icon} active={active} />
-                <span className="hidden lg:inline">{link.label}</span>
-                <span className="lg:hidden sr-only">{link.label}</span>
+                {inner}
               </Link>
             );
           })}
@@ -247,7 +269,31 @@ export default function Nav({ profileId }: Props) {
             <div className="p-4 flex-1">
               <p className="text-xs pwc-font-mono font-bold uppercase tracking-widest mb-3 px-1" style={{ color: "#4ECCA3", opacity: 0.6 }}>{t("common.navigation")}</p>
               {allLinks.map((link) => {
-                const active = isActive(link.href);
+                const active = !link.locked && isActive(link.href);
+                const row = (
+                  <>
+                    <span className="flex items-center gap-3">
+                      <NavItemIcon iconSrc={link.iconSrc} icon={link.icon} active={active} />
+                      {link.label}
+                      {link.locked && <Lock className="h-3.5 w-3.5 opacity-70" aria-hidden />}
+                    </span>
+                    {!link.locked && <ChevronRight className="h-4 w-4 opacity-60" aria-hidden="true" />}
+                  </>
+                );
+                if (link.locked) {
+                  return (
+                    <LockedNavItem
+                      key={link.href}
+                      link={link}
+                      className={cn(
+                        "flex items-center justify-between px-4 py-3.5 mb-1 min-h-[44px]",
+                        NAV_LINK_CLASS,
+                      )}
+                    >
+                      {row}
+                    </LockedNavItem>
+                  );
+                }
                 return (
                   <Link
                     key={link.href}
@@ -265,11 +311,7 @@ export default function Nav({ profileId }: Props) {
                       color: active ? "#4ECCA3" : "#94a3b8",
                     }}
                   >
-                    <span className="flex items-center gap-3">
-                      <NavItemIcon iconSrc={link.iconSrc} icon={link.icon} active={active} />
-                      {link.label}
-                    </span>
-                    <ChevronRight className="h-4 w-4 opacity-60" aria-hidden="true" />
+                    {row}
                   </Link>
                 );
               })}
@@ -299,19 +341,9 @@ export default function Nav({ profileId }: Props) {
         style={{ background: "rgba(5,12,24,0.97)", borderTop: "1px solid rgba(78,204,163,0.15)" }}
       >
         {bottomTabs.map((tab) => {
-          const active = isActive(tab.href);
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              onClick={() => setMobileOpen(false)}
-              aria-label={tab.label}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "relative flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[56px] py-2 px-1 focus:outline-none transition-colors",
-              )}
-              style={{ borderRight: "1px solid rgba(78,204,163,0.08)", color: active ? "#4ECCA3" : "#475569" }}
-            >
+          const active = !tab.locked && isActive(tab.href);
+          const content = (
+            <>
               {active && motionEnabled && (
                 <motion.span
                   layoutId="pwc-bottom-tab-pill"
@@ -324,10 +356,40 @@ export default function Nav({ profileId }: Props) {
               {active && !motionEnabled && (
                 <span className="absolute inset-0" style={{ background: "rgba(78,204,163,0.1)" }} aria-hidden="true" />
               )}
-              <span className="relative">
-                <NavItemIcon iconSrc={tab.iconSrc} icon={tab.icon} active={active} />
+              <span className="relative flex items-center gap-0.5">
+                <NavItemIcon iconSrc={tab.iconSrc} icon={tab.icon} active={active} size="sm" />
+                {tab.locked && <Lock className="h-2.5 w-2.5 opacity-70" aria-hidden />}
               </span>
               <span className={cn("text-[10px] relative", NAV_FONT_CLASS)}>{tab.label}</span>
+            </>
+          );
+          if (tab.locked) {
+            return (
+              <span
+                key={tab.href}
+                title={t("nav.scholarshipsLocked")}
+                aria-label={`${tab.label} — ${t("nav.scholarshipsLocked")}`}
+                aria-disabled="true"
+                className="relative flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[56px] py-2 px-1"
+                style={{ borderRight: "1px solid rgba(78,204,163,0.08)", ...LOCKED_NAV_STYLE }}
+              >
+                {content}
+              </span>
+            );
+          }
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              onClick={() => setMobileOpen(false)}
+              aria-label={tab.label}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "relative flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[56px] py-2 px-1 focus:outline-none transition-colors",
+              )}
+              style={{ borderRight: "1px solid rgba(78,204,163,0.08)", color: active ? "#4ECCA3" : "#475569" }}
+            >
+              {content}
             </Link>
           );
         })}

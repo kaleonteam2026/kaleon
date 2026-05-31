@@ -16,6 +16,7 @@ import Progress from "@/pages/progress";
 import DeadlineCalendar from "@/pages/deadline-calendar";
 import ExportsPage from "@/pages/exports";
 import Onboarding from "@/pages/onboarding";
+import AuthPage from "@/pages/auth";
 import Welcome from "@/pages/welcome";
 import ChatBubble from "@/components/chat-bubble";
 import SupabaseAuthModal from "@/components/supabase-auth-modal";
@@ -45,6 +46,7 @@ function Router() {
   const routes = (
           <Switch>
             <Route path="/" component={Landing} />
+            <Route path="/auth" component={AuthPage} />
             <Route path="/welcome/first-gen">
               <Welcome persona="first-gen" />
             </Route>

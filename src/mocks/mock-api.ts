@@ -1,3 +1,8 @@
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { computeGpaSummary, type StoredCourse } from "@/lib/course-progress";
+import { appendDevCourses, getDevCourses } from "@/lib/dev-courses";
+import { isAuthBypass } from "@/lib/dev-profile";
+
 type Json = Record<string, unknown> | unknown[] | string | number | boolean | null;
 
 const profile = {
@@ -14,10 +19,69 @@ const profile = {
   completionPercent: 72,
 };
 
-const courses = [
+let profileCourses: StoredCourse[] = [
   { id: 1, courseCode: "MATH 180", courseName: "Calculus I", units: 5, grade: "A", status: "completed", term: "Fall 2024" },
   { id: 2, courseCode: "CS 101", courseName: "Intro to Programming", units: 4, grade: "A-", status: "completed", term: "Spring 2025" },
 ];
+
+function getCoursesForProfile(profileId: number): StoredCourse[] {
+  if (isAuthBypass()) return getDevCourses(profileId);
+  return profileCourses;
+}
+
+function nextCourseId(courses: StoredCourse[]): number {
+  return courses.reduce((max, c) => Math.max(max, c.id ?? 0), 0) + 1;
+}
+
+function appendCourses(profileId: number, incoming: Omit<StoredCourse, "id">[], latestGpa?: number): StoredCourse[] {
+  if (isAuthBypass()) {
+    if (latestGpa && latestGpa > 0) profile.currentGpa = latestGpa;
+    return appendDevCourses(profileId, incoming);
+  }
+
+  const seen = new Set(profileCourses.map(c => c.courseCode ?? c.courseName));
+  let nextId = nextCourseId(profileCourses);
+  for (const course of incoming) {
+    const code = course.courseCode ?? course.courseName;
+    if (seen.has(code)) continue;
+    seen.add(code);
+    profileCourses.push({ ...course, id: nextId++ });
+  }
+  if (latestGpa && latestGpa > 0) profile.currentGpa = latestGpa;
+  return profileCourses;
+}
+
+function dashboardSummaryFromCourses(courses: StoredCourse[]) {
+  const gpa = computeGpaSummary(courses, profile.currentGpa);
+  const completed = courses.filter(c => c.status === "completed").length;
+  const inProgress = courses.filter(c => c.status === "in_progress").length;
+  const unitsPct = Math.min(100, Math.round((gpa.totalUnits / 130) * 100));
+  return {
+    profileCompletionPercent: profile.completionPercent,
+    totalCourses: courses.length,
+    completedCourses: completed,
+    inProgressCourses: inProgress,
+    estimatedGpa: gpa.estimatedGpa > 0 ? gpa.estimatedGpa : null,
+    savedPathwaysCount: 1,
+    guidebooksCount: 1,
+    topMatchUniversity: "UCLA",
+    topMatchScore: 84,
+    chosenTransferSchool: "UCLA",
+    chosenTransferScore: 84,
+    nextActions: ["Add another semester plan", "Review pathway assumptions"],
+    readinessScore: Math.min(100, Math.round(unitsPct * 0.4 + (gpa.estimatedGpa > 0 ? gpa.estimatedGpa * 15 : 0))),
+    readinessLabel: "On Track",
+    readinessBreakdown: {
+      profile: profile.completionPercent,
+      gpa: gpa.estimatedGpa > 0 ? Math.round(gpa.estimatedGpa * 20) : 20,
+      units: unitsPct,
+      pathway: 75,
+      guidebook: 60,
+      progress: Math.min(100, Math.round((completed / Math.max(courses.length, 1)) * 100)),
+      totalUnits: gpa.totalUnits,
+    },
+  };
+}
 
 const pathways = [
   {
@@ -28,12 +92,35 @@ const pathways = [
     confidenceScore: 82,
     estimatedAdmissionChance: "Moderate",
     rationale: "Strong GPA and aligned prerequisites.",
+    reportJson: {
+      type: "moderately_compatible",
+      university: "UCLA",
+      compatibilityScore: 82,
+      whyItFits: "Strong GPA and aligned prerequisites.",
+      concerns: "Complete remaining major prep courses.",
+      gpaTarget: 3.5,
+      courseGaps: ["MATH 280", "PHYS 210", "CS 250"],
+      transferTimeline: "Fall 2027",
+      scholarshipOptions: ["Cal Grant"],
+      internshipRecommendations: ["Tech internship"],
+      extracurricularRecommendations: ["CS club"],
+      campusOpportunities: [],
+      risks: [],
+      nextSteps: ["Finish calculus sequence"],
+    },
   },
 ];
 
 const progressEntries = [
   { id: 11, profileId: 1, note: "Met with counselor and confirmed major prep.", createdAt: new Date().toISOString() },
 ];
+
+/** Pathways returned by the last DeepSeek generate call (dev pass-through). */
+let generatedPathways: typeof pathways = [];
+
+function getPathwaysForProfile(_profileId: number) {
+  return generatedPathways.length > 0 ? generatedPathways : pathways;
+}
 
 function json(data: Json, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -44,6 +131,15 @@ function json(data: Json, status = 200): Response {
 
 function isApi(url: URL): boolean {
   return url.pathname.startsWith("/api/");
+}
+
+async function readJsonBody(init?: RequestInit): Promise<Record<string, unknown>> {
+  if (!init?.body || typeof init.body !== "string") return {};
+  try {
+    return JSON.parse(init.body) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
 }
 
 export function installMockApi(): void {
@@ -57,33 +153,56 @@ export function installMockApi(): void {
     if (!isApi(url)) return originalFetch(input, init);
 
     const { pathname } = url;
+    const profileIdMatch = pathname.match(/\/api\/profiles\/(\d+)/);
+    const profileId = profileIdMatch ? parseInt(profileIdMatch[1], 10) : profile.id;
+    const courses = getCoursesForProfile(profileId);
+    const gpaSummary = computeGpaSummary(courses, profile.currentGpa);
 
-    if (pathname === "/api/auth/user") return json({ user: { id: "dev", email: "dev@local", firstName: "Dev", lastName: "User" } });
+    if (pathname === "/api/auth/user") {
+      if (isSupabaseConfigured) return json({ user: null });
+      return json({ user: { id: "dev", email: "dev@local", firstName: "Dev", lastName: "User" } });
+    }
     if (pathname === "/api/login") return json({ ok: true });
     if (pathname === "/api/logout") return json({ ok: true });
 
     if (pathname === "/api/profiles" && method === "POST") return json(profile, 201);
     if (pathname.startsWith("/api/profiles/user/")) return json([profile]);
-    if (pathname === `/api/profiles/${profile.id}`) return json(profile);
     if (pathname === `/api/profiles/${profile.id}` && method === "PATCH") return json({ ...profile });
+    if (pathname === `/api/profiles/${profile.id}`) return json(profile);
 
-    if (pathname.endsWith("/courses/bulk")) return json({ inserted: courses.length });
+    if (pathname.endsWith("/courses/bulk") && method === "POST") {
+      const body = await readJsonBody(init);
+      const incoming = Array.isArray(body.courses) ? body.courses as Omit<StoredCourse, "id">[] : [];
+      const latestGpa = typeof body.latestGpa === "number" ? body.latestGpa : undefined;
+      const merged = appendCourses(profileId, incoming, latestGpa);
+      return json({ inserted: incoming.length, courses: merged });
+    }
     if (pathname.endsWith("/courses") && method === "GET") return json(courses);
     if (pathname.endsWith("/courses") && method === "POST") return json({ id: Date.now(), ...courses[0] }, 201);
-    if (pathname.includes("/gpa-summary")) return json({ estimatedGpa: 3.7, totalUnits: 9, completedUnits: 9, inProgressUnits: 0, courseCount: 2 });
+    if (pathname.includes("/gpa-summary")) return json(gpaSummary);
     if (pathname.includes("/course-catalog")) return json({ college: profile.communityCollege, major: profile.intendedMajor, categories: ["Core"], courses });
     if (pathname.includes("/transferability-analysis")) {
       return json({
         summary: "Most courses are likely transferable.",
         courseResults: courses.map((c) => ({ ...c, status: "transferable", assistNote: "Matches lower-division prep." })),
-        universityMatches: [{ university: "UCLA", system: "UC", matchScore: 84, matchReason: "Strong prep", transferableCount: 2, totalCourses: 2 }],
+        universityMatches: [{ university: "UCLA", system: "UC", matchScore: 84, matchReason: "Strong prep", transferableCount: courses.length, totalCourses: courses.length }],
       });
     }
     if (pathname.startsWith("/api/courses/") && method === "DELETE") return json({ ok: true });
 
     if (pathname.includes("/generate-matches")) return json({ ok: true });
-    if (pathname.includes("/pathways") && method === "GET") return json(pathways);
-    if (pathname.includes("/generate-pathways")) return json({ ok: true });
+    if (pathname.includes("/generate-pathways") && method === "POST") {
+      const res = await originalFetch(input, init);
+      if (res.ok) {
+        const data = await res.json() as { pathways?: typeof pathways } | typeof pathways;
+        if (Array.isArray(data)) generatedPathways = data;
+        else if (data && typeof data === "object" && Array.isArray(data.pathways)) {
+          generatedPathways = data.pathways;
+        }
+      }
+      return res;
+    }
+    if (pathname.includes("/pathways") && method === "GET") return json(getPathwaysForProfile(profileId));
     if (pathname.includes("/select")) return json({ ok: true });
     if (pathname.includes("/generate-guidebook")) return json({ guidebookId: 501 });
     if (pathname.includes("/generate-roadmap")) return json({ roadmapId: 601 });
@@ -115,7 +234,7 @@ export function installMockApi(): void {
       });
     }
 
-    if (pathname.includes("/progress/selected-pathway")) return json(pathways[0]);
+    if (pathname.includes("/progress/selected-pathway")) return json(getPathwaysForProfile(profileId)[0] ?? pathways[0]);
     if (pathname.includes("/progress/analyses")) return json([]);
     if (pathname.includes("/progress/entry-feedback")) return json({ ok: true });
     if (pathname.includes("/progress/analyze")) return json({ ok: true, analysisId: 1 });
@@ -124,23 +243,7 @@ export function installMockApi(): void {
     if (pathname.startsWith("/api/progress/") && method === "DELETE") return json({ ok: true });
 
     if (pathname.includes("/dashboard-summary/")) {
-      return json({
-        profileCompletionPercent: 72,
-        totalCourses: 2,
-        completedCourses: 2,
-        inProgressCourses: 0,
-        estimatedGpa: 3.7,
-        savedPathwaysCount: 1,
-        guidebooksCount: 1,
-        topMatchUniversity: "UCLA",
-        topMatchScore: 84,
-        chosenTransferSchool: "UCLA",
-        chosenTransferScore: 84,
-        nextActions: ["Add another semester plan", "Review pathway assumptions"],
-        readinessScore: 68,
-        readinessLabel: "On Track",
-        readinessBreakdown: { profile: 72, gpa: 74, units: 20, pathway: 75, guidebook: 60, progress: 58, totalUnits: 9 },
-      });
+      return json(dashboardSummaryFromCourses(courses));
     }
 
     if (pathname.includes("/exports") && method === "GET") return json({ generatedAt: new Date().toISOString(), exports: [] });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
-import Nav from "@/components/nav";
+import { AppPageLayout } from "@/components/app-page-layout";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
 import {
@@ -8,14 +8,7 @@ import {
   GraduationCap, TrendingUp, CalendarDays, BookOpen,
 } from "lucide-react";
 
-interface Profile {
-  id: number;
-  fullName?: string;
-  communityCollege?: string;
-  intendedMajor?: string;
-  currentGpa?: number;
-  transferTimeline?: string;
-}
+import type { StudentProfile } from "@/types/profile";
 
 interface TagCampus {
   id: string;
@@ -145,13 +138,13 @@ function StatusBadge({ status, gpa, needed }: { status: EligibilityStatus; gpa: 
 export default function TagChecker() {
   const { profileId } = useParams<{ profileId?: string }>();
   const pid = profileId ? parseInt(profileId) : undefined;
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!pid) { setLoading(false); return; }
     fetch(`/api/profiles/${pid}`, { credentials: "include" })
-      .then(r => r.json()).then((p: Profile) => setProfile(p))
+      .then(r => r.json()).then((p: StudentProfile) => setProfile(p))
       .catch(console.error).finally(() => setLoading(false));
   }, [pid]);
 
@@ -162,10 +155,7 @@ export default function TagChecker() {
   const closeCount = TAG_CAMPUSES.filter(c => getStatus(gpa, c, major).status === "close").length;
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-      <Nav profileId={pid} />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-3xl mx-auto">
+    <AppPageLayout profileId={pid} maxWidth="3xl">
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <GraduationCap className="h-5 w-5 text-indigo-600" />
@@ -293,7 +283,6 @@ export default function TagChecker() {
           </>
         )}
         </PageMotion>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

@@ -1,4 +1,4 @@
-import Nav from "@/components/nav";
+import { AppPageLayout } from "@/components/app-page-layout";
 import { ExternalLink, Heart, BookOpen, DollarSign, Shield, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
@@ -109,10 +109,7 @@ function ResourceLink({ r }: { r: Resource }) {
 
 export default function DreamAct() {
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-      <Nav />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-3xl mx-auto">
+    <AppPageLayout maxWidth="3xl">
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
             <Heart className="h-5 w-5 text-rose-500" />
@@ -202,7 +199,6 @@ export default function DreamAct() {
           Kaleon · AB 540 & Dream Act Guide · Information current as of early 2025 · Always verify with official sources
         </p>
         </PageMotion>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

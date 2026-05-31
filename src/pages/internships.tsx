@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
-import { useTranslation } from "react-i18next";
-import Nav from "@/components/nav";
+import { AppPageLayout } from "@/components/app-page-layout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
-import { fadeUp, staggerContainer, useMotionEnabled, useDirSign, hoverLift, DUR } from "@/lib/motion";
+import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
   Search, Loader2, ExternalLink, MapPin, Clock, DollarSign,
   ChevronDown, ChevronUp, Star, Shield, Beaker, Building2,
   Heart, Landmark, Info, Sparkles, GraduationCap, RefreshCcw,
   CalendarDays, BookOpen, CheckCircle2, AlertCircle, Bookmark,
 } from "lucide-react";
+import { t } from "@/lib/copy";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type InternshipType = "federal" | "california_state" | "research" | "private" | "nonprofit";
@@ -79,7 +79,6 @@ function MatchScore({ score }: { score: number }) {
 
 // ─── Internship card ──────────────────────────────────────────────────────────
 function InternshipCard({ internship }: { internship: InternshipMatch }) {
-  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const cfg = TYPE_CONFIG[internship.type] ?? TYPE_CONFIG.private;
   const Icon = cfg.icon;
@@ -205,7 +204,6 @@ function InternshipCard({ internship }: { internship: InternshipMatch }) {
 function SearchHistoryRow({ search, isActive, onClick }: {
   search: SearchResult; isActive: boolean; onClick: () => void;
 }) {
-  const { t } = useTranslation();
   const count = search.resultsJson?.internships?.length ?? 0;
   return (
     <button
@@ -239,15 +237,8 @@ const TYPE_LABEL_KEYS: Record<string, string> = {
   nonprofit: "pages.internships.type_nonprofit",
 };
 
-function useInternshipsMotion() {
-  const on = useMotionEnabled();
-  const dir = useDirSign();
-  return { iMotionOn: on, iLift: hoverLift(dir) };
-}
-
 export default function InternshipsPage() {
-  const { iMotionOn, iLift } = useInternshipsMotion();
-  const { t } = useTranslation();
+  const { enabled: iMotionOn, lift: iLift, itemVariants, containerVariants } = useBrutalistMotion();
   const { profileId } = useParams<{ profileId: string }>();
   const { toast } = useToast();
   const pid = parseInt(profileId);
@@ -337,11 +328,7 @@ export default function InternshipsPage() {
   internships.forEach(i => { typeCounts[i.type] = (typeCounts[i.type] ?? 0) + 1; });
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-      <Nav profileId={pid} />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-6xl mx-auto">
-
+    <AppPageLayout profileId={pid} maxWidth="6xl">
         {/* Header */}
         <div className="py-7">
           <div className="flex items-center gap-2 mb-1">
@@ -520,14 +507,14 @@ export default function InternshipsPage() {
                     initial={iMotionOn ? "hidden" : false}
                     whileInView={iMotionOn ? "show" : undefined}
                     viewport={{ once: true, margin: "-50px" }}
-                    variants={iMotionOn ? staggerContainer(0.06) : undefined}
+                    variants={containerVariants}
                   >
                     {sorted.map(internship => (
                       <motion.div
                         key={internship.id}
                         className="relative"
-                        variants={iMotionOn ? fadeUp(8, DUR.base) : undefined}
-                        whileHover={iMotionOn ? iLift : undefined}
+                        variants={itemVariants ?? fadeUp(8, DUR.base)}
+                        whileHover={iLift}
                       >
                         <button
                           onClick={() => void toggleSave(internship)}
@@ -605,7 +592,6 @@ export default function InternshipsPage() {
           {t("pages.internships.finderFooter")}
         </p>
         </PageMotion>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

@@ -1,6 +1,7 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
-import { Button } from "@/components/ui/button";
+import { PageLoadingState } from "@/components/page-loading-state";
 
 interface Props {
   children: ReactNode;
@@ -8,35 +9,25 @@ interface Props {
 
 export default function ProtectedRoute({ children }: Props) {
   const bypass = import.meta.env.VITE_AUTH_BYPASS === "true";
-  const { isAuthenticated, isLoading, login } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const [location, navigate] = useLocation();
+
+  useEffect(() => {
+    if (bypass || isLoading || isAuthenticated) return;
+    const returnTo = encodeURIComponent(location || "/dashboard");
+    navigate(`/auth?returnTo=${returnTo}`);
+  }, [bypass, isLoading, isAuthenticated, location, navigate]);
 
   if (bypass) {
     return <>{children}</>;
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
-          <p className="text-sm text-slate-500">Loading…</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingState variant="dark" message="Loading…" />;
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center space-y-4">
-          <h2 className="text-xl font-semibold text-slate-800">Sign in to continue</h2>
-          <p className="text-slate-500 text-sm">You need to be signed in to access this page.</p>
-          <Button onClick={login} className="bg-indigo-600 hover:bg-indigo-700">
-            Sign in
-          </Button>
-        </div>
-      </div>
-    );
+    return <PageLoadingState variant="dark" message="Redirecting…" />;
   }
 
   return <>{children}</>;

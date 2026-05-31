@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Bell, Check, Clock, ExternalLink, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/copy";
 
 interface Reminder {
   id: number;
@@ -33,7 +33,6 @@ const PRIORITY_DOT: Record<string, string> = {
 };
 
 export default function NotificationBell({ profileId }: Props) {
-  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [feed, setFeed] = useState<FeedResponse>({ unread: 0, reminders: [] });
   const [busy, setBusy] = useState<number | null>(null);

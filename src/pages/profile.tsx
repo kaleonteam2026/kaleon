@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/auth-context";
-import Nav from "@/components/nav";
+import { AppPageLayout } from "@/components/app-page-layout";
+import { PageLoadingState } from "@/components/page-loading-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Save, ArrowRight, Loader2, Search, ChevronDown, X, Check, Bell } from "lucide-react";
 import { PageMotion } from "@/components/page-motion";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/copy";
+import { apiProfileToFormData, EMPTY_PROFILE_FORM } from "@/lib/profile-mappers";
+import type { ProfileFormData } from "@/types/profile";
 
 // All 116 California Community Colleges
 const COLLEGES = [
@@ -86,7 +89,6 @@ function CollegePicker({
   value: string;
   onChange: (v: string) => void;
 }) {
-  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -207,7 +209,6 @@ interface ReminderPrefs {
 }
 
 function ReminderPrefsSection({ profileId }: { profileId: number }) {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const [prefs, setPrefs] = useState<ReminderPrefs | null>(null);
   const [saving, setSaving] = useState(false);
@@ -385,36 +386,13 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
   );
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface ProfileData {
-  id?: number;
-  fullName: string;
-  communityCollege: string;
-  currentGpa: string;
-  intendedMajor: string;
-  careerGoal: string;
-  financialSituation: string;
-  transferTimeline: string;
-  geographicPreference: string;
-  longTermAspirations: string;
-  isFirstGen: string;
-  interests: string;
-}
-
-const EMPTY: ProfileData = {
-  fullName: "", communityCollege: "", currentGpa: "", intendedMajor: "",
-  careerGoal: "", financialSituation: "", transferTimeline: "",
-  geographicPreference: "", longTermAspirations: "", isFirstGen: "", interests: "",
-};
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Profile() {
-  const { t } = useTranslation();
   const { profileId } = useParams<{ profileId?: string }>();
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [form, setForm] = useState<ProfileData>(EMPTY);
+  const [form, setForm] = useState<ProfileFormData>(EMPTY_PROFILE_FORM);
   const [loading, setLoading] = useState(!!profileId);
   const [saving, setSaving] = useState(false);
 
@@ -423,20 +401,7 @@ export default function Profile() {
       fetch(`/api/profiles/${profileId}`, { credentials: "include" })
         .then(r => r.json())
         .then((p: Record<string, unknown>) => {
-          setForm({
-            id: p.id as number,
-            fullName: (p.fullName as string) ?? "",
-            communityCollege: (p.communityCollege as string) ?? "",
-            currentGpa: p.currentGpa ? String(p.currentGpa) : "",
-            intendedMajor: (p.intendedMajor as string) ?? "",
-            careerGoal: (p.careerGoal as string) ?? "",
-            financialSituation: (p.financialSituation as string) ?? "",
-            transferTimeline: (p.transferTimeline as string) ?? "",
-            geographicPreference: (p.geographicPreference as string) ?? "",
-            longTermAspirations: (p.longTermAspirations as string) ?? "",
-            isFirstGen: (p.isFirstGen as string) ?? "",
-            interests: Array.isArray(p.interests) ? (p.interests as string[]).join(", ") : "",
-          });
+          setForm(apiProfileToFormData(p));
           setLoading(false);
         })
         .catch(() => setLoading(false));
@@ -445,21 +410,7 @@ export default function Profile() {
         .then(r => r.json())
         .then((profiles: Record<string, unknown>[]) => {
           if (profiles.length > 0) {
-            const p = profiles[0];
-            setForm({
-              id: p.id as number,
-              fullName: (p.fullName as string) ?? "",
-              communityCollege: (p.communityCollege as string) ?? "",
-              currentGpa: p.currentGpa ? String(p.currentGpa) : "",
-              intendedMajor: (p.intendedMajor as string) ?? "",
-              careerGoal: (p.careerGoal as string) ?? "",
-              financialSituation: (p.financialSituation as string) ?? "",
-              transferTimeline: (p.transferTimeline as string) ?? "",
-              geographicPreference: (p.geographicPreference as string) ?? "",
-              longTermAspirations: (p.longTermAspirations as string) ?? "",
-              isFirstGen: (p.isFirstGen as string) ?? "",
-              interests: Array.isArray(p.interests) ? (p.interests as string[]).join(", ") : "",
-            });
+            setForm(apiProfileToFormData(profiles[0]));
           }
         })
         .catch(() => {})
@@ -469,7 +420,7 @@ export default function Profile() {
     }
   }, [profileId, user?.id]);
 
-  const set = (field: keyof ProfileData, value: string) => {
+  const set = (field: keyof ProfileFormData, value: string) => {
     setForm(f => ({ ...f, [field]: value }));
   };
 
@@ -512,18 +463,11 @@ export default function Profile() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-900 border-t-transparent" />
-      </div>
-    );
+    return <PageLoadingState />;
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-      <Nav profileId={form.id} />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 px-4 md:px-8 max-w-3xl mx-auto focus:outline-none">
+    <AppPageLayout profileId={form.id} maxWidth="3xl">
         <div className="py-6 border-b-2 border-slate-900 mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.profile.title")}</h1>
           <p className="text-slate-600 text-sm mt-1">{t("pages.profile.subtitle")}</p>
@@ -684,7 +628,6 @@ export default function Profile() {
             {t("pages.profile.bottomDisclaimer")}
           </p>
         </PageMotion>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }

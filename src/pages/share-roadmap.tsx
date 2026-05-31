@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
-import { Loader2, Download, FileText, Image as ImageIcon, AlertTriangle, GraduationCap } from "lucide-react";
+import { Download, FileText, Image as ImageIcon, AlertTriangle, GraduationCap } from "lucide-react";
+import { PageLoadingState } from "@/components/page-loading-state";
 import { Button } from "@/components/ui/button";
 import { PageMotion } from "@/components/page-motion";
 
@@ -50,14 +51,7 @@ export default function ShareRoadmap() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-          <p className="text-sm text-slate-500">Loading shared roadmap…</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingState message="Loading shared roadmap…" className="bg-slate-50" />;
   }
 
   if (error || !data) {

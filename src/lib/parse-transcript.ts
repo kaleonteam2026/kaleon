@@ -9,13 +9,61 @@ export interface ExtractedCourse {
   code: string;
   name: string;
   units?: number;
+  term?: string;
+}
+
+export interface TranscriptParseResult {
+  courses: ExtractedCourse[];
+  latestGpa?: number;
+  totalUnits: number;
 }
 
 const COURSE_CODE_RE = /\b([A-Z]{2,6})\s+(\d{1,3}[A-Z]{0,2})\b/g;
 
+const CUMULATIVE_GPA_RES = [
+  /(?:cumulative|overall|total|cum(?:ulative)?)\s*gpa\s*[:\s]*([0-4]\.\d{1,3})/gi,
+  /(?:term|semester)\s*gpa\s*[:\s]*([0-4]\.\d{1,3})/gi,
+  /\bgpa\s*[:\s]+([0-4]\.\d{1,3})\b/gi,
+];
+
+function formatTerm(season: string, year: string): string {
+  return `${season.charAt(0).toUpperCase()}${season.slice(1).toLowerCase()} ${year}`;
+}
+
+/** Nearest term header before a course row (e.g. "Fall 2023"). */
+export function termNear(text: string, codeStart: number): string | undefined {
+  const before = text.slice(Math.max(0, codeStart - 500), codeStart);
+  const re = /\b(FALL|SPRING|SUMMER|WINTER)\s+(\d{4})\b/gi;
+  let match: RegExpExecArray | null;
+  let last: string | undefined;
+  while ((match = re.exec(before)) !== null) {
+    last = formatTerm(match[1], match[2]);
+  }
+  return last;
+}
+
+/** Latest cumulative / term GPA found in the transcript (last occurrence wins). */
+export function parseLatestGpa(text: string): number | undefined {
+  let latest: number | undefined;
+  let latestIndex = -1;
+
+  for (const re of CUMULATIVE_GPA_RES) {
+    re.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(text)) !== null) {
+      const val = parseFloat(match[1]);
+      if (val >= 0 && val <= 4.0 && match.index >= latestIndex) {
+        latestIndex = match.index;
+        latest = val;
+      }
+    }
+  }
+
+  return latest;
+}
+
 const SKIP = new Set([
-  "GPA","GE","UC","CSU","AP","SAT","ACT","CCC","CC","AB","CA","USA",
-  "FALL","SPRING","SUMMER","WINTER","TOTAL","UNITS","GRADE","TERM",
+  "GE","UC","CSU","AP","SAT","ACT","CCC","CC","AB","CA","USA","TOTAL","UNITS","GRADE",
   "PAGE","THE","AND","FOR","NOT","YES","NO","NEW","AA","AS","BA","BS",
   "MS","PHD","GED","HSD","ID","IGETC","DE","CR","NC","MW","EW","IP",
   "TR","SP","HD","LA","SF","SD","SB","SC","SM","SJ","OC","VC",
@@ -39,7 +87,7 @@ function unitsNear(text: string, codeEnd: number): number | undefined {
   return undefined;
 }
 
-export async function parseTranscriptPDF(file: File): Promise<ExtractedCourse[]> {
+export async function parseTranscriptPDF(file: File): Promise<TranscriptParseResult> {
   const buffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
 
@@ -65,9 +113,14 @@ export async function parseTranscriptPDF(file: File): Promise<ExtractedCourse[]>
     const code = `${dept} ${num}`;
     if (seen.has(code)) continue;
     seen.add(code);
-    const units = unitsNear(fullText, match.index + match[0].length);
-    courses.push({ code, name: code, units });
+    const codeEnd = match.index + match[0].length;
+    const units = unitsNear(fullText, codeEnd);
+    const term = termNear(fullText, match.index);
+    courses.push({ code, name: code, units, term });
   }
 
-  return courses;
+  const totalUnits = courses.reduce((sum, c) => sum + (c.units ?? 0), 0);
+  const latestGpa = parseLatestGpa(fullText);
+
+  return { courses, latestGpa, totalUnits };
 }

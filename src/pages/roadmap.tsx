@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useTranslation } from "react-i18next";
-import Nav from "@/components/nav";
+import { AppPageLayout } from "@/components/app-page-layout";
+import {
+  downloadMarkdownFile,
+  MarkdownDocumentNotFound,
+  MarkdownDocumentBackButton,
+} from "@/components/markdown-document-layout";
+import { PageLoadingState } from "@/components/page-loading-state";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -11,17 +16,10 @@ import {
 } from "lucide-react";
 import { MarkdownContent } from "@/components/markdown-renderer";
 import { PageMotion } from "@/components/page-motion";
-
-interface AcademicRoadmap {
-  id: number;
-  title?: string;
-  contentMarkdown?: string;
-  profileId?: number;
-  createdAt?: string;
-}
+import { t } from "@/lib/copy";
+import type { AcademicRoadmap } from "@/types/markdown-document";
 
 export default function Roadmap() {
-  const { t } = useTranslation();
   const { roadmapId } = useParams<{ roadmapId: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -188,45 +186,31 @@ export default function Roadmap() {
 
   const downloadMarkdown = () => {
     if (!roadmap?.contentMarkdown) return;
-    const blob = new Blob([roadmap.contentMarkdown], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `dyp-roadmap-${roadmap.id}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadMarkdownFile(roadmap.contentMarkdown, `dyp-roadmap-${roadmap.id}.md`);
     toast({ title: t("pages.roadmap.roadmapDownloaded") });
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-900" />
-          <p className="text-sm text-slate-500">{t("pages.roadmap.loadingRoadmap")}</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingState message={t("pages.roadmap.loadingRoadmap")} />;
   }
 
   if (!roadmap) {
     return (
-      <div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center">
-        <div className="text-center">
-          <MapPin className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">{t("pages.roadmap.notFound")}</p>
-          <Button variant="outline" onClick={() => navigate("/")} className="mt-4">{t("pages.roadmap.goHome")}</Button>
-        </div>
-      </div>
+      <MarkdownDocumentNotFound
+        message={t("pages.roadmap.notFound")}
+        icon={<MapPin className="h-12 w-12 text-slate-300 mx-auto mb-3" />}
+        action={
+          <MarkdownDocumentBackButton
+            label={t("pages.roadmap.goHome")}
+            onClick={() => navigate("/")}
+          />
+        }
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f5] text-slate-900" style={{ fontFamily: "Inter, sans-serif" }}>
-      <style dangerouslySetInnerHTML={{ __html: ".pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }" }} />
-      <Nav profileId={roadmap.profileId} />
-      <main id="main-content" tabIndex={-1} className="pt-14 pb-20 md:pb-8 focus:outline-none px-4 md:px-8 max-w-3xl mx-auto">
-
+    <AppPageLayout profileId={roadmap.profileId} maxWidth="3xl">
         {/* Header */}
         <div className="py-6 flex items-start justify-between gap-4">
           <div>
@@ -446,7 +430,6 @@ export default function Roadmap() {
           <p className="text-xs text-slate-400 mt-3">{t("common.verifyFooter")}</p>
         </div>
         </PageMotion>
-      </main>
-    </div>
+    </AppPageLayout>
   );
 }
