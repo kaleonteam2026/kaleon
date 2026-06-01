@@ -127,9 +127,6 @@ export default function Nav({ profileId }: Props) {
         }}
       />
       <span style={{ color: "#f8fafc" }}>Kaleon</span>
-      <span className="hidden lg:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium" style={{ color: "#f8fafc" }}>
-        {t("common.tagline")}
-      </span>
     </Link>
   );
 

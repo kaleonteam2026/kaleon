@@ -38,7 +38,6 @@
     "season_fall": "Fall",
     "season_spring": "Spring",
     "season_summer": "Summer",
-    "tagline": "TRANSFERS MADE EASY",
     "primaryNav": "Primary",
     "navMenu": "Navigation menu",
     "quickNav": "Quick navigation"
@@ -197,6 +196,7 @@
     "creating": "Creating profile…",
     "startJourney": "Start My Journey",
     "stepOf": "Step {{current}} of {{total}}",
+    "introHeading": "Lets start by asking you a few questions",
     "step1Title": "Welcome to Kaleon",
     "step1Subtitle": "Let's personalize your transfer journey",
     "step2Title": "Your College & Major",

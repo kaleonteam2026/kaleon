@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
@@ -60,9 +60,42 @@ function KaleonMark({ size, className }: { size: number; className?: string }) {
   );
 }
 
+const INTRO_DURATION_MS = 5000;
+
 const FONT_STYLES = `
   .pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
   .pwc-font-sans { font-family: 'Inter', sans-serif; }
+`;
+
+const INTRO_STYLES = `
+  .onboarding-intro-message {
+    min-height: 160px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    animation: onboardingIntroFade 5s ease-in-out forwards;
+  }
+  @keyframes onboardingIntroFade {
+    0% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    14%,
+    76% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .onboarding-intro-message {
+      animation: none;
+      opacity: 1;
+    }
+  }
 `;
 
 const ONBOARDING_PAGE_BG = {
@@ -105,7 +138,7 @@ export default function Onboarding() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [phase, setPhase] = useState<"form" | "calculating" | "ready">("form");
+  const [phase, setPhase] = useState<"intro" | "form" | "calculating" | "ready">("intro");
   const [extractedCourses, setExtractedCourses] = useState<ExtractedCourse[]>([]);
   const [extractedLatestGpa, setExtractedLatestGpa] = useState<number | null>(null);
   const [extractedTotalUnits, setExtractedTotalUnits] = useState(0);
@@ -124,6 +157,12 @@ export default function Onboarding() {
   });
 
   const set = (k: keyof FormData, v: string) => setForm(prev => ({ ...prev, [k]: v }));
+
+  useEffect(() => {
+    if (phase !== "intro") return;
+    const id = window.setTimeout(() => setPhase("form"), INTRO_DURATION_MS);
+    return () => window.clearTimeout(id);
+  }, [phase]);
 
   const handleTranscriptUpload = async (file: File) => {
     if (!file.name.toLowerCase().endsWith(".pdf")) {
@@ -241,6 +280,50 @@ export default function Onboarding() {
   const StepIcon = STEPS[step].icon;
   const motionOn = useMotionEnabled();
   const dir = useDirSign();
+
+  if (phase === "intro") {
+    return (
+      <main
+        className="min-h-screen pwc-font-sans flex items-center justify-center px-4 py-12"
+        style={ONBOARDING_PAGE_BG}
+        aria-live="polite"
+      >
+        <style dangerouslySetInnerHTML={{ __html: `${FONT_STYLES}${INTRO_STYLES}` }} />
+        <div className="w-full max-w-lg">
+          <div className="flex items-center gap-2 justify-center mb-8">
+            <KaleonMark size={28} />
+            <span
+              className="text-xl font-bold uppercase tracking-tight"
+              style={{ color: "var(--app-text)" }}
+            >
+              Kaleon
+            </span>
+          </div>
+          <section className="overflow-hidden shadow-xl" style={ONBOARDING_CARD}>
+            <div
+              className="px-8 py-10"
+              style={{
+                borderBottom: "1px solid var(--app-border-subtle)",
+                background: "rgba(78, 204, 163, 0.06)",
+              }}
+            >
+              <div className="onboarding-intro-message">
+                <h1
+                  className="m-0 font-bold text-center leading-snug"
+                  style={{
+                    fontSize: "clamp(1.25rem, 2.3vw, 1.75rem)",
+                    color: "var(--app-text)",
+                  }}
+                >
+                  {t("onboarding.introHeading")}
+                </h1>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   if (phase === "calculating") {
     return (

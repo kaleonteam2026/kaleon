@@ -33,8 +33,16 @@ const queryClient = new QueryClient({
 });
 
 function ChatBubbleWrapper() {
+  const [location] = useLocation();
   const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) return null;
+  if (
+    location === "/" ||
+    location === "/onboarding" ||
+    location.startsWith("/onboarding/")
+  ) {
+    return null;
+  }
   return <ChatBubble userId={user?.id} />;
 }
 

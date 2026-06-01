@@ -108,6 +108,14 @@ export default function Landing() {
     if (next !== scrolled) setScrolled(next);
   });
 
+  const startOnboarding = () => {
+    if (AUTH_BYPASS || isAuthenticated) {
+      navigate("/onboarding");
+      return;
+    }
+    navigate("/auth?mode=signup&returnTo=/onboarding");
+  };
+
   // With auth bypass, stay on landing so local UI changes are visible at /.
   useEffect(() => {
     if (!isLoading && isAuthenticated && !AUTH_BYPASS) {
@@ -173,9 +181,6 @@ export default function Landing() {
             style={{ width: 30, height: 30, borderRadius: 6, objectFit: "contain" }}
           />
           <span style={{ color: "#f8fafc" }}>{t("brand.name")}</span>
-          <span className="hidden md:inline pwc-font-mono text-[10px] normal-case tracking-widest font-medium" style={{ color: "#f8fafc" }}>
-            {t("common.tagline")}
-          </span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -231,7 +236,7 @@ export default function Landing() {
               className="flex flex-col sm:flex-row gap-4 items-start"
             >
               <button
-                onClick={login}
+                onClick={startOnboarding}
                 onMouseEnter={() => setCtaHover(true)}
                 onMouseLeave={() => setCtaHover(false)}
                 className="kaleon-btn-primary px-6 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold flex items-center gap-2"
@@ -429,7 +434,7 @@ export default function Landing() {
           <motion.button
             {...revealProps}
             variants={fadeUp(4, DUR.med)}
-            onClick={login}
+            onClick={startOnboarding}
             onMouseEnter={() => setCtaHover(true)}
             onMouseLeave={() => setCtaHover(false)}
             animate={
