@@ -79,11 +79,29 @@ function isValidCode(dept: string, num: string): boolean {
 }
 
 function unitsNear(text: string, codeEnd: number): number | undefined {
-  const window = text.slice(codeEnd, codeEnd + 80);
-  const m = window.match(/\b([1-9](?:\.\d)?)\s*(?:units?|unit|u\b)/i);
+  const window = text.slice(codeEnd, codeEnd + 120);
+
+  // Pattern 1: "3.0 UNITS", "3 units", "4.0 unit", "4 U"
+  const m = window.match(/\b([1-9]\d?(?:\.\d)?)\s*(?:units?|unit|u\b|credit\s*(?:s|hours?)?)/i);
   if (m) return parseFloat(m[1]);
-  const m2 = window.match(/\b([1-9](?:\.\d)?)\s+(?:[0-9A-Z.+-]+\s+){0,3}(?:CR|GR|NC|[ABCDF][+-]?)\b/);
-  if (m2) return parseFloat(m2[1]);
+
+  // Pattern 2: "(3)" or "(3.0)" — common transcript display
+  const mParen = window.match(/\(([1-5](?:\.0)?)\)/);
+  if (mParen) return parseFloat(mParen[1]);
+
+  // Pattern 3: "UNITS: 3" or "CREDITS: 4"
+  const mLabel = window.match(/(?:units?|credit|credits)\s*[:\s]\s*([1-9]\d?(?:\.\d)?)/i);
+  if (mLabel) return parseFloat(mLabel[1]);
+
+  // Pattern 4: "3.0 4.0" — some CC transcripts print units then grade side-by-side
+  // e.g. "3.0 A" or "3.0 4.0" where the first number is units (1-5), second is grade (0-4)
+  const mGradeNum = window.match(/\b([1-5](?:\.\d)?)\s+(?:[0-9A-Z.+-]+\s+){0,3}(?:CR|GR|NC|[ABCDF][+-]?)\b/);
+  if (mGradeNum) return parseFloat(mGradeNum[1]);
+
+  // Pattern 5: "3.0 4.0" where first = units, second = grade on 0-4 scale
+  const mSideBySide = window.match(/\b([1-5](?:\.\d))\s+([0-4](?:\.\d)?)\b/);
+  if (mSideBySide) return parseFloat(mSideBySide[1]);
+
   return undefined;
 }
 

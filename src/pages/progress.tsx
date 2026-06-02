@@ -1,334 +1,32 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams, Link } from "wouter";
+import { useParams } from "wouter";
 import { AppPageLayout } from "@/components/app-page-layout";
 import { PageLoadingState } from "@/components/page-loading-state";
-import { useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 import { MarkdownContent } from "@/components/markdown-renderer";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
 import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
-  TrendingUp, Plus, Loader2, Trash2, AlertTriangle, Download,
-  GraduationCap, Award, Briefcase, CheckCircle2, Star, AlertCircle,
-  FileText, BarChart3, Clock, Sparkles, Activity, Target, BookOpen,
-  Lock, ArrowRight, CheckCheck, XCircle, Info, RefreshCcw, ChevronRight,
+  TrendingUp, Plus, Loader2, Download, AlertTriangle,
+  GraduationCap, Award, CheckCircle2, Sparkles, Activity,
+  BookOpen, Target, ArrowRight, BarChart3, AlertCircle, Info,
 } from "lucide-react";
 import { t } from "@/lib/copy";
+import { useToast } from "@/hooks/use-toast";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type EntryType =
-  | "gpa_update"
-  | "certification"
-  | "opportunity"
-  | "milestone"
-  | "achievement"
-  | "setback"
-  | "note";
+import { PathwayLockScreen } from "@/components/progress/pathway-lock-screen";
+import { EntryFeedbackCard } from "@/components/progress/entry-feedback-card";
+import { EntryCard } from "@/components/progress/entry-card";
+import { AnalysisCard } from "@/components/progress/analysis-card";
+import { ScoreRing } from "@/components/progress/score-ring";
+import { ENTRY_TYPES } from "@/components/progress/entry-types-config";
+import type { EntryType, ProgressEntry, EntryFeedback, ProgressAnalysis, PathwayInfo } from "@/components/progress/progress-types";
 
-interface ProgressEntry {
-  id: number;
-  entryType: EntryType;
-  title: string;
-  description?: string | null;
-  entryDate?: string | null;
-  numericValue?: number | null;
-  createdAt: string;
-}
-
-interface EntryFeedback {
-  aligned: boolean;
-  alignmentScore: number;
-  currentAdmissionChance: number;
-  admissionImpactDelta: number;
-  severity: "positive" | "caution" | "concern";
-  heading: string;
-  feedback: string;
-  reconciliationSteps: string[];
-  nextAlignedActions: string[];
-  guidebookCheck: string;
-}
-
-interface ProgressAnalysis {
-  id: number;
-  contentMarkdown?: string | null;
-  overallScore?: number | null;
-  summary?: string | null;
-  createdAt: string;
-}
-
-interface PathwayInfo {
-  hasSelectedPathway: boolean;
-  pathway: Record<string, unknown> | null;
-}
-
-// ─── Entry type config ────────────────────────────────────────────────────────
-const ENTRY_TYPES: Record<EntryType, { labelKey: string; icon: React.ElementType; color: string; bg: string; border: string; descKey: string }> = {
-  gpa_update:    { labelKey: "pages.progress.et_gpa_label",         icon: BarChart3,     color: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200",    descKey: "pages.progress.et_gpa_desc" },
-  certification: { labelKey: "pages.progress.et_cert_label",        icon: Award,         color: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200",   descKey: "pages.progress.et_cert_desc" },
-  opportunity:   { labelKey: "pages.progress.et_opp_label",         icon: Briefcase,     color: "text-teal-700",    bg: "bg-teal-50",    border: "border-teal-200",    descKey: "pages.progress.et_opp_desc" },
-  milestone:     { labelKey: "pages.progress.et_milestone_label",   icon: CheckCircle2,  color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", descKey: "pages.progress.et_milestone_desc" },
-  achievement:   { labelKey: "pages.progress.et_achievement_label", icon: Star,          color: "text-violet-700",  bg: "bg-violet-50",  border: "border-violet-200",  descKey: "pages.progress.et_achievement_desc" },
-  setback:       { labelKey: "pages.progress.et_setback_label",     icon: AlertCircle,   color: "text-rose-700",    bg: "bg-rose-50",    border: "border-rose-200",    descKey: "pages.progress.et_setback_desc" },
-  note:          { labelKey: "pages.progress.et_note_label",        icon: FileText,      color: "text-slate-700",   bg: "bg-slate-50",   border: "border-slate-200",   descKey: "pages.progress.et_note_desc" },
-};
-
-// ─── Score ring ───────────────────────────────────────────────────────────────
-function ScoreRing({ score }: { score: number }) {
-  const reducedMotion = useReducedMotion();
-  const radius = 36;
-  const circ = 2 * Math.PI * radius;
-  const offset = circ - (score / 100) * circ;
-  const color = score >= 75 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
-  const label = score >= 75 ? t("pages.progress.onTrack") : score >= 50 ? t("pages.progress.needsAttention") : t("pages.progress.atRisk");
-  const labelColor = score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-rose-600";
-  return (
-    <div className="flex items-center gap-5">
-      <div className="relative w-24 h-24 flex-shrink-0">
-        <svg className="w-24 h-24 -rotate-90" viewBox="0 0 96 96">
-          <circle cx="48" cy="48" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="8" />
-          <circle cx="48" cy="48" r={radius} fill="none" stroke={color} strokeWidth="8"
-            strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-            style={reducedMotion ? undefined : { transition: "stroke-dashoffset 0.8s ease" }} />
-        </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-slate-800">{score}</span>
-      </div>
-      <div>
-        <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-0.5">{t("pages.progress.trajectoryScore")}</p>
-        <p className={cn("text-lg font-bold", labelColor)}>{label}</p>
-        <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.outOf100")}</p>
-      </div>
-    </div>
-  );
-}
-
-// ─── Admission chance badge ───────────────────────────────────────────────────
-function AdmissionBadge({ chance, delta }: { chance: number; delta: number }) {
-  const color = chance >= 70 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-    : chance >= 45 ? "bg-amber-50 border-amber-200 text-amber-700"
-    : "bg-rose-50 border-rose-200 text-rose-700";
-  const deltaColor = delta > 0 ? "text-emerald-600" : delta < 0 ? "text-rose-600" : "text-slate-600";
-  const deltaPrefix = delta > 0 ? "+" : "";
-  return (
-    <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full border font-semibold text-sm", color)}>
-      <GraduationCap className="h-4 w-4" />
-      <span>{t("pages.progress.admissionChanceLabel", { chance })}</span>
-      {delta !== 0 && (
-        <span className={cn("text-xs font-bold", deltaColor)}>
-          {t("pages.progress.deltaFromUpdate", { prefix: deltaPrefix, delta })}
-        </span>
-      )}
-    </div>
-  );
-}
-
-// ─── Entry feedback card ──────────────────────────────────────────────────────
-function EntryFeedbackCard({ feedback, onDismiss, entryTitle }: {
-  feedback: EntryFeedback;
-  onDismiss: () => void;
-  entryTitle: string;
-}) {
-  const reducedMotion = useReducedMotion();
-  const severityConfig = {
-    positive: { bg: "bg-emerald-50", border: "border-emerald-300", icon: CheckCheck, iconColor: "text-emerald-600", label: t("pages.progress.alignedWithGuidebook"), labelBg: "bg-emerald-100 text-emerald-700" },
-    caution:  { bg: "bg-amber-50",   border: "border-amber-300",   icon: Info,       iconColor: "text-amber-600",   label: t("pages.progress.reviewRecommended"),    labelBg: "bg-amber-100 text-amber-700" },
-    concern:  { bg: "bg-rose-50",    border: "border-rose-300",    icon: XCircle,    iconColor: "text-rose-600",    label: t("pages.progress.needsAttentionLabel"),  labelBg: "bg-rose-100 text-rose-700" },
-  };
-  const cfg = severityConfig[feedback.severity];
-  const Icon = cfg.icon;
-
-  return (
-    <div className={cn("rounded-2xl border-2 p-5 space-y-4 animate-in fade-in duration-300", reducedMotion ? "" : "slide-in-from-bottom-2", cfg.bg, cfg.border)}>
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", cfg.bg, "border", cfg.border)}>
-            <Icon className={cn("h-4 w-4", cfg.iconColor)} />
-          </div>
-          <div>
-            <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", cfg.labelBg)}>{cfg.label}</span>
-            <p className="text-sm font-bold text-slate-800 mt-1">{feedback.heading}</p>
-          </div>
-        </div>
-        <button onClick={onDismiss} className="text-slate-600 hover:text-slate-600 text-lg leading-none flex-shrink-0 mt-0.5">×</button>
-      </div>
-
-      {/* Admission chance */}
-      <AdmissionBadge chance={feedback.currentAdmissionChance} delta={feedback.admissionImpactDelta} />
-
-      {/* Alignment score */}
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-slate-600 text-xs">{t("pages.progress.guidebookAlignment")}</span>
-        <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden max-w-32">
-          <div
-            className={cn("h-full rounded-full transition-all duration-700",
-              feedback.alignmentScore >= 70 ? "bg-emerald-500" : feedback.alignmentScore >= 40 ? "bg-amber-500" : "bg-rose-500"
-            )}
-            style={{ width: `${feedback.alignmentScore}%` }}
-          />
-        </div>
-        <span className="text-xs font-semibold text-slate-600">{feedback.alignmentScore}/100</span>
-      </div>
-
-      {/* Guidebook check */}
-      <p className="text-xs text-slate-600 italic border-l-2 border-slate-300 pl-3">{feedback.guidebookCheck}</p>
-
-      {/* Main feedback */}
-      <p className="text-sm text-slate-700 leading-relaxed">{feedback.feedback}</p>
-
-      {/* Action steps — label and color changes based on severity */}
-      {feedback.reconciliationSteps.length > 0 && (() => {
-        const stepConfig = feedback.severity === "positive"
-          ? { label: t("pages.progress.waysToMaximize"), border: "border-emerald-200", labelColor: "text-emerald-700", arrowColor: "text-emerald-500", icon: TrendingUp }
-          : feedback.severity === "caution"
-          ? { label: t("pages.progress.alignmentSuggestions"), border: "border-amber-200", labelColor: "text-amber-700", arrowColor: "text-amber-500", icon: Info }
-          : { label: t("pages.progress.caReconciliation"), border: "border-rose-200", labelColor: "text-rose-700", arrowColor: "text-rose-400", icon: RefreshCcw };
-        const StepIcon = stepConfig.icon;
-        return (
-          <div className={cn("bg-white/80 rounded-xl border p-4", stepConfig.border)}>
-            <p className={cn("text-xs font-bold uppercase tracking-wide mb-2 flex items-center gap-1", stepConfig.labelColor)}>
-              <StepIcon className="h-3 w-3" /> {stepConfig.label}
-            </p>
-            <ul className="space-y-2">
-              {feedback.reconciliationSteps.map((step, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                  <ChevronRight className={cn("h-3.5 w-3.5 flex-shrink-0 mt-0.5", stepConfig.arrowColor)} />
-                  {step}
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      })()}
-
-      {/* Next aligned actions */}
-      {feedback.nextAlignedActions.length > 0 && (
-        <div className="bg-white/80 rounded-xl border border-emerald-200 p-4">
-          <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-2 flex items-center gap-1">
-            <BookOpen className="h-3 w-3" /> {t("pages.progress.nextStepsGuidebook")}
-          </p>
-          <ul className="space-y-2">
-            {feedback.nextAlignedActions.map((action, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                <ArrowRight className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                {action}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <Button variant="outline" size="sm" onClick={onDismiss} className="w-full">
-        <Plus className="h-3.5 w-3.5 mr-1" />{t("pages.progress.logAnotherUpdate")}
-      </Button>
-    </div>
-  );
-}
-
-// ─── Timeline entry card ──────────────────────────────────────────────────────
-function EntryCard({ entry, onDelete }: { entry: ProgressEntry; onDelete: (id: number) => void }) {
-  const cfg = ENTRY_TYPES[entry.entryType] ?? ENTRY_TYPES.note;
-  const Icon = cfg.icon;
-  const [deleting, setDeleting] = useState(false);
-  return (
-    <div className={cn("relative flex gap-3 p-4 rounded-xl border bg-white shadow-sm transition-all hover:shadow", cfg.border)}>
-      <div className={cn("flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center", cfg.bg)}>
-        <Icon className={cn("h-4 w-4", cfg.color)} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <span className={cn("text-xs font-semibold px-1.5 py-0.5 rounded-full border", cfg.bg, cfg.color, cfg.border)}>{t(cfg.labelKey)}</span>
-            <p className="mt-1 text-sm font-semibold text-slate-800 leading-tight">{entry.title}</p>
-            {entry.numericValue != null && (
-              <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.gpaLabel")} <strong className="text-slate-800">{entry.numericValue.toFixed(2)}</strong></p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {entry.entryDate && (
-              <span className="text-xs text-slate-600 flex items-center gap-1"><Clock className="h-3 w-3" />{entry.entryDate}</span>
-            )}
-            <button
-              onClick={async () => { setDeleting(true); await onDelete(entry.id); setDeleting(false); }}
-              disabled={deleting}
-              className="text-slate-300 hover:text-rose-400 transition p-0.5"
-              title={t("pages.progress.deleteEntry")}
-            >
-              {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-            </button>
-          </div>
-        </div>
-        {entry.description && <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">{entry.description}</p>}
-      </div>
-    </div>
-  );
-}
-
-// ─── Analysis history card ────────────────────────────────────────────────────
-function AnalysisCard({ analysis, isActive, onClick }: { analysis: ProgressAnalysis; isActive: boolean; onClick: () => void }) {
-  const score = analysis.overallScore ?? 0;
-  const color = score >= 75 ? "text-emerald-600 bg-emerald-50 border-emerald-200"
-    : score >= 50 ? "text-amber-600 bg-amber-50 border-amber-200"
-    : "text-rose-600 bg-rose-50 border-rose-200";
-  return (
-    <button
-      onClick={onClick}
-      className={cn("w-full text-left p-3 rounded-xl border transition-all",
-        isActive ? "border-indigo-400 bg-indigo-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"
-      )}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-slate-600">
-          {new Date(analysis.createdAt).toLocaleDateString('en-US', { month: "short", day: "numeric", year: "numeric" })}
-        </span>
-        <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full border", color)}>{score}/100</span>
-      </div>
-      {analysis.summary && <p className="text-xs text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">{analysis.summary}</p>}
-    </button>
-  );
-}
-
-// ─── Pathway lock screen ──────────────────────────────────────────────────────
-function PathwayLockScreen({ profileId }: { profileId: number }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-      <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center mb-5">
-        <Lock className="h-9 w-9 text-slate-600" />
-      </div>
-      <h2 className="text-xl font-bold text-slate-800 mb-2">{t("pages.progress.selectPathwayFirst")}</h2>
-      <p className="text-slate-600 max-w-md leading-relaxed mb-2">
-        {t("pages.progress.pathwayLockBody")}
-      </p>
-      <p className="text-sm text-slate-600 mb-8">{t("pages.progress.goToPathway")}</p>
-      <Link href={`/pathways/${profileId}`}>
-        <Button className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none gap-2">
-          <Target className="h-4 w-4" />
-          {t("pages.progress.goToMyPathway")}
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </Link>
-      <div className="mt-8 grid grid-cols-3 gap-4 max-w-sm text-center">
-        {[
-          { icon: GraduationCap, labelKey: "pages.progress.lockFeat_admission", color: "text-indigo-500" },
-          { icon: BookOpen,      labelKey: "pages.progress.lockFeat_guidebook", color: "text-violet-500" },
-          { icon: TrendingUp,    labelKey: "pages.progress.lockFeat_trajectory", color: "text-emerald-500" },
-        ].map(({ icon: Icon, labelKey, color }) => (
-          <div key={labelKey} className="bg-slate-50 rounded-xl p-3 border border-slate-200">
-            <Icon className={cn("h-5 w-5 mx-auto mb-1.5", color)} />
-            <p className="text-xs text-slate-600 font-medium">{t(labelKey)}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 type Tab = "log" | "timeline" | "assessment";
 
 export default function ProgressTracker() {
@@ -484,24 +182,24 @@ export default function ProgressTracker() {
   return (
     <AppPageLayout profileId={pid} maxWidth="4xl">
 
-        {/* Page header */}
-        <div className="py-7">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="h-5 w-5 text-indigo-600" />
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.progress.title")}</h1>
-            {pathwayInfo?.hasSelectedPathway && (
-              <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3" />
-                {String(pathwayInfo.pathway?.university ?? t("pages.progress.pathwayActiveFallback"))}
-              </span>
-            )}
-          </div>
-          <p className="text-slate-600 text-sm">
-            {t("pages.progress.intro")}
-          </p>
+      {/* Page header */}
+      <div className="py-7">
+        <div className="flex items-center gap-2 mb-1">
+          <TrendingUp className="h-5 w-5 text-indigo-600" />
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.progress.title")}</h1>
+          {pathwayInfo?.hasSelectedPathway && (
+            <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              {String(pathwayInfo.pathway?.university ?? t("pages.progress.pathwayActiveFallback"))}
+            </span>
+          )}
         </div>
+        <p className="text-slate-600 text-sm">
+          {t("pages.progress.intro")}
+        </p>
+      </div>
 
-        <PageMotion>
+      <PageMotion>
         {/* ── PATHWAY LOCK ─────────────────────────────────────────────────────── */}
         {!pathwayInfo?.hasSelectedPathway ? (
           <PathwayLockScreen profileId={pid} />
@@ -814,7 +512,7 @@ export default function ProgressTracker() {
         <p className="text-xs text-slate-600 text-center pb-10">
           {t("pages.progress.footerDisclaimer")}
         </p>
-        </PageMotion>
+      </PageMotion>
     </AppPageLayout>
   );
 }

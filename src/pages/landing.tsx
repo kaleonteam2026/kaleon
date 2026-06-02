@@ -21,77 +21,6 @@ import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { CopyTrans } from "@/components/copy-trans";
 import { t } from "@/lib/copy";
 
-const FONT_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-  .pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
-  .pwc-font-sans { font-family: 'Inter', sans-serif; }
-  .kaleon-card {
-    background: rgba(13,26,46,0.8);
-    border: 1px solid rgba(78,204,163,0.15);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
-  }
-  .kaleon-card:hover {
-    border-color: rgba(78,204,163,0.45);
-    box-shadow: 0 0 28px rgba(78,204,163,0.12);
-    transform: translateY(-2px);
-  }
-  .kaleon-badge {
-    border: 1px solid rgba(78,204,163,0.4);
-    background: rgba(78,204,163,0.08);
-    color: #4ECCA3;
-  }
-  .kaleon-btn-primary {
-    background: linear-gradient(135deg, #4ECCA3, #38b2ac);
-    color: #050c18;
-    transition: box-shadow 0.3s ease, transform 0.2s ease;
-  }
-  .kaleon-btn-primary:hover {
-    box-shadow: 0 0 28px rgba(78,204,163,0.5);
-    transform: translateY(-1px);
-  }
-  .kaleon-btn-outline {
-    border: 1px solid rgba(78,204,163,0.35);
-    background: transparent;
-    color: #cbd5e1;
-    transition: border-color 0.3s ease, background 0.3s ease;
-  }
-  .kaleon-btn-outline:hover {
-    border-color: rgba(78,204,163,0.6);
-    background: rgba(78,204,163,0.06);
-  }
-  .kaleon-step {
-    background: rgba(13,26,46,0.8);
-    border: 1px solid rgba(78,204,163,0.12);
-    transition: border-color 0.3s ease;
-  }
-  .kaleon-step:hover {
-    border-color: rgba(78,204,163,0.3);
-  }
-  .orbit-ring-1 { animation: orbit-1 10s linear infinite; }
-  .orbit-ring-2 { animation: orbit-2 16s linear infinite reverse; }
-  .orbit-ring-3 { animation: orbit-3 22s linear infinite; }
-  @keyframes orbit-1 {
-    from { transform: rotate(0deg) translateX(70px) rotate(0deg); }
-    to   { transform: rotate(360deg) translateX(70px) rotate(-360deg); }
-  }
-  @keyframes orbit-2 {
-    from { transform: rotate(0deg) translateX(110px) rotate(0deg); }
-    to   { transform: rotate(360deg) translateX(110px) rotate(-360deg); }
-  }
-  @keyframes orbit-3 {
-    from { transform: rotate(0deg) translateX(150px) rotate(0deg); }
-    to   { transform: rotate(360deg) translateX(150px) rotate(-360deg); }
-  }
-  .float-particle { animation: float-p 5s ease-in-out infinite; }
-  @keyframes float-p {
-    0%, 100% { transform: translateY(0px); opacity: 0.4; }
-    50% { transform: translateY(-12px); opacity: 0.8; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .orbit-ring-1, .orbit-ring-2, .orbit-ring-3, .float-particle { animation: none; }
-  }
-`;
-
 const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
 
 export default function Landing() {
@@ -157,7 +86,6 @@ export default function Landing() {
       className="min-h-screen pwc-font-sans"
       style={{ background: "linear-gradient(160deg, #050c18 0%, #0a1628 50%, #061020 100%)", color: "#e2e8f0" }}
     >
-      <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
 
       {/* Ambient glow blobs */}
       <div style={{ position: "fixed", top: "-10%", right: "5%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(78,204,163,0.07) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "VITE_AUTH_BYPASS=true BASE_PATH=/ vite --host 0.0.0.0",
+    "dev:auth": "VITE_AUTH_BYPASS=false BASE_PATH=/ vite --host 0.0.0.0",
     "build": "VITE_AUTH_BYPASS=false BASE_PATH=/ tsc -b && vite build",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "preview": "vite preview"

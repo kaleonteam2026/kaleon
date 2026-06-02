@@ -7,60 +7,19 @@ import { PageLoadingState } from "@/components/page-loading-state";
 import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import { getProfilesForUser } from "@/lib/api/profiles";
 import { displayName } from "@/lib/display-name";
-import { Button } from "@/components/ui/button";
 import { getDevDashboardSummary, getDevProfiles, isAuthBypass } from "@/lib/dev-profile";
 import {
-  AlertCircle, BookOpen, Briefcase, ChevronRight, Compass,
-  FileText, Info, LineChart, Map, Percent, Plus, Settings,
-  Target, TrendingUp, User, Zap,
+  BookOpen, Compass, Info, LineChart, Map, Percent, Target, User,
 } from "lucide-react";
 import { t } from "@/lib/copy";
 import { GRADUATION_UNITS, graduationProgressPercent } from "@/lib/course-progress";
 import type { DashboardSummary, StudentProfile } from "@/types/profile";
 
-const FONT_STYLES = `
-  .pwc-font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
-  .pwc-font-sans { font-family: 'Inter', sans-serif; }
-  .dash-card {
-    background: rgba(13,26,46,0.8);
-    border: 1px solid rgba(78,204,163,0.15);
-    border-radius: 12px;
-  }
-  .dash-card-header {
-    border-bottom: 1px solid rgba(78,204,163,0.1);
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .dash-stat-card {
-    background: rgba(13,26,46,0.8);
-    border: 1px solid rgba(78,204,163,0.15);
-    border-radius: 10px;
-    padding: 16px;
-    text-align: left;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    cursor: pointer;
-    width: 100%;
-  }
-  .dash-stat-card:hover {
-    border-color: rgba(78,204,163,0.35);
-    box-shadow: 0 0 20px rgba(78,204,163,0.08);
-  }
-  .dash-module-row {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(78,204,163,0.06);
-    cursor: pointer;
-    transition: background 0.15s ease;
-    text-align: left;
-    width: 100%;
-  }
-  .dash-module-row:last-child { border-bottom: none; }
-  .dash-module-row:hover { background: rgba(78,204,163,0.05); }
-  .bar-fill { background: linear-gradient(90deg, #4ECCA3, #38b2ac); border-radius: 4px; height: 100%; transition: width 0.8s ease; }
-`;
+import { DashboardEmpty } from "@/components/dashboard/dashboard-empty";
+import { PathHeroCard } from "@/components/dashboard/path-hero-card";
+import { SidebarProfile } from "@/components/dashboard/sidebar-profile";
+import { RoadmapModules } from "@/components/dashboard/roadmap-modules";
+import { SemesterComparison } from "@/components/dashboard/semester-comparison";
 
 function readinessAccent(score: number) {
   if (score >= 60) return { stroke: "#4ECCA3", labelKey: "pages.progress.onTrack", color: "#4ECCA3" };
@@ -68,7 +27,7 @@ function readinessAccent(score: number) {
   return { stroke: "#ef4444", labelKey: "pages.progress.atRisk", color: "#ef4444" };
 }
 
-function estimatedTransferTerm(totalUnits: number, t: (k: string) => string): string {
+function estimatedTransferTerm(totalUnits: number): string {
   const remaining = Math.max(0, 60 - totalUnits);
   const semestersLeft = Math.ceil(remaining / 15);
   const now = new Date();
@@ -126,13 +85,6 @@ export default function Dashboard() {
   const accent = readinessAccent(score);
   const dashOffset = useMemo(() => `${(score / 100) * 283} 283`, [score]);
 
-  const STATUS_LABEL = {
-    Active: t("dashboard.active"),
-    "Action Needed": t("dashboard.actionNeeded"),
-    "Not Started": t("dashboard.notStarted"),
-    "Pathway Active": t("dashboard.pathwayActive"),
-  } as const;
-
   const roadmapItems = useMemo(() => {
     if (!profile) return [];
     return [
@@ -174,12 +126,6 @@ export default function Dashboard() {
         metric: t("dashboard.active"),
         href: `/progress/${profile.id}`,
       },
-      {
-        title: t("dashboard.internshipFinder"), icon: Briefcase,
-        status: "Not Started",
-        metric: t("dashboard.explore"),
-        href: `/internships/${profile.id}`,
-      },
     ] as const;
   }, [profile, summary, t]);
 
@@ -188,47 +134,10 @@ export default function Dashboard() {
   }
 
   if (!profile) {
-    const emptyStateGreeting = displayName(user, undefined, t("common.student"));
-    return (
-      <AppPageLayout variant="dark" maxWidth="3xl">
-          <div className="py-16 text-center">
-            <Map className="h-16 w-16 mx-auto mb-4" style={{ color: "rgba(78,204,163,0.3)" }} />
-            <p className="text-sm pwc-font-mono uppercase tracking-wider mb-2" style={{ color: "#94a3b8" }}>
-              {t("dashboard.hello", { name: emptyStateGreeting })}
-            </p>
-            <h2 className="text-xl font-semibold mb-2" style={{ color: "#f1f5f9" }}>{t("dashboard.letsGetStarted")}</h2>
-            <p className="mb-6 max-w-md mx-auto text-sm" style={{ color: "#64748b" }}>
-              {t("dashboard.letsGetStartedBody")}
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Button
-                onClick={() =>
-                  navigate(
-                    isAuthenticated
-                      ? "/onboarding"
-                      : "/auth?mode=signup&returnTo=/onboarding",
-                  )
-                }
-                style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18", border: "none", borderRadius: 8 }}
-              >
-                <Plus className="h-4 w-4 mr-2" />{t("dashboard.quickSetup")}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  navigate(isAuthenticated ? "/profile" : "/auth?returnTo=/profile")
-                }
-                style={{ borderColor: "rgba(78,204,163,0.3)", color: "#4ECCA3", background: "transparent", borderRadius: 8 }}
-              >
-                {t("dashboard.manualSetup")}
-              </Button>
-            </div>
-          </div>
-      </AppPageLayout>
-    );
+    return <DashboardEmpty user={user} isAuthenticated={isAuthenticated} />;
   }
 
-  const transferTerm = estimatedTransferTerm(breakdown?.totalUnits ?? 0, t);
+  const transferTerm = estimatedTransferTerm(breakdown?.totalUnits ?? 0);
   const greeting = displayName(user, profile.fullName, t("common.student"));
   const totalUnits = breakdown?.totalUnits ?? 0;
   const kaleonSemesters = Math.max(1, Math.ceil(Math.max(0, 60 - totalUnits) / 15));
@@ -239,391 +148,198 @@ export default function Dashboard() {
 
   return (
     <AppPageLayout variant="dark" profileId={profile.id} maxWidth="wide" bareContent>
-      <style dangerouslySetInnerHTML={{ __html: FONT_STYLES }} />
-        <div className="grid grid-cols-12 gap-4 md:gap-6">
+      <div className="grid grid-cols-12 gap-4 md:gap-6">
 
-          {/* Your Path Hero Card */}
-          {targetSchool && (
-            <div className="col-span-12 p-5 md:p-6 rounded-xl" style={{ background: "rgba(13,26,46,0.85)", border: "1px solid rgba(78,204,163,0.25)" }}>
-              <p className="text-xs font-bold uppercase tracking-widest mb-1 pwc-font-mono" style={{ color: "#4ECCA3" }}>YOUR DASHBOARD</p>
-              <h2 className="text-xl md:text-2xl font-bold leading-snug" style={{ color: "#f8fafc" }}>
-                Your path to{" "}
-                <span style={{ color: "#4ECCA3" }}>{targetSchool}</span>
+        {/* Path Hero Card */}
+        {targetSchool && (
+          <PathHeroCard
+            targetSchool={targetSchool}
+            intendedMajor={profile.intendedMajor}
+            communityCollege={profile.communityCollege}
+            transferTerm={transferTerm}
+            totalUnits={totalUnits}
+          />
+        )}
+
+        {/* Header */}
+        <header className="col-span-12 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 pb-4 mb-2 pt-1" style={{ borderBottom: "1px solid rgba(78,204,163,0.2)" }}>
+          <div className="min-w-0">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight uppercase leading-tight" style={{ color: "#f8fafc" }}>{t("dashboard.missionControl")}</h1>
+            <p className="text-base md:text-lg mt-1" style={{ color: "#64748b" }}>{t("dashboard.welcomeBack", { name: greeting })}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right flex flex-col items-end">
+              <span className="text-xs pwc-font-mono uppercase" style={{ color: "#64748b" }}>{t("dashboard.estTransferDate")}</span>
+              <span className="pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>{transferTerm}</span>
+            </div>
+            <button
+              onClick={() => navigate(`/profile/${profile.id}`)}
+              className="h-10 w-10 rounded flex items-center justify-center transition-all"
+              aria-label={t("dashboard.openProfile")}
+              style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
+            >
+              <User size={20} />
+            </button>
+          </div>
+        </header>
+
+        {/* Left: Profile + Urgent Actions */}
+        <div className="col-span-12 lg:col-span-3 flex flex-col gap-4 md:gap-6">
+          <SidebarProfile
+            profile={profile}
+            summary={summary}
+            motionOn={dashMotionOn}
+            lift={dashLift}
+            itemVariants={itemVariants}
+            containerVariants={containerVariants}
+          />
+        </div>
+
+        {/* Center: Readiness Ring + Stats */}
+        <div className="col-span-12 lg:col-span-6 flex flex-col gap-4 md:gap-6">
+          <div className="dash-card p-5 md:p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-bold uppercase tracking-wider text-xs flex items-center gap-2" style={{ color: "#94a3b8" }}>
+                <Compass size={14} /> {t("dashboard.readinessRadar")}
               </h2>
-              {(profile.intendedMajor || transferTerm) && (
-                <p className="text-sm mt-1" style={{ color: "#64748b" }}>
-                  {[profile.intendedMajor, `Transfer ${transferTerm}`].filter(Boolean).join(" · ")}
-                </p>
-              )}
-              <div className="flex gap-3 mt-4">
-                <div className="flex-1 p-3 rounded-lg" style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.12)" }}>
-                  <p className="text-[10px] pwc-font-mono uppercase tracking-wider mb-1" style={{ color: "#475569" }}>Current College</p>
-                  <p className="font-bold text-sm" style={{ color: "#cbd5e1" }}>{profile.communityCollege ?? "—"}</p>
-                </div>
-                <div className="flex-1 p-3 rounded-lg" style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.12)" }}>
-                  <p className="text-[10px] pwc-font-mono uppercase tracking-wider mb-1" style={{ color: "#475569" }}>Completed Units</p>
-                  <p className="font-bold text-sm" style={{ color: "#cbd5e1" }}>{breakdown?.totalUnits ?? 0} units</p>
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="pwc-font-mono uppercase tracking-wider" style={{ color: "#475569" }}>Current Progress</span>
-                  <span className="pwc-font-mono" style={{ color: "#4ECCA3" }}>
-                    {breakdown?.totalUnits ?? 0} / {GRADUATION_UNITS} units
-                  </span>
-                </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(78,204,163,0.1)" }}>
-                  <div className="h-full rounded-full transition-all duration-700" style={{
-                    background: "linear-gradient(90deg, #4ECCA3, #38b2ac)",
-                    width: `${graduationProgressPercent(breakdown?.totalUnits ?? 0)}%`,
-                  }} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Header */}
-          <header className="col-span-12 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 pb-4 mb-2 pt-1" style={{ borderBottom: "1px solid rgba(78,204,163,0.2)" }}>
-            <div className="min-w-0">
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight uppercase leading-tight" style={{ color: "#f8fafc" }}>{t("dashboard.missionControl")}</h1>
-              <p className="text-base md:text-lg mt-1" style={{ color: "#64748b" }}>{t("dashboard.welcomeBack", { name: greeting })}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right flex flex-col items-end">
-                <span className="text-xs pwc-font-mono uppercase" style={{ color: "#64748b" }}>{t("dashboard.estTransferDate")}</span>
-                <span className="pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>{transferTerm}</span>
-              </div>
-              <button
-                onClick={() => navigate(`/profile/${profile.id}`)}
-                className="h-10 w-10 rounded flex items-center justify-center transition-all"
-                aria-label={t("dashboard.openProfile")}
-                style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
-              >
-                <User size={20} />
-              </button>
-            </div>
-          </header>
-
-          {/* Left: Profile + Urgent Actions */}
-          <div className="col-span-12 lg:col-span-3 flex flex-col gap-4 md:gap-6">
-            <div className="dash-card">
-              <div className="dash-card-header">
-                <h2 className="font-bold uppercase tracking-wider text-xs flex items-center gap-2" style={{ color: "#4ECCA3" }}>
-                  <Settings size={14} /> {t("dashboard.userProfile")}
-                </h2>
-                <button
-                  onClick={() => navigate(`/profile/${profile.id}`)}
-                  className="text-xs pwc-font-mono transition-colors"
-                  style={{ color: "#4ECCA3", opacity: 0.7 }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "0.7"; }}
-                >{t("dashboard.edit")}</button>
-              </div>
-              <div className="space-y-4 text-sm p-4">
-                <div>
-                  <div className="text-xs pwc-font-mono mb-1 uppercase" style={{ color: "#475569" }}>{t("dashboard.institution")}</div>
-                  <div className="font-medium" style={{ color: "#cbd5e1" }}>{profile.communityCollege ?? "—"}</div>
-                </div>
-                <div>
-                  <div className="text-xs pwc-font-mono mb-1 uppercase" style={{ color: "#475569" }}>{t("dashboard.targetMajor")}</div>
-                  <div className="font-medium" style={{ color: "#cbd5e1" }}>{profile.intendedMajor ?? "—"}</div>
-                </div>
-                <div>
-                  <div className="text-xs pwc-font-mono mb-1 uppercase" style={{ color: "#475569" }}>{t("dashboard.careerGoal")}</div>
-                  <div className="font-medium" style={{ color: "#cbd5e1" }}>{profile.careerGoal ?? "—"}</div>
-                </div>
-                <div>
-                  <div className="text-xs pwc-font-mono mb-1 uppercase flex items-center gap-1.5" style={{ color: "#475569" }}>
-                    {t("dashboard.chosenSchool")}
-                    <span className="pwc-font-mono text-[9px] px-1 py-0.5 tracking-widest" style={{ background: "#4ECCA3", color: "#050c18", borderRadius: 3 }}>{t("dashboard.primary")}</span>
-                  </div>
-                  <div className="font-medium flex items-center gap-2">
-                    {summary?.chosenTransferSchool ? (
-                      <span style={{ color: "#cbd5e1" }}>{summary.chosenTransferSchool}</span>
-                    ) : (
-                      <span className="italic text-sm" style={{ color: "#475569" }}>{t("dashboard.pickPrimary")}</span>
-                    )}
-                    {summary?.chosenTransferScore != null && (
-                      <span className="text-xs px-1.5 py-0.5 rounded pwc-font-mono" style={{ background: "rgba(78,204,163,0.15)", color: "#4ECCA3", border: "1px solid rgba(78,204,163,0.3)" }}>
-                        {summary.chosenTransferScore}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs pwc-font-mono mb-1 uppercase flex items-center gap-1.5" style={{ color: "#475569" }}>
-                    {t("dashboard.topMatch")}
-                    <span className="pwc-font-mono text-[9px] px-1 py-0.5 tracking-widest" style={{ background: "#10b981", color: "#fff", borderRadius: 3 }}>{t("dashboard.safety")}</span>
-                  </div>
-                  <div className="font-medium flex items-center gap-2">
-                    <span style={{ color: "#cbd5e1" }}>{summary?.topMatchUniversity ?? t("dashboard.generatePathways")}</span>
-                    {summary?.topMatchScore != null && (
-                      <span className="text-xs px-1.5 py-0.5 rounded pwc-font-mono" style={{ background: "rgba(78,204,163,0.15)", color: "#4ECCA3", border: "1px solid rgba(78,204,163,0.3)" }}>
-                        {summary.topMatchScore}
-                      </span>
-                    )}
-                  </div>
-                </div>
+              <div className="pwc-font-mono text-xs px-2 py-1 font-bold uppercase" style={{ background: "rgba(78,204,163,0.12)", color: accent.color, border: `1px solid ${accent.color}33`, borderRadius: 6 }}>
+                {summary?.readinessLabel ?? t(accent.labelKey)}
               </div>
             </div>
 
-            <div className="dash-card flex flex-col flex-grow">
-              <div className="dash-card-header">
-                <h2 className="font-bold uppercase tracking-wider text-xs flex items-center gap-2" style={{ color: "#f59e0b" }}>
-                  <Zap size={14} /> {t("dashboard.urgentActions")}
-                </h2>
+            <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 mb-6">
+              <div className="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center shrink-0">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(78,204,163,0.08)" strokeWidth="10" />
+                  <circle
+                    cx="50" cy="50" r="45" fill="none"
+                    stroke={accent.stroke} strokeWidth="10"
+                    strokeDasharray={dashOffset}
+                    className={dashMotionOn ? "transition-all duration-1000 ease-out" : ""}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-4xl pwc-font-mono font-bold leading-none" style={{ color: "#f8fafc" }}>{score}</span>
+                  <span className="text-xs uppercase tracking-widest mt-1" style={{ color: "#4ECCA3", opacity: 0.7 }}>{t("dashboard.score")}</span>
+                </div>
               </div>
-              <div className="p-4 flex-grow">
-                {(summary?.nextActions ?? []).length === 0 ? (
-                  <p className="text-sm italic" style={{ color: "#475569" }}>{t("dashboard.noUrgent")}</p>
-                ) : (
-                  <motion.div
-                    className="space-y-3"
-                    initial={dashMotionOn ? "hidden" : false}
-                    whileInView={dashMotionOn ? "show" : undefined}
-                    viewport={{ once: true, margin: "-50px" }}
-                    variants={containerVariants}
-                  >
-                    {summary!.nextActions.map((action, i) => (
-                      <motion.div
-                        key={i}
-                        variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
-                        whileHover={dashMotionOn ? dashLift : undefined}
-                        className="flex items-start gap-3 p-3"
-                        style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8 }}
-                      >
-                        <AlertCircle size={16} className="mt-0.5 shrink-0" style={{ color: "#ef4444" }} />
-                        <span className="text-sm font-medium leading-tight" style={{ color: "#fca5a5" }}>{action}</span>
-                      </motion.div>
-                    ))}
-                  </motion.div>
+
+              <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 w-full">
+                {[
+                  { labelKey: "dashboard.breakdown_profile", val: breakdown?.profile ?? 0, max: 20 },
+                  { labelKey: "dashboard.breakdown_gpa", val: breakdown?.gpa ?? 0, max: 25 },
+                  { labelKey: "dashboard.breakdown_units", val: breakdown?.units ?? 0, max: 25 },
+                  { labelKey: "dashboard.breakdown_pathway", val: breakdown?.pathway ?? 0, max: 15 },
+                  { labelKey: "dashboard.breakdown_guidebook", val: breakdown?.guidebook ?? 0, max: 5 },
+                  { labelKey: "dashboard.breakdown_progress", val: breakdown?.progress ?? 0, max: 10 },
+                ].map(item => (
+                  <div key={item.labelKey} className="flex flex-col gap-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="uppercase tracking-wider" style={{ color: "#94a3b8" }}>{t(item.labelKey)}</span>
+                      <span className="pwc-font-mono" style={{ color: "#4ECCA3" }}>{item.val}/{item.max}</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "rgba(78,204,163,0.08)" }}>
+                      <div className="bar-fill" style={{ width: `${(item.val / item.max) * 100}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-4 mt-2" style={{ borderTop: "1px solid rgba(78,204,163,0.1)" }}>
+              <span className="text-xs pwc-font-mono" style={{ color: "#64748b" }}>{t("dashboard.totalUnits")}</span>
+              <div className="flex items-center gap-2">
+                <span className="pwc-font-mono font-bold text-lg" style={{ color: "#4ECCA3" }}>{breakdown?.totalUnits ?? 0}</span>
+                <span style={{ color: "#334155" }}>/</span>
+                <span className="pwc-font-mono" style={{ color: "#475569" }}>{t("dashboard.unitsRequired")}</span>
+              </div>
+            </div>
+          </div>
+
+          <motion.div
+            className="grid grid-cols-2 gap-4 md:gap-6"
+            initial={dashMotionOn ? "hidden" : false}
+            whileInView={dashMotionOn ? "show" : undefined}
+            viewport={{ once: true, margin: "-50px" }}
+            variants={containerVariants}
+          >
+            <motion.button
+              onClick={() => navigate(`/courses/${profile.id}`)}
+              variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
+              whileHover={dashMotionOn ? dashLift : undefined}
+              className="dash-stat-card"
+            >
+              <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#475569" }}>{t("dashboard.estGpa")}</div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>{summary?.estimatedGpa?.toFixed(2) ?? "—"}</span>
+                {profile.currentGpa != null && (
+                  <span className="text-xs" style={{ color: "#475569" }}>{t("dashboard.current")}: {profile.currentGpa}</span>
                 )}
               </div>
-            </div>
-          </div>
+            </motion.button>
 
-          {/* Center: Readiness Ring + Stat Tiles */}
-          <div className="col-span-12 lg:col-span-6 flex flex-col gap-4 md:gap-6">
-            <div className="dash-card p-5 md:p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-bold uppercase tracking-wider text-xs flex items-center gap-2" style={{ color: "#94a3b8" }}>
-                  <Compass size={14} /> {t("dashboard.readinessRadar")}
-                </h2>
-                <div className="pwc-font-mono text-xs px-2 py-1 font-bold uppercase" style={{ background: "rgba(78,204,163,0.12)", color: accent.color, border: `1px solid ${accent.color}33`, borderRadius: 6 }}>
-                  {summary?.readinessLabel ?? t(accent.labelKey)}
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 mb-6">
-                <div className="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(78,204,163,0.08)" strokeWidth="10" />
-                    <circle
-                      cx="50" cy="50" r="45" fill="none"
-                      stroke={accent.stroke} strokeWidth="10"
-                      strokeDasharray={dashOffset}
-                      className={dashMotionOn ? "transition-all duration-1000 ease-out" : ""}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-4xl pwc-font-mono font-bold leading-none" style={{ color: "#f8fafc" }}>{score}</span>
-                    <span className="text-xs uppercase tracking-widest mt-1" style={{ color: "#4ECCA3", opacity: 0.7 }}>{t("dashboard.score")}</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 w-full">
-                  {[
-                    { labelKey: "dashboard.breakdown_profile", val: breakdown?.profile ?? 0, max: 20 },
-                    { labelKey: "dashboard.breakdown_gpa", val: breakdown?.gpa ?? 0, max: 25 },
-                    { labelKey: "dashboard.breakdown_units", val: breakdown?.units ?? 0, max: 25 },
-                    { labelKey: "dashboard.breakdown_pathway", val: breakdown?.pathway ?? 0, max: 15 },
-                    { labelKey: "dashboard.breakdown_guidebook", val: breakdown?.guidebook ?? 0, max: 5 },
-                    { labelKey: "dashboard.breakdown_progress", val: breakdown?.progress ?? 0, max: 10 },
-                  ].map(item => (
-                    <div key={item.labelKey} className="flex flex-col gap-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="uppercase tracking-wider" style={{ color: "#94a3b8" }}>{t(item.labelKey)}</span>
-                        <span className="pwc-font-mono" style={{ color: "#4ECCA3" }}>{item.val}/{item.max}</span>
-                      </div>
-                      <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "rgba(78,204,163,0.08)" }}>
-                        <div className="bar-fill" style={{ width: `${(item.val / item.max) * 100}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-4 mt-2" style={{ borderTop: "1px solid rgba(78,204,163,0.1)" }}>
-                <span className="text-xs pwc-font-mono" style={{ color: "#64748b" }}>{t("dashboard.totalUnits")}</span>
-                <div className="flex items-center gap-2">
-                  <span className="pwc-font-mono font-bold text-lg" style={{ color: "#4ECCA3" }}>{breakdown?.totalUnits ?? 0}</span>
-                  <span style={{ color: "#334155" }}>/</span>
-                  <span className="pwc-font-mono" style={{ color: "#475569" }}>{t("dashboard.unitsRequired")}</span>
-                </div>
-              </div>
-            </div>
-
-            <motion.div
-              className="grid grid-cols-2 gap-4 md:gap-6"
-              initial={dashMotionOn ? "hidden" : false}
-              whileInView={dashMotionOn ? "show" : undefined}
-              viewport={{ once: true, margin: "-50px" }}
-              variants={containerVariants}
+            <motion.button
+              onClick={() => navigate(`/courses/${profile.id}`)}
+              variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
+              whileHover={dashMotionOn ? dashLift : undefined}
+              className="dash-stat-card"
             >
-              <motion.button
-                onClick={() => navigate(`/courses/${profile.id}`)}
-                variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
-                whileHover={dashMotionOn ? dashLift : undefined}
-                className="dash-stat-card"
-              >
-                <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#475569" }}>{t("dashboard.estGpa")}</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>{summary?.estimatedGpa?.toFixed(2) ?? "—"}</span>
-                  {profile.currentGpa != null && (
-                    <span className="text-xs" style={{ color: "#475569" }}>{t("dashboard.current")}: {profile.currentGpa}</span>
-                  )}
-                </div>
-              </motion.button>
-
-              <motion.button
-                onClick={() => navigate(`/courses/${profile.id}`)}
-                variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
-                whileHover={dashMotionOn ? dashLift : undefined}
-                className="dash-stat-card"
-              >
-                <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#475569" }}>{t("dashboard.coursesLogged")}</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>{summary?.totalCourses ?? 0}</span>
-                  <span className="text-xs" style={{ color: "#475569" }}>
-                    {t("dashboard.doneIp", { done: summary?.completedCourses ?? 0, ip: summary?.inProgressCourses ?? 0 })}
-                  </span>
-                </div>
-              </motion.button>
-
-              <motion.button
-                onClick={() => navigate(`/profile/${profile.id}`)}
-                variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
-                whileHover={dashMotionOn ? dashLift : undefined}
-                className="dash-stat-card"
-              >
-                <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#475569" }}>{t("dashboard.profileComplete")}</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>{summary?.profileCompletionPercent ?? 0}%</span>
-                </div>
-              </motion.button>
-
-              <motion.button
-                onClick={() => navigate(`/pathways/${profile.id}`)}
-                variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
-                whileHover={dashMotionOn ? dashLift : undefined}
-                className="dash-stat-card"
-                style={{ border: "1px solid rgba(99,102,241,0.25)", background: "rgba(99,102,241,0.06)" }}
-              >
-                <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#818cf8" }}>{t("dashboard.aiPathways")}</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#a5b4fc" }}>{summary?.savedPathwaysCount ?? 0}</span>
-                  <span className="text-xs" style={{ color: "#6366f1" }}>{t("dashboard.saved")}</span>
-                </div>
-              </motion.button>
-            </motion.div>
-
-            {/* Semester Comparison + Money Saved */}
-            <div className="grid grid-cols-2 gap-4 md:gap-6">
-              <div className="dash-stat-card">
-                <div className="text-xs pwc-font-mono uppercase mb-1" style={{ color: "#475569" }}>With Kaleon</div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>{kaleonSemesters}</span>
-                  <span className="text-sm" style={{ color: "#4ECCA3" }}>semesters</span>
-                </div>
-                <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(78,204,163,0.08)" }}>
-                  <div className="text-[10px] pwc-font-mono uppercase tracking-wider mb-0.5" style={{ color: "#334155" }}>Typical Student</div>
-                  <div className="text-sm pwc-font-mono font-bold" style={{ color: "#475569" }}>{typicalSemesters}+ semesters</div>
-                </div>
+              <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#475569" }}>{t("dashboard.coursesLogged")}</div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>{summary?.totalCourses ?? 0}</span>
+                <span className="text-xs" style={{ color: "#475569" }}>
+                  {t("dashboard.doneIp", { done: summary?.completedCourses ?? 0, ip: summary?.inProgressCourses ?? 0 })}
+                </span>
               </div>
-              <div className="dash-stat-card">
-                <div className="text-xs pwc-font-mono uppercase mb-1" style={{ color: "#475569" }}>Money Saved</div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>${moneySaved.toLocaleString()}</span>
-                </div>
-                <div className="text-xs mt-1" style={{ color: "#64748b" }}>Fewer semesters = less tuition</div>
-                <div className="mt-2 pt-2" style={{ borderTop: "1px solid rgba(78,204,163,0.08)" }}>
-                  <div className="text-[10px] pwc-font-mono uppercase tracking-wider mb-0.5" style={{ color: "#334155" }}>Time Saved</div>
-                  <div className="text-sm pwc-font-mono font-bold" style={{ color: "#475569" }}>{semestersSaved} fewer semesters</div>
-                </div>
+            </motion.button>
+
+            <motion.button
+              onClick={() => navigate(`/profile/${profile.id}`)}
+              variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
+              whileHover={dashMotionOn ? dashLift : undefined}
+              className="dash-stat-card"
+            >
+              <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#475569" }}>{t("dashboard.profileComplete")}</div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#4ECCA3" }}>{summary?.profileCompletionPercent ?? 0}%</span>
               </div>
-            </div>
-          </div>
+            </motion.button>
 
-          {/* Right: Modules + Disclaimer */}
-          <div className="col-span-12 lg:col-span-3 flex flex-col gap-4 md:gap-6">
-            <div className="dash-card overflow-hidden flex-grow flex flex-col">
-              <div className="dash-card-header">
-                <h2 className="font-bold uppercase tracking-wider text-xs flex items-center gap-2" style={{ color: "#4ECCA3" }}>
-                  <FileText size={14} /> {t("dashboard.ccSuccessModules")}
-                </h2>
+            <motion.button
+              onClick={() => navigate(`/pathways/${profile.id}`)}
+              variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
+              whileHover={dashMotionOn ? dashLift : undefined}
+              className="dash-stat-card"
+              style={{ border: "1px solid rgba(99,102,241,0.25)", background: "rgba(99,102,241,0.06)" }}
+            >
+              <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#818cf8" }}>{t("dashboard.aiPathways")}</div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl pwc-font-mono font-bold" style={{ color: "#a5b4fc" }}>{summary?.savedPathwaysCount ?? 0}</span>
+                <span className="text-xs" style={{ color: "#6366f1" }}>{t("dashboard.saved")}</span>
               </div>
-              <motion.div
-                className="flex-grow flex flex-col"
-                initial={dashMotionOn ? "hidden" : false}
-                whileInView={dashMotionOn ? "show" : undefined}
-                viewport={{ once: true, margin: "-50px" }}
-                variants={containerVariants}
-              >
-                {roadmapItems.map((item) => (
-                  <motion.button
-                    key={item.title}
-                    onClick={() => navigate(item.href)}
-                    variants={itemVariants}
-                    className="dash-module-row group"
-                  >
-                    <div
-                      className="h-8 w-8 rounded flex items-center justify-center mr-3 shrink-0 transition-all"
-                      style={{ background: "rgba(78,204,163,0.08)", border: "1px solid rgba(78,204,163,0.2)", color: "#4ECCA3" }}
-                    >
-                      <item.icon size={14} />
-                    </div>
-                    <div className="flex-grow min-w-0">
-                      <div className="text-sm font-medium" style={{ color: "#cbd5e1" }}>{item.title}</div>
-                      <div className="text-xs pwc-font-mono flex items-center gap-1" style={{ color: "#475569" }}>
-                        <span style={{
-                          color: item.status === "Active" ? "#4ECCA3"
-                            : item.status === "Action Needed" ? "#f59e0b"
-                            : "#475569",
-                        }}>●</span>
-                        {STATUS_LABEL[item.status as keyof typeof STATUS_LABEL] ?? item.status}
-                      </div>
-                    </div>
-                    <div className="text-xs pwc-font-mono text-right ml-2 flex-shrink-0 flex items-center" style={{ color: "#475569" }}>
-                      {item.metric}
-                      <ChevronRight size={14} className="inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#4ECCA3" }} />
-                    </div>
-                  </motion.button>
-                ))}
-              </motion.div>
-            </div>
+            </motion.button>
+          </motion.div>
 
-            <div className="flex gap-3 p-4" style={{ background: "rgba(251,191,36,0.05)", border: "1px solid rgba(251,191,36,0.15)", borderRadius: 10 }}>
-              <Info size={16} className="shrink-0 mt-0.5" style={{ color: "#fbbf24", opacity: 0.7 }} />
-              <p className="text-xs leading-relaxed" style={{ color: "#78716c" }}>
-                <strong className="pwc-font-mono uppercase text-[10px] tracking-wider block mb-1" style={{ color: "#a78bfa", opacity: 0.8 }}>{t("dashboard.systemDisclaimer")}</strong>
-                {t("dashboard.disclaimerBody")}
-              </p>
-            </div>
-
-            <div className="hidden lg:block">
-              <button
-                onClick={() => navigate(`/progress/${profile.id}`)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold uppercase tracking-wider transition-all pwc-font-mono"
-                style={{ border: "1px solid rgba(78,204,163,0.3)", borderRadius: 8, color: "#4ECCA3", background: "transparent" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(78,204,163,0.08)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-              >
-                <TrendingUp size={14} /> {t("dashboard.viewProgress")}
-              </button>
-            </div>
-          </div>
-
+          <SemesterComparison
+            kaleonSemesters={kaleonSemesters}
+            typicalSemesters={typicalSemesters}
+            semestersSaved={semestersSaved}
+            moneySaved={moneySaved}
+          />
         </div>
+
+        {/* Right: Modules + Disclaimer */}
+        <div className="col-span-12 lg:col-span-3 flex flex-col gap-4 md:gap-6">
+          <RoadmapModules
+            items={roadmapItems}
+            profileId={profile.id}
+            motionOn={dashMotionOn}
+            itemVariants={itemVariants}
+            containerVariants={containerVariants}
+          />
+        </div>
+
+      </div>
     </AppPageLayout>
   );
 }

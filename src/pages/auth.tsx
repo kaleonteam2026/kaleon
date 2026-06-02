@@ -30,7 +30,17 @@ export default function AuthPage() {
   } = useAuth();
 
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
-  const returnTo = params.get("returnTo") || "/dashboard";
+
+  // Persist returnTo in localStorage so it survives Supabase's PKCE redirect cycle.
+  const returnTo = useMemo(() => {
+    const fromUrl = params.get("returnTo");
+    const fromStorage = localStorage.getItem("kaleon_auth_returnTo");
+    const resolved = fromUrl || fromStorage || "/dashboard";
+    if (resolved && resolved !== fromStorage) {
+      localStorage.setItem("kaleon_auth_returnTo", resolved);
+    }
+    return resolved;
+  }, [params]);
   const initialMode: AuthMode = params.get("mode") === "signup" ? "signup" : "signin";
 
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -42,6 +52,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && !authVerifying) {
+      localStorage.removeItem("kaleon_auth_returnTo");
       navigate(returnTo);
     }
   }, [isAuthenticated, isLoading, authVerifying, navigate, returnTo]);

@@ -1,27 +1,31 @@
+import { lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
-import Dashboard from "@/pages/dashboard";
-import Profile from "@/pages/profile";
-import Courses from "@/pages/courses";
-import Matches from "@/pages/matches";
-import Pathways from "@/pages/pathways";
-import Guidebook from "@/pages/guidebook";
-import Roadmap from "@/pages/roadmap";
-import Progress from "@/pages/progress";
-import DeadlineCalendar from "@/pages/deadline-calendar";
-import ExportsPage from "@/pages/exports";
-import Onboarding from "@/pages/onboarding";
-import AuthPage from "@/pages/auth";
-import Welcome from "@/pages/welcome";
+import { PageLoadingState } from "@/components/page-loading-state";
+import { ErrorBoundary } from "@/components/error-boundary";
 import ChatBubble from "@/components/chat-bubble";
 import SupabaseAuthModal from "@/components/supabase-auth-modal";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
 import ProtectedRoute from "@/components/protected-route";
+
+const Landing = lazy(() => import("@/pages/landing"));
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const Profile = lazy(() => import("@/pages/profile"));
+const Courses = lazy(() => import("@/pages/courses"));
+const Matches = lazy(() => import("@/pages/matches"));
+const Pathways = lazy(() => import("@/pages/pathways"));
+const Guidebook = lazy(() => import("@/pages/guidebook"));
+const Roadmap = lazy(() => import("@/pages/roadmap"));
+const Progress = lazy(() => import("@/pages/progress"));
+const DeadlineCalendar = lazy(() => import("@/pages/deadline-calendar"));
+const ExportsPage = lazy(() => import("@/pages/exports"));
+const Onboarding = lazy(() => import("@/pages/onboarding"));
+const AuthPage = lazy(() => import("@/pages/auth"));
+const Welcome = lazy(() => import("@/pages/welcome"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,68 +60,90 @@ function Router() {
             <Route path="/" component={Landing} />
             <Route path="/auth" component={AuthPage} />
             <Route path="/welcome/first-gen">
-              <Welcome persona="first-gen" />
+              <ErrorBoundary><Welcome persona="first-gen" /></ErrorBoundary>
             </Route>
             <Route path="/welcome/ab540">
-              <Welcome persona="ab540" />
+              <ErrorBoundary><Welcome persona="ab540" /></ErrorBoundary>
             </Route>
             <Route path="/welcome/returning">
-              <Welcome persona="returning" />
+              <ErrorBoundary><Welcome persona="returning" /></ErrorBoundary>
             </Route>
             <Route path="/dashboard">
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route path="/onboarding">
-              <ProtectedRoute>
-                <Onboarding />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route path="/profile/:profileId?">
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route path="/courses/:profileId">
-              <ProtectedRoute>
-                <Courses />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <Courses />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route path="/matches/:profileId">
-              <ProtectedRoute>
-                <Matches />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <Matches />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route path="/pathways/:profileId">
-              <ProtectedRoute>
-                <Pathways />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <Pathways />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route path="/guidebook/:guidebookId">
-              <ProtectedRoute>
-                <Guidebook />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <Guidebook />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route path="/roadmap/:roadmapId">
-              <ProtectedRoute>
-                <Roadmap />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <Roadmap />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route path="/progress/:profileId">
-              <ProtectedRoute>
-                <Progress />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <Progress />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route path="/deadline-calendar/:profileId?">
-              <ProtectedRoute>
-                <DeadlineCalendar />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <DeadlineCalendar />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route path="/exports/:profileId?">
-              <ProtectedRoute>
-                <ExportsPage />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <ExportsPage />
+                </ProtectedRoute>
+              </ErrorBoundary>
             </Route>
             <Route component={NotFound} />
           </Switch>
@@ -149,7 +175,11 @@ function App() {
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <AuthProvider>
             <SupabaseAuthModal />
-            <Router />
+            <Suspense fallback={<PageLoadingState variant="dark" message="Loading…" />}>
+              <ErrorBoundary variant="page">
+                <Router />
+              </ErrorBoundary>
+            </Suspense>
           </AuthProvider>
         </WouterRouter>
         <Toaster />
