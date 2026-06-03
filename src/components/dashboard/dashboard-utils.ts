@@ -4,7 +4,7 @@ export function readinessAccent(score: number) {
   return { stroke: "#ef4444", labelKey: "pages.progress.atRisk", color: "#ef4444" };
 }
 
-import type { TFunction } from "@/lib/copy";
+import type { TFunction } from "i18next";
 
 export function estimatedTransferTerm(totalUnits: number, t: TFunction): string {
   const remaining = Math.max(0, 60 - totalUnits);

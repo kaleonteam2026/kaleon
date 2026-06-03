@@ -12,7 +12,7 @@ export function IntroPhase() {
       <div className="w-full max-w-lg">
         <div className="flex items-center gap-2 justify-center mb-8">
           <img src={KALEON_LOGO_SRC} alt="" width={28} height={28} className="shrink-0 object-contain" aria-hidden />
-          <span className="text-xl font-bold uppercase tracking-tight" style={{ color: "var(--app-text)" }}>
+          <span className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
             Kaleon
           </span>
         </div>
@@ -26,10 +26,10 @@ export function IntroPhase() {
           >
             <div className="onboarding-intro-message">
               <h1
-                className="m-0 font-bold text-center leading-snug"
+                className="m-0 font-bold text-center leading-snug tracking-tight"
                 style={{
                   fontSize: "clamp(1.25rem, 2.3vw, 1.75rem)",
-                  color: "var(--app-text)",
+                  color: "#f8fafc",
                 }}
               >
                 {t("onboarding.introHeading")}

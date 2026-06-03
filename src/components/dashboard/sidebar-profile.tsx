@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { motion } from "framer-motion";
+import { motion, type Variants, type TargetAndTransition, type VariantLabels }from "framer-motion";
 import { Settings, Zap, AlertCircle } from "lucide-react";
 import { t } from "@/lib/copy";
 import { fadeUp, DUR } from "@/lib/motion";
@@ -9,9 +9,9 @@ interface SidebarProfileProps {
   profile: StudentProfile;
   summary: DashboardSummary | null;
   motionOn: boolean;
-  lift: unknown;
-  itemVariants: unknown;
-  containerVariants: unknown;
+  lift: VariantLabels | TargetAndTransition;
+  itemVariants?: Variants;
+  containerVariants?: Variants;
 }
 
 export function SidebarProfile({ profile, summary, motionOn: dashMotionOn, lift: dashLift, itemVariants, containerVariants }: SidebarProfileProps) {

@@ -1,17 +1,16 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Search, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CALIFORNIA_COMMUNITY_COLLEGES } from "./community-colleges";
+import { COLLEGE_MAJORS } from "./majors";
 
-interface CollegeAutocompleteProps {
+interface MajorAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   className?: string;
-  compact?: boolean;
 }
 
-export function CollegeAutocomplete({ value, onChange, placeholder, className, compact }: CollegeAutocompleteProps) {
+export function MajorAutocomplete({ value, onChange, placeholder, className }: MajorAutocompleteProps) {
   const [inputValue, setInputValue] = useState(value);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -21,9 +20,9 @@ export function CollegeAutocomplete({ value, onChange, placeholder, className, c
 
   const filtered = useMemo(() => {
     const q = inputValue.toLowerCase().trim();
-    if (!q) return CALIFORNIA_COMMUNITY_COLLEGES.slice(0, 25); // show first 25 as suggestions
-    return CALIFORNIA_COMMUNITY_COLLEGES.filter(c =>
-      c.toLowerCase().includes(q)
+    if (!q) return COLLEGE_MAJORS.slice(0, 25);
+    return COLLEGE_MAJORS.filter(m =>
+      m.toLowerCase().includes(q)
     );
   }, [inputValue]);
 
@@ -51,9 +50,9 @@ export function CollegeAutocomplete({ value, onChange, placeholder, className, c
     }
   }, [activeIndex]);
 
-  const selectCollege = (college: string) => {
-    setInputValue(college);
-    onChange(college);
+  const selectMajor = (major: string) => {
+    setInputValue(major);
+    onChange(major);
     setOpen(false);
     setActiveIndex(-1);
   };
@@ -85,7 +84,7 @@ export function CollegeAutocomplete({ value, onChange, placeholder, className, c
       case "Enter":
         e.preventDefault();
         if (activeIndex >= 0 && activeIndex < filtered.length) {
-          selectCollege(filtered[activeIndex]);
+          selectMajor(filtered[activeIndex]);
         }
         break;
       case "Escape":
@@ -95,16 +94,10 @@ export function CollegeAutocomplete({ value, onChange, placeholder, className, c
     }
   };
 
-  const inputPadding = compact ? "pl-7 pr-2 py-1.5" : "pl-9 pr-3 py-2.5";
-  const inputTextSize = compact ? "text-xs" : "text-sm";
-  const searchIconSize = compact ? "h-3 w-3 left-2.5" : "h-4 w-4 left-3";
-  const dropdownItemPadding = compact ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm";
-  const dropdownIconSize = compact ? "h-3 w-3" : "h-3.5 w-3.5";
-
   return (
     <div ref={wrapperRef} className="relative">
       <div className="relative">
-        <Search className={`absolute top-1/2 -translate-y-1/2 ${searchIconSize}`} style={{ color: "#4ECCA3", opacity: 0.6 }} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#4ECCA3", opacity: 0.6 }} />
         <input
           ref={inputRef}
           type="text"
@@ -114,9 +107,7 @@ export function CollegeAutocomplete({ value, onChange, placeholder, className, c
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className={cn(
-            "w-full rounded-xl",
-            inputPadding,
-            inputTextSize,
+            "w-full pl-9 pr-3 py-2.5 rounded-xl text-sm",
             "text-[var(--app-input-text)] placeholder:text-[var(--app-input-placeholder)]",
             "bg-[var(--app-input-bg)] border border-[var(--app-border-strong)]",
             "focus:outline-none focus:ring-2 focus:ring-[#4ECCA3]/40 focus:border-[#4ECCA3]",
@@ -125,15 +116,15 @@ export function CollegeAutocomplete({ value, onChange, placeholder, className, c
           role="combobox"
           aria-expanded={open}
           aria-autocomplete="list"
-          aria-controls="college-listbox"
-          aria-activedescendant={activeIndex >= 0 ? `college-option-${activeIndex}` : undefined}
+          aria-controls="major-listbox"
+          aria-activedescendant={activeIndex >= 0 ? `major-option-${activeIndex}` : undefined}
         />
       </div>
 
       {open && (
         <ul
           ref={listRef}
-          id="college-listbox"
+          id="major-listbox"
           role="listbox"
           className="absolute z-[100] mt-1 w-full max-h-56 overflow-y-auto rounded-xl border shadow-2xl"
           style={{
@@ -143,31 +134,30 @@ export function CollegeAutocomplete({ value, onChange, placeholder, className, c
         >
           {filtered.length === 0 ? (
             <li className="px-4 py-3 text-xs text-center" style={{ color: "#64748b" }}>
-              No colleges match — you can type your college name
+              No majors match — you can type your major name
             </li>
           ) : (
-            filtered.map((college, i) => {
-              const selected = college === inputValue;
+            filtered.map((major, i) => {
+              const selected = major === inputValue;
               return (
                 <li
-                  key={college}
-                  id={`college-option-${i}`}
+                  key={major}
+                  id={`major-option-${i}`}
                   role="option"
                   aria-selected={selected}
-                  onClick={() => selectCollege(college)}
+                  onClick={() => selectMajor(major)}
                   onMouseEnter={() => setActiveIndex(i)}
                   className={cn(
-                    "flex items-center gap-2 cursor-pointer transition-colors",
-                    dropdownItemPadding,
+                    "flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer transition-colors",
                     activeIndex === i
                       ? "bg-[rgba(78,204,163,0.15)]"
                       : "hover:bg-[rgba(78,204,163,0.08)]",
                   )}
                   style={{ color: activeIndex === i ? "#4ECCA3" : "#e2e8f0" }}
                 >
-                  <span className="flex-1">{college}</span>
+                  <span className="flex-1">{major}</span>
                   {selected && (
-                    <Check className={`${dropdownIconSize} shrink-0`} style={{ color: "#4ECCA3" }} />
+                    <Check className="h-3.5 w-3.5 shrink-0" style={{ color: "#4ECCA3" }} />
                   )}
                 </li>
               );

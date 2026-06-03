@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { ChevronRight, FileText, TrendingUp } from "lucide-react";
 import { t } from "@/lib/copy";
 import type { LucideIcon } from "lucide-react";
@@ -23,8 +23,8 @@ interface RoadmapModulesProps {
   items: readonly RoadmapItem[];
   profileId: number;
   motionOn: boolean;
-  itemVariants: unknown;
-  containerVariants: unknown;
+  itemVariants?: Variants;
+  containerVariants?: Variants;
 }
 
 export function RoadmapModules({ items, profileId, motionOn: dashMotionOn, itemVariants, containerVariants }: RoadmapModulesProps) {

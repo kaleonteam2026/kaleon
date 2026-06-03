@@ -2,7 +2,6 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { computeGpaSummary, type StoredCourse } from "@/lib/course-progress";
 import { appendDevCourses, getDevCourses } from "@/lib/dev-courses";
 import { isAuthBypass } from "@/lib/dev-profile";
-
 type Json = Record<string, unknown> | unknown[] | string | number | boolean | null;
 
 const profile = {
@@ -179,7 +178,7 @@ export function installMockApi(): void {
     }
     if (pathname.endsWith("/courses") && method === "GET") return json(courses);
     if (pathname.endsWith("/courses") && method === "POST") return json({ id: Date.now(), ...courses[0] }, 201);
-    if (pathname.includes("/gpa-summary")) return json(gpaSummary);
+    if (pathname.includes("/gpa-summary")) return json(gpaSummary as unknown as Json);
     if (pathname.includes("/course-catalog")) return json({ college: profile.communityCollege, major: profile.intendedMajor, categories: ["Core"], courses });
     if (pathname.includes("/transferability-analysis")) {
       return json({
@@ -252,6 +251,11 @@ export function installMockApi(): void {
     if (pathname === "/api/live/verify-deadlines") return json({ verified: true, changes: [] });
     if (pathname.startsWith("/api/reminders/prefs/")) return json({ enabled: false, channels: [] });
     if (pathname.startsWith("/api/reminders/") && pathname.endsWith("/run")) return json({ ok: true });
+
+    // Passthrough to the real Vite server plugin (uses DeepSeek AI)
+    if (pathname === "/api/transcript/parse") {
+      return originalFetch(input, init);
+    }
 
     return json({ ok: true });
   };

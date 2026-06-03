@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { GraduationCap, ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
-import { parseTranscriptPDF, type ExtractedCourse } from "@/lib/parse-transcript";
+import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
 import { appendDevCourses } from "@/lib/dev-courses";
 import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile } from "@/lib/dev-profile";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -19,7 +19,7 @@ import { FormSteps } from "@/components/onboarding/form-steps";
 import {
   ONBOARDING_PAGE_BG, ONBOARDING_CARD, STEP_ICONS, INTRO_DURATION_MS,
 } from "@/components/onboarding/onboarding-constants";
-import type { FormData } from "@/components/onboarding/onboarding-types";
+import type { FormData, PendingTranscript, ScanResult } from "@/components/onboarding/onboarding-types";
 
 export default function Onboarding() {
   const STEPS: {
@@ -38,12 +38,11 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [phase, setPhase] = useState<"intro" | "form" | "calculating" | "ready">("intro");
-  const [extractedCourses, setExtractedCourses] = useState<ExtractedCourse[]>([]);
-  const [extractedLatestGpa, setExtractedLatestGpa] = useState<number | null>(null);
-  const [extractedTotalUnits, setExtractedTotalUnits] = useState(0);
-  const [transcriptParsing, setTranscriptParsing] = useState(false);
-  const [transcriptError, setTranscriptError] = useState<string | null>(null);
-  const [transcriptFileName, setTranscriptFileName] = useState<string | null>(null);
+  const [pendingTranscripts, setPendingTranscripts] = useState<PendingTranscript[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanResults, setScanResults] = useState<ScanResult[]>([]);
+  const pendingIdRef = useRef(0);
   const [form, setForm] = useState<FormData>({
     fullName: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.firstName ?? ""),
     communityCollege: "",
@@ -62,37 +61,104 @@ export default function Onboarding() {
     return () => window.clearTimeout(id);
   }, [phase]);
 
-  const handleTranscriptUpload = async (file: File) => {
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      setTranscriptError("Please upload a PDF file.");
-      return;
-    }
-    setTranscriptFileName(file.name);
-    setTranscriptParsing(true);
-    setTranscriptError(null);
-    setExtractedCourses([]);
-    setExtractedLatestGpa(null);
-    setExtractedTotalUnits(0);
+  const handleAddPendingFile = (file: File) => {
+    if (!file.name.toLowerCase().endsWith(".pdf")) return;
+    const id = `pending-${++pendingIdRef.current}`;
+    setPendingTranscripts(prev => [...prev, { id, file, college: "" }]);
+  };
+
+  const handleUpdatePendingCollege = (id: string, college: string) => {
+    setPendingTranscripts(prev =>
+      prev.map(pt => (pt.id === id ? { ...pt, college } : pt))
+    );
+  };
+
+  const handleRemovePendingFile = (id: string) => {
+    setPendingTranscripts(prev => prev.filter(pt => pt.id !== id));
+  };
+
+  const handleScan = async () => {
+    if (pendingTranscripts.length === 0) return;
+    setScanning(true);
+    setScanError(null);
+    const results: ScanResult[] = [];
     try {
-      const result = await parseTranscriptPDF(file);
-      if (result.courses.length === 0) {
-        setTranscriptError("No course codes found. This may be a scanned PDF — you can add courses manually later.");
-      } else {
-        setExtractedCourses(result.courses);
-        setExtractedLatestGpa(result.latestGpa ?? null);
-        setExtractedTotalUnits(result.totalUnits);
+      for (const pt of pendingTranscripts) {
+        // 1. Extract raw text client-side with pdfjs-dist
+        const text = await extractTextFromPDF(pt.file);
+        if (!text.trim()) {
+          results.push({
+            college: pt.college.trim() || pt.file.name.replace(/\.pdf$/i, ""),
+            courses: [],
+            latestGpa: null,
+            totalUnits: 0,
+          });
+          continue;
+        }
+
+        // 2. Try AI-powered parsing via server endpoint
+        let result: { courses: { code: string; name: string; units?: number; term?: string }[]; latestGpa: number | null; totalUnits: number };
+        try {
+          const res = await fetch("/api/transcript/parse", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          });
+          if (res.ok) {
+            result = (await res.json()) as typeof result;
+          } else {
+            throw new Error(`Server returned ${res.status}`);
+          }
+        } catch {
+          // 3. Fallback to client-side regex parser
+          const fallback = parseTranscriptText(text);
+          result = { ...fallback, latestGpa: fallback.latestGpa ?? null };
+        }
+
+        results.push({
+          college: pt.college.trim() || pt.file.name.replace(/\.pdf$/i, ""),
+          courses: result.courses.map(c => ({ code: c.code, name: c.name, units: c.units, term: c.term })),
+          latestGpa: result.latestGpa,
+          totalUnits: result.totalUnits,
+        });
       }
+      setScanResults(results);
+      setPendingTranscripts([]);
     } catch {
-      setTranscriptError("Could not read this PDF. Try a different file or add courses manually later.");
+      setScanError("Could not read one or more PDFs. Try different files or add courses manually later.");
     } finally {
-      setTranscriptParsing(false);
+      setScanning(false);
     }
+  };
+
+  const handleRemoveCourseFromScan = (college: string, code: string) => {
+    setScanResults(prev =>
+      prev.map(sr =>
+        sr.college === college
+          ? { ...sr, courses: sr.courses.filter(c => c.code !== code) }
+          : sr,
+      ).filter(sr => sr.courses.length > 0)
+    );
+  };
+
+  const handleClearAllTranscripts = () => {
+    setPendingTranscripts([]);
+    setScanning(false);
+    setScanError(null);
+    setScanResults([]);
   };
 
   const canProceed = () => {
     if (step === 1) return form.communityCollege.trim().length > 0 && form.intendedMajor.trim().length > 0;
     return true;
   };
+
+  const flattenedCourses = scanResults.flatMap(r => r.courses);
+  const flattenedGpa = scanResults.reduce(
+    (best, r) => (r.latestGpa !== null && r.latestGpa > best ? r.latestGpa : best),
+    0,
+  );
+  const flattenedTotalUnits = scanResults.reduce((s, r) => s + r.totalUnits, 0);
 
   const submit = async () => {
     if (!user?.id) return;
@@ -104,7 +170,7 @@ export default function Onboarding() {
         communityCollege: form.communityCollege,
         intendedMajor: form.intendedMajor,
         careerGoal: form.careerGoal,
-        currentGpa: extractedLatestGpa ?? 0,
+        currentGpa: flattenedGpa,
         transferTimeline: form.transferTimeline,
         financialSituation: form.financialSituation,
         isFirstGen: form.isFirstGen,
@@ -123,8 +189,8 @@ export default function Onboarding() {
           isFirstGen: payload.isFirstGen,
           completionPercent: payload.completionPercent,
         });
-        if (extractedCourses.length > 0) {
-          appendDevCourses(DEV_PROFILE_ID, extractedCourses.map(c => ({
+        if (flattenedCourses.length > 0) {
+          appendDevCourses(DEV_PROFILE_ID, flattenedCourses.map(c => ({
             courseCode: c.code,
             courseName: c.name,
             units: c.units,
@@ -150,13 +216,13 @@ export default function Onboarding() {
         if (first) await updateProfileName(first);
       }
 
-      if (extractedCourses.length > 0 && created?.id) {
+      if (flattenedCourses.length > 0 && created?.id) {
         await fetch(`/api/profiles/${created.id}/courses/bulk`, {
           method: "POST", credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            latestGpa: extractedLatestGpa ?? undefined,
-            courses: extractedCourses.map(c => ({
+            latestGpa: flattenedGpa || undefined,
+            courses: flattenedCourses.map(c => ({
               courseCode: c.code,
               courseName: c.name,
               units: c.units,
@@ -225,26 +291,21 @@ export default function Onboarding() {
           </div>
 
           {/* Content */}
-          <div className="px-8 py-6 space-y-5 relative overflow-hidden">
+          <div className="px-8 py-6 space-y-5 relative" style={{ overflow: "visible" }}>
             <FormSteps
               step={step}
               form={form}
               onSet={set}
-              onTranscriptUpload={handleTranscriptUpload}
-              transcriptFileName={transcriptFileName}
-              transcriptParsing={transcriptParsing}
-              transcriptError={transcriptError}
-              extractedCourses={extractedCourses}
-              extractedLatestGpa={extractedLatestGpa}
-              extractedTotalUnits={extractedTotalUnits}
-              onRemoveCourse={(code) => setExtractedCourses(prev => prev.filter(x => x.code !== code))}
-              onClearTranscript={() => {
-                setTranscriptFileName(null);
-                setExtractedCourses([]);
-                setExtractedLatestGpa(null);
-                setExtractedTotalUnits(0);
-                setTranscriptError(null);
-              }}
+              pendingTranscripts={pendingTranscripts}
+              onAddPendingFile={handleAddPendingFile}
+              onUpdatePendingCollege={handleUpdatePendingCollege}
+              onRemovePendingFile={handleRemovePendingFile}
+              scanning={scanning}
+              scanError={scanError}
+              scanResults={scanResults}
+              onScan={handleScan}
+              onRemoveCourseFromScan={handleRemoveCourseFromScan}
+              onClearAllTranscripts={handleClearAllTranscripts}
               motionOn={motionOn}
               dir={dir}
             />

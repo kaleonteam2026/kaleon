@@ -105,7 +105,8 @@ function unitsNear(text: string, codeEnd: number): number | undefined {
   return undefined;
 }
 
-export async function parseTranscriptPDF(file: File): Promise<TranscriptParseResult> {
+/** Extract raw text from a PDF using pdfjs-dist (no regex parsing). */
+export async function extractTextFromPDF(file: File): Promise<string> {
   const buffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
 
@@ -119,12 +120,20 @@ export async function parseTranscriptPDF(file: File): Promise<TranscriptParseRes
     fullText += pageText + "\n";
   }
 
+  return fullText;
+}
+
+/**
+ * Parse already-extracted transcript text using regex.
+ * Used as a fallback when the AI endpoint is unavailable.
+ */
+export function parseTranscriptText(text: string): TranscriptParseResult {
   const seen = new Set<string>();
   const courses: ExtractedCourse[] = [];
 
   COURSE_CODE_RE.lastIndex = 0;
   let match: RegExpExecArray | null;
-  while ((match = COURSE_CODE_RE.exec(fullText)) !== null) {
+  while ((match = COURSE_CODE_RE.exec(text)) !== null) {
     const dept = match[1];
     const num = match[2];
     if (!isValidCode(dept, num)) continue;
@@ -132,13 +141,18 @@ export async function parseTranscriptPDF(file: File): Promise<TranscriptParseRes
     if (seen.has(code)) continue;
     seen.add(code);
     const codeEnd = match.index + match[0].length;
-    const units = unitsNear(fullText, codeEnd);
-    const term = termNear(fullText, match.index);
+    const units = unitsNear(text, codeEnd);
+    const term = termNear(text, match.index);
     courses.push({ code, name: code, units, term });
   }
 
   const totalUnits = courses.reduce((sum, c) => sum + (c.units ?? 0), 0);
-  const latestGpa = parseLatestGpa(fullText);
+  const latestGpa = parseLatestGpa(text);
 
   return { courses, latestGpa, totalUnits };
+}
+
+export async function parseTranscriptPDF(file: File): Promise<TranscriptParseResult> {
+  const text = await extractTextFromPDF(file);
+  return parseTranscriptText(text);
 }
