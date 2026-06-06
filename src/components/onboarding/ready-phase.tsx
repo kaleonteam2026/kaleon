@@ -2,7 +2,11 @@ import { useLocation } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 
-export function ReadyPhase() {
+interface ReadyPhaseProps {
+  profileId: number;
+}
+
+export function ReadyPhase({ profileId }: ReadyPhaseProps) {
   const [, navigate] = useLocation();
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "#070d1a" }}>
@@ -25,11 +29,11 @@ export function ReadyPhase() {
         </div>
       </div>
       <button
-        onClick={() => navigate("/dashboard")}
+        onClick={() => navigate(`/courses/${profileId}`)}
         className="mt-8 px-10 py-3.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-opacity hover:opacity-90"
         style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
       >
-        Go To Dashboard <ArrowRight size={16} />
+        Add Your Courses <ArrowRight size={16} />
       </button>
       <p className="mt-3 text-xs" style={{ color: "#475569" }}>Join students who secured their transfer plan this week</p>
     </div>

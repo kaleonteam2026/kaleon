@@ -114,6 +114,51 @@ const OPP_COLORS: Record<string, string> = {
   career_prep: "bg-emerald-100 text-emerald-700",
 };
 
+// ─── Collapsible section accordion ────────────────────────────────
+
+function CollapsibleSection({
+  label,
+  icon,
+  pathwayId,
+  sectionKey,
+  openSections,
+  onToggle,
+  children,
+  color,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  pathwayId: number;
+  sectionKey: string;
+  openSections: Set<string>;
+  onToggle: (key: string) => void;
+  children: React.ReactNode;
+  color?: string;
+}) {
+  const key = `${pathwayId}:${sectionKey}`;
+  const isOpen = openSections.has(key);
+  return (
+    <div className="border border-slate-100 rounded-lg overflow-hidden">
+      <button
+        onClick={() => onToggle(key)}
+        className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-slate-50"
+        style={{ color: color ?? "#475569" }}
+      >
+        <span className="flex items-center gap-1.5">
+          {icon}
+          {label}
+        </span>
+        {isOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+      </button>
+      {isOpen && (
+        <div className="px-3 pb-3 pt-1 border-t border-slate-100">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Pathways() {
   const { profileId } = useParams<{ profileId: string }>();
   const [, navigate] = useLocation();
@@ -125,7 +170,14 @@ export default function Pathways() {
   const [courseAnalysis, setCourseAnalysis] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const toggleSection = (key: string) => {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
   const [selecting, setSelecting] = useState<number | null>(null);
   const [generatingGuidebook, setGeneratingGuidebook] = useState<number | null>(null);
   const [generatingRoadmap, setGeneratingRoadmap] = useState<number | null>(null);
@@ -386,7 +438,6 @@ export default function Pathways() {
               if (!pathway) return null;
               const report = pathway.reportJson;
               const meta = TYPE_LABELS[type] ?? { labelKey: type, color: "text-slate-600", bg: "bg-slate-50 border-slate-200" };
-              const isExpanded = expanded === pathway.id;
               const isSelected = pathway.isSelected === "true";
 
               return (
@@ -399,7 +450,7 @@ export default function Pathways() {
                   "transition-all border-2 border-slate-900 rounded-none shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]",
                   isSelected && "ring-4 ring-slate-900 ring-offset-2"
                 )}>
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -419,66 +470,95 @@ export default function Pathways() {
                           {report?.gpaTarget && <> · {t("pages.pathways.gpaTarget")} <strong>{report.gpaTarget}</strong></>}
                         </p>
                       </div>
-                      <button
-                        onClick={() => setExpanded(isExpanded ? null : pathway.id)}
-                        className="text-slate-400 hover:text-slate-600 p-1"
-                      >
-                        {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                      </button>
                     </div>
+                    {/* Compact preview excerpt */}
+                    {report?.whyItFits && (
+                      <p className="text-sm text-slate-500 mt-2 pt-2 border-t border-slate-100 line-clamp-2">
+                        {report.whyItFits.length > 180
+                          ? report.whyItFits.slice(0, 180) + "…"
+                          : report.whyItFits}
+                      </p>
+                    )}
                   </CardHeader>
 
-                  {isExpanded && report && (
-                    <CardContent className="space-y-5 pt-0 border-t border-slate-100">
+                  {report && (
+                    <CardContent className="space-y-2 pt-0 border-t border-slate-100">
 
-                      {/* Why it fits / Concerns */}
-                      <div className="grid md:grid-cols-2 gap-4 mt-4">
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-semibold text-emerald-700 flex items-center gap-1">
-                            <CheckCircle className="h-3.5 w-3.5" /> {t("pages.pathways.whyItFits")}
-                          </h4>
+                      {/* Collapsible: Why It Fits (full) */}
+                      {report.whyItFits && (
+                        <CollapsibleSection
+                          label={t("pages.pathways.whyItFits")}
+                          icon={<CheckCircle className="h-3.5 w-3.5" />}
+                          pathwayId={pathway.id}
+                          sectionKey="whyItFits"
+                          openSections={openSections}
+                          onToggle={toggleSection}
+                          color="#059669"
+                        >
                           <p className="text-sm text-slate-600">{report.whyItFits}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-semibold text-amber-700 flex items-center gap-1">
-                            <AlertTriangle className="h-3.5 w-3.5" /> {t("pages.pathways.concerns")}
-                          </h4>
-                          <p className="text-sm text-slate-600">{report.concerns}</p>
-                        </div>
-                      </div>
-
-                      {report.riskAnalysis && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-rose-700 flex items-center gap-1 mb-1">
-                            <AlertTriangle className="h-3.5 w-3.5" /> Risk analysis
-                          </h4>
-                          <p className="text-sm text-slate-600">{report.riskAnalysis}</p>
-                        </div>
+                        </CollapsibleSection>
                       )}
 
-                      {/* Course gaps */}
+                      {/* Collapsible: Concerns */}
+                      {report.concerns && (
+                        <CollapsibleSection
+                          label={t("pages.pathways.concerns")}
+                          icon={<AlertTriangle className="h-3.5 w-3.5" />}
+                          pathwayId={pathway.id}
+                          sectionKey="concerns"
+                          openSections={openSections}
+                          onToggle={toggleSection}
+                          color="#d97706"
+                        >
+                          <p className="text-sm text-slate-600">{report.concerns}</p>
+                        </CollapsibleSection>
+                      )}
+
+                      {/* Collapsible: Risk Analysis */}
+                      {report.riskAnalysis && (
+                        <CollapsibleSection
+                          label="Risk analysis"
+                          icon={<AlertTriangle className="h-3.5 w-3.5" />}
+                          pathwayId={pathway.id}
+                          sectionKey="risks"
+                          openSections={openSections}
+                          onToggle={toggleSection}
+                          color="#e11d48"
+                        >
+                          <p className="text-sm text-slate-600">{report.riskAnalysis}</p>
+                        </CollapsibleSection>
+                      )}
+
+                      {/* Collapsible: Course Gaps */}
                       {(() => {
                         const openGaps = remainingCourseGaps(report.courseGaps, completedCourseCodes);
                         if (openGaps.length === 0) return null;
                         return (
-                        <div>
-                          <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-1 mb-1">
-                            <BookOpen className="h-3.5 w-3.5" /> {t("pages.pathways.courseGaps")}
-                          </h4>
-                          <ul className="text-sm text-slate-600 space-y-0.5">
-                            {openGaps.map((gap, i) => <li key={i}>• {gap}</li>)}
-                          </ul>
-                        </div>
+                          <CollapsibleSection
+                            label={`${t("pages.pathways.courseGaps")} (${openGaps.length})`}
+                            icon={<BookOpen className="h-3.5 w-3.5" />}
+                            pathwayId={pathway.id}
+                            sectionKey="courseGaps"
+                            openSections={openSections}
+                            onToggle={toggleSection}
+                          >
+                            <ul className="text-sm text-slate-600 space-y-0.5">
+                              {openGaps.map((gap, i) => <li key={i}>• {gap}</li>)}
+                            </ul>
+                          </CollapsibleSection>
                         );
                       })()}
 
-                      {/* University On-Site Opportunities */}
+                      {/* Collapsible: Campus Opportunities */}
                       {report.campusOpportunities && report.campusOpportunities.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-3">
-                            <Building2 className="h-3.5 w-3.5 text-indigo-500" />
-                            {t("pages.pathways.campusOpps")}
-                          </h4>
+                        <CollapsibleSection
+                          label={t("pages.pathways.campusOpps")}
+                          icon={<Building2 className="h-3.5 w-3.5" />}
+                          pathwayId={pathway.id}
+                          sectionKey="campusOpps"
+                          openSections={openSections}
+                          onToggle={toggleSection}
+                        >
                           <div className="space-y-2">
                             {report.campusOpportunities.map((opp, i) => {
                               const Icon = OPP_ICONS[opp.type] ?? Star;
@@ -502,64 +582,88 @@ export default function Pathways() {
                               );
                             })}
                           </div>
-                        </div>
+                        </CollapsibleSection>
                       )}
 
-                      {/* Extracurricular recommendations (text list fallback) */}
+                      {/* Collapsible: Extracurricular */}
                       {(!report.campusOpportunities || report.campusOpportunities.length === 0) &&
                         report.extracurricularRecommendations && report.extracurricularRecommendations.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-1 mb-1">
-                            <Users className="h-3.5 w-3.5" /> {t("pages.pathways.extracurricular")}
-                          </h4>
+                        <CollapsibleSection
+                          label={t("pages.pathways.extracurricular")}
+                          icon={<Users className="h-3.5 w-3.5" />}
+                          pathwayId={pathway.id}
+                          sectionKey="extracurricular"
+                          openSections={openSections}
+                          onToggle={toggleSection}
+                        >
                           <ul className="text-sm text-slate-600 space-y-0.5">
                             {report.extracurricularRecommendations.map((r, i) => <li key={i}>• {r}</li>)}
                           </ul>
-                        </div>
+                        </CollapsibleSection>
                       )}
 
-                      {/* Scholarships */}
+                      {/* Collapsible: Scholarships */}
                       {report.scholarshipOptions && report.scholarshipOptions.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-1 mb-1">
-                            <Award className="h-3.5 w-3.5" /> {t("pages.pathways.scholarships")}
-                          </h4>
+                        <CollapsibleSection
+                          label={t("pages.pathways.scholarships")}
+                          icon={<Award className="h-3.5 w-3.5" />}
+                          pathwayId={pathway.id}
+                          sectionKey="scholarships"
+                          openSections={openSections}
+                          onToggle={toggleSection}
+                        >
                           <ul className="text-sm text-slate-600 space-y-0.5">
                             {report.scholarshipOptions.map((s, i) => <li key={i}>• {s}</li>)}
                           </ul>
-                        </div>
+                        </CollapsibleSection>
                       )}
 
-                      {/* Internship recommendations */}
+                      {/* Collapsible: Internships */}
                       {report.internshipRecommendations && report.internshipRecommendations.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-1 mb-1">
-                            <Briefcase className="h-3.5 w-3.5" /> {t("pages.pathways.internships")}
-                          </h4>
+                        <CollapsibleSection
+                          label={t("pages.pathways.internships")}
+                          icon={<Briefcase className="h-3.5 w-3.5" />}
+                          pathwayId={pathway.id}
+                          sectionKey="internships"
+                          openSections={openSections}
+                          onToggle={toggleSection}
+                        >
                           <ul className="text-sm text-slate-600 space-y-0.5">
                             {report.internshipRecommendations.map((r, i) => <li key={i}>• {r}</li>)}
                           </ul>
-                        </div>
+                        </CollapsibleSection>
                       )}
 
-                      {/* Risks */}
+                      {/* Collapsible: Risks */}
                       {report.risks && report.risks.length > 0 && (
-                        <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">
-                          <h4 className="text-sm font-semibold text-rose-700 flex items-center gap-1 mb-1">
-                            <AlertTriangle className="h-3.5 w-3.5" /> {t("pages.pathways.riskAlerts")}
-                          </h4>
-                          <ul className="text-sm text-rose-700 space-y-0.5">
-                            {report.risks.map((risk, i) => <li key={i}>• {risk}</li>)}
-                          </ul>
-                        </div>
+                        <CollapsibleSection
+                          label={t("pages.pathways.riskAlerts")}
+                          icon={<AlertTriangle className="h-3.5 w-3.5" />}
+                          pathwayId={pathway.id}
+                          sectionKey="riskAlerts"
+                          openSections={openSections}
+                          onToggle={toggleSection}
+                          color="#e11d48"
+                        >
+                          <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">
+                            <ul className="text-sm text-rose-700 space-y-0.5">
+                              {report.risks.map((risk, i) => <li key={i}>• {risk}</li>)}
+                            </ul>
+                          </div>
+                        </CollapsibleSection>
                       )}
 
-                      {/* Next steps */}
+                      {/* Collapsible: Next Steps */}
                       {report.nextSteps && report.nextSteps.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1">
-                            <ArrowRight className="h-3.5 w-3.5 text-indigo-500" /> {t("pages.pathways.nextSteps")}
-                          </h4>
+                        <CollapsibleSection
+                          label={t("pages.pathways.nextSteps")}
+                          icon={<ArrowRight className="h-3.5 w-3.5" />}
+                          pathwayId={pathway.id}
+                          sectionKey="nextSteps"
+                          openSections={openSections}
+                          onToggle={toggleSection}
+                          color="#6366f1"
+                        >
                           <ol className="space-y-1">
                             {report.nextSteps.map((step, i) => (
                               <li key={i} className="flex gap-2 text-sm">
@@ -568,7 +672,7 @@ export default function Pathways() {
                               </li>
                             ))}
                           </ol>
-                        </div>
+                        </CollapsibleSection>
                       )}
                     </CardContent>
                   )}

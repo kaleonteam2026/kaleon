@@ -43,3 +43,19 @@ export function unitsRemaining(totalUnits: number): number {
   return Math.max(0, GRADUATION_UNITS - totalUnits);
 }
 
+/** Progress toward a configurable transfer-unit target (default 60 = UC/CSU minimum). */
+export function transferProgressPercent(
+  totalUnits: number,
+  requiredUnits: number = 60,
+): number {
+  return Math.min(100, (totalUnits / requiredUnits) * 100);
+}
+
+/** Remaining units to reach a configurable transfer-unit target. */
+export function transferUnitsRemaining(
+  totalUnits: number,
+  requiredUnits: number = 60,
+): number {
+  return Math.max(0, requiredUnits - totalUnits);
+}
+

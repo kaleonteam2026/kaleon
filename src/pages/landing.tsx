@@ -48,7 +48,7 @@ export default function Landing() {
   // With auth bypass, stay on landing so local UI changes are visible at /.
   useEffect(() => {
     if (!isLoading && isAuthenticated && !AUTH_BYPASS) {
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
 

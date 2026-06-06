@@ -8,15 +8,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { t } from "@/lib/copy";
 import {
-  GRADUATION_UNITS, graduationProgressPercent, unitsRemaining,
+  transferProgressPercent, transferUnitsRemaining,
 } from "@/lib/course-progress";
 import {
   Plus, Trash2, Loader2, ArrowRight, BookOpen, FlaskConical,
-  GraduationCap,
+  GraduationCap, ChevronDown,
 } from "lucide-react";
 import { CatalogModal } from "@/components/courses/catalog-modal";
 import { TransferabilityPanel } from "@/components/courses/transferability-panel";
 import type { Course, GpaSummary, CourseCatalog, CatalogCourse, TransferabilityResult } from "@/components/courses/course-types";
+
+const DEFAULT_TRANSFER_UNITS = 60;
+
+interface SchoolOption {
+  name: string;
+  requiredUnits: number;
+}
 
 export default function Courses() {
   const { profileId } = useParams<{ profileId: string }>();
@@ -26,6 +33,10 @@ export default function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [gpa, setGpa] = useState<GpaSummary | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Pathways (school) state
+  const [schools, setSchools] = useState<SchoolOption[]>([]);
+  const [selectedSchoolIdx, setSelectedSchoolIdx] = useState(0);
 
   // Catalog state
   const [modalOpen, setModalOpen] = useState(false);
@@ -48,8 +59,30 @@ export default function Courses() {
     Promise.all([
       fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }).then(r => r.json()),
       fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }).then(r => r.json()),
+      fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" })
+        .then(r => r.json())
+        .catch(() => []),
     ])
-      .then(([c, g]: [Course[], GpaSummary]) => { setCourses(c); setGpa(g); })
+      .then(([c, g, pathways]: [Course[], GpaSummary, unknown[]]) => {
+        setCourses(c);
+        setGpa(g);
+        // Extract school options from pathways
+        const schoolOpts: SchoolOption[] = [];
+        if (Array.isArray(pathways) && pathways.length > 0) {
+          for (const pw of pathways) {
+            const rj = (pw as Record<string, unknown>)?.reportJson as Record<string, unknown> | undefined;
+            const name = String(rj?.university ?? "University");
+            const req = Number(rj?.requiredUnits ?? DEFAULT_TRANSFER_UNITS);
+            if (name && name !== "University") {
+              schoolOpts.push({ name, requiredUnits: req });
+            }
+          }
+        }
+        // Always include a default "Transfer Minimum" option
+        schoolOpts.push({ name: "Transfer Minimum", requiredUnits: DEFAULT_TRANSFER_UNITS });
+        setSchools(schoolOpts);
+        setSelectedSchoolIdx(0);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   };
@@ -140,6 +173,11 @@ export default function Courses() {
   const inProgress = courses.filter(c => c.status === "in_progress");
   const planned    = courses.filter(c => c.status === "planned");
 
+  // Current school target
+  const activeSchool = schools[selectedSchoolIdx] ?? schools[schools.length - 1] ??
+    { name: "Transfer Minimum", requiredUnits: DEFAULT_TRANSFER_UNITS };
+  const schoolUnits = activeSchool.requiredUnits;
+
   if (loading) {
     return <PageLoadingState />;
   }
@@ -181,38 +219,58 @@ export default function Courses() {
               { label: t("pages.courses.inProgressUnits"),    value: `${gpa.inProgressUnits} ${t("pages.courses.totalUnits").toLowerCase()}` },
             ].map(s => (
               <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-3 text-center">
-                <div className="text-xl font-bold text-indigo-600">{s.value}</div>
+                <div className="text-xl font-bold text-emerald-600">{s.value}</div>
                 <div className="text-xs text-slate-600">{s.label}</div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Graduation unit progress */}
+        {/* Transfer unit progress */}
         {gpa && (
           <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 mb-5">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                <GraduationCap className="h-4 w-4 text-indigo-600" />
-                {t("pages.courses.graduationProgress")}
+                <GraduationCap className="h-4 w-4 text-emerald-600" />
+                {t("pages.courses.transferProgress")}
               </span>
-              <span className={`text-sm font-bold ${gpa.totalUnits >= GRADUATION_UNITS ? "text-emerald-600" : "text-indigo-600"}`}>
-                {gpa.totalUnits} / {GRADUATION_UNITS}
+              <span className={`text-sm font-bold ${gpa.totalUnits >= schoolUnits ? "text-emerald-600" : "text-amber-600"}`}>
+                {gpa.totalUnits} / {schoolUnits}
               </span>
             </div>
+            {/* School selector */}
+            {schools.length > 1 && (
+              <div className="mb-3 flex items-center gap-2">
+                <label className="text-xs text-slate-500">{t("pages.courses.targetSchool")}</label>
+                <div className="relative inline-block">
+                  <select
+                    className="appearance-none bg-slate-100 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
+                    value={selectedSchoolIdx}
+                    onChange={e => setSelectedSchoolIdx(Number(e.target.value))}
+                  >
+                    {schools.map((s, i) => (
+                      <option key={`${s.name}-${i}`} value={i}>
+                        {s.name} ({s.requiredUnits}u)
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="h-3 w-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+            )}
             <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-700 ${gpa.totalUnits >= GRADUATION_UNITS ? "bg-emerald-500" : "bg-indigo-500"}`}
-                style={{ width: `${graduationProgressPercent(gpa.totalUnits)}%` }}
+                className={`h-full rounded-full transition-all duration-700 ${gpa.totalUnits >= schoolUnits ? "bg-emerald-500" : "bg-emerald-400"}`}
+                style={{ width: `${transferProgressPercent(gpa.totalUnits, schoolUnits)}%` }}
               />
             </div>
             <p className="text-xs text-slate-600 mt-1.5 flex justify-between">
               <span>
-                {gpa.totalUnits >= GRADUATION_UNITS
-                  ? t("pages.courses.graduationComplete")
-                  : t("pages.courses.graduationRemaining", { units: unitsRemaining(gpa.totalUnits).toFixed(1) })}
+                {gpa.totalUnits >= schoolUnits
+                  ? t("pages.courses.transferComplete", { school: activeSchool.name })
+                  : t("pages.courses.transferRemaining", { units: transferUnitsRemaining(gpa.totalUnits, schoolUnits).toFixed(1) })}
               </span>
-              <span>{t("pages.courses.graduationRequirement", { units: GRADUATION_UNITS })}</span>
+              <span>{t("pages.courses.schoolRequires", { school: activeSchool.name, units: schoolUnits })}</span>
             </p>
           </div>
         )}
@@ -274,14 +332,14 @@ export default function Courses() {
             </div>
 
             {/* Transferability Analysis CTA */}
-            <div className="mt-8 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-2xl p-6">
+            <div className="mt-8 bg-gradient-to-br from-teal-50 to-slate-50 border border-teal-200 rounded-2xl p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="flex-1">
-                  <h2 className="text-base font-bold text-indigo-900 flex items-center gap-2">
-                    <FlaskConical className="h-5 w-5 text-indigo-500" />
+                  <h2 className="text-base font-bold text-teal-900 flex items-center gap-2">
+                    <FlaskConical className="h-5 w-5 text-teal-500" />
                     Check Course Transferability
                   </h2>
-                  <p className="text-sm text-indigo-700 mt-1">
+                  <p className="text-sm text-teal-700 mt-1">
                     AI will cross-reference your {courses.length} course{courses.length !== 1 ? "s" : ""} against ASSIST.org articulation agreements to identify which California universities best match your coursework and show your IGETC progress.
                   </p>
                 </div>
@@ -295,9 +353,9 @@ export default function Courses() {
               </div>
               {analyzing && (
                 <div className="mt-4 bg-white/60 rounded-xl p-4 text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-indigo-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-indigo-800">{t("pages.courses.checkingArticulation")}</p>
-                  <p className="text-xs text-indigo-500 mt-1">{t("pages.courses.crossReferencing")}</p>
+                  <Loader2 className="h-8 w-8 animate-spin text-teal-400 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-teal-800">{t("pages.courses.checkingArticulation")}</p>
+                  <p className="text-xs text-teal-500 mt-1">{t("pages.courses.crossReferencing")}</p>
                 </div>
               )}
             </div>

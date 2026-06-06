@@ -19,7 +19,7 @@ import { DashboardEmpty } from "@/components/dashboard/dashboard-empty";
 import { PathHeroCard } from "@/components/dashboard/path-hero-card";
 import { SidebarProfile } from "@/components/dashboard/sidebar-profile";
 import { RoadmapModules } from "@/components/dashboard/roadmap-modules";
-import { SemesterComparison } from "@/components/dashboard/semester-comparison";
+import { SemesterProgress } from "@/components/dashboard/semester-progress";
 
 function readinessAccent(score: number) {
   if (score >= 60) return { stroke: "#4ECCA3", labelKey: "pages.progress.onTrack", color: "#4ECCA3" };
@@ -140,10 +140,6 @@ export default function Dashboard() {
   const transferTerm = estimatedTransferTerm(breakdown?.totalUnits ?? 0);
   const greeting = displayName(user, profile.fullName, t("common.student"));
   const totalUnits = breakdown?.totalUnits ?? 0;
-  const kaleonSemesters = Math.max(1, Math.ceil(Math.max(0, 60 - totalUnits) / 15));
-  const typicalSemesters = 7;
-  const semestersSaved = Math.max(0, typicalSemesters - kaleonSemesters);
-  const moneySaved = semestersSaved * 2300;
   const targetSchool = summary?.chosenTransferSchool ?? summary?.topMatchUniversity;
 
   return (
@@ -319,13 +315,6 @@ export default function Dashboard() {
               </div>
             </motion.button>
           </motion.div>
-
-          <SemesterComparison
-            kaleonSemesters={kaleonSemesters}
-            typicalSemesters={typicalSemesters}
-            semestersSaved={semestersSaved}
-            moneySaved={moneySaved}
-          />
         </div>
 
         {/* Right: Modules + Disclaimer */}
@@ -337,6 +326,7 @@ export default function Dashboard() {
             itemVariants={itemVariants}
             containerVariants={containerVariants}
           />
+          <SemesterProgress profileId={profile.id} />
         </div>
 
       </div>

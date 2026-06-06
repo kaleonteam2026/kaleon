@@ -1,4 +1,5 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, type Plugin } from "vitest/config";
+import { playwright } from '@vitest/browser-playwright'
 import type { IncomingMessage, ServerResponse } from "http";
 import react from "@vitejs/plugin-react";
 import path from "path";
@@ -60,6 +61,7 @@ function serveDistStatic(): Plugin {
 }
 
 export default defineConfig({
+  envDir: ".",
   base: process.env.BASE_PATH ?? "/",
   publicDir: false,
   plugins: [react(), tailwindcss(), serveDistStatic(), pathwaysApiPlugin(), transcriptParsePlugin(), chunkSplitPlugin()],
@@ -67,6 +69,29 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "src"),
     },
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom/client", "@tanstack/react-query"],
+  },
+  test: {
+    
+    env: {
+      VITE_AUTH_BYPASS: "true",
+    },
+    server: {
+    deps: {
+      inline: ["@tanstack/react-query"],
+    },
+    },
+    browser: {
+      enabled: true,
+      headless: true,
+      provider: playwright(),
+      instances: [
+        { browser: 'chromium' },
+      ],
+    },
+    setupFiles: ["./src/test-setup.ts"],
   },
   build: {
     outDir: "dist",

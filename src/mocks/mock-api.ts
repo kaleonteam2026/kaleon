@@ -19,8 +19,6 @@ const profile = {
 };
 
 let profileCourses: StoredCourse[] = [
-  { id: 1, courseCode: "MATH 180", courseName: "Calculus I", units: 5, grade: "A", status: "completed", term: "Fall 2024" },
-  { id: 2, courseCode: "CS 101", courseName: "Intro to Programming", units: 4, grade: "A-", status: "completed", term: "Spring 2025" },
 ];
 
 function getCoursesForProfile(profileId: number): StoredCourse[] {
@@ -98,6 +96,7 @@ const pathways = [
       whyItFits: "Strong GPA and aligned prerequisites.",
       concerns: "Complete remaining major prep courses.",
       gpaTarget: 3.5,
+      requiredUnits: 60,
       courseGaps: ["MATH 280", "PHYS 210", "CS 250"],
       transferTimeline: "Fall 2027",
       scholarshipOptions: ["Cal Grant"],
@@ -158,6 +157,7 @@ export function installMockApi(): void {
     const gpaSummary = computeGpaSummary(courses, profile.currentGpa);
 
     if (pathname === "/api/auth/user") {
+      if (isAuthBypass()) return json({ user: { id: "dev", email: "dev@local", firstName: "Dev", lastName: "User" } });
       if (isSupabaseConfigured) return json({ user: null });
       return json({ user: { id: "dev", email: "dev@local", firstName: "Dev", lastName: "User" } });
     }

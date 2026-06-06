@@ -144,12 +144,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(() => {
     if (AUTH_BYPASS) {
-      setLocation("/dashboard");
+      setLocation("/dashboard", { replace: true });
       return;
     }
     if (USE_SUPABASE) {
       setAuthError(null);
-      setLocation("/auth");
+      setLocation("/auth", { replace: true });
       return;
     }
     window.location.href = `/api/login?returnTo=${encodeURIComponent("/")}`;

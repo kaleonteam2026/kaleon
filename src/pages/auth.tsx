@@ -53,7 +53,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (!isLoading && isAuthenticated && !authVerifying) {
       localStorage.removeItem("kaleon_auth_returnTo");
-      navigate(returnTo);
+      navigate(returnTo, { replace: true });
     }
   }, [isAuthenticated, isLoading, authVerifying, navigate, returnTo]);
 

@@ -6,8 +6,9 @@ import { cn } from "@/lib/utils";
 import { GraduationCap, ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
 import { appendDevCourses } from "@/lib/dev-courses";
-import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile } from "@/lib/dev-profile";
-import { isSupabaseConfigured } from "@/lib/supabase";
+import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { createSnapshot } from "@/lib/supabase-semesters";
 import { useMotionEnabled, useDirSign, DUR, EASE_OUT } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { t } from "@/lib/copy";
@@ -15,6 +16,7 @@ import { t } from "@/lib/copy";
 import { IntroPhase } from "@/components/onboarding/intro-phase";
 import { CalculatingPhase } from "@/components/onboarding/calculating-phase";
 import { ReadyPhase } from "@/components/onboarding/ready-phase";
+import { SchoolPreviewPhase } from "@/components/onboarding/school-preview-phase";
 import { FormSteps } from "@/components/onboarding/form-steps";
 import {
   ONBOARDING_PAGE_BG, ONBOARDING_CARD, STEP_ICONS, INTRO_DURATION_MS,
@@ -37,12 +39,18 @@ export default function Onboarding() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [phase, setPhase] = useState<"intro" | "form" | "calculating" | "ready">("intro");
+  const [phase, setPhase] = useState<"intro" | "form" | "calculating" | "ready" | "schools">("intro");
   const [pendingTranscripts, setPendingTranscripts] = useState<PendingTranscript[]>([]);
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const pendingIdRef = useRef(0);
+  const [pathwaySchools, setPathwaySchools] = useState<{
+    university: string;
+    pathwayType: "least_compatible" | "moderately_compatible" | "most_compatible";
+    compatibilityScore: number;
+  }[]>([]);
+  const createdProfileIdRef = useRef<number | null>(null);
   const [form, setForm] = useState<FormData>({
     fullName: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.firstName ?? ""),
     communityCollege: "",
@@ -160,6 +168,26 @@ export default function Onboarding() {
   );
   const flattenedTotalUnits = scanResults.reduce((s, r) => s + r.totalUnits, 0);
 
+  // Determine the best term label from parsed courses, or use a fallback
+  const detectedTermLabel = (): string => {
+    const terms = flattenedCourses
+      .map((c) => c.term)
+      .filter((t): t is string => Boolean(t && t.trim()));
+    if (terms.length === 0) return "Initial Transcript";
+    const freq = new Map<string, number>();
+    for (const t of terms) freq.set(t, (freq.get(t) ?? 0) + 1);
+    let best = "";
+    let bestCount = 0;
+    for (const [t, count] of freq) {
+      if (count > bestCount) {
+        best = t;
+        bestCount = count;
+      }
+    }
+    return best || "Initial Transcript";
+  };
+  const termLabel = detectedTermLabel();
+
   const submit = async () => {
     if (!user?.id) return;
     setSubmitting(true);
@@ -198,6 +226,23 @@ export default function Onboarding() {
             status: "completed",
           })));
         }
+        saveDevSemesterSnapshot(DEV_PROFILE_ID, {
+          user_id: user.id,
+          profile_id: DEV_PROFILE_ID,
+          term_label: termLabel,
+          college: form.communityCollege || "Unknown",
+          cumulative_gpa: flattenedGpa || null,
+          cumulative_units: flattenedTotalUnits || null,
+          term_gpa: flattenedGpa || null,
+          term_units: flattenedTotalUnits || null,
+          courses: flattenedCourses.map(c => ({
+            course_code: c.code,
+            course_name: c.name,
+            units: c.units ?? null,
+            grade: null,
+          })),
+        });
+        createdProfileIdRef.current = DEV_PROFILE_ID;
         setPhase("calculating");
         setTimeout(() => setPhase("ready"), 2800);
         return;
@@ -232,8 +277,83 @@ export default function Onboarding() {
           }),
         });
       }
+
+      // Save a semester snapshot in Supabase
+      if (isSupabaseConfigured && created?.id) {
+        await createSnapshot({
+          user_id: user.id,
+          profile_id: created.id,
+          term_label: termLabel,
+          college: form.communityCollege || "Unknown",
+          cumulative_gpa: flattenedGpa || null,
+          cumulative_units: flattenedTotalUnits || null,
+          term_gpa: flattenedGpa || null,
+          term_units: flattenedTotalUnits || null,
+          courses: flattenedCourses.map(c => ({
+            course_code: c.code,
+            course_name: c.name,
+            units: c.units ?? null,
+            grade: null,
+          })),
+        });
+      }
+      createdProfileIdRef.current = created.id;
       setPhase("calculating");
-      setTimeout(() => setPhase("ready"), 2800);
+
+      // Try to generate pathways in the background
+      try {
+        const pwRes = await fetch(`/api/profiles/${created.id}/generate-pathways`, {
+          method: "POST", credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileId: created.id,
+            fullName: payload.fullName,
+            communityCollege: payload.communityCollege,
+            intendedMajor: payload.intendedMajor,
+            careerGoal: payload.careerGoal,
+            currentGpa: flattenedGpa || undefined,
+            transferTimeline: form.transferTimeline,
+            financialSituation: form.financialSituation,
+            isFirstGen: form.isFirstGen,
+            courses: flattenedCourses.map(c => ({
+              courseCode: c.code,
+              courseName: c.name,
+              units: c.units,
+              term: c.term,
+              status: "completed",
+            })),
+            totalUnits: flattenedTotalUnits || undefined,
+          }),
+        });
+        if (pwRes.ok) {
+          const pwData = await pwRes.json() as {
+            pathways?: Array<{
+              pathwayType: string;
+              compatibilityScore: number;
+              reportJson?: { university: string };
+            }>;
+          };
+          const schools = (pwData.pathways ?? []).map((p) => {
+            const pt: "least_compatible" | "moderately_compatible" | "most_compatible" =
+              p.pathwayType === "least_compatible" || p.pathwayType === "most_compatible"
+                ? p.pathwayType
+                : "moderately_compatible";
+            return {
+              university: p.reportJson?.university ?? "UC Campus",
+              pathwayType: pt as "least_compatible" | "moderately_compatible" | "most_compatible",
+              compatibilityScore: p.compatibilityScore ?? 70,
+            } satisfies { university: string; pathwayType: "least_compatible" | "moderately_compatible" | "most_compatible"; compatibilityScore: number };
+          });
+          if (schools.length > 0) {
+            setPathwaySchools(schools);
+            setPhase("schools");
+            return;
+          }
+        }
+      } catch {
+        // Non-fatal — fall through to ready phase
+      }
+      setPhase("ready");
     } catch (e) {
       console.error(e);
       setSubmitting(false);
@@ -247,7 +367,15 @@ export default function Onboarding() {
 
   if (phase === "intro") return <IntroPhase />;
   if (phase === "calculating") return <CalculatingPhase />;
-  if (phase === "ready") return <ReadyPhase />;
+  if (phase === "ready") return <ReadyPhase profileId={createdProfileIdRef.current ?? DEV_PROFILE_ID} />;
+  if (phase === "schools") {
+    return (
+      <SchoolPreviewPhase
+        pathways={pathwaySchools}
+        profileId={createdProfileIdRef.current ?? DEV_PROFILE_ID}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen pwc-font-sans flex items-center justify-center px-4 py-12" style={ONBOARDING_PAGE_BG}>

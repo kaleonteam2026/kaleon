@@ -43,6 +43,7 @@ export interface GeneratedPathway {
     concerns: string;
     riskAnalysis: string;
     gpaTarget: number;
+    requiredUnits: number;
     courseGaps: string[];
     coursesAnalyzed: string[];
     transferTimeline: string;
@@ -67,14 +68,16 @@ export interface PathwayGenerationResult {
 
 const SYSTEM_PROMPT = `You are Kaleon, an expert California community college transfer advisor.
 
-Generate content for personalized transfer pathways: one stretch school, one match school, and one safety school.
+Generate personalized transfer pathways: one stretch school, one match school, and one safety school.
 
 For each school you must:
-1. Provide a tailored pathway report (why it fits, GPA target, timeline, next steps).
-2. Provide a clear risk analysis for that specific school (competition, major impaction, GPA gap, missing prep, timeline risk).
-3. Analyze the student's completed/in-progress courses against that school's major prep — list course gaps they still need and note which completed courses help.
+1. Provide a concise pathway report — why it fits, GPA target, timeline, and next steps.
+2. Include a brief risk analysis (competition, major impaction, GPA gap, missing prep, timeline risk).
+3. Analyze the student's completed/in-progress courses against that school's major prep — list key course gaps needed and note which completed courses help.
 
-Also analyze all courses holistically and compute graduation progress toward ${GRADUATION_UNITS} semester units for the progress bar (completed units, units remaining, percent complete).
+Also analyze all courses holistically and compute graduation progress toward ${GRADUATION_UNITS} semester units for the progress bar.
+
+BE CONCISE. Keep all text fields as short as possible. Avoid paragraphs longer than 2-3 sentences. Cap each array at 3-4 items maximum.
 
 Return JSON only — no markdown outside the JSON object:
 
@@ -84,7 +87,7 @@ Return JSON only — no markdown outside the JSON object:
     "graduationRequirement": ${GRADUATION_UNITS},
     "unitsRemaining": number,
     "percentComplete": number (0-100),
-    "courseAnalysis": string (2-4 sentences on course progress, transferable units, and what's left for graduation/transfer prep)
+    "courseAnalysis": string (1 sentence on course progress and what's left)
   },
   "pathways": [
     {
@@ -94,19 +97,20 @@ Return JSON only — no markdown outside the JSON object:
         "type": same as pathwayType,
         "university": string (real California UC or CSU),
         "compatibilityScore": number,
-        "whyItFits": string,
-        "concerns": string (short summary),
-        "riskAnalysis": string (detailed risk analysis for this school),
+        "whyItFits": string (2-3 sentences max),
+        "concerns": string (2-3 sentences max),
+        "riskAnalysis": string (3-4 sentences max, concise),
         "gpaTarget": number,
-        "courseGaps": string[] (courses still needed — exclude completed courses),
-        "coursesAnalyzed": string[] (completed courses relevant to this pathway),
-        "transferTimeline": string,
-        "scholarshipOptions": string[],
-        "internshipRecommendations": string[],
-        "extracurricularRecommendations": string[],
-        "campusOpportunities": [{ "name", "type", "description", "admitProfileNote" }],
-        "risks": string[] (bullet-style risk factors),
-        "nextSteps": string[]
+        "requiredUnits": number (number of semester units needed to transfer to this school, typically 60–70),
+        "courseGaps": string[] (max 4 items),
+        "coursesAnalyzed": string[] (max 4 items),
+        "transferTimeline": string (1 sentence),
+        "scholarshipOptions": string[] (max 4),
+        "internshipRecommendations": string[] (max 4),
+        "extracurricularRecommendations": string[] (max 3),
+        "campusOpportunities": [{ "name", "type", "description", "admitProfileNote" }] (max 3 items, each description 1 sentence),
+        "risks": string[] (max 4 bullet points),
+        "nextSteps": string[] (max 4 items)
       }
     }
   ]
@@ -189,6 +193,7 @@ function normalizePathways(raw: unknown, profileId: number): GeneratedPathway[] 
         concerns: String(report.concerns ?? ""),
         riskAnalysis: String(report.riskAnalysis ?? risks.join(" ")),
         gpaTarget: Number(report.gpaTarget ?? 3.0),
+        requiredUnits: Number(report.requiredUnits ?? 60),
         courseGaps: Array.isArray(report.courseGaps) ? report.courseGaps.map(String) : [],
         coursesAnalyzed: Array.isArray(report.coursesAnalyzed) ? report.coursesAnalyzed.map(String) : [],
         transferTimeline: String(report.transferTimeline ?? ""),
@@ -220,21 +225,15 @@ function buildUserPrompt(input: PathwayGenerationInput): string {
     `${c.courseCode ?? c.courseName}${c.units ? ` (${c.units}u)` : ""}${c.term ? ` — ${c.term}` : ""}`;
 
   return [
-    "Generate personalized transfer pathways (stretch, match, safety).",
-    "Provide risk analysis for each school.",
-    "Analyze courses and update the progress bar from courses/pathways using the graduation requirement.",
-    "",
     "Student profile:",
-    `- Name: ${input.fullName ?? "Student"}`,
-    `- Community college: ${input.communityCollege ?? "Unknown"}`,
-    `- Intended major: ${input.intendedMajor ?? "Undecided"}`,
-    `- Career goal: ${input.careerGoal ?? "Not specified"}`,
-    `- Current GPA: ${input.currentGpa ?? "Unknown"}`,
-    `- Transfer timeline: ${input.transferTimeline ?? "Undecided"}`,
-    `- Financial situation: ${input.financialSituation ?? "Not specified"}`,
+    `- College: ${input.communityCollege ?? "Unknown"}`,
+    `- Major: ${input.intendedMajor ?? "Undecided"}`,
+    `- Career: ${input.careerGoal ?? "Not specified"}`,
+    `- GPA: ${input.currentGpa ?? "Unknown"}`,
+    `- Timeline: ${input.transferTimeline ?? "Undecided"}`,
+    `- Finances: ${input.financialSituation ?? "Not specified"}`,
     `- First-gen: ${input.isFirstGen ?? "Not specified"}`,
-    `- Completed units (from transcript/profile): ${input.totalUnits ?? "Unknown"}`,
-    `- Graduation requirement: ${GRADUATION_UNITS} units`,
+    `- Units completed: ${input.totalUnits ?? "Unknown"} / ${GRADUATION_UNITS}`,
     "",
     "Completed courses:",
     completed.map(formatCourse).join("\n") || "(none)",

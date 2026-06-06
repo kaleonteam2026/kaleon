@@ -15,6 +15,7 @@ import { PageMotion } from "@/components/page-motion";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/copy";
 import { apiProfileToFormData, EMPTY_PROFILE_FORM } from "@/lib/profile-mappers";
+import { SemesterHistory } from "@/components/profile/semester-history";
 import type { ProfileFormData } from "@/types/profile";
 
 // All 116 California Community Colleges
@@ -609,6 +610,9 @@ export default function Profile() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Semester History */}
+          {form.id ? <SemesterHistory profileId={form.id} /> : null}
 
           {/* Reminder preferences */}
           {form.id ? <ReminderPrefsSection profileId={form.id} /> : null}
