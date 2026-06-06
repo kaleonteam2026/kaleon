@@ -4,7 +4,7 @@ import { generatePathwaysWithDeepSeek } from "./generate-pathways.js";
 import { parseTranscriptWithAI } from "./transcript-parse.js";
 
 const app = express();
-const PORT = process.env.PORT ?? 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const DIST = path.resolve(import.meta.dirname, "..", "dist");
 
 app.use(express.json());
