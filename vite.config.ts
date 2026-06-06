@@ -63,7 +63,7 @@ function serveDistStatic(): Plugin {
 export default defineConfig({
   envDir: ".",
   base: process.env.BASE_PATH ?? "/",
-  publicDir: false,
+  publicDir: "public",
   plugins: [react(), tailwindcss(), serveDistStatic(), pathwaysApiPlugin(), transcriptParsePlugin(), chunkSplitPlugin()],
   resolve: {
     alias: {

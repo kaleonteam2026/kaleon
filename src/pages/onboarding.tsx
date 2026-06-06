@@ -31,8 +31,8 @@ export default function Onboarding() {
   }[] = [
     { title: t("onboarding.step1Title"), subtitle: t("onboarding.step1Subtitle"), icon: null },
     { title: t("onboarding.step2Title"), subtitle: t("onboarding.step2Subtitle"), icon: STEP_ICONS[0] },
-    { title: t("onboarding.step3Title"), subtitle: t("onboarding.step3Subtitle"), icon: STEP_ICONS[1] },
-    { title: t("onboarding.step4Title"), subtitle: t("onboarding.step4Subtitle"), icon: STEP_ICONS[2] },
+    { title: "Review Your Scan", subtitle: "Confirm everything is accurate before we map your path", icon: STEP_ICONS[1] },
+    { title: "Timeline & Background", subtitle: "Help us personalize your pathway", icon: STEP_ICONS[2] },
   ];
 
   const { user, updateProfileName } = useAuth();
@@ -44,6 +44,7 @@ export default function Onboarding() {
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
+  const [hasMultipleColleges, setHasMultipleColleges] = useState<boolean | null>(null);
   const pendingIdRef = useRef(0);
   const [pathwaySchools, setPathwaySchools] = useState<{
     university: string;
@@ -100,17 +101,23 @@ export default function Onboarding() {
             courses: [],
             latestGpa: null,
             totalUnits: 0,
+            detectedMajor: null,
           });
           continue;
         }
 
         // 2. Try AI-powered parsing via server endpoint
-        let result: { courses: { code: string; name: string; units?: number; term?: string }[]; latestGpa: number | null; totalUnits: number };
+        let result: {
+          courses: { code: string; name: string; units?: number; term?: string; college?: string }[];
+          latestGpa: number | null;
+          totalUnits: number;
+          detectedMajor?: string | null;
+        };
         try {
           const res = await fetch("/api/transcript/parse", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify({ text, detectMultipleColleges: hasMultipleColleges === true }),
           });
           if (res.ok) {
             result = (await res.json()) as typeof result;
@@ -120,14 +127,28 @@ export default function Onboarding() {
         } catch {
           // 3. Fallback to client-side regex parser
           const fallback = parseTranscriptText(text);
-          result = { ...fallback, latestGpa: fallback.latestGpa ?? null };
+          result = { ...fallback, latestGpa: fallback.latestGpa ?? null, detectedMajor: null };
         }
 
+        // If AI detected a major, pre-fill the major field (only if not already set)
+        if (result.detectedMajor) {
+          setForm(prev => prev.intendedMajor ? prev : { ...prev, intendedMajor: result.detectedMajor! });
+        }
+
+        // Determine college name: use per-course college if detected, else the file's college
+        const defaultCollege = pt.college.trim() || pt.file.name.replace(/\.pdf$/i, "");
         results.push({
-          college: pt.college.trim() || pt.file.name.replace(/\.pdf$/i, ""),
-          courses: result.courses.map(c => ({ code: c.code, name: c.name, units: c.units, term: c.term })),
+          college: defaultCollege,
+          courses: result.courses.map(c => ({
+            code: c.code,
+            name: c.name,
+            units: c.units,
+            term: c.term,
+            college: c.college,
+          })),
           latestGpa: result.latestGpa,
           totalUnits: result.totalUnits,
+          detectedMajor: result.detectedMajor,
         });
       }
       setScanResults(results);
@@ -146,6 +167,30 @@ export default function Onboarding() {
           ? { ...sr, courses: sr.courses.filter(c => c.code !== code) }
           : sr,
       ).filter(sr => sr.courses.length > 0)
+    );
+  };
+
+  const handleAddCourseToScan = (college: string, course: { code: string; name: string; units?: number; term?: string }) => {
+    setScanResults(prev =>
+      prev.map(sr =>
+        sr.college === college
+          ? { ...sr, courses: [...sr.courses, course], totalUnits: sr.totalUnits + (course.units ?? 0) }
+          : sr,
+      )
+    );
+  };
+
+  const handleUpdateCourseInScan = (college: string, oldCode: string, updated: { code: string; name: string; units?: number; term?: string }) => {
+    setScanResults(prev =>
+      prev.map(sr => {
+        if (sr.college !== college) return sr;
+        const updatedCourses = sr.courses.map(c => (c.code === oldCode ? { ...c, ...updated } : c));
+        return {
+          ...sr,
+          courses: updatedCourses,
+          totalUnits: updatedCourses.reduce((sum, c) => sum + (c.units ?? 0), 0),
+        };
+      })
     );
   };
 
@@ -433,7 +478,11 @@ export default function Onboarding() {
               scanResults={scanResults}
               onScan={handleScan}
               onRemoveCourseFromScan={handleRemoveCourseFromScan}
+              onAddCourseToScan={handleAddCourseToScan}
+              onUpdateCourseInScan={handleUpdateCourseInScan}
               onClearAllTranscripts={handleClearAllTranscripts}
+              hasMultipleColleges={hasMultipleColleges}
+              onSetMultipleColleges={setHasMultipleColleges}
               motionOn={motionOn}
               dir={dir}
             />

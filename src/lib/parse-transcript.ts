@@ -10,6 +10,14 @@ export interface ExtractedCourse {
   name: string;
   units?: number;
   term?: string;
+  college?: string;
+}
+
+export interface TranscriptParseResult {
+  courses: ExtractedCourse[];
+  latestGpa?: number;
+  totalUnits: number;
+  detectedMajor?: string | null;
 }
 
 export interface TranscriptParseResult {

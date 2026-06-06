@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { X, Upload, FileText, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
 import { createSnapshot, deleteAllSnapshots } from "@/lib/supabase-semesters";
@@ -6,6 +6,7 @@ import { isAuthBypass, saveDevSemesterSnapshot, deleteAllDevSemesterSnapshots } 
 import { appendDevCourses } from "@/lib/dev-courses";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { GRADUATION_UNITS, type StoredCourse } from "@/lib/course-progress";
+import { ParsingMessages } from "@/components/onboarding/parsing-messages";
 
 interface ReuploadTranscriptModalProps {
   profileId: number;
@@ -32,126 +33,6 @@ export function ReuploadTranscriptModal({
   } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const bypass = isAuthBypass();
-
-  // ─── Rotating parsing messages ──────────────────────────────────────
-  const PARSE_MESSAGES = [
-    "Grab a cup of coffee",
-    "Take a 5 min walk",
-    "Hit 20 pushups",
-    "Stretch your legs",
-    "Take a deep breath in",
-    "Slowly exhale...",
-    "Look out the window",
-    "Roll your shoulders back",
-    "Close your eyes for a moment",
-    "Drink a glass of water",
-    "Sit up nice and tall",
-    "Unclench your jaw",
-    "Wiggle your toes",
-    "Crack your knuckles",
-    "Roll your neck gently",
-    "Write down three things you're grateful for",
-    "Hum your favorite song",
-    "Tap your fingers to a rhythm",
-    "Squeeze a stress ball",
-    "Do 10 calf raises",
-    "Straighten your posture",
-    "Smile for no reason",
-    "Blink slowly a few times",
-    "Massage your temples",
-    "Shrug your shoulders up and down",
-    "Do a quick seated twist",
-    "Touch your toes",
-    "Take a sip of tea",
-    "Pet your cat or dog",
-    "Listen to the birds outside",
-    "Count backward from 20",
-    "Visualize your goal university",
-    "Repeat: 'I've got this'",
-    "Flex your feet back and forth",
-    "Do 5 jumping jacks",
-    "Hug yourself for 5 seconds",
-    "March in place for 30 seconds",
-    "Do a wall sit for 15 seconds",
-    "Breathe in for 4 counts",
-    "Hold for 4 counts",
-    "Breathe out for 6 counts",
-    "Repeat a positive mantra",
-    "Think of a happy memory",
-    "Trace shapes on your palm",
-    "Gently massage your hands",
-    "Look at something green",
-    "Let your mind wander",
-    "Make a mental to-do list",
-    "Plan a fun weekend activity",
-    "Recall a funny joke",
-    "Name 5 things you can see",
-    "Name 4 things you can feel",
-    "Name 3 things you can hear",
-    "Name 2 things you can smell",
-    "Name 1 thing you can taste",
-    "Do a quick gratitude check-in",
-    "Rest your hands in your lap",
-    "Lengthen your spine",
-    "Tuck your chin slightly",
-    "Soften your gaze",
-    "Set an intention for the day",
-    "Think of someone who inspires you",
-    "Imagine your dream study spot",
-    "Do 10 arm circles",
-    "Roll your wrists gently",
-    "Stand up and sit back down",
-    "Fix your posture one more time",
-    "Organize your desk a little",
-    "Straighten a stack of papers",
-    "Tidy up your keyboard",
-    "Wipe your screen gently",
-    "Plug in your charger if low",
-    "Check your pen collection",
-    "Rearrange a small shelf",
-    "Water a nearby plant",
-    "Brush some dust off your desk",
-    "Fold a piece of paper into a shape",
-    "Doodle on a scrap page",
-    "Stare at a blank wall for 10 seconds",
-    "Listen to ambient sounds",
-    "Whistle a short tune",
-    "Tap a steady beat on the table",
-    "Bounce your leg gently",
-    "Stretch your fingers wide",
-    "Clench and release your fists",
-    "Reach your arms overhead",
-    "Lean side to side slowly",
-    "Rotate your ankles in circles",
-    "Press your palms together firmly",
-    "Raise your eyebrows high then relax",
-    "Puff your cheeks and release",
-    "Tense your whole body for 5 seconds",
-    "Let everything go limp",
-    "Enjoy this moment of stillness",
-    "Think of your favorite summer day",
-    "Recall the smell of rain",
-    "Picture a calm ocean wave",
-    "Imagine a gentle breeze",
-    "You're doing great — keep going",
-    "Almost there — stay chill",
-    "Your future self thanks you",
-    "One step closer to your goals",
-    "Progress, not perfection",
-    "Small wins add up",
-    "You've handled harder things",
-    "This is the easy part",
-  ];
-
-  const [parsingMsgIndex, setParsingMsgIndex] = useState(0);
-
-  useEffect(() => {
-    if (status !== "parsing") return;
-    const timer = setInterval(() => {
-      setParsingMsgIndex((i) => (i + 1) % PARSE_MESSAGES.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [status]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -349,18 +230,7 @@ export function ReuploadTranscriptModal({
               <p className="text-xs" style={{ color: "#64748b" }}>Your dashboard will refresh with the latest data.</p>
             </div>
           ) : status === "parsing" ? (
-            <div className="flex flex-col items-center gap-4 py-8 text-center">
-              <Loader2 className="h-10 w-10 animate-spin" style={{ color: "#4ECCA3" }} />
-              <p className="text-sm font-medium" style={{ color: "#cbd5e1" }}>Parsing transcript...</p>
-              <div className="px-4 py-3 rounded-lg" style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.12)" }}>
-                <p className="text-[10px] pwc-font-mono uppercase tracking-wider mb-2" style={{ color: "#475569" }}>
-                  This should take a minute, meanwhile:
-                </p>
-                <p key={parsingMsgIndex} className="text-sm italic leading-relaxed min-h-[2lh]" style={{ color: "#4ECCA3" }}>
-                  {PARSE_MESSAGES[parsingMsgIndex]}
-                </p>
-              </div>
-            </div>
+            <ParsingMessages visible title="Parsing transcript..." />
           ) : status === "saving" ? (
             <div className="flex flex-col items-center gap-3 py-6 text-center">
               <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#4ECCA3" }} />

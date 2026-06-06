@@ -34,13 +34,13 @@ app.post("/api/transcript/parse", async (req, res) => {
     res.status(503).json({ error: "DeepSeek API key not configured" });
     return;
   }
-  const { text } = req.body ?? {};
+  const { text, detectMultipleColleges } = req.body ?? {};
   if (!text || typeof text !== "string") {
     res.status(400).json({ error: "Missing 'text' field" });
     return;
   }
   try {
-    const result = await parseTranscriptWithAI(text, apiKey);
+    const result = await parseTranscriptWithAI(text, apiKey, !!detectMultipleColleges);
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: String(e) });

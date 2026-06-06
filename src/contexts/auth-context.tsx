@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import {
@@ -57,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return new URLSearchParams(window.location.search).has("token_hash");
   });
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccessPath, setAuthSuccessPath] = useState<string | null>(null);
 
   const applySession = useCallback(async (session: Awaited<ReturnType<typeof getCurrentSession>>) => {
     if (session?.user) {
@@ -108,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true;
+    let authChannel: BroadcastChannel | null = null;
 
     async function initSupabaseAuth() {
       const params = new URLSearchParams(window.location.search);
@@ -117,6 +119,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!mounted) return;
         if (error) setAuthError(error);
         setAuthVerifying(false);
+
+        // If we just verified the magic link in THIS tab, notify other tabs
+        // and close (the magic link email opened this as a new tab).
+        const session = await getCurrentSession();
+        if (!mounted) return;
+        if (session?.user) {
+          const returnTo = localStorage.getItem("kaleon_auth_returnTo") || "/dashboard";
+          try {
+            const channel = new BroadcastChannel("kaleon-auth");
+            channel.postMessage({ type: "auth-success", returnTo });
+            channel.close();
+          } catch { /* BroadcastChannel may not be available */ }
+          // Attempt to close this tab — it was opened by the magic link email
+          window.close();
+        }
       }
 
       const session = await getCurrentSession();
@@ -126,6 +143,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     initSupabaseAuth();
+
+    // Listen for auth success in another tab (the magic link tab)
+    try {
+      authChannel = new BroadcastChannel("kaleon-auth");
+      authChannel.onmessage = (event) => {
+        if (event.data?.type === "auth-success") {
+          const path = event.data.returnTo || "/dashboard";
+          // Re-fetch session to pick up the new auth state
+          getCurrentSession().then((session) => {
+            if (!mounted) return;
+            applySession(session);
+            setAuthSuccessPath(path);
+          });
+        }
+      };
+    } catch { /* BroadcastChannel may not be available */ }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       await applySession(session);
@@ -139,8 +172,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      authChannel?.close();
     };
   }, [applySession, fetchUser]);
+
+  // Navigate when auth completes from a cross-tab broadcast
+  useEffect(() => {
+    if (authSuccessPath && !isLoading && user && !authVerifying) {
+      setAuthSuccessPath(null);
+      localStorage.removeItem("kaleon_auth_returnTo");
+      setLocation(authSuccessPath, { replace: true });
+    }
+  }, [authSuccessPath, isLoading, user, authVerifying, setLocation]);
 
   const login = useCallback(() => {
     if (AUTH_BYPASS) {

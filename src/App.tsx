@@ -1,7 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { motion, useReducedMotion } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PageLoadingState } from "@/components/page-loading-state";
@@ -51,9 +50,6 @@ function ChatBubbleWrapper() {
 }
 
 function Router() {
-  const [location] = useLocation();
-  const reduced = useReducedMotion();
-  const animateRoutes = !reduced;
 
   const routes = (
           <Switch>
@@ -151,18 +147,7 @@ function Router() {
 
   return (
     <>
-      {animateRoutes ? (
-        <motion.div
-          key={location}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {routes}
-        </motion.div>
-      ) : (
-        routes
-      )}
+      {routes}
       <ChatBubbleWrapper />
     </>
   );

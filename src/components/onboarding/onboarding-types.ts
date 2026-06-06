@@ -21,4 +21,5 @@ export interface ScanResult {
   courses: ExtractedCourse[];
   latestGpa: number | null;
   totalUnits: number;
+  detectedMajor?: string | null;
 }

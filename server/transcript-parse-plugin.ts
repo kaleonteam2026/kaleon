@@ -41,13 +41,13 @@ export function transcriptParsePlugin(): Plugin {
 
         try {
           const raw = await readBody(req);
-          const { text } = JSON.parse(raw) as { text: string };
+          const { text, detectMultipleColleges } = JSON.parse(raw) as { text: string; detectMultipleColleges?: boolean };
           if (!text?.trim()) {
             sendJson(res, 400, { error: "Missing 'text' field in request body." });
             return;
           }
 
-          const result = await parseTranscriptWithAI(text, apiKey.trim());
+          const result = await parseTranscriptWithAI(text, apiKey.trim(), detectMultipleColleges);
           sendJson(res, 200, result);
         } catch (err) {
           const message = err instanceof Error ? err.message : "Transcript parsing failed";
