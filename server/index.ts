@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
-import { generatePathwaysWithDeepSeek } from "./generate-pathways.js";
-import { parseTranscriptWithAI } from "./transcript-parse.js";
+import { generatePathwaysWithDeepSeek } from "./generate-pathways.ts";
+import { parseTranscriptWithAI } from "./transcript-parse.ts";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
