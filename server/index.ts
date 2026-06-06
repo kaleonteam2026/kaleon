@@ -52,7 +52,7 @@ app.post("/api/transcript/parse", async (req, res) => {
 app.use(express.static(DIST));
 
 // SPA fallback — any unmatched route serves the app shell
-app.get("{*splat}", (_req, res) => {
+app.use((_req, res) => {
   res.sendFile(path.join(DIST, "index.html"));
 });
 
