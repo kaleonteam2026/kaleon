@@ -24,6 +24,7 @@ export default function AuthPage() {
     isAuthenticated,
     isLoading,
     signInWithEmail,
+    verifyOtp,
     authVerifying,
     authError,
     clearAuthError,
@@ -49,6 +50,8 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [linkSent, setLinkSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [verifyingCode, setVerifyingCode] = useState(false);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && !authVerifying) {
@@ -166,7 +169,7 @@ export default function AuthPage() {
                 {t("auth.verifyingBody")}
               </p>
             </div>
-          ) : linkSent ? (
+          ) : linkSent && !verifyingCode ? (
             <>
               <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mb-2" style={{ color: "#f8fafc" }}>
                 {t("auth.sentTitle")}
@@ -180,18 +183,114 @@ export default function AuthPage() {
                 }}
               >
                 <Mail className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "#4ECCA3" }} />
-                <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
-                  {t("auth.sentBody", { email })}
-                </p>
+                <div className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
+                  <p className="mb-2">{t("auth.sentBody", { email })}</p>
+                  <p className="font-medium" style={{ color: "#f1f5f9" }}>
+                    If the link opened on another device, enter the verification code below instead.
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
+                onClick={() => setVerifyingCode(true)}
+                className="kaleon-btn-primary w-full px-4 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold flex items-center justify-center gap-2"
+                style={{ borderRadius: 8 }}
+              >
+                Enter Verification Code
+              </button>
+              <button
+                type="button"
                 onClick={() => { setLinkSent(false); setEmail(""); }}
-                className="kaleon-btn-outline w-full px-4 py-3 text-xs pwc-font-mono uppercase tracking-wider font-bold"
+                className="kaleon-btn-outline w-full px-4 py-3 text-xs pwc-font-mono uppercase tracking-wider font-bold mt-2"
                 style={{ borderRadius: 8 }}
               >
                 {t("auth.useDifferentEmail")}
               </button>
+            </>
+          ) : linkSent && verifyingCode ? (
+            <>
+              <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mb-2" style={{ color: "#f8fafc" }}>
+                Enter Code
+              </h1>
+              <p className="text-sm mb-4 leading-relaxed" style={{ color: "#94a3b8" }}>
+                Check your email at <strong style={{ color: "#f1f5f9" }}>{email}</strong> for a 6-digit verification code.
+                Enter it below to sign in on this device.
+              </p>
+
+              {displayError && (
+                <p
+                  className="text-sm mb-4 px-3 py-2"
+                  style={{
+                    color: "#fca5a5",
+                    background: "rgba(239,68,68,0.08)",
+                    border: "1px solid rgba(239,68,68,0.25)",
+                    borderRadius: 8,
+                  }}
+                >
+                  {displayError}
+                </p>
+              )}
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setLocalError(null);
+                  clearAuthError();
+                  if (!otpCode.trim()) return;
+                  setLoading(true);
+                  const result = await verifyOtp(email, otpCode.trim());
+                  if (result.error) {
+                    setLocalError(result.error);
+                  }
+                  setLoading(false);
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label
+                    className="text-xs pwc-font-mono uppercase tracking-wider font-bold mb-2 block"
+                    style={{ color: "#64748b" }}
+                  >
+                    Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="000000"
+                    className="w-full px-4 py-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-[#4ECCA3] text-center text-2xl font-bold tracking-widest"
+                    style={inputStyle}
+                  />
+                  <p className="text-xs mt-2 text-center" style={{ color: "#64748b" }}>
+                    The code is in the same email as the magic link
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || otpCode.length < 6}
+                  className="kaleon-btn-primary w-full px-4 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold flex items-center justify-center gap-2 disabled:opacity-60"
+                  style={{ borderRadius: 8 }}
+                >
+                  {loading ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Verifying…</>
+                  ) : (
+                    "Verify & Sign In"
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setVerifyingCode(false); setOtpCode(""); }}
+                  className="kaleon-btn-outline w-full px-4 py-3 text-xs pwc-font-mono uppercase tracking-wider font-bold"
+                  style={{ borderRadius: 8 }}
+                >
+                  Back
+                </button>
+              </form>
             </>
           ) : (
             <>
@@ -263,7 +362,6 @@ export default function AuthPage() {
                     <input
                       type="text"
                       required
-                      autoFocus
                       autoComplete="given-name"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}

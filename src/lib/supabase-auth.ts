@@ -63,6 +63,23 @@ export async function signInWithMagicLink(
   return error ? { error: error.message } : {};
 }
 
+/**
+ * Verify a one-time password (6-digit code) sent via email.
+ * This lets the user enter the code on their original device instead of
+ * relying on clicking the magic link (which opens wherever email is read).
+ */
+export async function verifyOtpCode(
+  email: string,
+  token: string,
+): Promise<{ error?: string }> {
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "email",
+  });
+  return error ? { error: error.message } : {};
+}
+
 export async function updateUserMetadata(
   metadata: { first_name?: string; last_name?: string },
 ): Promise<{ error?: string }> {

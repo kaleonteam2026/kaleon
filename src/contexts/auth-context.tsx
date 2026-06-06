@@ -7,6 +7,7 @@ import {
   signInWithMagicLink,
   updateUserMetadata,
   verifyMagicLinkFromUrl,
+  verifyOtpCode,
 } from "@/lib/supabase-auth";
 
 interface AuthUser {
@@ -31,6 +32,7 @@ interface AuthState {
     email: string,
     options?: { firstName?: string; returnTo?: string },
   ) => Promise<{ error?: string }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error?: string }>;
   updateProfileName: (firstName: string) => Promise<{ error?: string }>;
   logout: () => void;
   refetch: () => void;
@@ -213,6 +215,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const verifyOtp = useCallback(async (email: string, token: string) => {
+    return verifyOtpCode(email, token);
+  }, []);
+
   const updateProfileName = useCallback(async (firstName: string) => {
     const trimmed = firstName.trim();
     if (!trimmed) return { error: "Name is required" };
@@ -252,6 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         closeLogin,
         clearAuthError,
         signInWithEmail,
+        verifyOtp,
         updateProfileName,
         logout,
         refetch: fetchUser,
