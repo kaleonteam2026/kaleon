@@ -9,7 +9,7 @@ interface SidebarProfileProps {
   profile: StudentProfile;
   summary: DashboardSummary | null;
   motionOn: boolean;
-  lift: VariantLabels | TargetAndTransition;
+  lift?: VariantLabels | TargetAndTransition;
   itemVariants?: Variants;
   containerVariants?: Variants;
 }

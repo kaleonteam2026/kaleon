@@ -11,6 +11,7 @@ export interface StudentProfile {
   longTermAspirations?: string;
   isFirstGen?: string;
   interests?: string[];
+  completionPercent?: number;
 }
 
 export interface ProfileFormData {

@@ -1,15 +1,14 @@
 import { useEffect, useState, useRef } from "react";
-import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { GraduationCap, ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
 import { appendDevCourses } from "@/lib/dev-courses";
 import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
-import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import { createSnapshot } from "@/lib/supabase-semesters";
-import { useMotionEnabled, useDirSign, DUR, EASE_OUT } from "@/lib/motion";
+import { createProfile, insertCourses } from "@/lib/supabase-profiles";
+import { useMotionEnabled, useDirSign } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { t } from "@/lib/copy";
 
@@ -36,7 +35,6 @@ export default function Onboarding() {
   ];
 
   const { user, updateProfileName } = useAuth();
-  const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [phase, setPhase] = useState<"intro" | "form" | "calculating" | "ready" | "schools">("intro");
@@ -293,41 +291,40 @@ export default function Onboarding() {
         return;
       }
 
-      const r = await fetch("/api/profiles", {
-        method: "POST", credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!r.ok) throw new Error("Failed to create profile");
-      const created = (await r.json()) as { id: number };
-
-      if (isSupabaseConfigured && !isAuthBypass() && !user.firstName?.trim()) {
-        const first = (form.fullName || payload.fullName).trim().split(/\s+/)[0];
-        if (first) await updateProfileName(first);
-      }
-
-      if (flattenedCourses.length > 0 && created?.id) {
-        await fetch(`/api/profiles/${created.id}/courses/bulk`, {
-          method: "POST", credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            latestGpa: flattenedGpa || undefined,
-            courses: flattenedCourses.map(c => ({
-              courseCode: c.code,
-              courseName: c.name,
-              units: c.units,
-              term: c.term,
-              status: "completed",
-            })),
-          }),
+      // Real Supabase path: create profile + insert courses via Supabase direct
+      if (isSupabaseConfigured && !isAuthBypass()) {
+        const sp = await createProfile(user.id, {
+          fullName: payload.fullName,
+          communityCollege: payload.communityCollege,
+          intendedMajor: payload.intendedMajor,
+          careerGoal: payload.careerGoal,
+          currentGpa: payload.currentGpa,
+          transferTimeline: payload.transferTimeline,
+          financialSituation: payload.financialSituation,
+          isFirstGen: payload.isFirstGen,
+          completionPercent: payload.completionPercent,
         });
-      }
+        if (!sp?.id) throw new Error("Failed to create profile");
+        createdProfileIdRef.current = sp.id;
 
-      // Save a semester snapshot in Supabase
-      if (isSupabaseConfigured && created?.id) {
+        if (flattenedCourses.length > 0) {
+          await insertCourses(sp.id, user.id, flattenedCourses.map(c => ({
+            courseCode: c.code,
+            courseName: c.name,
+            units: c.units,
+            term: c.term,
+            status: "completed",
+          })));
+        }
+
+        if (!user.firstName?.trim()) {
+          const first = payload.fullName.trim().split(/\s+/)[0];
+          if (first) await updateProfileName(first);
+        }
+
         await createSnapshot({
           user_id: user.id,
-          profile_id: created.id,
+          profile_id: sp.id,
           term_label: termLabel,
           college: form.communityCollege || "Unknown",
           cumulative_gpa: flattenedGpa || null,
@@ -341,7 +338,20 @@ export default function Onboarding() {
             grade: null,
           })),
         });
+
+        setPhase("calculating");
+        setTimeout(() => setPhase("ready"), 2800);
+        return;
       }
+
+      // Legacy / mock path (non-Supabase or auth bypass)
+      const r = await fetch("/api/profiles", {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) throw new Error("Failed to create profile");
+      const created = (await r.json()) as { id: number };
       createdProfileIdRef.current = created.id;
       setPhase("calculating");
 

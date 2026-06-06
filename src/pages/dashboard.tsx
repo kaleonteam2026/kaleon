@@ -5,14 +5,13 @@ import { motion } from "framer-motion";
 import { AppPageLayout } from "@/components/app-page-layout";
 import { PageLoadingState } from "@/components/page-loading-state";
 import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
-import { getProfilesForUser } from "@/lib/api/profiles";
+import { getProfileForUser, getCoursesForProfile, computeDashboardSummary } from "@/lib/supabase-profiles";
 import { displayName } from "@/lib/display-name";
 import { getDevDashboardSummary, getDevProfiles, isAuthBypass } from "@/lib/dev-profile";
 import {
-  BookOpen, Compass, Info, LineChart, Map, Percent, Target, User,
+  BookOpen, Compass, LineChart, Map, Percent, Target, User,
 } from "lucide-react";
 import { t } from "@/lib/copy";
-import { GRADUATION_UNITS, graduationProgressPercent } from "@/lib/course-progress";
 import type { DashboardSummary, StudentProfile } from "@/types/profile";
 
 import { DashboardEmpty } from "@/components/dashboard/dashboard-empty";
@@ -65,19 +64,22 @@ export default function Dashboard() {
       return;
     }
 
-    getProfilesForUser(user.id)
-      .then((profiles: StudentProfile[]) => {
-        if (profiles.length > 0) {
-          const p = profiles[0];
-          setProfile(p);
-          return fetch(`/api/dashboard-summary/${p.id}`, { credentials: "include" })
-            .then(r => r.json())
-            .then((s: DashboardSummary) => setSummary(s));
+    // Real Supabase path: fetch profile + courses directly
+    const loadData = async () => {
+      try {
+        const prof = await getProfileForUser(user.id);
+        if (prof) {
+          setProfile(prof);
+          const courses = await getCoursesForProfile(prof.id);
+          setSummary(computeDashboardSummary(prof, courses));
         }
-        return undefined;
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      } catch (e) {
+        console.error("Error loading dashboard data:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, [user?.id]);
 
   const breakdown = summary?.readinessBreakdown;
@@ -262,7 +264,7 @@ export default function Dashboard() {
             <motion.button
               onClick={() => navigate(`/courses/${profile.id}`)}
               variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
-              whileHover={dashMotionOn ? dashLift : undefined}
+              {...(dashMotionOn ? { whileHover: dashLift } : {})}
               className="dash-stat-card"
             >
               <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#475569" }}>{t("dashboard.estGpa")}</div>
@@ -277,7 +279,7 @@ export default function Dashboard() {
             <motion.button
               onClick={() => navigate(`/courses/${profile.id}`)}
               variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
-              whileHover={dashMotionOn ? dashLift : undefined}
+              {...(dashMotionOn ? { whileHover: dashLift } : {})}
               className="dash-stat-card"
             >
               <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#475569" }}>{t("dashboard.coursesLogged")}</div>
@@ -292,7 +294,7 @@ export default function Dashboard() {
             <motion.button
               onClick={() => navigate(`/profile/${profile.id}`)}
               variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
-              whileHover={dashMotionOn ? dashLift : undefined}
+              {...(dashMotionOn ? { whileHover: dashLift } : {})}
               className="dash-stat-card"
             >
               <div className="text-xs pwc-font-mono uppercase mb-2" style={{ color: "#475569" }}>{t("dashboard.profileComplete")}</div>
@@ -304,7 +306,7 @@ export default function Dashboard() {
             <motion.button
               onClick={() => navigate(`/pathways/${profile.id}`)}
               variants={dashMotionOn ? fadeUp(6, DUR.base) : undefined}
-              whileHover={dashMotionOn ? dashLift : undefined}
+              {...(dashMotionOn ? { whileHover: dashLift } : {})}
               className="dash-stat-card"
               style={{ border: "1px solid rgba(99,102,241,0.25)", background: "rgba(99,102,241,0.06)" }}
             >
