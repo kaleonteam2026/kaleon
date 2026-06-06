@@ -6,7 +6,6 @@ import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript"
 import { appendDevCourses } from "@/lib/dev-courses";
 import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { createSnapshot } from "@/lib/supabase-semesters";
 import { createProfile, insertCourses } from "@/lib/supabase-profiles";
 import { useMotionEnabled, useDirSign } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
@@ -321,23 +320,6 @@ export default function Onboarding() {
           const first = payload.fullName.trim().split(/\s+/)[0];
           if (first) await updateProfileName(first);
         }
-
-        await createSnapshot({
-          user_id: user.id,
-          profile_id: sp.id,
-          term_label: termLabel,
-          college: form.communityCollege || "Unknown",
-          cumulative_gpa: flattenedGpa || null,
-          cumulative_units: flattenedTotalUnits || null,
-          term_gpa: flattenedGpa || null,
-          term_units: flattenedTotalUnits || null,
-          courses: flattenedCourses.map(c => ({
-            course_code: c.code,
-            course_name: c.name,
-            units: c.units ?? null,
-            grade: null,
-          })),
-        });
 
         setPhase("calculating");
         setTimeout(() => setPhase("ready"), 2800);
