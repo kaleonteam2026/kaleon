@@ -6,7 +6,7 @@ import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript"
 import { appendDevCourses } from "@/lib/dev-courses";
 import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { createProfile, insertCourses } from "@/lib/supabase-profiles";
+import { createProfile, getProfileForUser, insertCourses, updateProfile } from "@/lib/supabase-profiles";
 import { useMotionEnabled, useDirSign } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { t } from "@/lib/copy";
@@ -290,19 +290,35 @@ export default function Onboarding() {
         return;
       }
 
-      // Real Supabase path: create profile + insert courses via Supabase direct
+      // Real Supabase path: get-or-create profile + insert courses via Supabase direct
       if (isSupabaseConfigured && !isAuthBypass()) {
-        const sp = await createProfile(user.id, {
-          fullName: payload.fullName,
-          communityCollege: payload.communityCollege,
-          intendedMajor: payload.intendedMajor,
-          careerGoal: payload.careerGoal,
-          currentGpa: payload.currentGpa,
-          transferTimeline: payload.transferTimeline,
-          financialSituation: payload.financialSituation,
-          isFirstGen: payload.isFirstGen,
-          completionPercent: payload.completionPercent,
-        });
+        // Check if profile already exists for this user
+        let sp = await getProfileForUser(user.id);
+        if (sp) {
+          sp = await updateProfile(sp.id, {
+            fullName: payload.fullName,
+            communityCollege: payload.communityCollege,
+            intendedMajor: payload.intendedMajor,
+            careerGoal: payload.careerGoal,
+            currentGpa: payload.currentGpa,
+            transferTimeline: payload.transferTimeline,
+            financialSituation: payload.financialSituation,
+            isFirstGen: payload.isFirstGen,
+            completionPercent: payload.completionPercent,
+          });
+        } else {
+          sp = await createProfile(user.id, {
+            fullName: payload.fullName,
+            communityCollege: payload.communityCollege,
+            intendedMajor: payload.intendedMajor,
+            careerGoal: payload.careerGoal,
+            currentGpa: payload.currentGpa,
+            transferTimeline: payload.transferTimeline,
+            financialSituation: payload.financialSituation,
+            isFirstGen: payload.isFirstGen,
+            completionPercent: payload.completionPercent,
+          });
+        }
         if (!sp?.id) throw new Error("Failed to create profile");
         createdProfileIdRef.current = sp.id;
 
