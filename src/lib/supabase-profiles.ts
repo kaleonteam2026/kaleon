@@ -203,6 +203,20 @@ export async function insertCourses(
 }
 
 /**
+ * Delete a single course by ID.
+ * RLS ensures the user can only delete their own courses.
+ */
+export async function deleteCourse(courseId: number): Promise<boolean> {
+  const { error } = await supabase.from("courses").delete().eq("id", courseId);
+
+  if (error) {
+    console.error("Error deleting course:", error);
+    return false;
+  }
+  return true;
+}
+
+/**
  * Compute a DashboardSummary from profile + courses data.
  * Mirrors the dev logic but sources real data.
  */

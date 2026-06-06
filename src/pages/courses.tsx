@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
+import { useAuth } from "@/contexts/auth-context";
 import { AppPageLayout } from "@/components/app-page-layout";
 import { PageLoadingState } from "@/components/page-loading-state";
 import { PageMotion } from "@/components/page-motion";
@@ -7,6 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { t } from "@/lib/copy";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { getCoursesForProfile, insertCourses, deleteCourse as deleteCourseSupabase } from "@/lib/supabase-profiles";
+import { computeGpaSummary } from "@/lib/course-progress";
+import { isAuthBypass } from "@/lib/dev-profile";
 import {
   transferProgressPercent, transferUnitsRemaining,
 } from "@/lib/course-progress";
@@ -28,6 +33,7 @@ interface SchoolOption {
 export default function Courses() {
   const { profileId } = useParams<{ profileId: string }>();
   const [, navigate] = useLocation();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -56,6 +62,21 @@ export default function Courses() {
   );
 
   const loadCourses = () => {
+    // Real Supabase path
+    if (isSupabaseConfigured && !isAuthBypass()) {
+      getCoursesForProfile(pid).then(c => {
+        setCourses(c);
+        setGpa(computeGpaSummary(c));
+        // Try to load pathways from server for school selector
+        fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" })
+          .then(r => r.json())
+          .then(setSchoolOptions)
+          .catch(() => {});
+      }).catch(console.error).finally(() => setLoading(false));
+      return;
+    }
+
+    // Dev / mock path
     Promise.all([
       fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }).then(r => r.json()),
       fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }).then(r => r.json()),
@@ -66,25 +87,27 @@ export default function Courses() {
       .then(([c, g, pathways]: [Course[], GpaSummary, unknown[]]) => {
         setCourses(c);
         setGpa(g);
-        // Extract school options from pathways
-        const schoolOpts: SchoolOption[] = [];
-        if (Array.isArray(pathways) && pathways.length > 0) {
-          for (const pw of pathways) {
-            const rj = (pw as Record<string, unknown>)?.reportJson as Record<string, unknown> | undefined;
-            const name = String(rj?.university ?? "University");
-            const req = Number(rj?.requiredUnits ?? DEFAULT_TRANSFER_UNITS);
-            if (name && name !== "University") {
-              schoolOpts.push({ name, requiredUnits: req });
-            }
-          }
-        }
-        // Always include a default "Transfer Minimum" option
-        schoolOpts.push({ name: "Transfer Minimum", requiredUnits: DEFAULT_TRANSFER_UNITS });
-        setSchools(schoolOpts);
-        setSelectedSchoolIdx(0);
+        setSchoolOptions(pathways);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+  };
+
+  const setSchoolOptions = (pathways: unknown[]) => {
+    const schoolOpts: SchoolOption[] = [];
+    if (Array.isArray(pathways) && pathways.length > 0) {
+      for (const pw of pathways) {
+        const rj = (pw as Record<string, unknown>)?.reportJson as Record<string, unknown> | undefined;
+        const name = String(rj?.university ?? "University");
+        const req = Number(rj?.requiredUnits ?? DEFAULT_TRANSFER_UNITS);
+        if (name && name !== "University") {
+          schoolOpts.push({ name, requiredUnits: req });
+        }
+      }
+    }
+    schoolOpts.push({ name: "Transfer Minimum", requiredUnits: DEFAULT_TRANSFER_UNITS });
+    setSchools(schoolOpts);
+    setSelectedSchoolIdx(0);
   };
 
   useEffect(() => { loadCourses(); }, [pid]);
@@ -114,6 +137,23 @@ export default function Courses() {
     catalogCourse: CatalogCourse,
     detail: { grade?: string; status: string; term: string }
   ) => {
+    if (isSupabaseConfigured && !isAuthBypass() && user?.id) {
+      const created = await insertCourses(pid, user.id, [{
+        courseCode: catalogCourse.courseCode,
+        courseName: catalogCourse.courseName,
+        units: catalogCourse.units,
+        grade: detail.grade,
+        status: detail.status,
+        term: detail.term || undefined,
+      }]);
+      if (created.length === 0) throw new Error(t("pages.courses.failedAddCourse"));
+      setCourses(prev => [...prev, created[0]]);
+      setAnalysis(null);
+      setGpa(computeGpaSummary([...courses, created[0]]));
+      toast({ title: t("pages.courses.toastAdded", { code: catalogCourse.courseCode }) });
+      return;
+    }
+
     const r = await fetch(`/api/profiles/${pid}/courses`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -138,9 +178,15 @@ export default function Courses() {
 
   const deleteCourse = async (courseId: number) => {
     try {
-      await fetch(`/api/courses/${courseId}`, { method: "DELETE", credentials: "include" });
+      if (isSupabaseConfigured && !isAuthBypass()) {
+        const ok = await deleteCourseSupabase(courseId);
+        if (!ok) throw new Error("Delete failed");
+      } else {
+        await fetch(`/api/courses/${courseId}`, { method: "DELETE", credentials: "include" });
+      }
       setCourses(prev => prev.filter(c => c.id !== courseId));
       setAnalysis(null);
+      setGpa(prev => prev ? { ...prev, courseCount: prev.courseCount - 1 } : null);
       toast({ title: t("pages.courses.toastCourseRemoved") });
     } catch {
       toast({ title: t("pages.courses.toastErrorRemoving"), variant: "destructive" });

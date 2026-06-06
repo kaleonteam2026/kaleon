@@ -127,11 +127,6 @@ export default function Onboarding() {
           result = { ...fallback, latestGpa: fallback.latestGpa ?? null, detectedMajor: null };
         }
 
-        // If AI detected a major, pre-fill the major field (only if not already set)
-        if (result.detectedMajor) {
-          setForm(prev => prev.intendedMajor ? prev : { ...prev, intendedMajor: result.detectedMajor! });
-        }
-
         // Determine college name: use per-course college if detected, else the file's college
         const defaultCollege = pt.college.trim() || pt.file.name.replace(/\.pdf$/i, "");
         results.push({
@@ -199,6 +194,7 @@ export default function Onboarding() {
   };
 
   const canProceed = () => {
+    if (step === 0) return !scanning;
     if (step === 1) return form.communityCollege.trim().length > 0 && form.intendedMajor.trim().length > 0;
     return true;
   };
