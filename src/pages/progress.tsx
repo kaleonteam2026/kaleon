@@ -14,7 +14,7 @@ import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
   TrendingUp, Plus, Loader2, Download, AlertTriangle,
   GraduationCap, Award, CheckCircle2, Sparkles, Activity,
-  BookOpen, Target, ArrowRight, BarChart3, AlertCircle, Info,
+  BookOpen, Target, ArrowRight, BarChart3, Info,
 } from "lucide-react";
 import { t } from "@/lib/copy";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +72,7 @@ export default function ProgressTracker() {
   const [profileCourses, setProfileCourses] = useState<StoredCourse[]>([]);
   const [totalUnits, setTotalUnits] = useState(0);
   const [profileGpa, setProfileGpa] = useState<number | null>(null);
+  const [igetcDoneCount, setIgetcDoneCount] = useState<number | null>(null);
 
   // Tab
   const [tab, setTab] = useState<Tab>("log");
@@ -159,6 +160,16 @@ export default function ProgressTracker() {
       .then((a: ProgressAnalysis[]) => { setAnalyses(a); if (a.length > 0) setActiveAnalysis(a[0]); })
       .catch(() => {})
       .finally(() => setLoadingAnalyses(false));
+
+    // Load IGETC areas (may not exist in production — degrade gracefully)
+    fetch(`/api/profiles/${pid}/igetc`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { areas?: Record<string, boolean> } | null) => {
+        if (data?.areas) {
+          setIgetcDoneCount(Object.values(data.areas).filter(Boolean).length);
+        }
+      })
+      .catch(() => {});
   }, [pid]);
 
   const handleLogEntry = async () => {
@@ -371,7 +382,7 @@ export default function ProgressTracker() {
               <div>
                 <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  {t("pages.courses.igetcCompletion", { count: 0, total: IGETC_AREAS.length })}
+                  {t("pages.courses.igetcCompletion", { count: igetcDoneCount ?? "—", total: IGETC_AREAS.length })}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                   {IGETC_AREAS.map((area) => (

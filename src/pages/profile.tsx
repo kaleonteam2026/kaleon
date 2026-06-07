@@ -400,15 +400,15 @@ export default function Profile() {
   useEffect(() => {
     if (profileId) {
       fetch(`/api/profiles/${profileId}`, { credentials: "include" })
-        .then(r => r.json())
-        .then((p: Record<string, unknown>) => {
-          setForm(apiProfileToFormData(p));
+        .then(r => r.ok ? r.json() : null)
+        .then((p: Record<string, unknown> | null) => {
+          if (p) setForm(apiProfileToFormData(p));
           setLoading(false);
         })
         .catch(() => setLoading(false));
     } else if (user?.id) {
       fetch(`/api/profiles/user/${user.id}`, { credentials: "include" })
-        .then(r => r.json())
+        .then(r => r.ok ? r.json() : [])
         .then((profiles: Record<string, unknown>[]) => {
           if (profiles.length > 0) {
             setForm(apiProfileToFormData(profiles[0]));
@@ -442,6 +442,7 @@ export default function Profile() {
           body: JSON.stringify(payload),
           credentials: "include",
         });
+        if (!r.ok) throw new Error("Failed to save profile");
         saved = await r.json() as Record<string, unknown>;
       } else {
         const r = await fetch("/api/profiles", {
@@ -450,6 +451,7 @@ export default function Profile() {
           body: JSON.stringify(payload),
           credentials: "include",
         });
+        if (!r.ok) throw new Error("Failed to create profile");
         saved = await r.json() as Record<string, unknown>;
         setForm(f => ({ ...f, id: saved.id as number }));
       }

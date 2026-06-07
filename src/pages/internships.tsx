@@ -253,7 +253,7 @@ export default function InternshipsPage() {
 
   useEffect(() => {
     fetch(`/api/profiles/${pid}/internships/searches`, { credentials: "include" })
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : [])
       .then((s: SearchResult[]) => {
         setSearches(s);
         if (s.length > 0) setActiveSearch(s[0]);
@@ -264,7 +264,7 @@ export default function InternshipsPage() {
 
   useEffect(() => {
     fetch(`/api/profiles/${pid}/saved-internships`, { credentials: "include" })
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : [])
       .then((rows: Array<{ internshipSlug: string }>) => {
         setSavedSlugs(new Set(rows.map(r => r.internshipSlug)));
       })
@@ -276,15 +276,17 @@ export default function InternshipsPage() {
     const isSaved = savedSlugs.has(slug);
     try {
       if (isSaved) {
-        await fetch(`/api/profiles/${pid}/saved-internships/${encodeURIComponent(slug)}`, { method: "DELETE", credentials: "include" });
+        const res = await fetch(`/api/profiles/${pid}/saved-internships/${encodeURIComponent(slug)}`, { method: "DELETE", credentials: "include" });
+        if (!res.ok) throw new Error("Delete failed");
         setSavedSlugs(prev => { const s = new Set(prev); s.delete(slug); return s; });
         toast({ title: t("pages.internships.toastRemoved") });
       } else {
-        await fetch(`/api/profiles/${pid}/saved-internships`, {
+        const res = await fetch(`/api/profiles/${pid}/saved-internships`, {
           method: "POST", credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ internshipSlug: slug, internshipData: internship as unknown as Record<string, unknown> }),
         });
+        if (!res.ok) throw new Error("Save failed");
         setSavedSlugs(prev => new Set([...prev, slug]));
         toast({ title: t("pages.internships.toastSaved") });
       }

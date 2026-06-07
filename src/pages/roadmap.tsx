@@ -18,6 +18,7 @@ import { MarkdownContent } from "@/components/markdown-renderer";
 import { PageMotion } from "@/components/page-motion";
 import { t } from "@/lib/copy";
 import type { AcademicRoadmap } from "@/types/markdown-document";
+import { loadRoadmap } from "@/lib/supabase-documents";
 
 export default function Roadmap() {
   const { roadmapId } = useParams<{ roadmapId: string }>();
@@ -41,11 +42,19 @@ export default function Roadmap() {
   const rid = parseInt(roadmapId);
 
   useEffect(() => {
-    fetch(`/api/roadmaps/${rid}`, { credentials: "include" })
-      .then(r => r.json())
-      .then((r: AcademicRoadmap) => setRoadmap(r))
-      .catch(() => toast({ title: t("pages.roadmap.errorLoading"), variant: "destructive" }))
-      .finally(() => setLoading(false));
+    loadRoadmap(rid).then((doc) => {
+      if (doc) {
+        setRoadmap({
+          id: doc.id,
+          title: doc.title,
+          contentMarkdown: doc.contentMarkdown,
+          createdAt: doc.createdAt,
+          profileId: doc.profileId,
+        });
+      }
+    }).catch(() => {
+      toast({ title: t("pages.roadmap.errorLoading"), variant: "destructive" });
+    }).finally(() => setLoading(false));
   }, [rid]);
 
   const refreshStatus = async () => {

@@ -67,7 +67,7 @@ export default function Matches() {
 
   useEffect(() => {
     fetch(`/api/profiles/${pid}/generate-matches`, { method: "POST", credentials: "include" })
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : [])
       .then((m: Match[]) => setMatches(m))
       .catch(() => toast({ title: t("pages.matches.toastError"), variant: "destructive" }))
       .finally(() => setLoading(false));

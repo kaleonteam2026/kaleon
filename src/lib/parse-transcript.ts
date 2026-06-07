@@ -20,12 +20,6 @@ export interface TranscriptParseResult {
   detectedMajor?: string | null;
 }
 
-export interface TranscriptParseResult {
-  courses: ExtractedCourse[];
-  latestGpa?: number;
-  totalUnits: number;
-}
-
 const COURSE_CODE_RE = /\b([A-Z]{2,6})\s+(\d{1,3}[A-Z]{0,2})\b/g;
 
 const CUMULATIVE_GPA_RES = [

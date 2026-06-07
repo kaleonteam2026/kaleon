@@ -28,6 +28,10 @@ import {
   loadPathwaysFromDb,
   selectPathwayInDb,
 } from "@/lib/supabase-pathways";
+import {
+  saveGuidebook,
+  saveRoadmap,
+} from "@/lib/supabase-documents";
 
 interface ProfileCourse {
   id: number;
@@ -402,15 +406,62 @@ export default function Pathways() {
   const generateGuidebook = async (pathwayId: number) => {
     setGeneratingGuidebook(pathwayId);
     try {
-      const r = await fetch(`/api/pathways/${pathwayId}/generate-guidebook`, { method: "POST", credentials: "include" });
+      const pathway = pathways.find((p) => p.id === pathwayId);
+      if (!pathway?.reportJson) throw new Error("Pathway data not found");
+
+      // Load profile data for the generation input
+      let profileData: Record<string, unknown> = {};
+      if (user?.id) {
+        const sp = await getProfileForUser(user.id);
+        if (sp) {
+          profileData = {
+            fullName: sp.fullName,
+            communityCollege: sp.communityCollege,
+            intendedMajor: sp.intendedMajor,
+            careerGoal: sp.careerGoal,
+            currentGpa: sp.currentGpa,
+            transferTimeline: sp.transferTimeline,
+            financialSituation: sp.financialSituation,
+            isFirstGen: sp.isFirstGen,
+          };
+        }
+      }
+
+      const r = await fetch(`/api/pathways/${pathwayId}/generate-guidebook`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pathway: {
+            university: pathway.reportJson.university,
+            pathwayType: pathway.pathwayType ?? "moderately_compatible",
+            compatibilityScore: pathway.compatibilityScore ?? 70,
+            gpaTarget: pathway.reportJson.gpaTarget ?? 3.0,
+            requiredUnits: pathway.reportJson.requiredUnits ?? 60,
+            whyItFits: pathway.reportJson.whyItFits ?? "",
+            concerns: pathway.reportJson.concerns ?? "",
+            transferTimeline: pathway.reportJson.transferTimeline ?? "",
+            courseGaps: pathway.reportJson.courseGaps ?? [],
+            risks: pathway.reportJson.risks ?? [],
+            nextSteps: pathway.reportJson.nextSteps ?? [],
+          },
+          profile: profileData,
+          courses: profileCourses,
+        }),
+      });
       if (r.status === 429) {
         toast({ title: t("pages.pathways.toast_rateLimit"), variant: "destructive" });
         return;
       }
       if (!r.ok) throw new Error();
-      const g = await r.json() as { id: number };
+      const result = await r.json() as { title: string; contentMarkdown: string };
+
+      // Save to Supabase
+      const saved = await saveGuidebook(pid, result.title, result.contentMarkdown, pathwayId);
+      if (!saved) throw new Error("Failed to save guidebook");
+
       toast({ title: t("pages.pathways.toast_guidebookReady"), description: t("pages.pathways.toast_guidebookReadyDesc") });
-      navigate(`/guidebook/${g.id}`);
+      navigate(`/guidebook/${saved.id}`);
     } catch {
       toast({ title: t("pages.pathways.toast_guidebookError"), variant: "destructive" });
     } finally {
@@ -421,15 +472,62 @@ export default function Pathways() {
   const generateRoadmap = async (pathwayId: number) => {
     setGeneratingRoadmap(pathwayId);
     try {
-      const r = await fetch(`/api/pathways/${pathwayId}/generate-roadmap`, { method: "POST", credentials: "include" });
+      const pathway = pathways.find((p) => p.id === pathwayId);
+      if (!pathway?.reportJson) throw new Error("Pathway data not found");
+
+      // Load profile data for the generation input
+      let profileData: Record<string, unknown> = {};
+      if (user?.id) {
+        const sp = await getProfileForUser(user.id);
+        if (sp) {
+          profileData = {
+            fullName: sp.fullName,
+            communityCollege: sp.communityCollege,
+            intendedMajor: sp.intendedMajor,
+            careerGoal: sp.careerGoal,
+            currentGpa: sp.currentGpa,
+            transferTimeline: sp.transferTimeline,
+            financialSituation: sp.financialSituation,
+            isFirstGen: sp.isFirstGen,
+          };
+        }
+      }
+
+      const r = await fetch(`/api/pathways/${pathwayId}/generate-roadmap`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pathway: {
+            university: pathway.reportJson.university,
+            pathwayType: pathway.pathwayType ?? "moderately_compatible",
+            compatibilityScore: pathway.compatibilityScore ?? 70,
+            gpaTarget: pathway.reportJson.gpaTarget ?? 3.0,
+            requiredUnits: pathway.reportJson.requiredUnits ?? 60,
+            whyItFits: pathway.reportJson.whyItFits ?? "",
+            concerns: pathway.reportJson.concerns ?? "",
+            transferTimeline: pathway.reportJson.transferTimeline ?? "",
+            courseGaps: pathway.reportJson.courseGaps ?? [],
+            risks: pathway.reportJson.risks ?? [],
+            nextSteps: pathway.reportJson.nextSteps ?? [],
+          },
+          profile: profileData,
+          courses: profileCourses,
+        }),
+      });
       if (r.status === 429) {
         toast({ title: t("pages.pathways.toast_rateLimit"), description: t("pages.pathways.toast_roadmapRateDesc"), variant: "destructive" });
         return;
       }
       if (!r.ok) throw new Error();
-      const roadmap = await r.json() as { id: number };
+      const result = await r.json() as { title: string; contentMarkdown: string };
+
+      // Save to Supabase
+      const saved = await saveRoadmap(pid, result.title, result.contentMarkdown, pathwayId);
+      if (!saved) throw new Error("Failed to save roadmap");
+
       toast({ title: t("pages.pathways.toast_roadmapReady"), description: t("pages.pathways.toast_roadmapReadyDesc") });
-      navigate(`/roadmap/${roadmap.id}`);
+      navigate(`/roadmap/${saved.id}`);
     } catch {
       toast({ title: t("pages.pathways.toast_roadmapError"), variant: "destructive" });
     } finally {

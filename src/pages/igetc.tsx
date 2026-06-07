@@ -110,6 +110,7 @@ export default function IgetcTracker() {
   const load = useCallback(async () => {
     try {
       const r = await fetch(`/api/profiles/${pid}/igetc`, { credentials: "include" });
+      if (!r.ok) { setAreas({}); return; }
       const data = await r.json() as { areas: Record<string, boolean> };
       setAreas(data.areas ?? {});
     } catch { /* ignore */ }
@@ -126,11 +127,12 @@ export default function IgetcTracker() {
   const save = async () => {
     setSaving(true);
     try {
-      await fetch(`/api/profiles/${pid}/igetc`, {
+      const res = await fetch(`/api/profiles/${pid}/igetc`, {
         method: "PUT", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ areas }),
       });
+      if (!res.ok) throw new Error("Save failed");
       setDirty(false);
       toast({ title: t("pages.igetc.savedToast") });
     } catch {
@@ -142,8 +144,8 @@ export default function IgetcTracker() {
     setAnalyzing(true);
     try {
       const r = await fetch(`/api/profiles/${pid}/igetc/analyze`, { method: "POST", credentials: "include" });
+      if (!r.ok) { throw new Error("Analysis failed"); }
       const data = await r.json() as { areas: Record<string, boolean>; note?: string };
-      if (data.note) { toast({ title: data.note }); setAnalyzing(false); return; }
       setAreas(prev => {
         const merged = { ...prev };
         for (const k of ALL_KEYS) {

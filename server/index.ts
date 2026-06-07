@@ -2,6 +2,8 @@ import express from "express";
 import path from "path";
 import { generatePathwaysWithDeepSeek } from "./generate-pathways.ts";
 import { parseTranscriptWithAI } from "./transcript-parse.ts";
+import { generateGuidebookWithDeepSeek } from "./generate-guidebook.ts";
+import { generateRoadmapWithDeepSeek } from "./generate-roadmap.ts";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -78,6 +80,38 @@ app.post("/api/transcript/parse", async (req, res) => {
   }
   try {
     const result = await parseTranscriptWithAI(text, apiKey, !!detectMultipleColleges);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// ── Guidebook generation ───────────────────────────────────────────────
+
+app.post("/api/pathways/:pathwayId/generate-guidebook", async (req, res) => {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: "DeepSeek API key not configured" });
+    return;
+  }
+  try {
+    const result = await generateGuidebookWithDeepSeek(req.body, apiKey);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// ── Roadmap generation ─────────────────────────────────────────────────
+
+app.post("/api/pathways/:pathwayId/generate-roadmap", async (req, res) => {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: "DeepSeek API key not configured" });
+    return;
+  }
+  try {
+    const result = await generateRoadmapWithDeepSeek(req.body, apiKey);
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: String(e) });

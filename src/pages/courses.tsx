@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { t } from "@/lib/copy";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { getCoursesForProfile, insertCourses, deleteCourse as deleteCourseSupabase } from "@/lib/supabase-profiles";
+import { loadPathwaysFromDb } from "@/lib/supabase-pathways";
 import { computeGpaSummary } from "@/lib/course-progress";
 import { isAuthBypass } from "@/lib/dev-profile";
 import {
@@ -72,14 +73,13 @@ export default function Courses() {
   const loadCourses = () => {
     // Real Supabase path
     if (isSupabaseConfigured && !isAuthBypass()) {
-      getCoursesForProfile(pid).then(c => {
-        setCourses(c);
-        setGpa(computeGpaSummary(c));
-        // Try to load pathways from server for school selector — guard against HTML response
-        fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" })
-          .then(r => r.ok ? r.json() : [])
-          .then(setSchoolOptions)
-          .catch(() => {});
+      Promise.all([
+        getCoursesForProfile(pid),
+        loadPathwaysFromDb(pid),
+      ]).then(([storedCourses, savedPathways]) => {
+        setCourses(storedCourses);
+        setGpa(computeGpaSummary(storedCourses));
+        setSchoolOptions(savedPathways as unknown[]);
       }).catch(console.error).finally(() => setLoading(false));
       return;
     }
@@ -155,9 +155,12 @@ export default function Courses() {
         term: detail.term || undefined,
       }]);
       if (created.length === 0) throw new Error(t("pages.courses.failedAddCourse"));
-      setCourses(prev => [...prev, created[0]]);
+      setCourses(prev => {
+        const updated = [...prev, created[0]];
+        setGpa(computeGpaSummary(updated));
+        return updated;
+      });
       setAnalysis(null);
-      setGpa(computeGpaSummary([...courses, created[0]]));
       toast({ title: t("pages.courses.toastAdded", { code: catalogCourse.courseCode }) });
       return;
     }
@@ -210,8 +213,11 @@ export default function Courses() {
       if (isSupabaseConfigured && !isAuthBypass() && user?.id) {
         const created = await insertCourses(pid, user.id, [courseData]);
         if (created.length === 0) throw new Error("Failed to add course");
-        setCourses(prev => [...prev, created[0]]);
-        setGpa(computeGpaSummary([...courses, created[0]]));
+        setCourses(prev => {
+          const updated = [...prev, created[0]];
+          setGpa(computeGpaSummary(updated));
+          return updated;
+        });
         toast({ title: t("pages.courses.toastAdded", { code }) });
       } else {
         const r = await fetch(`/api/profiles/${pid}/courses`, {
@@ -222,8 +228,11 @@ export default function Courses() {
         });
         if (!r.ok) throw new Error("Failed to add course");
         const created = await r.json() as Course;
-        setCourses(prev => [...prev, created]);
-        setGpa(computeGpaSummary([...courses, created]));
+        setCourses(prev => {
+          const updated = [...prev, created];
+          setGpa(computeGpaSummary(updated));
+          return updated;
+        });
         toast({ title: t("pages.courses.toastAdded", { code }) });
       }
     } catch {
@@ -247,9 +256,12 @@ export default function Courses() {
       } else {
         await fetch(`/api/courses/${courseId}`, { method: "DELETE", credentials: "include" });
       }
-      setCourses(prev => prev.filter(c => c.id !== courseId));
+      setCourses(prev => {
+        const updated = prev.filter(c => c.id !== courseId);
+        setGpa(computeGpaSummary(updated));
+        return updated;
+      });
       setAnalysis(null);
-      setGpa(prev => prev ? { ...prev, courseCount: prev.courseCount - 1 } : null);
       toast({ title: t("pages.courses.toastCourseRemoved") });
     } catch {
       toast({ title: t("pages.courses.toastErrorRemoving"), variant: "destructive" });
@@ -288,7 +300,7 @@ export default function Courses() {
   const schoolUnits = activeSchool.requiredUnits;
 
   if (loading) {
-    return <PageLoadingState />;
+    return <PageLoadingState showNav profileId={pid} />;
   }
 
   return (

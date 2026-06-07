@@ -7,6 +7,8 @@ import fs from "fs";
 import tailwindcss from "@tailwindcss/vite";
 import { pathwaysApiPlugin } from "./server/pathways-api-plugin.ts";
 import { transcriptParsePlugin } from "./server/transcript-parse-plugin.ts";
+import { guidebookPlugin } from "./server/generate-guidebook-plugin.ts";
+import { roadmapPlugin } from "./server/generate-roadmap-plugin.ts";
 import { chunkSplitPlugin } from "vite-plugin-chunk-split";
 
 /** Root-level static files kept in `dist/` (logo, nav icons, etc.). */
@@ -64,7 +66,7 @@ export default defineConfig({
   envDir: ".",
   base: process.env.BASE_PATH ?? "/",
   publicDir: "public",
-  plugins: [react(), tailwindcss(), serveDistStatic(), pathwaysApiPlugin(), transcriptParsePlugin(), chunkSplitPlugin()],
+  plugins: [react(), tailwindcss(), serveDistStatic(), pathwaysApiPlugin(), transcriptParsePlugin(), guidebookPlugin(), roadmapPlugin(), chunkSplitPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

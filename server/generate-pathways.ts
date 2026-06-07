@@ -126,7 +126,7 @@ Rules:
 Financial & background context:
 - If the student's financial situation is "Limited" or "Very limited", prioritize affordable/accessible programs and include tuition information.
 - If the student is first-generation, prioritize programs and campusOpportunities that offer first-gen support services (EOP, Bridge programs, TRiO, etc.).
-- If financial situation is "Comfortable" or "Very comfortable", focus on merit-based scholarships and competitive programs.
+- If financial situation is "Comfortable" or "Very comfortab\le", focus on merit-based scholarships and competitive programs.
 - If the student is not first-gen, still include general scholarship and program recommendations.`;
 
 function extractJsonPayload(text: string): unknown {

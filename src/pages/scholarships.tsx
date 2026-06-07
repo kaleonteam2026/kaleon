@@ -317,7 +317,7 @@ export default function Scholarships() {
     const scholarshipMethod = pid ? "POST" : "GET";
 
     fetch(scholarshipUrl, { method: scholarshipMethod, credentials: "include" })
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : [])
       .then((s: Scholarship[]) => setScholarships(s))
       .catch(() => toast({ title: t("pages.scholarships.toastErrorScholarships"), variant: "destructive" }))
       .finally(() => setLoading(false));
@@ -331,7 +331,7 @@ export default function Scholarships() {
     ccLoadedRef.current = true;
     setCcLoading(true);
     fetch(`/api/profiles/${pid}/cc-campus-opportunities`, { credentials: "include" })
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : { programs: [], events: [] })
       .then((d: CCOpportunitiesResult) => setCcOpps(d))
       .catch(() => toast({ title: t("pages.scholarships.toastErrorCC"), variant: "destructive" }))
       .finally(() => setCcLoading(false));

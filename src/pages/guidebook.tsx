@@ -15,6 +15,7 @@ import {
   MarkdownDocumentLayout,
   MarkdownDocumentBackButton,
 } from "@/components/markdown-document-layout";
+import { loadGuidebook } from "@/lib/supabase-documents";
 
 export default function Guidebook() {
   const { guidebookId } = useParams<{ guidebookId: string }>();
@@ -27,11 +28,19 @@ export default function Guidebook() {
   void navigate;
 
   useEffect(() => {
-    fetch(`/api/guidebooks/${gid}`, { credentials: "include" })
-      .then(r => r.json())
-      .then((g: Guidebook) => setGuidebook(g))
-      .catch(() => toast({ title: t("pages.guidebook.toast_loadError"), variant: "destructive" }))
-      .finally(() => setLoading(false));
+    loadGuidebook(gid).then((doc) => {
+      if (doc) {
+        setGuidebook({
+          id: doc.id,
+          title: doc.title,
+          contentMarkdown: doc.contentMarkdown,
+          createdAt: doc.createdAt,
+          profileId: doc.profileId,
+        });
+      }
+    }).catch(() => {
+      toast({ title: t("pages.guidebook.toast_loadError"), variant: "destructive" });
+    }).finally(() => setLoading(false));
   }, [gid, toast]);
 
   const downloadMarkdown = () => {

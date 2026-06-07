@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import {
   GraduationCap, Target, BookOpen, Award, ArrowRight,
-  TrendingUp, Search, Building2, Users, Map, Compass,
+  TrendingUp, Search, Building2, Users, Compass,
 } from "lucide-react";
 import {
   useMotionEnabled,
@@ -401,7 +401,6 @@ export default function Landing() {
             {t("landing.footerGuides")}
           </a>
         </div>
-        <span className="hidden"><Map /></span>
       </footer>
     </div>
   );
