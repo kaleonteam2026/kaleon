@@ -236,7 +236,7 @@ export default function Pathways() {
               setTotalUnits(gpaSummary.totalUnits ?? 0);
             }
             if (savedPathways.length > 0) {
-              setPathways(savedPathways);
+              setPathways(savedPathways as Pathway[]);
             }
             setLoading(false);
           }).catch(() => setLoading(false));
