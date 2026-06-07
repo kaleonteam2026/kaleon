@@ -125,6 +125,7 @@ export async function savePathways(
 
   if (insErr) {
     console.error("Error saving pathways:", insErr);
+    throw insErr;
   }
 }
 

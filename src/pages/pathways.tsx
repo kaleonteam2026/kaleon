@@ -378,10 +378,15 @@ export default function Pathways() {
           if (reloaded.length > 0) {
             setPathways(reloaded as Pathway[]);
           }
+          toast({ title: t("pages.pathways.toast_generated"), description: t("pages.pathways.toast_generatedDesc") });
         }
-        catch (e) { console.error("Failed to persist pathways:", e); }
+        catch (e) {
+          console.error("Failed to persist pathways:", e);
+          toast({ title: t("pages.pathways.toast_genError"), description: "Failed to save — pathways won't persist after navigation", variant: "destructive" });
+        }
+      } else {
+        toast({ title: t("pages.pathways.toast_generated"), description: t("pages.pathways.toast_generatedDesc") });
       }
-      toast({ title: t("pages.pathways.toast_generated"), description: t("pages.pathways.toast_generatedDesc") });
     } catch (e) {
       const msg = e instanceof Error ? e.message : t("pages.pathways.toast_genErrorDesc");
       toast({ title: t("pages.pathways.toast_genError"), description: msg, variant: "destructive" });
@@ -695,6 +700,11 @@ export default function Pathways() {
                           <span className={cn("text-xs px-2 py-0.5 rounded-full border font-semibold", meta.bg, meta.color)}>
                             {t(meta.labelKey)} {t("pages.pathways.schoolSuffix")}
                           </span>
+                          {pathway.generationLabel && (
+                            <span className="text-[11px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200 font-medium">
+                              {pathway.generationLabel}
+                            </span>
+                          )}
                           {isSelected && (
                             <span className="text-xs bg-slate-900 text-white px-2 py-0.5 border-2 border-slate-900 flex items-center gap-1 pwc-font-mono uppercase tracking-wider font-bold">
                               <CheckCircle className="h-3 w-3" /> {t("pages.pathways.primaryBadge")}
