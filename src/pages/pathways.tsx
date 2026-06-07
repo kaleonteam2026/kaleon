@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, AlertTriangle, CheckCircle, ArrowRight,
+  Loader2, Target, AlertTriangle, CheckCircle, ArrowRight,
   ChevronDown, ChevronUp, Sparkles, BookOpen, Award, Users, Briefcase,
   Star, GraduationCap, Building2
 } from "lucide-react";
@@ -222,7 +222,7 @@ export default function Pathways() {
             if (storedCourses.length > 0) {
               setProfileCourses(storedCourses as ProfileCourse[]);
               const gpaSummary = computeGpaSummary(
-                storedCourses.map(c => ({ ...c, grade: c.grade ?? null })),
+                storedCourses,
                 profile?.currentGpa,
               );
               setProfileGpa(gpaSummary.estimatedGpa > 0 ? gpaSummary.estimatedGpa : null);
@@ -270,7 +270,7 @@ export default function Pathways() {
         if (storedCourses.length > 0) {
           courses = storedCourses as ProfileCourse[];
           const gpaSummary = computeGpaSummary(
-            storedCourses.map(c => ({ ...c, grade: c.grade ?? null })),
+            storedCourses,
             profile.currentGpa as number | undefined,
           );
           totalUnits = gpaSummary.totalUnits ?? 0;
