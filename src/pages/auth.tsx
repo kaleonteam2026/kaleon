@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
-import { Loader2, ArrowLeft, Mail } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
@@ -51,7 +51,6 @@ export default function AuthPage() {
   const [localError, setLocalError] = useState<string | null>(null);
   const [linkSent, setLinkSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
-  const [verifyingCode, setVerifyingCode] = useState(false);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && !authVerifying) {
@@ -169,52 +168,14 @@ export default function AuthPage() {
                 {t("auth.verifyingBody")}
               </p>
             </div>
-          ) : linkSent && !verifyingCode ? (
-            <>
-              <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mb-2" style={{ color: "#f8fafc" }}>
-                {t("auth.sentTitle")}
-              </h1>
-              <div
-                className="flex items-start gap-3 p-4 mb-6"
-                style={{
-                  background: "rgba(78,204,163,0.08)",
-                  border: "1px solid rgba(78,204,163,0.25)",
-                  borderRadius: 8,
-                }}
-              >
-                <Mail className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "#4ECCA3" }} />
-                <div className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
-                  <p className="mb-2">{t("auth.sentBody", { email })}</p>
-                  <p className="font-medium" style={{ color: "#f1f5f9" }}>
-                    If the link opened on another device, enter the verification code below instead.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setVerifyingCode(true)}
-                className="kaleon-btn-primary w-full px-4 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold flex items-center justify-center gap-2"
-                style={{ borderRadius: 8 }}
-              >
-                Enter Verification Code
-              </button>
-              <button
-                type="button"
-                onClick={() => { setLinkSent(false); setEmail(""); }}
-                className="kaleon-btn-outline w-full px-4 py-3 text-xs pwc-font-mono uppercase tracking-wider font-bold mt-2"
-                style={{ borderRadius: 8 }}
-              >
-                {t("auth.useDifferentEmail")}
-              </button>
-            </>
-          ) : linkSent && verifyingCode ? (
+          ) : linkSent ? (
             <>
               <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mb-2" style={{ color: "#f8fafc" }}>
                 Enter Code
               </h1>
               <p className="text-sm mb-4 leading-relaxed" style={{ color: "#94a3b8" }}>
                 Check your email at <strong style={{ color: "#f1f5f9" }}>{email}</strong> for a 6-digit verification code.
-                Enter it below to sign in on this device.
+                Enter it below to {mode === "signin" ? "sign in" : "create your account"}.
               </p>
 
               {displayError && (
@@ -278,17 +239,17 @@ export default function AuthPage() {
                   {loading ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Verifying…</>
                   ) : (
-                    "Verify & Sign In"
+                    "Verify & " + (mode === "signin" ? "Sign In" : "Create Account")
                   )}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => { setVerifyingCode(false); setOtpCode(""); }}
+                  onClick={() => { setLinkSent(false); setEmail(""); setOtpCode(""); }}
                   className="kaleon-btn-outline w-full px-4 py-3 text-xs pwc-font-mono uppercase tracking-wider font-bold"
                   style={{ borderRadius: 8 }}
                 >
-                  Back
+                  Use a different email
                 </button>
               </form>
             </>

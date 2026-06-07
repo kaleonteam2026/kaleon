@@ -17,7 +17,12 @@ import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { CopyTrans } from "@/components/copy-trans";
 import { t } from "@/lib/copy";
-import { GRADUATION_UNITS, graduationProgressPercent } from "@/lib/course-progress";
+import { useAuth } from "@/contexts/auth-context";
+import {
+  getProfileForUser,
+  getCoursesForProfile,
+} from "@/lib/supabase-profiles";
+import { GRADUATION_UNITS, graduationProgressPercent, computeGpaSummary } from "@/lib/course-progress";
 
 interface ProfileCourse {
   id: number;
@@ -163,6 +168,7 @@ export default function Pathways() {
   const { profileId } = useParams<{ profileId: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [pathways, setPathways] = useState<Pathway[]>([]);
   const [profileCourses, setProfileCourses] = useState<ProfileCourse[]>([]);
   const [profileGpa, setProfileGpa] = useState<number | null>(null);
@@ -185,19 +191,50 @@ export default function Pathways() {
   const { enabled: pwMotionOn, lift: pwLift, itemVariants, containerVariants } = useBrutalistMotion();
 
   const loadPathways = () => {
-    Promise.all([
-      fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" }).then(r => r.json()),
-      fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }).then(r => r.json()),
-      fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }).then(r => r.json()),
-    ])
-      .then(([pathwayData, courseData, gpaData]: [Pathway[], ProfileCourse[], { estimatedGpa?: number; totalUnits?: number }]) => {
-        setPathways(pathwayData);
-        setProfileCourses(courseData);
-        setProfileGpa(gpaData.estimatedGpa && gpaData.estimatedGpa > 0 ? gpaData.estimatedGpa : null);
-        setTotalUnits(gpaData.totalUnits ?? 0);
+    // Try API first (mock/dev mode), fall back to Supabase
+    const apiPromise = Promise.all([
+      fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" }).then(
+        (r) => (r.ok ? r.json() : []) as Promise<Pathway[]>,
+      ),
+      fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }).then(
+        (r) => (r.ok ? r.json() : []) as Promise<ProfileCourse[]>,
+      ),
+      fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }).then(
+        (r) => (r.ok ? r.json() : {}) as Promise<{ estimatedGpa?: number; totalUnits?: number }>,
+      ),
+    ]);
+
+    apiPromise
+      .then(([pathwayData, courseData, gpaData]) => {
+        if (pathwayData.length > 0 || courseData.length > 0) {
+          // API returned data
+          setPathways(pathwayData);
+          setProfileCourses(courseData);
+          setProfileGpa(gpaData.estimatedGpa && gpaData.estimatedGpa > 0 ? gpaData.estimatedGpa : null);
+          setTotalUnits(gpaData.totalUnits ?? 0);
+          setLoading(false);
+        } else if (user?.id) {
+          // API returned empty — try Supabase directly
+          Promise.all([
+            getProfileForUser(user.id),
+            getCoursesForProfile(pid),
+          ]).then(([profile, storedCourses]) => {
+            if (storedCourses.length > 0) {
+              setProfileCourses(storedCourses as ProfileCourse[]);
+              const gpaSummary = computeGpaSummary(
+                storedCourses.map(c => ({ ...c, grade: c.grade ?? null })),
+                profile?.currentGpa,
+              );
+              setProfileGpa(gpaSummary.estimatedGpa > 0 ? gpaSummary.estimatedGpa : null);
+              setTotalUnits(gpaSummary.totalUnits ?? 0);
+            }
+            setLoading(false);
+          }).catch(() => setLoading(false));
+        } else {
+          setLoading(false);
+        }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch(() => setLoading(false));
   };
 
   useEffect(() => { loadPathways(); }, [pid]);
@@ -211,20 +248,44 @@ export default function Pathways() {
   const generatePathways = async () => {
     setGenerating(true);
     try {
-      const [profileRes, coursesRes, gpaRes] = await Promise.all([
-        fetch(`/api/profiles/${pid}`, { credentials: "include" }),
-        fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }),
-        fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }),
-      ]);
-      const profile = profileRes.ok ? await profileRes.json() : {};
-      const courses = coursesRes.ok ? await coursesRes.json() : [];
-      const gpaSummary = gpaRes.ok ? await gpaRes.json() : {};
+      // Load profile and courses from Supabase directly (no non-existent API endpoints)
+      let profile: Record<string, unknown> = {};
+      let courses: ProfileCourse[] = [];
+      let totalUnits = 0;
+      if (user?.id) {
+        const sp = await getProfileForUser(user.id);
+        if (sp) {
+          profile = {
+            fullName: sp.fullName,
+            communityCollege: sp.communityCollege,
+            intendedMajor: sp.intendedMajor,
+            careerGoal: sp.careerGoal,
+            currentGpa: sp.currentGpa,
+            transferTimeline: sp.transferTimeline,
+            financialSituation: sp.financialSituation,
+            isFirstGen: sp.isFirstGen,
+          };
+        }
+        const storedCourses = await getCoursesForProfile(pid);
+        if (storedCourses.length > 0) {
+          courses = storedCourses as ProfileCourse[];
+          const gpaSummary = computeGpaSummary(
+            storedCourses.map(c => ({ ...c, grade: c.grade ?? null })),
+            profile.currentGpa as number | undefined,
+          );
+          totalUnits = gpaSummary.totalUnits ?? 0;
+          setProfileCourses(courses);
+          setProfileGpa(gpaSummary.estimatedGpa > 0 ? gpaSummary.estimatedGpa : null);
+          setTotalUnits(totalUnits);
+        }
+      }
 
       const r = await fetch(`/api/profiles/${pid}/generate-pathways`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          profileId: pid,
           fullName: profile.fullName,
           communityCollege: profile.communityCollege,
           intendedMajor: profile.intendedMajor,
@@ -234,7 +295,7 @@ export default function Pathways() {
           financialSituation: profile.financialSituation,
           isFirstGen: profile.isFirstGen,
           courses,
-          totalUnits: gpaSummary.totalUnits,
+          totalUnits,
         }),
       });
       if (r.status === 429) {
