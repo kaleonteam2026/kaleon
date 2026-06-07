@@ -58,7 +58,7 @@ interface CampusOpportunityItem {
 }
 
 interface PathwayReport {
-  type: string;
+  type?: string;
   university: string;
   compatibilityScore: number;
   whyItFits: string;

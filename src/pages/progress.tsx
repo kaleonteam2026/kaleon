@@ -260,7 +260,7 @@ export default function ProgressTracker() {
                       </span>
                     )}
                     <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      {t("pages.pathways.compatibility")} {pathwayInfo.pathway.compatibilityScore ?? "—"}%
+                      {t("pages.pathways.compatibility")} {String(pathwayInfo.pathway.compatibilityScore ?? "—")}%
                     </span>
                   </div>
                 </div>
