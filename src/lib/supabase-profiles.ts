@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { computeGpaSummary, type StoredCourse } from "@/lib/course-progress";
-import type { DashboardSummary, StudentProfile } from "@/types/profile";
+import type { StudentProfile } from "@/types/profile";
 
 /**
  * Convert a raw Supabase row (snake_case) to the client-side StudentProfile (camelCase).
@@ -256,64 +256,4 @@ export async function deleteCourse(courseId: number): Promise<boolean> {
     return false;
   }
   return true;
-}
-
-/**
- * Compute a DashboardSummary from profile + courses data.
- * Mirrors the dev logic but sources real data.
- */
-export function computeDashboardSummary(
-  profile: StudentProfile,
-  courses: StoredCourse[],
-): DashboardSummary {
-  const completion = profile.completionPercent ?? 60;
-  const gpa = profile.currentGpa ?? 0;
-  const completed = courses.filter((c) => c.status === "completed");
-  const inProgress = courses.filter((c) => c.status === "in_progress");
-  const completedUnits = completed.reduce((s, c) => s + (c.units ?? 0), 0);
-  const inProgressUnits = inProgress.reduce((s, c) => s + (c.units ?? 0), 0);
-  const totalUnits = completedUnits + inProgressUnits;
-  const unitsPct = Math.min(100, Math.round((totalUnits / 60) * 100));
-  const gpaSummary = computeGpaSummary(courses, profile.currentGpa);
-
-  return {
-    profileCompletionPercent: completion,
-    totalCourses: courses.length,
-    completedCourses: completed.length,
-    inProgressCourses: inProgress.length,
-    estimatedGpa: gpa > 0 ? gpa : null,
-    savedPathwaysCount: 0,
-    guidebooksCount: 0,
-    topMatchUniversity: null,
-    topMatchScore: null,
-    chosenTransferSchool: null,
-    chosenTransferScore: null,
-    nextActions:
-      courses.length > 0
-        ? ["Review your pathway course gaps", "Explore AI transfer pathways"]
-        : [
-            "Add your completed courses",
-            "Explore AI transfer pathways",
-            "Review scholarship matches",
-          ],
-    readinessScore: Math.min(
-      100,
-      Math.round(
-        unitsPct * 0.4 + completion * 0.3 + (gpa > 0 ? gpa * 7 : 0),
-      ),
-    ),
-    readinessLabel: "Getting started",
-    readinessBreakdown: {
-      profile: completion,
-      gpa: gpa > 0 ? Math.round(gpa * 20) : 20,
-      units: unitsPct,
-      pathway: 0,
-      guidebook: 0,
-      progress:
-        courses.length > 0
-          ? Math.round((completed.length / courses.length) * 100)
-          : 0,
-      totalUnits,
-    },
-  };
 }

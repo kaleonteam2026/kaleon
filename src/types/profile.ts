@@ -45,21 +45,3 @@ export interface ReadinessBreakdown {
   progress: number;
   totalUnits: number;
 }
-
-export interface DashboardSummary {
-  profileCompletionPercent: number;
-  totalCourses: number;
-  completedCourses: number;
-  inProgressCourses: number;
-  estimatedGpa: number | null;
-  savedPathwaysCount: number;
-  guidebooksCount: number;
-  topMatchUniversity: string | null;
-  topMatchScore: number | null;
-  chosenTransferSchool: string | null;
-  chosenTransferScore: number | null;
-  nextActions: string[];
-  readinessScore: number;
-  readinessLabel: string;
-  readinessBreakdown: ReadinessBreakdown;
-}

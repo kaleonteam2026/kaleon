@@ -36,7 +36,7 @@ export default function AuthPage() {
   const returnTo = useMemo(() => {
     const fromUrl = params.get("returnTo");
     const fromStorage = localStorage.getItem("kaleon_auth_returnTo");
-    const resolved = fromUrl || fromStorage || "/dashboard";
+    const resolved = fromUrl || fromStorage || "/profiles";
     if (resolved && resolved !== fromStorage) {
       localStorage.setItem("kaleon_auth_returnTo", resolved);
     }

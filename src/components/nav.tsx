@@ -111,7 +111,7 @@ export default function Nav({ profileId }: Props) {
   const bottomTabs: NavItem[] = profileLinks;
 
   const Brand = (
-    <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg tracking-tight uppercase">
+    <Link href="/profiles" className="flex items-center gap-2 font-bold text-lg tracking-tight uppercase">
       <img
         src={KALEON_LOGO_SRC}
         alt="Logo"

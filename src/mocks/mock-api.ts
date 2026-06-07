@@ -48,38 +48,6 @@ function appendCourses(profileId: number, incoming: Omit<StoredCourse, "id">[], 
   return profileCourses;
 }
 
-function dashboardSummaryFromCourses(courses: StoredCourse[]) {
-  const gpa = computeGpaSummary(courses, profile.currentGpa);
-  const completed = courses.filter(c => c.status === "completed").length;
-  const inProgress = courses.filter(c => c.status === "in_progress").length;
-  const unitsPct = Math.min(100, Math.round((gpa.totalUnits / 130) * 100));
-  return {
-    profileCompletionPercent: profile.completionPercent,
-    totalCourses: courses.length,
-    completedCourses: completed,
-    inProgressCourses: inProgress,
-    estimatedGpa: gpa.estimatedGpa > 0 ? gpa.estimatedGpa : null,
-    savedPathwaysCount: 1,
-    guidebooksCount: 1,
-    topMatchUniversity: "UCLA",
-    topMatchScore: 84,
-    chosenTransferSchool: "UCLA",
-    chosenTransferScore: 84,
-    nextActions: ["Add another semester plan", "Review pathway assumptions"],
-    readinessScore: Math.min(100, Math.round(unitsPct * 0.4 + (gpa.estimatedGpa > 0 ? gpa.estimatedGpa * 15 : 0))),
-    readinessLabel: "On Track",
-    readinessBreakdown: {
-      profile: profile.completionPercent,
-      gpa: gpa.estimatedGpa > 0 ? Math.round(gpa.estimatedGpa * 20) : 20,
-      units: unitsPct,
-      pathway: 75,
-      guidebook: 60,
-      progress: Math.min(100, Math.round((completed / Math.max(courses.length, 1)) * 100)),
-      totalUnits: gpa.totalUnits,
-    },
-  };
-}
-
 const pathways = [
   {
     id: 101,
@@ -240,10 +208,6 @@ export function installMockApi(): void {
     if (pathname.endsWith("/progress") && method === "GET") return json(progressEntries);
     if (pathname.endsWith("/progress") && method === "POST") return json({ id: Date.now(), note: "New progress entry", createdAt: new Date().toISOString() }, 201);
     if (pathname.startsWith("/api/progress/") && method === "DELETE") return json({ ok: true });
-
-    if (pathname.includes("/dashboard-summary/")) {
-      return json(dashboardSummaryFromCourses(courses));
-    }
 
     if (pathname.includes("/exports") && method === "GET") return json({ generatedAt: new Date().toISOString(), exports: [] });
     if (pathname.includes("/exports/") && method === "POST") return json({ ok: true, url: "#" });

@@ -14,7 +14,7 @@ export default function ProtectedRoute({ children }: Props) {
 
   useEffect(() => {
     if (bypass || isLoading || isAuthenticated) return;
-    const returnTo = encodeURIComponent(location || "/dashboard");
+    const returnTo = encodeURIComponent(location || "/profiles");
     navigate(`/auth?returnTo=${returnTo}`, { replace: true });
   }, [bypass, isLoading, isAuthenticated, location, navigate]);
 

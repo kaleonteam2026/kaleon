@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const session = await getCurrentSession();
         if (!mounted) return;
         if (session?.user) {
-          const returnTo = localStorage.getItem("kaleon_auth_returnTo") || "/dashboard";
+          const returnTo = localStorage.getItem("kaleon_auth_returnTo") || "/profiles";
           try {
             const channel = new BroadcastChannel("kaleon-auth");
             channel.postMessage({ type: "auth-success", returnTo });
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authChannel = new BroadcastChannel("kaleon-auth");
       authChannel.onmessage = (event) => {
         if (event.data?.type === "auth-success") {
-          const path = event.data.returnTo || "/dashboard";
+          const path = event.data.returnTo || "/profiles";
           // Re-fetch session to pick up the new auth state
           getCurrentSession().then((session) => {
             if (!mounted) return;
@@ -189,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(() => {
     if (AUTH_BYPASS) {
-      setLocation("/dashboard", { replace: true });
+      setLocation("/profiles", { replace: true });
       return;
     }
     if (USE_SUPABASE) {

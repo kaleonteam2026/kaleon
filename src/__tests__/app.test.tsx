@@ -28,12 +28,6 @@ describe("Mock API", () => {
     expect(data.communityCollege).toBe("Pasadena City College");
   });
 
-  it("returns dashboard summary data", async () => {
-    const res = await fetch("/api/profiles/1/dashboard-summary/");
-    const data = await res.json();
-    expect(data).toHaveProperty("profileCompletionPercent");
-    expect(data).toHaveProperty("readinessScore");
-  });
 });
 
 // ---------------------------------------------------------------------------

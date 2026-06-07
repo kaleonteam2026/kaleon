@@ -77,8 +77,8 @@ export default function AdminUsage() {
         <p className="text-sm text-slate-600 mt-2">Please try again in a moment.</p>
         <button
           className="mt-4 text-sm text-indigo-600 underline"
-          onClick={() => setLocation("/dashboard")}
-        >Back to dashboard</button>
+          onClick={() => setLocation("/profiles")}
+        >Back to profiles</button>
       </main>
     );
   }

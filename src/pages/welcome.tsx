@@ -91,7 +91,7 @@ export default function Welcome({ persona }: WelcomeProps) {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate("/dashboard");
+      navigate("/profiles");
     }
   }, [isAuthenticated, isLoading, navigate]);
 

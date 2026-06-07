@@ -9,7 +9,6 @@ Standalone Vite React app extracted from `feat/replit-decoupling` for static pag
 - `/welcome/ab540`
 - `/welcome/returning`
 - `/onboarding`
-- `/dashboard`
 - `/profile/:profileId?`
 - `/courses/:profileId`
 - `/matches/:profileId`

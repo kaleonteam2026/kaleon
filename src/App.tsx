@@ -11,7 +11,6 @@ import { AuthProvider, useAuth } from "@/contexts/auth-context";
 import ProtectedRoute from "@/components/protected-route";
 
 const Landing = lazy(() => import("@/pages/landing"));
-const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Profile = lazy(() => import("@/pages/profile"));
 const Courses = lazy(() => import("@/pages/courses"));
 const Matches = lazy(() => import("@/pages/matches"));
@@ -63,13 +62,6 @@ function Router() {
             </Route>
             <Route path="/welcome/returning">
               <ErrorBoundary><Welcome persona="returning" /></ErrorBoundary>
-            </Route>
-            <Route path="/dashboard">
-              <ErrorBoundary>
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              </ErrorBoundary>
             </Route>
             <Route path="/onboarding">
               <ErrorBoundary>
