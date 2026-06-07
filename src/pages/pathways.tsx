@@ -327,7 +327,14 @@ export default function Pathways() {
       setPathways(p);
       // Persist to Supabase so pathways survive page reload
       if (user?.id) {
-        try { await savePathways(pid, user.id, p); }
+        try {
+          await savePathways(pid, user.id, p);
+          // Reload from DB to replace Date.now() IDs with real SERIAL IDs
+          const reloaded = await loadPathwaysFromDb(pid);
+          if (reloaded.length > 0) {
+            setPathways(reloaded as Pathway[]);
+          }
+        }
         catch (e) { console.error("Failed to persist pathways:", e); }
       }
       toast({ title: t("pages.pathways.toast_generated"), description: t("pages.pathways.toast_generatedDesc") });
