@@ -121,7 +121,13 @@ Rules:
 - Exactly 3 pathways
 - Use real UC/CSU campuses
 - progressSummary must reflect the student's course list and unit totals
-- unitsRemaining = graduationRequirement - completedUnits (minimum 0)`;
+- unitsRemaining = graduationRequirement - completedUnits (minimum 0)
+
+Financial & background context:
+- If the student's financial situation is "Limited" or "Very limited", prioritize affordable/accessible programs and include tuition information.
+- If the student is first-generation, prioritize programs and campusOpportunities that offer first-gen support services (EOP, Bridge programs, TRiO, etc.).
+- If financial situation is "Comfortable" or "Very comfortable", focus on merit-based scholarships and competitive programs.
+- If the student is not first-gen, still include general scholarship and program recommendations.`;
 
 function extractJsonPayload(text: string): unknown {
   const trimmed = text.trim();

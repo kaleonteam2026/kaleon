@@ -50,6 +50,14 @@ export default function Courses() {
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
 
+  // Manual add course form
+  const [showManualAdd, setShowManualAdd] = useState(false);
+  const [manualCode, setManualCode] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [manualUnits, setManualUnits] = useState("");
+  const [manualGrade, setManualGrade] = useState("");
+  const [manualTerm, setManualTerm] = useState("");
+
   // Analysis state
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<TransferabilityResult | null>(null);
@@ -67,21 +75,21 @@ export default function Courses() {
       getCoursesForProfile(pid).then(c => {
         setCourses(c);
         setGpa(computeGpaSummary(c));
-        // Try to load pathways from server for school selector
+        // Try to load pathways from server for school selector — guard against HTML response
         fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" })
-          .then(r => r.json())
+          .then(r => r.ok ? r.json() : [])
           .then(setSchoolOptions)
           .catch(() => {});
       }).catch(console.error).finally(() => setLoading(false));
       return;
     }
 
-    // Dev / mock path
+    // Dev / mock path — guard every .json() behind r.ok
     Promise.all([
-      fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }).then(r => r.json()),
-      fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }).then(r => r.json()),
+      fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }).then(r => r.ok ? r.json() : []),
+      fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }).then(r => r.ok ? r.json() : { estimatedGpa: 0, totalUnits: 0, completedUnits: 0, inProgressUnits: 0, courseCount: 0 }),
       fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" })
-        .then(r => r.json())
+        .then(r => r.ok ? r.json() : [])
         .catch(() => []),
     ])
       .then(([c, g, pathways]: [Course[], GpaSummary, unknown[]]) => {
@@ -121,8 +129,8 @@ export default function Courses() {
     try {
       const r = await fetch(`/api/profiles/${pid}/course-catalog`, { credentials: "include" });
       if (!r.ok) {
-        const err = await r.json() as { error?: string };
-        throw new Error(err.error ?? t("pages.courses.couldNotLoadCatalog"));
+        const errBody = await r.json().catch(() => ({})) as { error?: string };
+        throw new Error(errBody.error ?? t("pages.courses.couldNotLoadCatalog"));
       }
       const data = await r.json() as CourseCatalog;
       setCatalog(data);
@@ -172,8 +180,63 @@ export default function Courses() {
     setCourses(prev => [...prev, created]);
     setAnalysis(null);
     fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" })
-      .then(r => r.json()).then((g: GpaSummary) => setGpa(g)).catch(() => {});
+      .then(r => r.ok ? r.json() : null).then(g => g && setGpa(g)).catch(() => {});
     toast({ title: t("pages.courses.toastAdded", { code: catalogCourse.courseCode }) });
+  };
+
+  const addManualCourse = async () => {
+    if (!manualCode.trim()) {
+      toast({ title: "Course code is required", variant: "destructive" });
+      return;
+    }
+    const code = manualCode.trim().toUpperCase();
+    // Check for duplicates by course code
+    const exists = alreadyAdded.has(`${code}::${manualName.trim() || code}`) ||
+      courses.some(c => c.courseCode?.toUpperCase() === code);
+    if (exists) {
+      toast({ title: `"${code}" is already in your list`, variant: "destructive" });
+      return;
+    }
+    const courseData = {
+      courseCode: code,
+      courseName: manualName.trim() || code,
+      units: manualUnits ? parseFloat(manualUnits) : undefined,
+      grade: manualGrade.trim() || undefined,
+      status: "completed" as const,
+      term: manualTerm.trim() || undefined,
+    };
+
+    try {
+      if (isSupabaseConfigured && !isAuthBypass() && user?.id) {
+        const created = await insertCourses(pid, user.id, [courseData]);
+        if (created.length === 0) throw new Error("Failed to add course");
+        setCourses(prev => [...prev, created[0]]);
+        setGpa(computeGpaSummary([...courses, created[0]]));
+        toast({ title: t("pages.courses.toastAdded", { code }) });
+      } else {
+        const r = await fetch(`/api/profiles/${pid}/courses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(courseData),
+          credentials: "include",
+        });
+        if (!r.ok) throw new Error("Failed to add course");
+        const created = await r.json() as Course;
+        setCourses(prev => [...prev, created]);
+        setGpa(computeGpaSummary([...courses, created]));
+        toast({ title: t("pages.courses.toastAdded", { code }) });
+      }
+    } catch {
+      toast({ title: "Failed to add course", variant: "destructive" });
+    }
+
+    setManualCode("");
+    setManualName("");
+    setManualUnits("");
+    setManualGrade("");
+    setManualTerm("");
+    setShowManualAdd(false);
+    setAnalysis(null);
   };
 
   const deleteCourse = async (courseId: number) => {
@@ -249,10 +312,91 @@ export default function Courses() {
             Select courses directly from your college&apos;s catalog to ensure accurate course codes and unit counts.
           </p>
         </div>
-        <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none flex-shrink-0">
-          <Plus className="h-4 w-4 mr-2" /> Add Course
-        </Button>
+        <div className="flex gap-2">
+          {showManualAdd ? (
+            <Button
+              onClick={() => setShowManualAdd(false)}
+              variant="outline"
+              className="border-slate-300 text-slate-600 rounded-none"
+            >
+              Cancel
+            </Button>
+          ) : (
+            <Button
+              onClick={() => setShowManualAdd(true)}
+              variant="outline"
+              className="border-slate-300 text-slate-600 rounded-none"
+            >
+              <Plus className="h-4 w-4 mr-2" /> Manual
+            </Button>
+          )}
+          <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none flex-shrink-0">
+            <Plus className="h-4 w-4 mr-2" /> Catalog
+          </Button>
+        </div>
       </div>
+
+      {/* Manual Add Course Form */}
+      {showManualAdd && (
+        <div className="mb-6 p-4 border-2 border-slate-200 bg-slate-50 rounded-none">
+          <h3 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-tight">Add a Course Manually</h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+            <div>
+              <label className="block text-[10px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Code *</label>
+              <input
+                value={manualCode}
+                onChange={e => setManualCode(e.target.value)}
+                placeholder="e.g. MATH 101"
+                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Name</label>
+              <input
+                value={manualName}
+                onChange={e => setManualName(e.target.value)}
+                placeholder="Course name"
+                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Units</label>
+              <input
+                value={manualUnits}
+                onChange={e => setManualUnits(e.target.value)}
+                type="number"
+                min="0"
+                step="0.5"
+                placeholder="e.g. 3"
+                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Grade</label>
+              <input
+                value={manualGrade}
+                onChange={e => setManualGrade(e.target.value)}
+                placeholder="e.g. A, B+"
+                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Term</label>
+              <input
+                value={manualTerm}
+                onChange={e => setManualTerm(e.target.value)}
+                placeholder="e.g. Fall 2023"
+                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={addManualCourse} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-none text-sm px-6">
+              <Plus className="h-4 w-4 mr-2" /> Add Course
+            </Button>
+          </div>
+        </div>
+      )}
 
       <PageMotion>
         {/* GPA Summary */}

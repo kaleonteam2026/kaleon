@@ -164,7 +164,45 @@ export async function getCoursesForProfile(
 }
 
 /**
+ * Deduplicate a list of courses against existing courses for a profile.
+ * Returns only courses whose course_code is not already in the database.
+ */
+export async function deduplicateCourses(
+  profileId: number,
+  incoming: Array<{
+    courseCode?: string;
+    courseName: string;
+    units?: number;
+    grade?: string;
+    status?: string;
+    term?: string;
+  }>,
+): Promise<typeof incoming> {
+  if (incoming.length === 0) return [];
+
+  // Fetch existing course codes for this profile
+  const { data: existing } = await supabase
+    .from("courses")
+    .select("course_code")
+    .eq("profile_id", profileId);
+
+  const existingCodes = new Set(
+    (existing ?? [])
+      .map((r) => (r as { course_code: string | null }).course_code)
+      .filter(Boolean)
+      .map((c) => c!.trim().toUpperCase()),
+  );
+
+  return incoming.filter((c) => {
+    const code = (c.courseCode ?? "").trim().toUpperCase();
+    if (!code) return true; // always keep courses without a code
+    return !existingCodes.has(code);
+  });
+}
+
+/**
  * Insert courses for a profile into the `courses` table.
+ * Automatically deduplicates against existing courses by course_code.
  * Returns the inserted courses.
  */
 export async function insertCourses(
@@ -181,7 +219,11 @@ export async function insertCourses(
 ): Promise<StoredCourse[]> {
   if (courses.length === 0) return [];
 
-  const rows = courses.map((c) => ({
+  // Deduplicate: skip courses that already exist by course_code
+  const unique = await deduplicateCourses(profileId, courses);
+  if (unique.length === 0) return [];
+
+  const rows = unique.map((c) => ({
     profile_id: profileId,
     user_id: userId,
     course_code: c.courseCode ?? null,

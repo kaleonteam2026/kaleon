@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, Target, AlertTriangle, CheckCircle, ArrowRight,
+  Loader2, AlertTriangle, CheckCircle, ArrowRight,
   ChevronDown, ChevronUp, Sparkles, BookOpen, Award, Users, Briefcase,
   Star, GraduationCap, Building2
 } from "lucide-react";
@@ -480,9 +480,6 @@ export default function Pathways() {
             <p className="text-slate-500 text-sm mt-1 max-w-md mx-auto">
               {t("pages.pathways.noPathwaysBody")}
             </p>
-            <Button onClick={generatePathways} className="mt-6 bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
-              <Sparkles className="mr-2 h-4 w-4" /> {t("pages.pathways.generatePathways")}
-            </Button>
           </div>
         )}
 
