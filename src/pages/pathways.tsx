@@ -23,6 +23,11 @@ import {
   getCoursesForProfile,
 } from "@/lib/supabase-profiles";
 import { GRADUATION_UNITS, graduationProgressPercent, computeGpaSummary } from "@/lib/course-progress";
+import {
+  savePathways,
+  loadPathwaysFromDb,
+  selectPathwayInDb,
+} from "@/lib/supabase-pathways";
 
 interface ProfileCourse {
   id: number;
@@ -214,19 +219,24 @@ export default function Pathways() {
           setTotalUnits(gpaData.totalUnits ?? 0);
           setLoading(false);
         } else if (user?.id) {
-          // API returned empty — try Supabase directly
+          // API returned empty — try Supabase directly for courses + saved pathways
           Promise.all([
             getProfileForUser(user.id),
             getCoursesForProfile(pid),
-          ]).then(([profile, storedCourses]) => {
+            loadPathwaysFromDb(pid),
+          ]).then(([profile, storedCourses, savedPathways]) => {
+            let gpaSummary = { estimatedGpa: 0, totalUnits: 0 };
             if (storedCourses.length > 0) {
               setProfileCourses(storedCourses as ProfileCourse[]);
-              const gpaSummary = computeGpaSummary(
+              gpaSummary = computeGpaSummary(
                 storedCourses,
-                profile?.currentGpa,
+                profile?.currentGpa ?? undefined,
               );
               setProfileGpa(gpaSummary.estimatedGpa > 0 ? gpaSummary.estimatedGpa : null);
               setTotalUnits(gpaSummary.totalUnits ?? 0);
+            }
+            if (savedPathways.length > 0) {
+              setPathways(savedPathways);
             }
             setLoading(false);
           }).catch(() => setLoading(false));
@@ -315,6 +325,11 @@ export default function Pathways() {
         setCourseAnalysis(data.progressSummary.courseAnalysis);
       }
       setPathways(p);
+      // Persist to Supabase so pathways survive page reload
+      if (user?.id) {
+        try { await savePathways(pid, user.id, p); }
+        catch (e) { console.error("Failed to persist pathways:", e); }
+      }
       toast({ title: t("pages.pathways.toast_generated"), description: t("pages.pathways.toast_generatedDesc") });
     } catch (e) {
       const msg = e instanceof Error ? e.message : t("pages.pathways.toast_genErrorDesc");
@@ -327,7 +342,8 @@ export default function Pathways() {
   const selectPathway = async (pathwayId: number) => {
     setSelecting(pathwayId);
     try {
-      await fetch(`/api/pathways/${pathwayId}/select`, { method: "POST", credentials: "include" });
+      const ok = await selectPathwayInDb(pid, pathwayId);
+      if (!ok) throw new Error();
       setPathways(prev => prev.map(p => ({ ...p, isSelected: p.id === pathwayId ? "true" : "false" })));
       toast({ title: t("pages.pathways.toast_selected") });
     } catch {

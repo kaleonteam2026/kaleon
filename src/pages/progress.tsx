@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import { AppPageLayout } from "@/components/app-page-layout";
 import { PageLoadingState } from "@/components/page-loading-state";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,16 @@ import { AnalysisCard } from "@/components/progress/analysis-card";
 import { ScoreRing } from "@/components/progress/score-ring";
 import { ENTRY_TYPES } from "@/components/progress/entry-types-config";
 import type { EntryType, ProgressEntry, EntryFeedback, ProgressAnalysis, PathwayInfo } from "@/components/progress/progress-types";
+import { useAuth } from "@/contexts/auth-context";
+import {
+  getSelectedPathway,
+} from "@/lib/supabase-pathways";
+import {
+  getCoursesForProfile,
+} from "@/lib/supabase-profiles";
+import { IGETC_AREAS } from "@/components/courses/course-types";
+import { computeGpaSummary, graduationProgressPercent, transferProgressPercent } from "@/lib/course-progress";
+import type { StoredCourse } from "@/lib/course-progress";
 
 type Tab = "log" | "timeline" | "assessment";
 
@@ -33,11 +43,16 @@ export default function ProgressTracker() {
   const { enabled: prMotionOn, lift: prLift, itemVariants, containerVariants } = useBrutalistMotion();
   const { profileId } = useParams<{ profileId: string }>();
   const { toast } = useToast();
+  const { user } = useAuth();
   const pid = parseInt(profileId);
 
   // Pathway gate
   const [pathwayInfo, setPathwayInfo] = useState<PathwayInfo | null>(null);
   const [pathwayLoading, setPathwayLoading] = useState(true);
+
+  // Courses data for transfer/IGETC overview
+  const [profileCourses, setProfileCourses] = useState<StoredCourse[]>([]);
+  const [totalUnits, setTotalUnits] = useState(0);
 
   // Tab
   const [tab, setTab] = useState<Tab>("log");
@@ -68,13 +83,41 @@ export default function ProgressTracker() {
   const [, setCurrentSection] = useState("");
   const analysisRef = useRef<HTMLDivElement>(null);
 
-  // Load pathway gate + data
+  // Load pathway gate + data (Supabase direct, no non-existent API endpoints)
   useEffect(() => {
-    fetch(`/api/profiles/${pid}/progress/selected-pathway`, { credentials: "include" })
-      .then(r => r.json())
-      .then((info: PathwayInfo) => setPathwayInfo(info))
-      .catch(() => setPathwayInfo({ hasSelectedPathway: false, pathway: null }))
-      .finally(() => setPathwayLoading(false));
+    if (!user?.id) {
+      setPathwayLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    getSelectedPathway(pid).then(selected => {
+      if (cancelled) return;
+      if (selected) {
+        setPathwayInfo({
+          hasSelectedPathway: true,
+          pathway: {
+            ...(selected.reportJson ?? {}),
+            pathwayType: selected.pathwayType,
+            compatibilityScore: selected.compatibilityScore,
+          } as Record<string, unknown>,
+        });
+      } else {
+        setPathwayInfo({ hasSelectedPathway: false, pathway: null });
+      }
+    }).catch(() => {
+      if (!cancelled) setPathwayInfo({ hasSelectedPathway: false, pathway: null });
+    }).finally(() => {
+      if (!cancelled) setPathwayLoading(false);
+    });
+
+    getCoursesForProfile(pid).then(courses => {
+      if (cancelled) return;
+      setProfileCourses(courses);
+      const gpaSummary = computeGpaSummary(courses);
+      setTotalUnits(gpaSummary.totalUnits ?? 0);
+    }).catch(() => {});
 
     fetch(`/api/profiles/${pid}/progress`, { credentials: "include" })
       .then(r => r.json())
@@ -200,32 +243,134 @@ export default function ProgressTracker() {
       </div>
 
       <PageMotion>
+        {/* ── PATHWAY OVERVIEW CARD ────────────────────────────────────────── */}
+        {pathwayInfo?.hasSelectedPathway && pathwayInfo.pathway && (
+          <div className="mb-8 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5 text-emerald-400" />
+                    {String(pathwayInfo.pathway.university ?? t("pages.progress.pathwayActiveFallback"))}
+                  </h2>
+                  <div className="flex flex-wrap gap-2 mt-1.5">
+                    {pathwayInfo.pathway.pathwayType && (
+                      <span className="text-xs px-2 py-0.5 rounded-full border font-semibold bg-white/10 text-white/80 border-white/20 capitalize">
+                        {String(pathwayInfo.pathway.pathwayType).replace(/_/g, " ")}
+                      </span>
+                    )}
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      {t("pages.pathways.compatibility")} {pathwayInfo.pathway.compatibilityScore ?? "—"}%
+                    </span>
+                  </div>
+                </div>
+                <div className="hidden sm:flex items-center gap-3">
+                  {typeof pathwayInfo.pathway.gpaTarget === "number" && (
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-white">{Number(pathwayInfo.pathway.gpaTarget).toFixed(1)}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-white/60">{t("pages.progress.gpaTarget")}</div>
+                    </div>
+                  )}
+                  {typeof pathwayInfo.pathway.requiredUnits === "number" && (
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-white">{totalUnits}/{Number(pathwayInfo.pathway.requiredUnits)}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-white/60">Units</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Transfer progress bar */}
+              {typeof pathwayInfo.pathway.requiredUnits === "number" && (
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <p className="text-sm font-semibold text-slate-700">{t("pages.courses.transferProgress")}</p>
+                    <p className="text-sm text-slate-500">
+                      {t("pages.courses.transferProgressLabel", {
+                        completed: totalUnits,
+                        required: Number(pathwayInfo.pathway.requiredUnits),
+                        school: String(pathwayInfo.pathway.university ?? ""),
+                      })}
+                    </p>
+                  </div>
+                  <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
+                      style={{ width: `${transferProgressPercent(totalUnits, Number(pathwayInfo.pathway.requiredUnits))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Stats row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
+                  <div className="text-lg font-bold text-indigo-600">{latestGpa != null ? latestGpa.toFixed(2) : "—"}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">{t("pages.progress.latestGpa")}</div>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
+                  <div className="text-lg font-bold text-amber-600">{certCount}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">{t("pages.progress.certifications")}</div>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
+                  <div className="text-lg font-bold text-teal-600">{oppCount}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">{t("pages.progress.opportunities")}</div>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
+                  <div className="text-lg font-bold text-slate-900">{profileCourses.length}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Courses</div>
+                </div>
+              </div>
+
+              {/* IGETC Areas checklist */}
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  {t("pages.courses.igetcCompletion", { count: 0, total: IGETC_AREAS.length })}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {IGETC_AREAS.map((area) => (
+                    <div
+                      key={area.key}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200"
+                    >
+                      <div className="h-5 w-5 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0">
+                        <div className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                      </div>
+                      <span className="text-xs text-slate-600">{t(area.labelKey)}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  <Info className="h-3 w-3 inline mr-0.5" />
+                  {t("pages.courses.igetcQualifies")} — {t("pages.igetc.verifyTitle")}.
+                </p>
+              </div>
+
+              {/* Quick links */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Link href={`/courses/${profileId}`}>
+                  <Button variant="outline" size="sm" className="rounded-none border-slate-300 text-xs">
+                    <BookOpen className="h-3.5 w-3.5 mr-1" />{t("pages.courses.title")}
+                  </Button>
+                </Link>
+                <Link href={`/pathways/${profileId}`}>
+                  <Button variant="outline" size="sm" className="rounded-none border-slate-300 text-xs">
+                    <Target className="h-3.5 w-3.5 mr-1" />{t("pages.pathways.title")}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── PATHWAY LOCK ─────────────────────────────────────────────────────── */}
         {!pathwayInfo?.hasSelectedPathway ? (
           <PathwayLockScreen profileId={pid} />
         ) : (
           <>
-            {/* Quick stats strip */}
-            {entries.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-                <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
-                  <p className="text-2xl font-bold text-blue-600">{latestGpa != null ? latestGpa.toFixed(2) : "—"}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.latestGpa")}</p>
-                </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
-                  <p className="text-2xl font-bold text-amber-600">{certCount}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.certifications")}</p>
-                </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
-                  <p className="text-2xl font-bold text-teal-600">{oppCount}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.opportunities")}</p>
-                </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
-                  <p className="text-2xl font-bold text-slate-900">{achievementCount}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">{t("pages.progress.achievements")}</p>
-                </div>
-              </div>
-            )}
 
             {/* Tab bar */}
             <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-6 border border-slate-200">
