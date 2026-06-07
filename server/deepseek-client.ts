@@ -29,15 +29,17 @@ export async function deepSeekChat({
   const client = getDeepSeekClient(apiKey);
   const model = getDeepSeekModel();
 
-  const completion = await client.chat.completions.create({
-    messages: [
-      { role: "system", content: system },
-      { role: "user", content: user },
-    ],
-    model,
-    temperature: 0.1,
-    timeout: 180000, // 3 minutes — avoids socket hangup on slow DeepSeek responses
-  });
+  const completion = await client.chat.completions.create(
+    {
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      model,
+      temperature: 0.1,
+    },
+    { timeout: 180000 }, // 3 minutes — avoids socket hangup on slow DeepSeek responses
+  );
 
   const content = completion.choices[0]?.message?.content;
   if (!content?.trim()) {

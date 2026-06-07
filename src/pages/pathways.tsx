@@ -69,6 +69,7 @@ interface PathwayReport {
   concerns: string;
   riskAnalysis?: string;
   gpaTarget: number;
+  requiredUnits?: number;
   courseGaps: string[];
   coursesAnalyzed?: string[];
   transferTimeline: string;
