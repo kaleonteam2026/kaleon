@@ -3,7 +3,7 @@ import { CheckCircle2, AlertCircle, Star, School, BookOpen, FlaskConical, Extern
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/copy";
 import { CourseAnalysisRow } from "./course-analysis-row";
-import { IGETC_AREAS } from "./course-types";
+import { IGETC_AREAS, CSU_GE_AREAS } from "./course-types";
 import type { TransferabilityResult } from "./course-types";
 
 const SYSTEM_COLOR: Record<string, string> = {
@@ -84,6 +84,33 @@ export function TransferabilityPanel({ result }: { result: TransferabilityResult
           <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">{t("pages.courses.verifyAssist")}</a>
         </p>
       </div>
+
+      {result.calgetcSummary && (
+      <div>
+        <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-teal-500" />
+          CalGETC (CSU GE Breadth) — {result.calgetcSummary.completedAreas.length}/{CSU_GE_AREAS.length}
+        </h2>
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          {CSU_GE_AREAS.map((area, i) => {
+            const done = result.calgetcSummary![area.key as keyof typeof result.calgetcSummary];
+            return (
+              <div key={area.key} className={cn("flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0", i % 2 === 0 ? "bg-white" : "bg-slate-50/60")}>
+                {done ? <CheckCircle2 className="h-4 w-4 text-teal-500 flex-shrink-0" /> : <AlertCircle className="h-4 w-4 text-slate-300 flex-shrink-0" />}
+                <span className={cn("text-sm", done ? "text-slate-800 font-medium" : "text-slate-600")}>{t(area.labelKey)}</span>
+                <span className={cn("ml-auto text-xs font-semibold px-2 py-0.5 rounded-full", done ? "bg-teal-100 text-teal-700" : "bg-slate-100 text-slate-600")}>
+                  {done ? t("pages.courses.complete") : t("pages.courses.needed")}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-xs text-slate-600 mt-2">
+          CSU GE Breadth (CalGETC) requirements for CSU transfer.{" "}
+          <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">{t("pages.courses.verifyAssist")}</a>
+        </p>
+      </div>
+      )}
 
       <div>
         <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">

@@ -275,6 +275,16 @@ export default function Courses() {
       const r = await fetch(`/api/profiles/${pid}/transferability-analysis`, {
         method: "POST",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courses: courses.map(c => ({
+            courseCode: c.courseCode,
+            courseName: c.courseName,
+            units: c.units,
+            term: c.term,
+            status: c.status,
+          })),
+        }),
       });
       if (!r.ok) {
         const err = await r.json() as { error?: string };

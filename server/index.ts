@@ -4,6 +4,7 @@ import { generatePathwaysWithDeepSeek } from "./generate-pathways.ts";
 import { parseTranscriptWithAI } from "./transcript-parse.ts";
 import { generateGuidebookWithDeepSeek } from "./generate-guidebook.ts";
 import { generateRoadmapWithDeepSeek } from "./generate-roadmap.ts";
+import { generateTransferabilityAnalysis } from "./transferability-analysis.ts";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -112,6 +113,22 @@ app.post("/api/pathways/:pathwayId/generate-roadmap", async (req, res) => {
   }
   try {
     const result = await generateRoadmapWithDeepSeek(req.body, apiKey);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// ── Transferability analysis ────────────────────────────────────────────
+
+app.post("/api/profiles/:id/transferability-analysis", async (req, res) => {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: "DeepSeek API key not configured" });
+    return;
+  }
+  try {
+    const result = await generateTransferabilityAnalysis(req.body, apiKey);
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: String(e) });
