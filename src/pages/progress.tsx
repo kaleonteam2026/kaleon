@@ -25,13 +25,31 @@ import { EntryCard } from "@/components/progress/entry-card";
 import { AnalysisCard } from "@/components/progress/analysis-card";
 import { ScoreRing } from "@/components/progress/score-ring";
 import { ENTRY_TYPES } from "@/components/progress/entry-types-config";
-import type { EntryType, ProgressEntry, EntryFeedback, ProgressAnalysis, PathwayInfo } from "@/components/progress/progress-types";
+import type { EntryType, ProgressEntry, EntryFeedback, ProgressAnalysis } from "@/components/progress/progress-types";
+
+/** Local pathway data shape for the progress page. */
+interface PathwayOverviewData {
+  university?: string;
+  pathwayType?: string;
+  compatibilityScore?: unknown;
+  gpaTarget?: unknown;
+  requiredUnits?: unknown;
+  courseGaps?: string[];
+  risks?: string[];
+  nextSteps?: string[];
+}
+
+interface PathwayInfo {
+  hasSelectedPathway: boolean;
+  pathway: PathwayOverviewData | null;
+}
 import { useAuth } from "@/contexts/auth-context";
 import {
   getSelectedPathway,
 } from "@/lib/supabase-pathways";
 import {
   getCoursesForProfile,
+  getProfileForUser,
 } from "@/lib/supabase-profiles";
 import { IGETC_AREAS } from "@/components/courses/course-types";
 import { computeGpaSummary, graduationProgressPercent, transferProgressPercent } from "@/lib/course-progress";
@@ -53,6 +71,7 @@ export default function ProgressTracker() {
   // Courses data for transfer/IGETC overview
   const [profileCourses, setProfileCourses] = useState<StoredCourse[]>([]);
   const [totalUnits, setTotalUnits] = useState(0);
+  const [profileGpa, setProfileGpa] = useState<number | null>(null);
 
   // Tab
   const [tab, setTab] = useState<Tab>("log");
@@ -98,10 +117,15 @@ export default function ProgressTracker() {
         setPathwayInfo({
           hasSelectedPathway: true,
           pathway: {
-            ...(selected.reportJson ?? {}),
+            university: selected.reportJson?.university,
             pathwayType: selected.pathwayType,
             compatibilityScore: selected.compatibilityScore,
-          } as Record<string, unknown>,
+            gpaTarget: selected.reportJson?.gpaTarget,
+            requiredUnits: selected.reportJson?.requiredUnits,
+            courseGaps: selected.reportJson?.courseGaps,
+            risks: selected.reportJson?.risks,
+            nextSteps: selected.reportJson?.nextSteps,
+          },
         });
       } else {
         setPathwayInfo({ hasSelectedPathway: false, pathway: null });
@@ -117,6 +141,11 @@ export default function ProgressTracker() {
       setProfileCourses(courses);
       const gpaSummary = computeGpaSummary(courses);
       setTotalUnits(gpaSummary.totalUnits ?? 0);
+    }).catch(() => {});
+
+    getProfileForUser(user.id).then(profile => {
+      if (cancelled) return;
+      setProfileGpa(profile?.currentGpa ?? null);
     }).catch(() => {});
 
     fetch(`/api/profiles/${pid}/progress`, { credentials: "include" })
@@ -254,7 +283,7 @@ export default function ProgressTracker() {
                     {String(pathwayInfo.pathway.university ?? t("pages.progress.pathwayActiveFallback"))}
                   </h2>
                   <div className="flex flex-wrap gap-2 mt-1.5">
-                    {pathwayInfo.pathway.pathwayType && (
+                    {Boolean(pathwayInfo.pathway.pathwayType) && (
                       <span className="text-xs px-2 py-0.5 rounded-full border font-semibold bg-white/10 text-white/80 border-white/20 capitalize">
                         {String(pathwayInfo.pathway.pathwayType).replace(/_/g, " ")}
                       </span>
@@ -304,19 +333,33 @@ export default function ProgressTracker() {
                 </div>
               )}
 
-              {/* Stats row */}
+              {/* GPA Stats row */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
-                  <div className="text-lg font-bold text-indigo-600">{latestGpa != null ? latestGpa.toFixed(2) : "—"}</div>
+                  <div className="text-lg font-bold text-indigo-600">
+                    {((latestGpa ?? profileGpa) ?? 0) > 0 ? Number(latestGpa ?? profileGpa).toFixed(2) : "—"}
+                  </div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-500">{t("pages.progress.latestGpa")}</div>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
-                  <div className="text-lg font-bold text-amber-600">{certCount}</div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">{t("pages.progress.certifications")}</div>
+                  <div className="text-lg font-bold text-amber-600">
+                    {typeof pathwayInfo.pathway.gpaTarget === "number" ? Number(pathwayInfo.pathway.gpaTarget).toFixed(1) : "—"}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">{t("pages.pathways.gpaTarget")}</div>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
-                  <div className="text-lg font-bold text-teal-600">{oppCount}</div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">{t("pages.progress.opportunities")}</div>
+                  <div className="text-lg font-bold" style={{
+                    color: profileGpa != null && typeof pathwayInfo.pathway.gpaTarget === "number"
+                      ? Number(profileGpa) >= Number(pathwayInfo.pathway.gpaTarget) ? "#059669" : "#e11d48"
+                      : "#94a3b8"
+                  }}>
+                    {profileGpa != null && typeof pathwayInfo.pathway.gpaTarget === "number"
+                      ? Number(pathwayInfo.pathway.gpaTarget) - Number(profileGpa) > 0
+                        ? `Need +${(Number(pathwayInfo.pathway.gpaTarget) - Number(profileGpa)).toFixed(2)}`
+                        : "Met ✓"
+                      : "—"}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Gap</div>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
                   <div className="text-lg font-bold text-slate-900">{profileCourses.length}</div>

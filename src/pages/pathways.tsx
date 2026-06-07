@@ -92,6 +92,7 @@ interface Pathway {
   pathwayType?: string;
   reportJson?: PathwayReport;
   isSelected?: string;
+  generationLabel?: string;
 }
 
 const TYPE_LABELS: Record<string, { labelKey: string; color: string; bg: string }> = {
@@ -179,6 +180,8 @@ export default function Pathways() {
   const [profileGpa, setProfileGpa] = useState<number | null>(null);
   const [totalUnits, setTotalUnits] = useState(0);
   const [courseAnalysis, setCourseAnalysis] = useState<string | null>(null);
+  const [activeGeneration, setActiveGeneration] = useState<string | null>(null);
+  const [generations, setGenerations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
@@ -248,6 +251,27 @@ export default function Pathways() {
   };
 
   useEffect(() => { loadPathways(); }, [pid]);
+
+  // Derive generations list from loaded pathways
+  useEffect(() => {
+    const seen = new Set<string>();
+    const labels: string[] = [];
+    for (const p of pathways) {
+      const lbl = p.generationLabel;
+      if (lbl && !seen.has(lbl)) {
+        seen.add(lbl);
+        labels.push(lbl);
+      }
+    }
+    setGenerations(labels);
+    if (labels.length > 0 && (!activeGeneration || !labels.includes(activeGeneration))) {
+      setActiveGeneration(labels[0]); // latest
+    }
+  }, [pathways]);
+
+  const visiblePathways = activeGeneration
+    ? pathways.filter((p) => p.generationLabel === activeGeneration)
+    : pathways;
 
   const completedCourseCodes = new Set(
     profileCourses
@@ -419,7 +443,7 @@ export default function Pathways() {
             {generating ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("pages.pathways.generating")}</>
             ) : (
-              <><Sparkles className="mr-2 h-4 w-4" />{pathways.length > 0 ? t("pages.pathways.regenerate") : t("pages.pathways.generatePathways")}</>
+              <><Sparkles className="mr-2 h-4 w-4" />{generations.length > 0 ? "Generate New" : t("pages.pathways.generatePathways")}</>
             )}
           </Button>
         </header>
@@ -507,6 +531,25 @@ export default function Pathways() {
         )}
 
         {!generating && pathways.length > 0 && (
+          <>
+          {/* Generation selector tabs */}
+          {generations.length > 1 && (
+            <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-6 border border-slate-200 overflow-x-auto">
+              {generations.map((label) => (
+                <button
+                  key={label}
+                  onClick={() => setActiveGeneration(label)}
+                  className={`flex-1 px-4 py-2 text-xs font-semibold rounded-lg uppercase tracking-wider transition-all whitespace-nowrap ${
+                    activeGeneration === label
+                      ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+                      : "text-slate-600 hover:text-slate-800"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           <motion.div
             className="space-y-4 pb-12"
             initial={pwMotionOn ? "hidden" : false}
@@ -515,7 +558,7 @@ export default function Pathways() {
             variants={containerVariants}
           >
             {["least_compatible", "moderately_compatible", "most_compatible"].map(type => {
-              const pathway = pathways.find(p => p.pathwayType === type);
+              const pathway = visiblePathways.find(p => p.pathwayType === type);
               if (!pathway) return null;
               const report = pathway.reportJson;
               const meta = TYPE_LABELS[type] ?? { labelKey: type, color: "text-slate-600", bg: "bg-slate-50 border-slate-200" };
@@ -813,6 +856,7 @@ export default function Pathways() {
               <CopyTrans i18nKey="pages.pathways.disclaimer" components={{ strong: <strong /> }} />
             </div>
           </motion.div>
+          </>
         )}
         </PageMotion>
     </AppPageLayout>

@@ -1,5 +1,5 @@
 /** Total units required for associate degree / graduation progress at CC. */
-export const GRADUATION_UNITS = 130;
+export const GRADUATION_UNITS = 60;
 
 export interface StoredCourse {
   id?: number;
@@ -28,7 +28,7 @@ export function computeGpaSummary(
   const completedUnits = completed.reduce((s, c) => s + (c.units ?? 0), 0);
   const inProgressUnits = inProgress.reduce((s, c) => s + (c.units ?? 0), 0);
   return {
-    estimatedGpa: profileGpa && profileGpa > 0 ? profileGpa : 0,
+    estimatedGpa: profileGpa,
     totalUnits: completedUnits + inProgressUnits,
     completedUnits,
     inProgressUnits,

@@ -35,6 +35,7 @@ export interface Pathway {
   pathwayType?: string;
   reportJson?: PathwayReportJson;
   isSelected?: string; // "true" | "false" (string, matching existing convention)
+  generationLabel?: string;
 }
 
 /** Row shape from the `pathways` Supabase table. */
@@ -45,6 +46,7 @@ interface PathwayRow {
   compatibility_score: number;
   is_selected: boolean;
   report_json: unknown;
+  generation_label: string;
   created_at: string;
 }
 
@@ -59,12 +61,47 @@ function rowToPathway(row: PathwayRow): Pathway {
     isSelected: row.is_selected ? "true" : "false",
     universityId: report.university,
     reportJson: report,
+    generationLabel: row.generation_label,
   };
 }
 
 /**
- * Delete all existing pathways for a profile, then insert fresh ones.
- * Called after pathway generation completes.
+ * Get the next generation label for a profile.
+ * Counts existing generations and returns "Pathway N+1".
+ */
+async function getNextGenerationLabel(profileId: number): Promise<string> {
+  const { data, error } = await supabase
+    .from("pathways")
+    .select("generation_label")
+    .eq("profile_id", profileId);
+
+  if (error) {
+    console.error("Error counting generations:", error);
+    return "Pathway 1";
+  }
+
+  const existing = new Set(
+    ((data ?? []) as { generation_label: string }[]).map((r) => r.generation_label),
+  );
+
+  if (existing.size === 0) return "Pathway 1";
+
+  // Find the highest numbered pathway label
+  let maxN = 0;
+  for (const label of existing) {
+    const match = label.match(/^Pathway (\d+)$/i);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (n > maxN) maxN = n;
+    }
+  }
+
+  return `Pathway ${maxN + 1}`;
+}
+
+/**
+ * Save a new generation of pathways. Does NOT delete old generations —
+ * every call creates a new numbered "slot" (Pathway 1, Pathway 2, …).
  */
 export async function savePathways(
   profileId: number,
@@ -73,23 +110,14 @@ export async function savePathways(
 ): Promise<void> {
   if (pathways.length === 0) return;
 
-  // Delete existing pathways for this profile
-  const { error: delErr } = await supabase
-    .from("pathways")
-    .delete()
-    .eq("profile_id", profileId);
+  const label = await getNextGenerationLabel(profileId);
 
-  if (delErr) {
-    console.error("Error deleting old pathways:", delErr);
-    return;
-  }
-
-  // Insert fresh rows
   const rows = pathways.map((p) => ({
     profile_id: profileId,
     pathway_type: p.pathwayType ?? "moderately_compatible",
     compatibility_score: p.compatibilityScore ?? 70,
     is_selected: false,
+    generation_label: label,
     report_json: p.reportJson ?? {},
   }));
 
@@ -101,8 +129,7 @@ export async function savePathways(
 }
 
 /**
- * Load all pathways for a profile from the database.
- * Used on page mount to restore previously generated pathways.
+ * Load all pathways for a profile from the database, ordered by generation.
  */
 export async function loadPathwaysFromDb(
   profileId: number,
@@ -122,14 +149,40 @@ export async function loadPathwaysFromDb(
 }
 
 /**
+ * Get the list of distinct generation labels for a profile, newest first.
+ */
+export async function getGenerationLabels(
+  profileId: number,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("pathways")
+    .select("generation_label")
+    .eq("profile_id", profileId)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    console.error("Error fetching generation labels:", error);
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  for (const row of data as { generation_label: string }[]) {
+    if (!seen.has(row.generation_label)) {
+      seen.add(row.generation_label);
+      labels.push(row.generation_label);
+    }
+  }
+  return labels;
+}
+
+/**
  * Mark a pathway as selected (primary) and unselect all others for the profile.
- * The DB unique partial index on is_selected=true enforces one primary per profile.
  */
 export async function selectPathwayInDb(
   profileId: number,
   pathwayId: number,
 ): Promise<boolean> {
-  // First, unselect all pathways for this profile
   const { error: unselErr } = await supabase
     .from("pathways")
     .update({ is_selected: false })
@@ -140,7 +193,6 @@ export async function selectPathwayInDb(
     return false;
   }
 
-  // Then, select the target pathway
   const { error: selErr } = await supabase
     .from("pathways")
     .update({ is_selected: true })
@@ -157,7 +209,6 @@ export async function selectPathwayInDb(
 
 /**
  * Get the currently selected (primary) pathway for a profile.
- * Returns null if none is selected.
  */
 export async function getSelectedPathway(
   profileId: number,
@@ -172,7 +223,6 @@ export async function getSelectedPathway(
 
   if (error) {
     if (error.code !== "PGRST116") {
-      // PGRST116 = no rows returned — not an error
       console.error("Error fetching selected pathway:", error);
     }
     return null;
