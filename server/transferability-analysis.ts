@@ -206,6 +206,8 @@ function buildUserPrompt(input: TransferabilityAnalysisInput): string {
 
 function extractJsonPayload(text: string): unknown {
   const trimmed = text.trim();
+  const debugPrefix = "[transferability-json]";
+
   // Try direct parse first
   try {
     return JSON.parse(trimmed);
@@ -227,6 +229,23 @@ function extractJsonPayload(text: string): unknown {
   const objStart = trimmed.indexOf("{");
   const objEnd = trimmed.lastIndexOf("}");
   if (objStart >= 0 && objEnd > objStart) {
+    // Try to extract a balanced JSON object by counting braces
+    let braceDepth = 0;
+    let actualEnd = -1;
+    for (let i = objStart; i < trimmed.length; i++) {
+      if (trimmed[i] === "{") braceDepth++;
+      else if (trimmed[i] === "}") braceDepth--;
+      if (braceDepth === 0) { actualEnd = i; break; }
+    }
+    if (actualEnd > objStart) {
+      const candidate = trimmed.slice(objStart, actualEnd + 1);
+      try {
+        return JSON.parse(candidate);
+      } catch {
+        // fall through to extended candidate
+      }
+    }
+    // Fall back to full slice between first and last brace
     try {
       return JSON.parse(trimmed.slice(objStart, objEnd + 1));
     } catch {
@@ -234,6 +253,33 @@ function extractJsonPayload(text: string): unknown {
     }
   }
 
+  // Aggressive regex: match any top-level JSON object
+  const objMatch = trimmed.match(/\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\}))*\}))*\}/s);
+  if (objMatch) {
+    try {
+      return JSON.parse(objMatch[0]);
+    } catch {
+      // fall through
+    }
+  }
+
+  // Last resort: try to repair common JSON issues (trailing commas, single quotes)
+  const repaired = trimmed
+    .replace(/,\s*}/g, "}")                       // remove trailing commas before }
+    .replace(/,\s*]/g, "]")                       // remove trailing commas before ]
+    .replace(/([{,])\s*'([^']+)'\s*:/g, '$1"$2":') // single-quoted keys → double-quoted
+    .replace(/:\s*'([^']*)'/g, ':"$1"')            // single-quoted values → double-quoted
+    .replace(/\/\/.*$/gm, "")                      // remove line comments
+    .trim();
+  try {
+    return JSON.parse(repaired);
+  } catch {
+    // fall through
+  }
+
+  // Log the actual raw response for debugging before throwing
+  console.error(debugPrefix, "Failed to parse DeepSeek response. First 500 chars:", trimmed.slice(0, 500));
+  console.error(debugPrefix, "Response length:", trimmed.length);
   throw new Error("Could not extract valid JSON from DeepSeek response");
 }
 
