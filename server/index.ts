@@ -9,6 +9,17 @@ const DIST = path.resolve(import.meta.dirname, "..", "dist");
 
 app.use(express.json());
 
+// ── Async job store (in-memory, resets on restart) ──────────────────
+
+interface Job {
+  status: "pending" | "completed" | "failed";
+  result?: unknown;
+  error?: string;
+}
+
+const jobs = new Map<number, Job>();
+let nextJobId = 1;
+
 // ── DeepSeek-powered AI endpoints ──────────────────────────────────────
 
 app.post("/api/profiles/:id/generate-pathways", async (req, res) => {
@@ -17,14 +28,40 @@ app.post("/api/profiles/:id/generate-pathways", async (req, res) => {
     res.status(503).json({ error: "DeepSeek API key not configured" });
     return;
   }
+
+  const jobId = nextJobId++;
+  jobs.set(jobId, { status: "pending" });
+
+  // Respond immediately with the job ID
+  res.status(202).json({ jobId });
+
+  // Run generation in background
   try {
     const result = await generatePathwaysWithDeepSeek(
       { profileId: Number(req.params.id), ...req.body },
       apiKey,
     );
-    res.json(result);
+    jobs.set(jobId, { status: "completed", result });
   } catch (e) {
-    res.status(500).json({ error: String(e) });
+    jobs.set(jobId, { status: "failed", error: String(e) });
+  }
+});
+
+// Poll endpoint for job status
+app.get("/api/pathways/jobs/:jobId", (req, res) => {
+  const job = jobs.get(Number(req.params.jobId));
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+  if (job.status === "pending") {
+    res.json({ status: "pending" });
+  } else if (job.status === "failed") {
+    res.json({ status: "failed", error: job.error });
+  } else {
+    res.json({ status: "completed", result: job.result });
+    // Clean up completed jobs after delivering
+    jobs.delete(Number(req.params.jobId));
   }
 });
 

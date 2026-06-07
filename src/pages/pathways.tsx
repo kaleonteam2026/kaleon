@@ -340,7 +340,22 @@ export default function Pathways() {
         const err = await r.json().catch(() => ({})) as { error?: string };
         throw new Error(err.error ?? "Generation failed");
       }
-      const data = await r.json() as Pathway[] | PathwayGenerationResponse;
+
+      // Server returns 202 with a jobId — poll until complete
+      const { jobId } = await r.json() as { jobId: number };
+      let result: unknown = null;
+      for (let attempt = 0; attempt < 120; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const pollR = await fetch(`/api/pathways/jobs/${jobId}`, { credentials: "include" });
+        if (!pollR.ok) throw new Error("Polling failed");
+        const job = await pollR.json() as { status: string; result?: unknown; error?: string };
+        if (job.status === "completed") { result = job.result; break; }
+        if (job.status === "failed") throw new Error(job.error ?? "Generation failed");
+        // else "pending" — keep polling
+      }
+      if (!result) throw new Error("Generation timed out after 6 minutes");
+
+      const data = result as Pathway[] | PathwayGenerationResponse;
       const p = Array.isArray(data) ? data : (data.pathways ?? []);
       if (!Array.isArray(data) && data.progressSummary?.completedUnits != null) {
         setTotalUnits(data.progressSummary.completedUnits);

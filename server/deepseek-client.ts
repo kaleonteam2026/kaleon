@@ -36,6 +36,7 @@ export async function deepSeekChat({
     ],
     model,
     temperature: 0.1,
+    timeout: 180000, // 3 minutes — avoids socket hangup on slow DeepSeek responses
   });
 
   const content = completion.choices[0]?.message?.content;

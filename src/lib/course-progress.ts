@@ -28,7 +28,7 @@ export function computeGpaSummary(
   const completedUnits = completed.reduce((s, c) => s + (c.units ?? 0), 0);
   const inProgressUnits = inProgress.reduce((s, c) => s + (c.units ?? 0), 0);
   return {
-    estimatedGpa: profileGpa,
+    estimatedGpa: profileGpa ?? 0,
     totalUnits: completedUnits + inProgressUnits,
     completedUnits,
     inProgressUnits,
