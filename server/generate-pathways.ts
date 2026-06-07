@@ -125,23 +125,49 @@ Rules:
 
 function extractJsonPayload(text: string): unknown {
   const trimmed = text.trim();
+  // Try direct parse first
   try {
     return JSON.parse(trimmed);
   } catch {
-    const block = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (block?.[1]) return JSON.parse(block[1].trim());
-    const objStart = trimmed.indexOf("{");
-    const objEnd = trimmed.lastIndexOf("}");
-    if (objStart >= 0 && objEnd > objStart) {
-      return JSON.parse(trimmed.slice(objStart, objEnd + 1));
-    }
-    const arrStart = trimmed.indexOf("[");
-    const arrEnd = trimmed.lastIndexOf("]");
-    if (arrStart >= 0 && arrEnd > arrStart) {
-      return JSON.parse(trimmed.slice(arrStart, arrEnd + 1));
-    }
-    throw new Error("Could not parse pathway JSON from model response");
+    // fall through
   }
+
+  // Try markdown code block extraction
+  const block = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (block?.[1]) {
+    try {
+      return JSON.parse(block[1].trim());
+    } catch {
+      // fall through
+    }
+  }
+
+  // Try extracting content between outermost { }
+  const objStart = trimmed.indexOf("{");
+  const objEnd = trimmed.lastIndexOf("}");
+  if (objStart >= 0 && objEnd > objStart) {
+    try {
+      return JSON.parse(trimmed.slice(objStart, objEnd + 1));
+    } catch {
+      // fall through
+    }
+  }
+
+  // Try extracting content between outermost [ ]
+  const arrStart = trimmed.indexOf("[");
+  const arrEnd = trimmed.lastIndexOf("]");
+  if (arrStart >= 0 && arrEnd > arrStart) {
+    try {
+      return JSON.parse(trimmed.slice(arrStart, arrEnd + 1));
+    } catch {
+      // fall through
+    }
+  }
+
+  throw new Error(
+    "Could not parse pathway JSON from model response. " +
+      `First 200 chars: ${trimmed.slice(0, 200)}`,
+  );
 }
 
 function normalizeProgressSummary(

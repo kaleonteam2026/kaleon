@@ -35,12 +35,7 @@ export async function deepSeekChat({
       { role: "user", content: user },
     ],
     model,
-    stream: false,
-    // DeepSeek extended params (OpenAI SDK allows extra fields)
-    ...({
-      thinking: { type: "enabled" },
-      reasoning_effort: "high",
-    } as Record<string, unknown>),
+    temperature: 0.1,
   });
 
   const content = completion.choices[0]?.message?.content;

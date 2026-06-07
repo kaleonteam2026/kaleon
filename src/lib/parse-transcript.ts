@@ -113,10 +113,39 @@ function unitsNear(text: string, codeEnd: number): number | undefined {
   return undefined;
 }
 
+/**
+ * Detect mobile browser for PDF worker workaround.
+ */
+function isMobileBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 /** Extract raw text from a PDF using pdfjs-dist (no regex parsing). */
 export async function extractTextFromPDF(file: File): Promise<string> {
+  // Reject files over 20 MB — likely scanned/image-based or corrupted
+  if (file.size > 20 * 1024 * 1024) {
+    throw new Error(
+      "This PDF is too large to process in the browser. Try a smaller file (under 20 MB).",
+    );
+  }
+
   const buffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+
+  // On mobile, disable the web worker — module workers (.mjs) often fail to load
+  // on mobile Safari/Chrome, causing getDocument to reject silently.
+  const isMobile = isMobileBrowser();
+  const pdf = await pdfjsLib.getDocument({
+    data: new Uint8Array(buffer),
+    ...(isMobile ? {
+      disableWorker: true,
+      disableFontFace: true,
+      useSystemFonts: false,
+      verbosity: 0,
+      cMapUrl: undefined,
+      cMapPacked: false,
+    } : {}),
+  }).promise;
 
   let fullText = "";
   for (let i = 1; i <= pdf.numPages; i++) {
@@ -126,6 +155,15 @@ export async function extractTextFromPDF(file: File): Promise<string> {
       .map((item) => ("str" in item ? (item as { str: string }).str : ""))
       .join(" ");
     fullText += pageText + "\n";
+  }
+
+  // If the PDF has pages but no extractable text, it's likely a scanned/image-based PDF
+  if (!fullText.trim() && pdf.numPages > 0) {
+    throw new Error(
+      "This PDF appears to be a scanned document with no selectable text. " +
+      "Please upload a digital transcript (exported from your student portal), " +
+      "or enter your courses manually.",
+    );
   }
 
   return fullText;

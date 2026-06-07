@@ -145,8 +145,9 @@ export default function Onboarding() {
       }
       setScanResults(results);
       setPendingTranscripts([]);
-    } catch {
-      setScanError("Could not read one or more PDFs. Try different files or add courses manually later.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setScanError(msg || "Could not read one or more PDFs. You can skip scanning and add courses manually later.");
     } finally {
       setScanning(false);
     }
