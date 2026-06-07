@@ -3,8 +3,8 @@ dist
 .git
 .gitignore
 *.md
-.env
 .env.*
+!.env
 !.env.example
 .vscode
 .idea
