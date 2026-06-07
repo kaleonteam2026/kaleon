@@ -53,9 +53,14 @@ export async function signInWithMagicLink(
     ? { first_name: options.firstName.trim() }
     : undefined;
 
+  // When signing in (no firstName), don't auto-create a user if the email doesn't exist.
+  // When signing up (firstName provided), allow user creation.
+  const shouldCreateUser = Boolean(options?.firstName?.trim());
+
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
+      shouldCreateUser,
       emailRedirectTo: getAuthRedirectUrl(options?.returnTo),
       data,
     },
