@@ -120,12 +120,25 @@ export function FormSteps({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf"
+                accept=".pdf,application/pdf"
                 className="sr-only"
                 aria-label="Upload transcript PDF"
                 onChange={e => {
                   const f = e.target.files?.[0];
-                  if (f) onAddPendingFile(f);
+                  if (!f) return;
+                  // Validate MIME type
+                  if (f.type && f.type !== "application/pdf") {
+                    alert("The selected file is not a PDF. Please upload a PDF transcript.");
+                    e.target.value = "";
+                    return;
+                  }
+                  // Check size (20 MB max, 10 MB warning on mobile)
+                  if (f.size > 20 * 1024 * 1024) {
+                    alert("This file is too large (over 20 MB). Please choose a smaller file.");
+                    e.target.value = "";
+                    return;
+                  }
+                  onAddPendingFile(f);
                   e.target.value = "";
                 }}
               />
@@ -313,7 +326,22 @@ export function FormSteps({
                   </div>
 
                   {scanError && (
-                    <p className="text-xs text-amber-400">{scanError}</p>
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs text-amber-400">{scanError}</p>
+                      <button
+                        type="button"
+                        onClick={onScan}
+                        disabled={scanning}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all self-start"
+                        style={{ background: "rgba(78,204,163,0.15)", color: "#4ECCA3", border: "1px solid rgba(78,204,163,0.3)" }}
+                      >
+                        {scanning ? (
+                          <><Loader2 className="h-3 w-3 animate-spin" aria-hidden /> Retrying…</>
+                        ) : (
+                          <><Sparkles className="h-3 w-3" aria-hidden /> Retry with AI</>
+                        )}
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

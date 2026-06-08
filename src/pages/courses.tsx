@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { t } from "@/lib/copy";
+import { fetchWithTimeout } from "@/lib/api/client";
+import { useRequestCleanup } from "@/hooks/use-request-cleanup";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { getCoursesForProfile, insertCourses, deleteCourse as deleteCourseSupabase } from "@/lib/supabase-profiles";
 import { loadPathwaysFromDb } from "@/lib/supabase-pathways";
@@ -64,6 +66,7 @@ export default function Courses() {
   const [analysis, setAnalysis] = useState<TransferabilityResult | null>(null);
 
   const pid = parseInt(profileId);
+  const getSignal = useRequestCleanup();
 
   const alreadyAdded = useMemo<Set<string>>(
     () => new Set(courses.map(c => `${c.courseCode ?? ""}::${c.courseName}`)),
@@ -272,7 +275,7 @@ export default function Courses() {
     setAnalyzing(true);
     setAnalysis(null);
     try {
-      const r = await fetch(`/api/profiles/${pid}/transferability-analysis`, {
+      const r = await fetchWithTimeout(`/api/profiles/${pid}/transferability-analysis`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -285,7 +288,12 @@ export default function Courses() {
             status: c.status,
           })),
         }),
-      });
+        timeout: 180_000,
+      }, getSignal());
+      if (r.status === 429) {
+        toast({ title: "Rate limit reached", description: "Please wait a moment before analyzing again.", variant: "destructive" });
+        return;
+      }
       if (!r.ok) {
         const err = await r.json() as { error?: string };
         throw new Error(err.error ?? t("pages.courses.analysisFailed"));

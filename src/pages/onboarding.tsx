@@ -3,6 +3,8 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
+import { fetchWithTimeout } from "@/lib/api/client";
+import { useRequestCleanup } from "@/hooks/use-request-cleanup";
 import { appendDevCourses } from "@/lib/dev-courses";
 import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -49,6 +51,7 @@ export default function Onboarding() {
     compatibilityScore: number;
   }[]>([]);
   const createdProfileIdRef = useRef<number | null>(null);
+  const getSignal = useRequestCleanup();
   const [form, setForm] = useState<FormData>({
     fullName: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.firstName ?? ""),
     communityCollege: "",
@@ -111,11 +114,12 @@ export default function Onboarding() {
           detectedMajor?: string | null;
         };
         try {
-          const res = await fetch("/api/transcript/parse", {
+          const res = await fetchWithTimeout("/api/transcript/parse", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text, detectMultipleColleges: hasMultipleColleges === true }),
-          });
+            timeout: 180_000,
+          }, getSignal());
           if (res.ok) {
             result = (await res.json()) as typeof result;
           } else {

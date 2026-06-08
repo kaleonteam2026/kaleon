@@ -117,6 +117,22 @@ function isMobileBrowser(): boolean {
 
 /** Extract raw text from a PDF using pdfjs-dist (no regex parsing). */
 export async function extractTextFromPDF(file: File): Promise<string> {
+  // Validate file type
+  if (file.type && file.type !== "application/pdf") {
+    throw new Error(
+      "The selected file is not a PDF. Please upload a PDF transcript exported from your student portal.",
+    );
+  }
+
+  // Warn on mobile for files over 10 MB — main-thread parsing is slower
+  const isMobile = isMobileBrowser();
+  if (isMobile && file.size > 10 * 1024 * 1024) {
+    throw new Error(
+      "This PDF is quite large for a mobile device (over 10 MB). " +
+      "It may take a while to process. If scanning fails, try a smaller file or add your courses manually.",
+    );
+  }
+
   // Reject files over 20 MB — likely scanned/image-based or corrupted
   if (file.size > 20 * 1024 * 1024) {
     throw new Error(
@@ -128,7 +144,6 @@ export async function extractTextFromPDF(file: File): Promise<string> {
 
   // On mobile, disable the web worker — module workers (.mjs) often fail to load
   // on mobile Safari/Chrome, causing getDocument to reject silently.
-  const isMobile = isMobileBrowser();
   const pdf = await pdfjsLib.getDocument({
     data: new Uint8Array(buffer),
     ...(isMobile ? {

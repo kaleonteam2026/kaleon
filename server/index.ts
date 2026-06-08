@@ -12,6 +12,17 @@ const DIST = path.resolve(import.meta.dirname, "..", "dist");
 
 app.use(express.json());
 
+// Server-wide request timeout — 5 minutes. Prevents hanging sockets
+// if a DeepSeek call never returns.
+app.use((req, res, next) => {
+  req.setTimeout(300_000, () => {
+    if (!res.headersSent) {
+      res.status(504).json({ error: "Server timeout" });
+    }
+  });
+  next();
+});
+
 // ── Async job store (in-memory, resets on restart) ──────────────────
 
 interface Job {

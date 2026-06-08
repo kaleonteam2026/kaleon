@@ -5,6 +5,8 @@ import { PageLoadingState } from "@/components/page-loading-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { fetchWithTimeout, TimeoutError } from "@/lib/api/client";
+import { useRequestCleanup } from "@/hooks/use-request-cleanup";
 import {
   Loader2, Target, AlertTriangle, CheckCircle, ArrowRight,
   ChevronDown, ChevronUp, Sparkles, BookOpen, Award, Users, Briefcase,
@@ -203,6 +205,7 @@ export default function Pathways() {
   const [generatingGuidebook, setGeneratingGuidebook] = useState<number | null>(null);
   const [generatingRoadmap, setGeneratingRoadmap] = useState<number | null>(null);
   const pid = parseInt(profileId);
+  const getSignal = useRequestCleanup();
   const { enabled: pwMotionOn, lift: pwLift, itemVariants, containerVariants } = useBrutalistMotion();
 
   const loadPathways = () => {
@@ -347,24 +350,41 @@ export default function Pathways() {
         }
       }
 
-      const r = await fetch(`/api/profiles/${pid}/generate-pathways`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          profileId: pid,
-          fullName: profile.fullName,
-          communityCollege: profile.communityCollege,
-          intendedMajor: profile.intendedMajor,
-          careerGoal: profile.careerGoal,
-          currentGpa: profile.currentGpa,
-          transferTimeline: profile.transferTimeline,
-          financialSituation: profile.financialSituation,
-          isFirstGen: profile.isFirstGen,
-          courses,
-          totalUnits,
-        }),
-      });
+      // Auto-retry once on network / timeout errors
+      const attemptFetch = async (retries = 1): Promise<Response> => {
+        for (let i = 0; i <= retries; i++) {
+          try {
+            return await fetchWithTimeout(`/api/profiles/${pid}/generate-pathways`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                profileId: pid,
+                fullName: profile.fullName,
+                communityCollege: profile.communityCollege,
+                intendedMajor: profile.intendedMajor,
+                careerGoal: profile.careerGoal,
+                currentGpa: profile.currentGpa,
+                transferTimeline: profile.transferTimeline,
+                financialSituation: profile.financialSituation,
+                isFirstGen: profile.isFirstGen,
+                courses,
+                totalUnits,
+              }),
+              timeout: 180_000,
+            }, getSignal());
+          } catch (err) {
+            if (i < retries && (err instanceof TypeError || err instanceof TimeoutError)) {
+              // Network blip or timeout — try once more
+              continue;
+            }
+            throw err;
+          }
+        }
+        throw new Error("Fetch failed after retries");
+      };
+
+      const r = await attemptFetch();
       if (r.status === 429) {
         toast({ title: t("pages.pathways.toast_rateLimit"), description: t("pages.pathways.toast_rateLimitDesc"), variant: "destructive" });
         return;
@@ -379,7 +399,10 @@ export default function Pathways() {
       let result: unknown = null;
       for (let attempt = 0; attempt < 120; attempt++) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
-        const pollR = await fetch(`/api/pathways/jobs/${jobId}`, { credentials: "include" });
+        const pollR = await fetchWithTimeout(`/api/pathways/jobs/${jobId}`, {
+          credentials: "include",
+          timeout: 10_000,
+        }, getSignal());
         if (!pollR.ok) throw new Error("Polling failed");
         const job = await pollR.json() as { status: string; result?: unknown; error?: string };
         if (job.status === "completed") { result = job.result; break; }
@@ -466,7 +489,7 @@ export default function Pathways() {
         }
       }
 
-      const r = await fetch(`/api/pathways/${pathwayId}/generate-guidebook`, {
+      const r = await fetchWithTimeout(`/api/pathways/${pathwayId}/generate-guidebook`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -487,7 +510,8 @@ export default function Pathways() {
           profile: profileData,
           courses: profileCourses,
         }),
-      });
+        timeout: 180_000,
+      }, getSignal());
       if (r.status === 429) {
         toast({ title: t("pages.pathways.toast_rateLimit"), variant: "destructive" });
         return;
@@ -532,7 +556,7 @@ export default function Pathways() {
         }
       }
 
-      const r = await fetch(`/api/pathways/${pathwayId}/generate-roadmap`, {
+      const r = await fetchWithTimeout(`/api/pathways/${pathwayId}/generate-roadmap`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -553,7 +577,8 @@ export default function Pathways() {
           profile: profileData,
           courses: profileCourses,
         }),
-      });
+        timeout: 180_000,
+      }, getSignal());
       if (r.status === 429) {
         toast({ title: t("pages.pathways.toast_rateLimit"), description: t("pages.pathways.toast_roadmapRateDesc"), variant: "destructive" });
         return;
