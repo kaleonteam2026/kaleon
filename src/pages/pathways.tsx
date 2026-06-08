@@ -206,17 +206,17 @@ export default function Pathways() {
   const { enabled: pwMotionOn, lift: pwLift, itemVariants, containerVariants } = useBrutalistMotion();
 
   const loadPathways = () => {
-    // Try API first (mock/dev mode), fall back to Supabase
+    // Try API first (mock/dev mode), fall back to Supabase on any failure
     const apiPromise = Promise.all([
       fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" }).then(
         (r) => (r.ok ? r.json() : []) as Promise<Pathway[]>,
-      ),
+      ).catch(() => [] as Pathway[]),
       fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }).then(
         (r) => (r.ok ? r.json() : []) as Promise<ProfileCourse[]>,
-      ),
+      ).catch(() => [] as ProfileCourse[]),
       fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }).then(
         (r) => (r.ok ? r.json() : {}) as Promise<{ estimatedGpa?: number; totalUnits?: number }>,
-      ),
+      ).catch(() => ({}) as { estimatedGpa?: number; totalUnits?: number }),
     ]);
 
     apiPromise
@@ -229,7 +229,7 @@ export default function Pathways() {
           setTotalUnits(gpaData.totalUnits ?? 0);
           setLoading(false);
         } else if (user?.id) {
-          // API returned empty — try Supabase directly for courses + saved pathways
+          // API returned empty or errored — try Supabase directly for courses + saved pathways
           Promise.all([
             getProfileForUser(user.id),
             getCoursesForProfile(pid),
@@ -254,7 +254,33 @@ export default function Pathways() {
           setLoading(false);
         }
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        // API fetch itself failed — try Supabase if user is available
+        if (user?.id) {
+          Promise.all([
+            getProfileForUser(user.id),
+            getCoursesForProfile(pid),
+            loadPathwaysFromDb(pid),
+          ]).then(([profile, storedCourses, savedPathways]) => {
+            let gpaSummary = { estimatedGpa: 0, totalUnits: 0 };
+            if (storedCourses.length > 0) {
+              setProfileCourses(storedCourses as ProfileCourse[]);
+              gpaSummary = computeGpaSummary(
+                storedCourses,
+                profile?.currentGpa ?? undefined,
+              );
+              setProfileGpa(gpaSummary.estimatedGpa > 0 ? gpaSummary.estimatedGpa : null);
+              setTotalUnits(gpaSummary.totalUnits ?? 0);
+            }
+            if (savedPathways.length > 0) {
+              setPathways(savedPathways as Pathway[]);
+            }
+            setLoading(false);
+          }).catch(() => setLoading(false));
+        } else {
+          setLoading(false);
+        }
+      });
   };
 
   useEffect(() => { loadPathways(); }, [pid]);
