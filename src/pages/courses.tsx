@@ -532,9 +532,9 @@ export default function Courses() {
                               {course.term && <span>{course.term}</span>}
                             </div>
                           </div>
-                          <button onClick={() => deleteCourse(course.id)} className="text-slate-300 hover:text-red-500 transition-colors p-1">
+                          {course.id && (<button onClick={() => deleteCourse(course.id!)} className="text-slate-300 hover:text-red-500 transition-colors p-1">
                             <Trash2 className="h-4 w-4" />
-                          </button>
+                          </button>)}
                         </div>
                       ))}
                     </div>
