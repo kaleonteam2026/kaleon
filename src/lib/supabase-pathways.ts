@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabase";
+import { computeGpaSummary } from "@/lib/course-progress";
+import type { StoredCourse } from "@/lib/course-progress";
 
 /** Describes the JSON shape inside the pathway report. */
 export interface PathwayReportJson {
@@ -230,4 +232,91 @@ export async function getSelectedPathway(
   }
 
   return rowToPathway(data as PathwayRow);
+}
+
+// ── Pathway Snapshots ────────────────────────────────────────────────────
+
+export interface PathwaySnapshot {
+  id: number;
+  profileId: number;
+  generationLabel: string;
+  totalUnits: number;
+  completedUnits: number;
+  inProgressUnits: number;
+  courseCount: number;
+  gpa: number | null;
+  createdAt: string;
+}
+
+interface PathwaySnapshotRow {
+  id: number;
+  profile_id: number;
+  generation_label: string;
+  total_units: number;
+  completed_units: number;
+  in_progress_units: number;
+  course_count: number;
+  gpa: number | null;
+  created_at: string;
+}
+
+function rowToSnapshot(row: PathwaySnapshotRow): PathwaySnapshot {
+  return {
+    id: row.id,
+    profileId: row.profile_id,
+    generationLabel: row.generation_label,
+    totalUnits: row.total_units,
+    completedUnits: row.completed_units,
+    inProgressUnits: row.in_progress_units,
+    courseCount: row.course_count,
+    gpa: row.gpa,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Save a snapshot of the user's course state at the time a pathway generation
+ * is saved. This preserves the academic context so the progress page can show
+ * what the user's record looked like when each pathway was created.
+ */
+export async function savePathwaySnapshot(
+  profileId: number,
+  generationLabel: string,
+  courses: StoredCourse[],
+): Promise<void> {
+  const summary = computeGpaSummary(courses);
+
+  const { error } = await supabase.from("pathway_snapshots").insert({
+    profile_id: profileId,
+    generation_label: generationLabel,
+    total_units: summary.totalUnits,
+    completed_units: summary.completedUnits,
+    in_progress_units: summary.inProgressUnits,
+    course_count: summary.courseCount,
+    gpa: summary.estimatedGpa > 0 ? summary.estimatedGpa : null,
+  });
+
+  if (error) {
+    console.error("Error saving pathway snapshot:", error);
+  }
+}
+
+/**
+ * Load all pathway snapshots for a profile, newest first.
+ */
+export async function loadPathwaySnapshots(
+  profileId: number,
+): Promise<PathwaySnapshot[]> {
+  const { data, error } = await supabase
+    .from("pathway_snapshots")
+    .select("*")
+    .eq("profile_id", profileId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading pathway snapshots:", error);
+    return [];
+  }
+
+  return ((data ?? []) as PathwaySnapshotRow[]).map(rowToSnapshot);
 }

@@ -20,6 +20,7 @@ import { t } from "@/lib/copy";
 import { useToast } from "@/hooks/use-toast";
 
 import { PathwayLockScreen } from "@/components/progress/pathway-lock-screen";
+import { PathwayHistoryPanel } from "@/components/progress/pathway-history-panel";
 import { EntryFeedbackCard } from "@/components/progress/entry-feedback-card";
 import { EntryCard } from "@/components/progress/entry-card";
 import { AnalysisCard } from "@/components/progress/analysis-card";
@@ -46,7 +47,10 @@ interface PathwayInfo {
 import { useAuth } from "@/contexts/auth-context";
 import {
   getSelectedPathway,
+  loadPathwaysFromDb,
+  loadPathwaySnapshots,
 } from "@/lib/supabase-pathways";
+import type { PathwaySnapshot, Pathway } from "@/lib/supabase-pathways";
 import {
   getCoursesForProfile,
   getProfileForUser,
@@ -55,7 +59,7 @@ import { IGETC_AREAS, CSU_GE_AREAS } from "@/components/courses/course-types";
 import { computeGpaSummary, graduationProgressPercent, transferProgressPercent } from "@/lib/course-progress";
 import type { StoredCourse } from "@/lib/course-progress";
 
-type Tab = "log" | "timeline" | "assessment";
+type Tab = "log" | "timeline" | "assessment" | "history";
 
 export default function ProgressTracker() {
   const { enabled: prMotionOn, lift: prLift, itemVariants, containerVariants } = useBrutalistMotion();
@@ -103,6 +107,11 @@ export default function ProgressTracker() {
   const [activeAnalysis, setActiveAnalysis] = useState<ProgressAnalysis | null>(null);
   const [generating, setGenerating] = useState(false);
   const [, setCurrentSection] = useState("");
+
+  // Pathway history snapshots
+  const [pathwaySnapshots, setPathwaySnapshots] = useState<PathwaySnapshot[]>([]);
+  const [pathwayHistory, setPathwayHistory] = useState<Pathway[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const analysisRef = useRef<HTMLDivElement>(null);
 
   // Load pathway gate + data (Supabase direct, no non-existent API endpoints)
@@ -182,6 +191,18 @@ export default function ProgressTracker() {
         }
       })
       .catch(() => {});
+
+    // Load pathway history snapshots for the History tab
+    Promise.all([
+      loadPathwaySnapshots(pid),
+      loadPathwaysFromDb(pid),
+    ]).then(([snapshots, allPathways]) => {
+      if (cancelled) return;
+      setPathwaySnapshots(snapshots);
+      setPathwayHistory(allPathways);
+    }).catch(() => {}).finally(() => {
+      if (!cancelled) setLoadingHistory(false);
+    });
   }, [pid]);
 
   const handleLogEntry = async () => {
@@ -465,6 +486,7 @@ export default function ProgressTracker() {
                 { id: "log",        label: t("pages.progress.tab_log"),        icon: Plus,      badge: undefined as number | undefined },
                 { id: "timeline",   label: t("pages.progress.tab_timeline"),   icon: Activity,  badge: entries.length as number | undefined },
                 { id: "assessment", label: t("pages.progress.tab_assessment"), icon: Sparkles,  badge: analyses.length as number | undefined },
+                { id: "history",    label: "History",           icon: BarChart3, badge: pathwaySnapshots.length as number | undefined },
               ]).map(tabCfg => (
                 <button
                   key={tabCfg.id}
@@ -735,6 +757,20 @@ export default function ProgressTracker() {
                       </div>
                     )}
                   </div>
+                )}
+              </div>
+            )}
+            {/* ── TAB: PATHWAY HISTORY ───────────────────────────────────────── */}
+            {tab === "history" && (
+              <div className="mb-12">
+                {loadingHistory ? (
+                  <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-slate-600" /></div>
+                ) : (
+                  <PathwayHistoryPanel
+                    snapshots={pathwaySnapshots}
+                    pathways={pathwayHistory}
+                    profileId={pid}
+                  />
                 )}
               </div>
             )}

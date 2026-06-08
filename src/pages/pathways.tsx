@@ -23,10 +23,12 @@ import {
   getCoursesForProfile,
 } from "@/lib/supabase-profiles";
 import { GRADUATION_UNITS, graduationProgressPercent, computeGpaSummary } from "@/lib/course-progress";
+import type { StoredCourse } from "@/lib/course-progress";
 import {
   savePathways,
   loadPathwaysFromDb,
   selectPathwayInDb,
+  savePathwaySnapshot,
 } from "@/lib/supabase-pathways";
 import {
   saveGuidebook,
@@ -377,6 +379,11 @@ export default function Pathways() {
           const reloaded = await loadPathwaysFromDb(pid);
           if (reloaded.length > 0) {
             setPathways(reloaded as Pathway[]);
+            // Save a snapshot of current course state for this generation
+            const genLabel = reloaded[0].generationLabel;
+            if (genLabel && courses.length > 0) {
+              await savePathwaySnapshot(pid, genLabel, courses as StoredCourse[]);
+            }
           }
           toast({ title: t("pages.pathways.toast_generated"), description: t("pages.pathways.toast_generatedDesc") });
         }
