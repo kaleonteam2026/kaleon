@@ -12,25 +12,3 @@ CREATE TABLE pathway_snapshots (
 );
 
 CREATE INDEX idx_pathway_snapshots_profile ON pathway_snapshots(profile_id, created_at DESC);
-
-ALTER TABLE pathway_snapshots ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Users can view their own pathway snapshots" ON pathway_snapshots;
-CREATE POLICY "Users can view their own pathway snapshots"
-  ON pathway_snapshots FOR SELECT
-  USING (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()));
-
-DROP POLICY IF EXISTS "Users can insert their own pathway snapshots" ON pathway_snapshots;
-CREATE POLICY "Users can insert their own pathway snapshots"
-  ON pathway_snapshots FOR INSERT
-  WITH CHECK (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()));
-
-DROP POLICY IF EXISTS "Users can update their own pathway snapshots" ON pathway_snapshots;
-CREATE POLICY "Users can update their own pathway snapshots"
-  ON pathway_snapshots FOR UPDATE
-  USING (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()));
-
-DROP POLICY IF EXISTS "Users can delete their own pathway snapshots" ON pathway_snapshots;
-CREATE POLICY "Users can delete their own pathway snapshots"
-  ON pathway_snapshots FOR DELETE
-  USING (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()));

@@ -11,7 +11,7 @@ import { t } from "@/lib/copy";
 import { fetchWithTimeout } from "@/lib/api/client";
 import { useRequestCleanup } from "@/hooks/use-request-cleanup";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { getCoursesForProfile, insertCourses, deleteCourse as deleteCourseSupabase } from "@/lib/supabase-profiles";
+import { getCoursesForProfile, getProfileForUser, insertCourses, deleteCourse as deleteCourseSupabase } from "@/lib/supabase-profiles";
 import { loadPathwaysFromDb } from "@/lib/supabase-pathways";
 import { computeGpaSummary } from "@/lib/course-progress";
 import { isAuthBypass } from "@/lib/dev-profile";
@@ -77,11 +77,12 @@ export default function Courses() {
     // Real Supabase path
     if (isSupabaseConfigured && !isAuthBypass()) {
       Promise.all([
+        getProfileForUser(user?.id ?? ""),
         getCoursesForProfile(pid),
         loadPathwaysFromDb(pid),
-      ]).then(([storedCourses, savedPathways]) => {
+      ]).then(([profile, storedCourses, savedPathways]) => {
         setCourses(storedCourses);
-        setGpa(computeGpaSummary(storedCourses));
+        setGpa(computeGpaSummary(storedCourses, profile?.currentGpa ?? undefined));
         setSchoolOptions(savedPathways as unknown[]);
       }).catch(console.error).finally(() => setLoading(false));
       return;
