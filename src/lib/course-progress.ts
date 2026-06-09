@@ -23,8 +23,13 @@ export function computeGpaSummary(
   courses: StoredCourse[],
   profileGpa?: number | null,
 ): GpaSummary {
-  const completed = courses.filter((c) => c.status === "completed");
-  const inProgress = courses.filter((c) => c.status === "in_progress");
+  // Only consider courses with actual earned units. Failed/withdrawn courses
+  // (units = 0 or undefined) should not count toward totals or course count.
+  const validCourses = courses.filter(
+    c => typeof c.units === "number" && c.units > 0
+  );
+  const completed = validCourses.filter((c) => c.status === "completed");
+  const inProgress = validCourses.filter((c) => c.status === "in_progress");
   const completedUnits = completed.reduce((s, c) => s + (c.units ?? 0), 0);
   const inProgressUnits = inProgress.reduce((s, c) => s + (c.units ?? 0), 0);
   return {
@@ -32,7 +37,7 @@ export function computeGpaSummary(
     totalUnits: completedUnits + inProgressUnits,
     completedUnits,
     inProgressUnits,
-    courseCount: courses.length,
+    courseCount: validCourses.length,
   };
 }
 export function graduationProgressPercent(totalUnits: number): number {

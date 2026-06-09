@@ -19,6 +19,7 @@ import {
 } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { CopyTrans } from "@/components/copy-trans";
+import Footer from "@/components/footer";
 import { t } from "@/lib/copy";
 
 const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
@@ -380,28 +381,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="px-6 md:px-12 py-8 text-center text-xs" style={{ borderTop: "1px solid rgba(78,204,163,0.1)", color: "#475569" }}>
-        <p className="pwc-font-mono uppercase tracking-wider mb-2">{t("landing.footerLine1")}</p>
-        <p style={{ color: "#334155" }}>{t("landing.footerLine2")}</p>
-        <motion.div
-          {...revealProps}
-          variants={staggerContainer(0.04)}
-          className="flex flex-wrap justify-center gap-3 mt-3 pwc-font-mono uppercase"
-          style={{ color: "#334155" }}
-        >
-          {["Santa Monica", "De Anza", "Foothill", "Mt. SAC", "Pasadena City", "LACC", "Diablo Valley"].map(c => (
-            <motion.span key={c} variants={fadeUp(5, DUR.fast)} style={{ color: "#4ECCA3", opacity: 0.4 }}>
-              {c}
-            </motion.span>
-          ))}
-        </motion.div>
-        <div className="mt-4">
-          <a href="/transfer" className="pwc-font-mono uppercase tracking-wider underline" style={{ color: "#4ECCA3", opacity: 0.5 }}>
-            {t("landing.footerGuides")}
-          </a>
-        </div>
-      </footer>
+      <Footer variant="public" />
     </div>
   );
 }

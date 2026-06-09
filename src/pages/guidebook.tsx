@@ -118,13 +118,12 @@ export default function Guidebook() {
           </div>
         </PageMotion>
       }
-      footer={
+      afterContent={
         <PageMotion>
           <div className="text-center pb-12">
             <Button onClick={downloadMarkdown} variant="outline">
               <Download className="h-4 w-4 mr-2" /> {t("pages.guidebook.downloadFull")}
             </Button>
-            <p className="text-xs text-slate-400 mt-3">{t("pages.guidebook.footer")}</p>
           </div>
         </PageMotion>
       }

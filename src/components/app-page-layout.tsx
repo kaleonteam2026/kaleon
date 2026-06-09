@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import Nav from "@/components/nav";
+import Footer from "@/components/footer";
 import { cn } from "@/lib/utils";
 
 export type AppLayoutVariant = "light" | "dark";
@@ -97,6 +98,7 @@ export function AppPageLayout({
           children
         )}
       </main>
+      <Footer variant="compact" />
     </div>
   );
 }

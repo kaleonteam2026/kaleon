@@ -11,16 +11,16 @@ import { t } from "@/lib/copy";
 import { fetchWithTimeout } from "@/lib/api/client";
 import { useRequestCleanup } from "@/hooks/use-request-cleanup";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { getCoursesForProfile, getProfileForUser, insertCourses, deleteCourse as deleteCourseSupabase } from "@/lib/supabase-profiles";
+import { getCoursesForProfile, getProfileForUser, insertCourses, deleteCourse as deleteCourseSupabase, deleteAllCoursesForProfile } from "@/lib/supabase-profiles";
 import { loadPathwaysFromDb } from "@/lib/supabase-pathways";
 import { computeGpaSummary } from "@/lib/course-progress";
 import { isAuthBypass } from "@/lib/dev-profile";
+import { saveDevCourses } from "@/lib/dev-courses";
 import {
   transferProgressPercent, transferUnitsRemaining,
 } from "@/lib/course-progress";
-import {
-  Plus, Trash2, Loader2, ArrowRight, BookOpen, FlaskConical,
-  GraduationCap, ChevronDown,
+import { Plus, Trash2, Loader2, ArrowRight, BookOpen, FlaskConical,
+  GraduationCap, ChevronDown, Upload, AlertTriangle,
 } from "lucide-react";
 import { CatalogModal } from "@/components/courses/catalog-modal";
 import { TransferabilityPanel } from "@/components/courses/transferability-panel";
@@ -46,6 +46,25 @@ export default function Courses() {
   // Pathways (school) state
   const [schools, setSchools] = useState<SchoolOption[]>([]);
   const [selectedSchoolIdx, setSelectedSchoolIdx] = useState(0);
+
+  // Re-upload transcript state
+  const [showReuploadConfirm, setShowReuploadConfirm] = useState(false);
+
+  const handleReuploadConfirm = async () => {
+    try {
+      // Delete all existing courses before navigating to the upload flow
+      if (isSupabaseConfigured && !isAuthBypass()) {
+        await deleteAllCoursesForProfile(pid);
+      } else {
+        saveDevCourses(pid, []);
+        // Also hit the mock API to clear its in-memory store
+        fetch(`/api/profiles/${pid}/courses`, { method: "DELETE" }).catch(() => {});
+      }
+    } catch {
+      // Non-fatal — if delete fails, the re-upload will still replace courses
+    }
+    navigate(`/onboarding?reupload=${pid}`);
+  };
 
   // Catalog state
   const [modalOpen, setModalOpen] = useState(false);
@@ -364,8 +383,47 @@ export default function Courses() {
           <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none flex-shrink-0">
             <Plus className="h-4 w-4 mr-2" /> Catalog
           </Button>
+          <Button
+            onClick={() => setShowReuploadConfirm(true)}
+            variant="outline"
+            className="border-amber-300 text-amber-700 hover:bg-amber-50 rounded-none"
+          >
+            <Upload className="h-4 w-4 mr-2" /> Re-upload Transcript
+          </Button>
         </div>
       </div>
+
+      {/* Re-upload confirmation dialog */}
+      {showReuploadConfirm && (
+        <div className="mb-6 p-5 border-2 border-amber-300 bg-amber-50 rounded-xl">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-full bg-amber-100 shrink-0">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-bold text-amber-900 mb-1">{t("pages.courses.reuploadWarningTitle")}</h3>
+              <p className="text-sm text-amber-800 mb-4">
+                {t("pages.courses.reuploadWarningBody")}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowReuploadConfirm(false)}
+                  variant="outline"
+                  className="border-slate-300 text-slate-600 rounded-none"
+                >
+                  {t("pages.courses.reuploadCancel")}
+                </Button>
+                <Button
+                  onClick={() => { void handleReuploadConfirm(); }}
+                  className="bg-amber-600 hover:bg-amber-700 text-white rounded-none"
+                >
+                  <Upload className="h-4 w-4 mr-2" /> {t("pages.courses.reuploadConfirm")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Manual Add Course Form */}
       {showManualAdd && (
@@ -436,7 +494,7 @@ export default function Courses() {
             {[
               { label: t("pages.courses.estimatedGpa"),  value: gpa.estimatedGpa > 0 ? gpa.estimatedGpa.toFixed(2) : "—" },
               { label: t("pages.courses.totalUnits"),    value: gpa.totalUnits },
-              { label: t("pages.courses.sectionCompleted"),      value: `${gpa.completedUnits} ${t("pages.courses.totalUnits").toLowerCase()}` },
+              { label: t("pages.courses.sectionCompleted"),      value: `${gpa.completedUnits} ${t("pages.courses.earnedUnits")}` },
               { label: t("pages.courses.inProgressUnits"),    value: `${gpa.inProgressUnits} ${t("pages.courses.totalUnits").toLowerCase()}` },
             ].map(s => (
               <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-3 text-center">
@@ -590,11 +648,7 @@ export default function Courses() {
           </>
         )}
 
-        {/* Footer nav */}
-        <div className="py-6 border-b-2 border-slate-900 mb-6 flex items-center justify-between">
-          <p className="text-xs text-slate-600">
-            GPA calculations are estimates. Verify your official GPA with your college transcript.
-          </p>
+        <div className="text-center py-6">
           <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
             View My Pathway <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

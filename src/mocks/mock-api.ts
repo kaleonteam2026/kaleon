@@ -156,6 +156,15 @@ export function installMockApi(): void {
       });
     }
     if (pathname.startsWith("/api/courses/") && method === "DELETE") return json({ ok: true });
+    if (pathname.match(/\/api\/profiles\/\d+\/courses$/) && method === "DELETE") {
+      if (isAuthBypass()) {
+        const { saveDevCourses } = await import("@/lib/dev-courses");
+        saveDevCourses(profileId, []);
+      } else {
+        profileCourses = [];
+      }
+      return json({ ok: true });
+    }
 
     if (pathname.includes("/generate-matches")) return json({ ok: true });
     if (pathname.includes("/generate-pathways") && method === "POST") {

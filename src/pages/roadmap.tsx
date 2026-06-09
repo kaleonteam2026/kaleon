@@ -424,19 +424,18 @@ export default function Roadmap() {
         </div>
 
         {/* Content */}
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-6 md:px-10 py-8 mb-12">
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-6 md:px-10 py-8 mb-6">
           <MarkdownContent
             markdown={roadmap.contentMarkdown ?? "No content available."}
             setSection={setCurrentSection}
           />
         </div>
 
-        {/* Footer */}
+        {/* Download button */}
         <div className="text-center pb-12">
           <Button onClick={downloadMarkdown} variant="outline">
             <Download className="h-4 w-4 mr-2" /> {t("pages.roadmap.downloadRoadmap")}
           </Button>
-          <p className="text-xs text-slate-400 mt-3">{t("common.verifyFooter")}</p>
         </div>
         </PageMotion>
     </AppPageLayout>

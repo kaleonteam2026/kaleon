@@ -37,7 +37,8 @@ Return ONLY valid JSON with this exact structure — no markdown, no code fences
 Rules:
 - Course codes are typically DEPARTMENT + NUMBER (e.g. "MATH 101", "ENGL 110", "BIOL 3A", "CS 106B").
 - Course name is the full description (e.g. "Calculus I", "Introduction to Psychology").
-- Units are a number typically between 1 and 6, usually appearing right after or right before the course code/name.
+- Units represent the number of course credits. Transcripts often have separate "Earned" and "Attempted" columns. Extract the value from the "Earned" column (or "Earned Units", "Units Earned") — NOT from "Attempted", "Units Attempted", or similar labels. The typical range is 1–6.
+- If a course has 0.00 Earned units (indicating failure or withdrawal), DO NOT include it in the output at all — skip it entirely.
 - Terms look like "Fall 2023", "Spring 2024", "Summer 2023", "Winter 2024". Group each course under the nearest term header that precedes it.
 - GPA is a decimal between 0.0 and 4.0 labeled with "cumulative", "overall", "total", "GPA", or similar. If multiple GPAs appear, take the latest cumulative/overall one.
 - totalUnits is the sum of all course unit values.
@@ -79,14 +80,18 @@ export async function parseTranscriptWithAI(
     detectedMajor?: string | null;
   };
 
-  // Validate and shape the result
-  const courses = (parsed.courses ?? []).map(c => ({
-    code: c.code ?? "UNKNOWN",
-    name: c.name ?? c.code ?? "Unknown Course",
-    units: typeof c.units === "number" && c.units > 0 ? c.units : undefined,
-    term: typeof c.term === "string" && c.term.trim().length > 0 ? c.term.trim() : undefined,
-    college: typeof c.college === "string" && c.college.trim().length > 0 ? c.college.trim() : undefined,
-  }));
+  // Validate and shape the result.
+  // Exclude courses with 0 or undefined units — these are failed/withdrawn courses
+  // that have 0.00 in the "Earned" column on the transcript.
+  const courses = (parsed.courses ?? [])
+    .filter(c => typeof c.units === "number" && c.units > 0)
+    .map(c => ({
+      code: c.code ?? "UNKNOWN",
+      name: c.name ?? c.code ?? "Unknown Course",
+      units: c.units,
+      term: typeof c.term === "string" && c.term.trim().length > 0 ? c.term.trim() : undefined,
+      college: typeof c.college === "string" && c.college.trim().length > 0 ? c.college.trim() : undefined,
+    }));
 
   const latestGpa =
     parsed.latestGpa != null && parsed.latestGpa >= 0 && parsed.latestGpa <= 4.0

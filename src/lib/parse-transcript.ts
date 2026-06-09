@@ -201,10 +201,13 @@ export function parseTranscriptText(text: string): TranscriptParseResult {
     courses.push({ code, name: code, units, term });
   }
 
-  const totalUnits = courses.reduce((sum, c) => sum + (c.units ?? 0), 0);
+  // Filter out courses with 0 or undefined units — these represent failed/withdrawn
+  // courses where the "Earned" column was 0.00 on the transcript.
+  const earned = courses.filter(c => c.units !== undefined && c.units > 0);
+  const totalUnits = earned.reduce((sum, c) => sum + (c.units ?? 0), 0);
   const latestGpa = parseLatestGpa(text);
 
-  return { courses, latestGpa, totalUnits };
+  return { courses: earned, latestGpa, totalUnits };
 }
 
 export async function parseTranscriptPDF(file: File): Promise<TranscriptParseResult> {

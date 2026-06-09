@@ -590,9 +590,6 @@ export default function InternshipsPage() {
           </div>
         )}
 
-        <p className="text-xs text-slate-600 text-center py-8">
-          {t("pages.internships.finderFooter")}
-        </p>
         </PageMotion>
     </AppPageLayout>
   );

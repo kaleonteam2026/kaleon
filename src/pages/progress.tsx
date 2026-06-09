@@ -777,9 +777,6 @@ export default function ProgressTracker() {
           </>
         )}
 
-        <p className="text-xs text-slate-600 text-center pb-10">
-          {t("pages.progress.footerDisclaimer")}
-        </p>
       </PageMotion>
     </AppPageLayout>
   );

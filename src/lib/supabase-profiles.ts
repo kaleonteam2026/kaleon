@@ -257,3 +257,17 @@ export async function deleteCourse(courseId: number): Promise<boolean> {
   }
   return true;
 }
+
+/**
+ * Delete ALL courses for a given profile.
+ * Used when re-uploading a transcript — old courses must be wiped first.
+ */
+export async function deleteAllCoursesForProfile(profileId: number): Promise<boolean> {
+  const { error } = await supabase.from("courses").delete().eq("profile_id", profileId);
+
+  if (error) {
+    console.error("Error deleting all courses for profile:", error);
+    return false;
+  }
+  return true;
+}

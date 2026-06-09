@@ -1,14 +1,15 @@
 import { useEffect, useState, useRef } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle2, Loader2, Upload } from "lucide-react";
 import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
 import { fetchWithTimeout } from "@/lib/api/client";
 import { useRequestCleanup } from "@/hooks/use-request-cleanup";
-import { appendDevCourses } from "@/lib/dev-courses";
+import { appendDevCourses, saveDevCourses } from "@/lib/dev-courses";
 import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { createProfile, getProfileForUser, insertCourses, updateProfile } from "@/lib/supabase-profiles";
+import { createProfile, getProfileForUser, insertCourses, updateProfile, deleteAllCoursesForProfile } from "@/lib/supabase-profiles";
 import { useMotionEnabled, useDirSign } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { t } from "@/lib/copy";
@@ -36,9 +37,12 @@ export default function Onboarding() {
   ];
 
   const { user, updateProfileName } = useAuth();
+  const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [phase, setPhase] = useState<"intro" | "form" | "calculating" | "ready" | "schools">("intro");
+  const [isReupload, setIsReupload] = useState(false);
+  const reuploadProfileIdRef = useRef<number | null>(null);
   const [pendingTranscripts, setPendingTranscripts] = useState<PendingTranscript[]>([]);
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -65,6 +69,19 @@ export default function Onboarding() {
   const set = (k: keyof FormData, v: string) => setForm(prev => ({ ...prev, [k]: v }));
 
   useEffect(() => {
+    // Check if this is a re-upload from the courses page
+    const params = new URLSearchParams(window.location.search);
+    const reuploadVal = params.get("reupload");
+    if (reuploadVal) {
+      const pid = parseInt(reuploadVal, 10);
+      if (!isNaN(pid)) {
+        reuploadProfileIdRef.current = pid;
+        setIsReupload(true);
+        setPhase("form");
+        return;
+      }
+    }
+
     if (phase !== "intro") return;
     const id = window.setTimeout(() => setPhase("form"), INTRO_DURATION_MS);
     return () => window.clearTimeout(id);
@@ -204,12 +221,14 @@ export default function Onboarding() {
     return true;
   };
 
-  const flattenedCourses = scanResults.flatMap(r => r.courses);
+  const flattenedCourses = scanResults.flatMap(r =>
+    r.courses.filter(c => c.units !== undefined && c.units > 0),
+  );
   const flattenedGpa = scanResults.reduce(
     (best, r) => (r.latestGpa !== null && r.latestGpa > best ? r.latestGpa : best),
     0,
   );
-  const flattenedTotalUnits = scanResults.reduce((s, r) => s + r.totalUnits, 0);
+  const flattenedTotalUnits = flattenedCourses.reduce((sum, c) => sum + (c.units ?? 0), 0);
 
   // Determine the best term label from parsed courses, or use a fallback
   const detectedTermLabel = (): string => {
@@ -249,6 +268,10 @@ export default function Onboarding() {
       };
 
       if (isAuthBypass()) {
+        // If re-uploading, clear all existing dev courses first
+        if (isReupload) {
+          saveDevCourses(DEV_PROFILE_ID, []);
+        }
         saveDevProfile({
           fullName: payload.fullName,
           communityCollege: payload.communityCollege,
@@ -324,6 +347,10 @@ export default function Onboarding() {
         createdProfileIdRef.current = sp.id;
 
         if (flattenedCourses.length > 0) {
+          // If this is a re-upload, clear old courses first so new ones fully replace them
+          if (isReupload) {
+            await deleteAllCoursesForProfile(sp.id);
+          }
           await insertCourses(sp.id, user.id, flattenedCourses.map(c => ({
             courseCode: c.code,
             courseName: c.name,
@@ -474,6 +501,12 @@ export default function Onboarding() {
 
           {/* Content */}
           <div className="px-8 py-6 space-y-5 relative" style={{ overflow: "visible" }}>
+            {isReupload && (
+              <div className="flex items-center gap-3 p-3 rounded-xl text-sm" style={{ background: "rgba(251, 191, 36, 0.12)", border: "1px solid rgba(251, 191, 36, 0.35)" }}>
+                <Upload className="h-4 w-4 shrink-0" style={{ color: "#f59e0b" }} aria-hidden />
+                <span style={{ color: "#fbbf24" }}>{t("onboarding.reuploadBanner")}</span>
+              </div>
+            )}
             <FormSteps
               step={step}
               form={form}
