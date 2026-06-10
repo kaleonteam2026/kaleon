@@ -145,7 +145,7 @@ export default function BetaAgreementModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-xl max-h-[90vh] flex flex-col p-0 gap-0"
+        className="sm:max-w-xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
         style={{
           background: "#0a1628",
           border: "1px solid rgba(78,204,163,0.2)",
@@ -169,7 +169,11 @@ export default function BetaAgreementModal({
 
         {/* Scrollable agreement content */}
         <div className="flex-1 px-6 overflow-hidden min-h-0">
-          <ScrollArea className="h-full max-h-[50vh]" onScroll={handleScroll}>
+          <ScrollArea
+            className="h-full"
+            style={{ "--scrollbar-thumb": "rgba(78,204,163,0.6)" } as React.CSSProperties}
+            onScroll={handleScroll}
+          >
             <div
               className="text-sm leading-relaxed whitespace-pre-line pr-4"
               style={{ color: "#cbd5e1" }}
