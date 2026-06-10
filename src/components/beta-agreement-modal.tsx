@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -145,14 +144,16 @@ export default function BetaAgreementModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
+        className="sm:max-w-xl p-0 flex flex-col gap-0 overflow-hidden"
         style={{
           background: "#0a1628",
           border: "1px solid rgba(78,204,163,0.2)",
           color: "#e2e8f0",
+          height: "90vh",
+          maxHeight: "600px",
         }}
       >
-        <DialogHeader className="p-6 pb-2">
+        <DialogHeader className="p-6 pb-2 shrink-0">
           <DialogTitle
             className="text-lg font-bold uppercase tracking-tight"
             style={{ color: "#f8fafc" }}
@@ -168,19 +169,14 @@ export default function BetaAgreementModal({
         </DialogHeader>
 
         {/* Scrollable agreement content */}
-        <div className="flex-1 px-6 overflow-hidden min-h-0">
-          <ScrollArea
-            className="h-full"
-            style={{ "--scrollbar-thumb": "rgba(78,204,163,0.6)" } as React.CSSProperties}
+        <div className="px-6 overflow-hidden min-h-0 flex-1">
+          <div
+            className="h-full overflow-y-auto pr-4 text-sm leading-relaxed whitespace-pre-line scrollbar-custom"
+            style={{ color: "#cbd5e1" }}
             onScroll={handleScroll}
           >
-            <div
-              className="text-sm leading-relaxed whitespace-pre-line pr-4"
-              style={{ color: "#cbd5e1" }}
-            >
-              {AGREEMENT_TEXT}
-            </div>
-          </ScrollArea>
+            {AGREEMENT_TEXT}
+          </div>
         </div>
 
         {/* Progress indicator / scroll prompt */}
@@ -188,7 +184,7 @@ export default function BetaAgreementModal({
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-xs text-center px-6 py-1.5 pwc-font-mono uppercase tracking-wider"
+            className="text-xs text-center px-6 py-1.5 pwc-font-mono uppercase tracking-wider shrink-0"
             style={{ color: "#4ECCA3", opacity: 0.6 }}
           >
             ↓ Scroll to the bottom to continue
@@ -197,7 +193,7 @@ export default function BetaAgreementModal({
 
         {/* Checkbox + action buttons */}
         <div
-          className="p-6 pt-4 flex flex-col gap-4"
+          className="p-6 pt-4 flex flex-col gap-4 shrink-0"
           style={{
             borderTop: "1px solid rgba(78,204,163,0.1)",
           }}

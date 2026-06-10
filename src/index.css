@@ -590,3 +590,26 @@ html {
   .orbit-ring-1, .orbit-ring-2, .orbit-ring-3, .float-particle { animation: none !important; }
   .onboarding-intro-message { animation: none !important; opacity: 1 !important; }
 }
+
+/* ── Custom scrollbar ── */
+.scrollbar-custom {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(78,204,163,0.5) transparent;
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background: rgba(78,204,163,0.5);
+  border-radius: 3px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background: rgba(78,204,163,0.75);
+}
