@@ -23,6 +23,8 @@ const DeadlineCalendar = lazy(() => import("@/pages/deadline-calendar"));
 const ExportsPage = lazy(() => import("@/pages/exports"));
 const Onboarding = lazy(() => import("@/pages/onboarding"));
 const AuthPage = lazy(() => import("@/pages/auth"));
+const TermsPage = lazy(() => import("@/pages/terms"));
+const PrivacyPage = lazy(() => import("@/pages/privacy"));
 const Welcome = lazy(() => import("@/pages/welcome"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
@@ -71,12 +73,8 @@ function Router() {
                 </ProtectedRoute>
               </ErrorBoundary>
             </Route>
-            <Route path="/terms">
-              <Redirect to="/terms.pdf" />
-            </Route>
-            <Route path="/privacy">
-              <Redirect to="/privacy.pdf" />
-            </Route>
+            <Route path="/terms" component={TermsPage} />
+            <Route path="/privacy" component={PrivacyPage} />
             <Route path="/profiles">
               <Redirect to="/profile" />
             </Route>
