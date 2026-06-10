@@ -20,6 +20,7 @@ import {
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { CopyTrans } from "@/components/copy-trans";
 import Footer from "@/components/footer";
+import BetaAgreementModal from "@/components/beta-agreement-modal";
 import { t } from "@/lib/copy";
 
 const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
@@ -30,6 +31,7 @@ export default function Landing() {
   const motionOn = useMotionEnabled();
   const [scrolled, setScrolled] = useState(false);
   const [ctaHover, setCtaHover] = useState(false);
+  const [betaModalOpen, setBetaModalOpen] = useState(false);
   const dirSign = 1;
 
   const { scrollY } = useScroll();
@@ -38,12 +40,9 @@ export default function Landing() {
     if (next !== scrolled) setScrolled(next);
   });
 
+  // Authenticated users skip the beta modal
   const startOnboarding = () => {
-    if (AUTH_BYPASS || isAuthenticated) {
-      navigate("/onboarding");
-      return;
-    }
-    navigate("/auth?mode=signup&returnTo=/onboarding");
+    setBetaModalOpen(true);
   };
 
   // With auth bypass, stay on landing so local UI changes are visible at /.
@@ -380,6 +379,8 @@ export default function Landing() {
           </motion.button>
         </div>
       </section>
+
+      <BetaAgreementModal open={betaModalOpen} onOpenChange={setBetaModalOpen} />
 
       <Footer variant="public" />
     </div>

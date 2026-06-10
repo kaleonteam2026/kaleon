@@ -70,6 +70,12 @@ function Router() {
                 </ProtectedRoute>
               </ErrorBoundary>
             </Route>
+            <Route path="/terms">
+              <Redirect to="/terms.pdf" />
+            </Route>
+            <Route path="/privacy">
+              <Redirect to="/privacy.pdf" />
+            </Route>
             <Route path="/profiles">
               <Redirect to="/profile" />
             </Route>

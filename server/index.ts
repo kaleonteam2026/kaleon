@@ -146,6 +146,16 @@ app.post("/api/profiles/:id/transferability-analysis", async (req, res) => {
   }
 });
 
+// ── Serve static documents (privacy, terms, etc.) ─────────────────────
+
+app.get("/privacy", (_req, res) => {
+  res.sendFile(path.join(DIST, "privacy.pdf"));
+});
+
+app.get("/terms", (_req, res) => {
+  res.sendFile(path.join(DIST, "terms.pdf"));
+});
+
 // ── Serve built frontend ──────────────────────────────────────────────
 
 app.use(express.static(DIST));
