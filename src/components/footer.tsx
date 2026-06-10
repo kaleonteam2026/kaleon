@@ -75,11 +75,11 @@ export default function Footer({ variant = "compact" }: { variant?: FooterVarian
             </div>
 
             {/* Support email */}
-            <div className="text-center md:text-right">
-              <FooterLink
+            <div className="text-center md:text-right" style={{ color: "#4ECCA3" }}>
+              <FooterLink 
                 href="mailto:support@kaleon.org"
                 className={cn(LINK_CLASS, "text-sm")}
-                style={{ color: "#4ECCA3" }}
+                
               >
                 {t("footer.supportEmail")}
               </FooterLink>
