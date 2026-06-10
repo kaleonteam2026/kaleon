@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -106,18 +106,19 @@ export default function BetaAgreementModal({
   const { isAuthenticated } = useAuth();
   const [scrolledToBottom, setScrolledToBottom] = useState(false);
   const [agreed, setAgreed] = useState(false);
-  const viewportRef = useRef<HTMLDivElement | null>(null);
 
-  const handleScroll = useCallback(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const threshold = 5; // px from bottom
-    const atBottom =
-      el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-    if (atBottom && !scrolledToBottom) {
-      setScrolledToBottom(true);
-    }
-  }, [scrolledToBottom]);
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const el = e.currentTarget;
+      const threshold = 5; // px from bottom
+      const atBottom =
+        el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+      if (atBottom && !scrolledToBottom) {
+        setScrolledToBottom(true);
+      }
+    },
+    [scrolledToBottom]
+  );
 
   const handleAgree = useCallback(() => {
     if (!agreed) return;
@@ -168,10 +169,8 @@ export default function BetaAgreementModal({
 
         {/* Scrollable agreement content */}
         <div className="flex-1 px-6 overflow-hidden min-h-0">
-          <ScrollArea className="h-full max-h-[50vh]">
+          <ScrollArea className="h-full max-h-[50vh]" onScroll={handleScroll}>
             <div
-              ref={viewportRef}
-              onScroll={handleScroll}
               className="text-sm leading-relaxed whitespace-pre-line pr-4"
               style={{ color: "#cbd5e1" }}
             >
