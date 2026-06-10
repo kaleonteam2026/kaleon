@@ -258,6 +258,7 @@ function ReminderPrefsSection({ profileId }: { profileId: number }) {
 
   const toggleLead = (n: number) => {
     const has = prefs.leadDays.includes(n);
+    
     const next = has ? prefs.leadDays.filter((x) => x !== n) : [...prefs.leadDays, n];
     if (next.length === 0) {
       toast({ title: t("pages.profile.toastPickLead") });
