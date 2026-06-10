@@ -7,6 +7,14 @@ html {
   touch-action: manipulation;
 }
 
+/* Prevent horizontal overflow on mobile — any overflowing child
+   will be clipped rather than causing a right-side indent. */
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
