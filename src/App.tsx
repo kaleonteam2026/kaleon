@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PageLoadingState } from "@/components/page-loading-state";
 import { ErrorBoundary } from "@/components/error-boundary";
+import Footer from "@/components/footer";
 import ChatBubble from "@/components/chat-bubble";
 import SupabaseAuthModal from "@/components/supabase-auth-modal";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
@@ -150,6 +151,7 @@ function Router() {
     <>
       {routes}
       <ChatBubbleWrapper />
+      <Footer variant="public" />
     </>
   );
 }

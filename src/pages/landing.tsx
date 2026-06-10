@@ -19,7 +19,6 @@ import {
 } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { CopyTrans } from "@/components/copy-trans";
-import Footer from "@/components/footer";
 import BetaAgreementModal from "@/components/beta-agreement-modal";
 import { t } from "@/lib/copy";
 
@@ -381,8 +380,6 @@ export default function Landing() {
       </section>
 
       <BetaAgreementModal open={betaModalOpen} onOpenChange={setBetaModalOpen} />
-
-      <Footer variant="public" />
     </div>
   );
 }

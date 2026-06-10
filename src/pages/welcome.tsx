@@ -3,7 +3,6 @@ import { useLocation } from "wouter";
 import { useEffect, useMemo } from "react";
 import { GraduationCap, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import Footer from "@/components/footer";
 import { fadeUp, staggerContainer, useMotionEnabled, DUR } from "@/lib/motion";
 
 const FONT_STYLES = `
@@ -255,7 +254,6 @@ export default function Welcome({ persona }: WelcomeProps) {
         </div>
       </section>
 
-      <Footer variant="public" />
     </div>
   );
 }

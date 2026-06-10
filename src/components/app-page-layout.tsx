@@ -98,7 +98,7 @@ export function AppPageLayout({
           children
         )}
       </main>
-      <Footer variant="compact" />
+      <Footer variant="public" />
     </div>
   );
 }
