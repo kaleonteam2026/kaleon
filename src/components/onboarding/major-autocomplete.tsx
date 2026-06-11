@@ -8,9 +8,10 @@ interface MajorAutocompleteProps {
   onChange: (value: string) => void;
   placeholder: string;
   className?: string;
+  id?: string;
 }
 
-export function MajorAutocomplete({ value, onChange, placeholder, className }: MajorAutocompleteProps) {
+export function MajorAutocomplete({ value, onChange, placeholder, className, id }: MajorAutocompleteProps) {
   const [inputValue, setInputValue] = useState(value);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -100,6 +101,7 @@ export function MajorAutocomplete({ value, onChange, placeholder, className }: M
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#4ECCA3", opacity: 0.6 }} />
         <input
           ref={inputRef}
+          id={id}
           type="text"
           value={inputValue}
           onChange={e => handleInputChange(e.target.value)}

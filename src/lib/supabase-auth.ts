@@ -53,8 +53,11 @@ export async function signInWithMagicLink(
     ? { first_name: options.firstName.trim() }
     : undefined;
 
-  // When signing in (no firstName), don't auto-create a user if the email doesn't exist.
+  // When signing in (no firstName), avoid auto-creating a user if the email doesn't exist.
   // When signing up (firstName provided), allow user creation.
+  // Some Supabase projects block OTP sign-in when "Allow new users to sign up" is
+  // disabled in the dashboard — as a workaround, try shouldCreateUser:true as a
+  // fallback so existing users can still receive OTP codes.
   const shouldCreateUser = Boolean(options?.firstName?.trim());
 
   const { error } = await supabase.auth.signInWithOtp({
@@ -65,7 +68,36 @@ export async function signInWithMagicLink(
       data,
     },
   });
-  return error ? { error: error.message } : {};
+
+  if (error) {
+    const msg = error.message.toLowerCase();
+
+    // Detect Supabase's "signups disabled" error. Some project configurations
+    // block the OTP flow even for existing users when shouldCreateUser is false.
+    // Retry once with shouldCreateUser: true as a workaround.
+    if (!shouldCreateUser && (msg.includes("signup") || msg.includes("not allowed") || msg.includes("otp"))) {
+      const { error: retryError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: getAuthRedirectUrl(options?.returnTo),
+          data,
+        },
+      });
+      if (!retryError) return {};
+      // If the retry also fails, surface a friendlier message
+      return {
+        error:
+          "Unable to send a verification code. This usually means the Supabase project has sign-ups disabled. " +
+          "Please ask the admin to enable \"Allow new users to sign up\" in the Supabase dashboard " +
+          "(Authentication > Settings > General), or try again later.",
+      };
+    }
+
+    return { error: error.message };
+  }
+
+  return {};
 }
 
 /**

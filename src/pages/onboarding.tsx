@@ -10,6 +10,8 @@ import { appendDevCourses, saveDevCourses } from "@/lib/dev-courses";
 import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { createProfile, getProfileForUser, insertCourses, updateProfile, deleteAllCoursesForProfile } from "@/lib/supabase-profiles";
+import { deleteAllSnapshots } from "@/lib/supabase-semesters";
+import { deleteAllPathwaysForProfile, deleteAllPathwaySnapshotsForProfile } from "@/lib/supabase-pathways";
 import { useMotionEnabled, useDirSign } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { t } from "@/lib/copy";
@@ -347,9 +349,13 @@ export default function Onboarding() {
         createdProfileIdRef.current = sp.id;
 
         if (flattenedCourses.length > 0) {
-          // If this is a re-upload, clear old courses first so new ones fully replace them
+          // If this is a re-upload, clear old courses and associated data first
+          // so new ones fully replace the stale state
           if (isReupload) {
             await deleteAllCoursesForProfile(sp.id);
+            await deleteAllSnapshots(sp.id);
+            await deleteAllPathwaysForProfile(sp.id);
+            await deleteAllPathwaySnapshotsForProfile(sp.id);
           }
           await insertCourses(sp.id, user.id, flattenedCourses.map(c => ({
             courseCode: c.code,
@@ -531,7 +537,7 @@ export default function Onboarding() {
           </div>
 
           {/* Footer buttons */}
-          <div className="px-8 pb-8 flex items-end justify-between gap-3" style={{ borderTop: "1px solid rgba(78,204,163,0.15)" }}>
+          <div className="px-8 pb-8 pt-4 flex items-end justify-between gap-3" style={{ borderTop: "1px solid rgba(78,204,163,0.15)" }}>
             {step > 0 ? (
               <Button variant="ghost" onClick={() => setStep(s => s - 1)} className="hover:bg-[rgba(78,204,163,0.08)]" style={{ color: "#94a3b8" }}>
                 <ArrowLeft className="h-4 w-4 mr-1" />{t("onboarding.back")}

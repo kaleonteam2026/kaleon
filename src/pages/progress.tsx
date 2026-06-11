@@ -56,6 +56,7 @@ import {
   getProfileForUser,
 } from "@/lib/supabase-profiles";
 import { IGETC_AREAS, CSU_GE_AREAS } from "@/components/courses/course-types";
+import type { TransferabilityResult, CourseTransferResult } from "@/components/courses/course-types";
 import { computeGpaSummary, graduationProgressPercent, transferProgressPercent } from "@/lib/course-progress";
 import type { StoredCourse } from "@/lib/course-progress";
 
@@ -79,6 +80,7 @@ export default function ProgressTracker() {
   const [igetcDoneCount, setIgetcDoneCount] = useState<number | null>(null);
   const [calgetcDoneCount, setCalgetcDoneCount] = useState<number | null>(null);
   const [gePattern, setGePattern] = useState<"igetc" | "calgetc">("igetc");
+  const [transferabilityResult, setTransferabilityResult] = useState<TransferabilityResult | null>(null);
 
   // Tab
   const [tab, setTab] = useState<Tab>("log");
@@ -188,6 +190,16 @@ export default function ProgressTracker() {
       .then((data: { areas?: Record<string, boolean> } | null) => {
         if (data?.areas) {
           setCalgetcDoneCount(Object.values(data.areas).filter(Boolean).length);
+        }
+      })
+      .catch(() => {});
+
+    // Load transferability analysis results to show per-course GE area mapping
+    fetch(`/api/profiles/${pid}/transferability-analysis`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: TransferabilityResult | null) => {
+        if (data?.courseAnalysis && data.courseAnalysis.length > 0) {
+          setTransferabilityResult(data);
         }
       })
       .catch(() => {});
@@ -436,17 +448,64 @@ export default function ProgressTracker() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {(gePattern === "igetc" ? IGETC_AREAS : CSU_GE_AREAS).map((area) => (
-                    <div
-                      key={area.key}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200"
-                    >
-                      <div className="h-5 w-5 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0">
-                        <div className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                  {(gePattern === "igetc" ? IGETC_AREAS : CSU_GE_AREAS).map((area) => {
+                    const areaKey = area.key;
+                    // Find analysis courses that map to this area
+                    const areaCourses = transferabilityResult?.courseAnalysis.filter((c) =>
+                      gePattern === "igetc"
+                        ? c.igetcArea === areaKey
+                        : c.csuGEArea === areaKey
+                    ) ?? [];
+                    // Match against profile courses to get their actual status
+                    const courseStatusMap = new Map<string, string>();
+                    for (const pc of profileCourses) {
+                      const key = (pc.courseCode ?? pc.courseName).toUpperCase().replace(/\s+/g, " ");
+                      courseStatusMap.set(key, pc.status ?? "completed");
+                    }
+                    const planned = areaCourses.filter(c => courseStatusMap.get((c.courseCode ?? c.courseName).toUpperCase().replace(/\s+/g, " ")) === "planned");
+                    const other = areaCourses.filter(c => courseStatusMap.get((c.courseCode ?? c.courseName).toUpperCase().replace(/\s+/g, " ")) !== "planned");
+
+                    return (
+                      <div
+                        key={areaKey}
+                        className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="h-5 w-5 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0">
+                            <div className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                          </div>
+                          <span className="text-xs text-slate-600">{t(area.labelKey)}</span>
+                          {areaCourses.length > 0 && (
+                            <span className="ml-auto text-[10px] text-slate-400">{areaCourses.length} course{areaCourses.length !== 1 ? "s" : ""}</span>
+                          )}
+                        </div>
+                        {other.length > 0 && (
+                          <div className="mt-1.5 space-y-0.5">
+                            {other.map((c, ci) => (
+                              <div key={ci} className="flex items-center gap-1.5 text-[11px] text-slate-500 pl-1">
+                                <span className="w-1 h-1 rounded-full bg-emerald-400 flex-shrink-0" />
+                                <span className="truncate">{c.courseCode || c.courseName}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {planned.length > 0 && (
+                          <div className="mt-1.5 space-y-0.5">
+                            {planned.map((c, ci) => (
+                              <div key={ci} className="flex items-center gap-1.5 text-[11px] pl-1">
+                                <span className="w-1 h-1 rounded-full bg-amber-400 flex-shrink-0" />
+                                <span className="truncate text-amber-600">{c.courseCode || c.courseName}</span>
+                                <span className="text-[10px] px-1 rounded bg-amber-100 text-amber-700 font-medium">Planned</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {areaCourses.length === 0 && transferabilityResult && (
+                          <div className="mt-1 text-[10px] text-slate-400 italic">—</div>
+                        )}
                       </div>
-                      <span className="text-xs text-slate-600">{t(area.labelKey)}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
                   <Info className="h-3 w-3 inline mr-0.5" />

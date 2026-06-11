@@ -320,3 +320,31 @@ export async function loadPathwaySnapshots(
 
   return ((data ?? []) as PathwaySnapshotRow[]).map(rowToSnapshot);
 }
+
+/**
+ * Delete ALL pathways for a profile (every generation).
+ * Used when re-uploading a transcript — old pathway data must be wiped.
+ */
+export async function deleteAllPathwaysForProfile(profileId: number): Promise<boolean> {
+  const { error } = await supabase.from("pathways").delete().eq("profile_id", profileId);
+
+  if (error) {
+    console.error("Error deleting pathways for profile:", error);
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Delete ALL pathway snapshots for a profile.
+ * Used when re-uploading a transcript — old snapshot data must be wiped.
+ */
+export async function deleteAllPathwaySnapshotsForProfile(profileId: number): Promise<boolean> {
+  const { error } = await supabase.from("pathway_snapshots").delete().eq("profile_id", profileId);
+
+  if (error) {
+    console.error("Error deleting pathway snapshots for profile:", error);
+    return false;
+  }
+  return true;
+}

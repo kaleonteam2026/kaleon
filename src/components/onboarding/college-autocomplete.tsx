@@ -9,9 +9,10 @@ interface CollegeAutocompleteProps {
   placeholder: string;
   className?: string;
   compact?: boolean;
+  id?: string;
 }
 
-export function CollegeAutocomplete({ value, onChange, placeholder, className, compact }: CollegeAutocompleteProps) {
+export function CollegeAutocomplete({ value, onChange, placeholder, className, compact, id }: CollegeAutocompleteProps) {
   const [inputValue, setInputValue] = useState(value);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -107,6 +108,7 @@ export function CollegeAutocomplete({ value, onChange, placeholder, className, c
         <Search className={`absolute top-1/2 -translate-y-1/2 ${searchIconSize}`} style={{ color: "#4ECCA3", opacity: 0.6 }} />
         <input
           ref={inputRef}
+          id={id}
           type="text"
           value={inputValue}
           onChange={e => handleInputChange(e.target.value)}

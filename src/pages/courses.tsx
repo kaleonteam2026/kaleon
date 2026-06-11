@@ -12,7 +12,8 @@ import { fetchWithTimeout } from "@/lib/api/client";
 import { useRequestCleanup } from "@/hooks/use-request-cleanup";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { getCoursesForProfile, getProfileForUser, insertCourses, deleteCourse as deleteCourseSupabase, deleteAllCoursesForProfile } from "@/lib/supabase-profiles";
-import { loadPathwaysFromDb } from "@/lib/supabase-pathways";
+import { loadPathwaysFromDb, deleteAllPathwaysForProfile, deleteAllPathwaySnapshotsForProfile } from "@/lib/supabase-pathways";
+import { deleteAllSnapshots } from "@/lib/supabase-semesters";
 import { computeGpaSummary } from "@/lib/course-progress";
 import { isAuthBypass } from "@/lib/dev-profile";
 import { saveDevCourses } from "@/lib/dev-courses";
@@ -55,6 +56,9 @@ export default function Courses() {
       // Delete all existing courses before navigating to the upload flow
       if (isSupabaseConfigured && !isAuthBypass()) {
         await deleteAllCoursesForProfile(pid);
+        await deleteAllSnapshots(pid);
+        await deleteAllPathwaysForProfile(pid);
+        await deleteAllPathwaySnapshotsForProfile(pid);
       } else {
         saveDevCourses(pid, []);
         // Also hit the mock API to clear its in-memory store
@@ -315,8 +319,13 @@ export default function Courses() {
         return;
       }
       if (!r.ok) {
-        const err = await r.json() as { error?: string };
-        throw new Error(err.error ?? t("pages.courses.analysisFailed"));
+        const errText = await r.text().catch(() => "");
+        try {
+          const err = JSON.parse(errText) as { error?: string };
+          throw new Error(err.error ?? t("pages.courses.analysisFailed"));
+        } catch {
+          throw new Error(`Server error (${r.status}): ${errText.slice(0, 200)}`);
+        }
       }
       const data = await r.json() as TransferabilityResult;
       setAnalysis(data);

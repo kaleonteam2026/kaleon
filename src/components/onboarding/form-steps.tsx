@@ -476,6 +476,7 @@ export function FormSteps({
                 {t("onboarding.ccLabel")} <span className="text-red-400">*</span>
               </label>
               <CollegeAutocomplete
+                id="ob-cc"
                 value={form.communityCollege}
                 onChange={(val) => onSet("communityCollege", val)}
                 placeholder={t("onboarding.ccPlaceholder")}
@@ -487,6 +488,7 @@ export function FormSteps({
                 {t("onboarding.majorLabel")} <span className="text-red-400">*</span>
               </label>
               <MajorAutocomplete
+                id="ob-major"
                 value={form.intendedMajor}
                 onChange={(val) => onSet("intendedMajor", val)}
                 placeholder={t("onboarding.majorPlaceholder")}

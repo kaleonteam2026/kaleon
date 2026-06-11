@@ -84,6 +84,44 @@ const progressEntries = [
 /** Pathways returned by the last DeepSeek generate call (dev pass-through). */
 let generatedPathways: typeof pathways = [];
 
+/** Last transferability analysis result, cached so the progress page can load it. */
+let lastAnalysisResult: Record<string, unknown> = {
+  communityCollege: "",
+  summary: "",
+  bestMatches: [],
+  courseAnalysis: [],
+  igetcSummary: { area1AEnglish: false, area1BCriticalThinking: false, area2Math: false, area3Arts: false, area4Social: false, area5Science: false, area6Language: false, completedAreas: [], missingAreas: [] },
+  totalTransferableUnits: 0,
+  recommendations: [],
+};
+
+function mapCourseToIgetc(code: string): string | undefined {
+  const u = code.toUpperCase().replace(/\s+/g, " ");
+  if (/^ENGL\s+1(?:A|01A?)/.test(u)) return "area1AEnglish";
+  if (/^(ENGL\s+(?:1[BC]|2|02)|PHIL\s+(?:4|04|6|06)|COMM\s+(?:2|4))/.test(u)) return "area1BCriticalThinking";
+  if (/^(MATH|STAT)\s/.test(u)) return "area2Math";
+  if (/^(ART|MUS|DANC|THEA|FILM|PHOT)\s/.test(u)) return "area3Arts";
+  if (/^(HIST|POLS|PSYC|SOC|ECON|ANTH|GEOG)\s/.test(u)) return "area4Social";
+  if (/^(BIOL|CHEM|PHYS|ASTR|GEOL|OCEA|PHS)\s/.test(u)) return "area5Science";
+  if (/^SPAN|FREN|GERM|ITAL|CHIN|JAPN|KOR|LATN|GREK/.test(u)) return "area6Language";
+  return undefined;
+}
+
+function mapCourseToCsuge(code: string): string | undefined {
+  const u = code.toUpperCase().replace(/\s+/g, " ");
+  if (/^(COMM|ENGL)\s+(?:1|01)\b/.test(u)) return "areaA1Oral";
+  if (/^ENGL\s+1A/.test(u)) return "areaA2Written";
+  if (/^(ENGL\s+1[BC]|PHIL\s+[46])/.test(u)) return "areaA3Critical";
+  if (/^(PHYS|CHEM|ASTR|GEOL)\s/.test(u)) return "areaB1Physical";
+  if (/^(BIOL|BIO)\s/.test(u)) return "areaB2Life";
+  if (/\b(LAB|L)\s*\d/.test(u)) return "areaB3Lab";
+  if (/^(MATH|STAT)\s/.test(u)) return "areaB4Math";
+  if (/^(ART|MUS|DANC|THEA|FILM)\s/.test(u)) return "areaC1Arts";
+  if (/^(HIST|ENGL\s+(?:2|02)|PHIL|HUM)\s/.test(u)) return "areaC2Humanities";
+  if (/^(HIST|POLS|PSYC|SOC|ECON|ANTH|GEOG)\s/.test(u)) return "areaDSocial";
+  return undefined;
+}
+
 function getPathwaysForProfile(_profileId: number) {
   return generatedPathways.length > 0 ? generatedPathways : pathways;
 }
@@ -149,11 +187,29 @@ export function installMockApi(): void {
     if (pathname.includes("/gpa-summary")) return json(gpaSummary as unknown as Json);
     if (pathname.includes("/course-catalog")) return json({ college: profile.communityCollege, major: profile.intendedMajor, categories: ["Core"], courses });
     if (pathname.includes("/transferability-analysis")) {
-      return json({
-        summary: "Most courses are likely transferable.",
-        courseResults: courses.map((c) => ({ ...c, status: "transferable", assistNote: "Matches lower-division prep." })),
-        universityMatches: [{ university: "UCLA", system: "UC", matchScore: 84, matchReason: "Strong prep", transferableCount: courses.length, totalCourses: courses.length }],
-      });
+      // Store last analysis result so progress page can load it
+      if (method === "POST") {
+        const body = await readJsonBody(init);
+        const incoming = Array.isArray(body.courses) ? body.courses as Omit<StoredCourse, "id">[] : [];
+        lastAnalysisResult = {
+          communityCollege: profile.communityCollege,
+          summary: "Most courses are likely transferable.",
+          bestMatches: [{ university: "UCLA", system: "UC", matchScore: 84, matchReason: "Strong prep", transferableCount: courses.length, totalCourses: courses.length }],
+          courseAnalysis: incoming.map((c) => ({
+            courseCode: c.courseCode ?? c.courseName,
+            courseName: c.courseName,
+            units: c.units ?? 3,
+            status: "transferable" as const,
+            igetcArea: mapCourseToIgetc(c.courseCode ?? c.courseName),
+            csuGEArea: mapCourseToCsuge(c.courseCode ?? c.courseName),
+            assistNote: "Matches lower-division prep.",
+          })),
+          igetcSummary: { area1AEnglish: false, area1BCriticalThinking: false, area2Math: false, area3Arts: false, area4Social: false, area5Science: false, area6Language: false, completedAreas: [], missingAreas: ["area1AEnglish", "area1BCriticalThinking", "area2Math", "area3Arts", "area4Social", "area5Science", "area6Language"] },
+          totalTransferableUnits: incoming.reduce((s, c) => s + (c.units ?? 0), 0),
+          recommendations: ["Complete remaining GE courses"],
+        };
+      }
+      return json(lastAnalysisResult as unknown as Json);
     }
     if (pathname.startsWith("/api/courses/") && method === "DELETE") return json({ ok: true });
     if (pathname.match(/\/api\/profiles\/\d+\/courses$/) && method === "DELETE") {

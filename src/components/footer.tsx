@@ -33,7 +33,6 @@ const LINK_CLASS = "pwc-font-mono uppercase tracking-wider text-xs";
 const links = [
   { key: "privacyPolicy", href: "/privacy" },
   { key: "termsOfService", href: "/terms" },
-  { key: "studentDataPrivacy", href: "/student-data" },
   { key: "contactSupport", href: "mailto:support@kaleon.org" },
   { key: "reportBug", href: "mailto:support@kaleon.org?subject=Bug%20Report" },
   { key: "requestDataDeletion", href: "mailto:support@kaleon.org?subject=Data%20Deletion%20Request" },

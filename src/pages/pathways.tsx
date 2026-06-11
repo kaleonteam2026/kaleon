@@ -32,10 +32,7 @@ import {
   selectPathwayInDb,
   savePathwaySnapshot,
 } from "@/lib/supabase-pathways";
-import {
-  saveGuidebook,
-  saveRoadmap,
-} from "@/lib/supabase-documents";
+import { saveRoadmap } from "@/lib/supabase-documents";
 
 interface ProfileCourse {
   id: number;
@@ -202,7 +199,6 @@ export default function Pathways() {
     });
   };
   const [selecting, setSelecting] = useState<number | null>(null);
-  const [generatingGuidebook, setGeneratingGuidebook] = useState<number | null>(null);
   const [generatingRoadmap, setGeneratingRoadmap] = useState<number | null>(null);
   const pid = parseInt(profileId);
   const getSignal = useRequestCleanup();
@@ -299,9 +295,15 @@ export default function Pathways() {
         labels.push(lbl);
       }
     }
+    // Sort newest-first by extracting the numeric suffix from "Pathway N"
+    labels.sort((a, b) => {
+      const na = parseInt(a.match(/\d+/)?.[0] ?? "0");
+      const nb = parseInt(b.match(/\d+/)?.[0] ?? "0");
+      return nb - na;
+    });
     setGenerations(labels);
     if (labels.length > 0 && (!activeGeneration || !labels.includes(activeGeneration))) {
-      setActiveGeneration(labels[0]); // latest
+      setActiveGeneration(labels[0]); // newest
     }
   }, [pathways]);
 
@@ -419,7 +421,6 @@ export default function Pathways() {
       if (!Array.isArray(data) && data.progressSummary?.courseAnalysis) {
         setCourseAnalysis(data.progressSummary.courseAnalysis);
       }
-      setPathways(p);
       // Persist to Supabase so pathways survive page reload
       if (user?.id) {
         try {
@@ -441,6 +442,8 @@ export default function Pathways() {
           toast({ title: t("pages.pathways.toast_genError"), description: "Failed to save — pathways won't persist after navigation", variant: "destructive" });
         }
       } else {
+        // No DB to persist to — show API response directly
+        setPathways(p);
         toast({ title: t("pages.pathways.toast_generated"), description: t("pages.pathways.toast_generatedDesc") });
       }
     } catch (e) {
@@ -462,73 +465,6 @@ export default function Pathways() {
       toast({ title: t("pages.pathways.toast_selectError"), variant: "destructive" });
     } finally {
       setSelecting(null);
-    }
-  };
-
-  const generateGuidebook = async (pathwayId: number) => {
-    setGeneratingGuidebook(pathwayId);
-    try {
-      const pathway = pathways.find((p) => p.id === pathwayId);
-      if (!pathway?.reportJson) throw new Error("Pathway data not found");
-
-      // Load profile data for the generation input
-      let profileData: Record<string, unknown> = {};
-      if (user?.id) {
-        const sp = await getProfileForUser(user.id);
-        if (sp) {
-          profileData = {
-            fullName: sp.fullName,
-            communityCollege: sp.communityCollege,
-            intendedMajor: sp.intendedMajor,
-            careerGoal: sp.careerGoal,
-            currentGpa: sp.currentGpa,
-            transferTimeline: sp.transferTimeline,
-            financialSituation: sp.financialSituation,
-            isFirstGen: sp.isFirstGen,
-          };
-        }
-      }
-
-      const r = await fetchWithTimeout(`/api/pathways/${pathwayId}/generate-guidebook`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pathway: {
-            university: pathway.reportJson.university,
-            pathwayType: pathway.pathwayType ?? "moderately_compatible",
-            compatibilityScore: pathway.compatibilityScore ?? 70,
-            gpaTarget: pathway.reportJson.gpaTarget ?? 3.0,
-            requiredUnits: pathway.reportJson.requiredUnits ?? 60,
-            whyItFits: pathway.reportJson.whyItFits ?? "",
-            concerns: pathway.reportJson.concerns ?? "",
-            transferTimeline: pathway.reportJson.transferTimeline ?? "",
-            courseGaps: pathway.reportJson.courseGaps ?? [],
-            risks: pathway.reportJson.risks ?? [],
-            nextSteps: pathway.reportJson.nextSteps ?? [],
-          },
-          profile: profileData,
-          courses: profileCourses,
-        }),
-        timeout: 180_000,
-      }, getSignal());
-      if (r.status === 429) {
-        toast({ title: t("pages.pathways.toast_rateLimit"), variant: "destructive" });
-        return;
-      }
-      if (!r.ok) throw new Error();
-      const result = await r.json() as { title: string; contentMarkdown: string };
-
-      // Save to Supabase
-      const saved = await saveGuidebook(pid, result.title, result.contentMarkdown, pathwayId);
-      if (!saved) throw new Error("Failed to save guidebook");
-
-      toast({ title: t("pages.pathways.toast_guidebookReady"), description: t("pages.pathways.toast_guidebookReadyDesc") });
-      navigate(`/guidebook/${saved.id}`);
-    } catch {
-      toast({ title: t("pages.pathways.toast_guidebookError"), variant: "destructive" });
-    } finally {
-      setGeneratingGuidebook(null);
     }
   };
 
@@ -1001,32 +937,18 @@ export default function Pathways() {
                       {isSelected ? t("pages.pathways.primaryPathway") : t("pages.pathways.makePrimary")}
                     </Button>
                     {isSelected && (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => generateGuidebook(pathway.id)}
-                          disabled={generatingGuidebook === pathway.id || generatingRoadmap === pathway.id}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        >
-                          {generatingGuidebook === pathway.id ? (
-                            <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />{t("pages.pathways.generating")}</>
-                          ) : (
-                            <><Sparkles className="h-3.5 w-3.5 mr-1" />{t("pages.pathways.generateGuidebook")}</>
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => generateRoadmap(pathway.id)}
-                          disabled={generatingRoadmap === pathway.id || generatingGuidebook === pathway.id}
-                          className="bg-violet-600 hover:bg-violet-700 text-white"
-                        >
-                          {generatingRoadmap === pathway.id ? (
-                            <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />{t("pages.pathways.generating")}</>
-                          ) : (
-                            <><GraduationCap className="h-3.5 w-3.5 mr-1" />{t("pages.pathways.academicRoadmap")}</>
-                          )}
-                        </Button>
-                      </>
+                      <Button
+                        size="sm"
+                        onClick={() => generateRoadmap(pathway.id)}
+                        disabled={generatingRoadmap === pathway.id}
+                        className="bg-violet-600 hover:bg-violet-700 text-white"
+                      >
+                        {generatingRoadmap === pathway.id ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />{t("pages.pathways.generating")}</>
+                        ) : (
+                          <><GraduationCap className="h-3.5 w-3.5 mr-1" />{t("pages.pathways.academicRoadmap")}</>
+                        )}
+                      </Button>
                     )}
                   </div>
                 </Card>
