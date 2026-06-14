@@ -157,10 +157,13 @@ export default function ProgressTracker() {
       setTotalUnits(gpaSummary.totalUnits ?? 0);
     }).catch(() => {});
 
-    getProfileForUser(user.id).then(profile => {
-      if (cancelled) return;
-      setProfileGpa(profile?.currentGpa ?? null);
-    }).catch(() => {});
+    // Only load GPA from Supabase when using real auth UUIDs (not the "dev" bypass user)
+    if (user.id !== "dev") {
+      getProfileForUser(user.id).then(profile => {
+        if (cancelled) return;
+        setProfileGpa(profile?.currentGpa ?? null);
+      }).catch(() => {});
+    }
 
     fetch(`/api/profiles/${pid}/progress`, { credentials: "include" })
       .then(r => r.json())

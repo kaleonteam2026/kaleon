@@ -282,7 +282,7 @@ export default function Pathways() {
       });
   };
 
-  useEffect(() => { loadPathways(); }, [pid]);
+  useEffect(() => { loadPathways(); }, [pid, user?.id]);
 
   // Derive generations list from loaded pathways
   useEffect(() => {
@@ -295,15 +295,15 @@ export default function Pathways() {
         labels.push(lbl);
       }
     }
-    // Sort newest-first by extracting the numeric suffix from "Pathway N"
+    // Sort oldest-first so tabs read "Pathway 1, Pathway 2, Pathway 3"
     labels.sort((a, b) => {
       const na = parseInt(a.match(/\d+/)?.[0] ?? "0");
       const nb = parseInt(b.match(/\d+/)?.[0] ?? "0");
-      return nb - na;
+      return na - nb;
     });
     setGenerations(labels);
     if (labels.length > 0 && (!activeGeneration || !labels.includes(activeGeneration))) {
-      setActiveGeneration(labels[0]); // newest
+      setActiveGeneration(labels[labels.length - 1]); // newest (last) by default
     }
   }, [pathways]);
 
@@ -320,23 +320,27 @@ export default function Pathways() {
   const generatePathways = async () => {
     setGenerating(true);
     try {
-      // Load profile and courses from Supabase directly (no non-existent API endpoints)
+      // Load profile and courses from Supabase directly
       let profile: Record<string, unknown> = {};
       let courses: ProfileCourse[] = [];
       let totalUnits = 0;
       if (user?.id) {
-        const sp = await getProfileForUser(user.id);
-        if (sp) {
-          profile = {
-            fullName: sp.fullName,
-            communityCollege: sp.communityCollege,
-            intendedMajor: sp.intendedMajor,
-            careerGoal: sp.careerGoal,
-            currentGpa: sp.currentGpa,
-            transferTimeline: sp.transferTimeline,
-            financialSituation: sp.financialSituation,
-            isFirstGen: sp.isFirstGen,
-          };
+        // Only load profile via user_id when using real auth UUIDs,
+        // not the "dev" bypass user (which would cause a UUID type error on Supabase)
+        if (user.id !== "dev") {
+          const sp = await getProfileForUser(user.id);
+          if (sp) {
+            profile = {
+              fullName: sp.fullName,
+              communityCollege: sp.communityCollege,
+              intendedMajor: sp.intendedMajor,
+              careerGoal: sp.careerGoal,
+              currentGpa: sp.currentGpa,
+              transferTimeline: sp.transferTimeline,
+              financialSituation: sp.financialSituation,
+              isFirstGen: sp.isFirstGen,
+            };
+          }
         }
         const storedCourses = await getCoursesForProfile(pid);
         if (storedCourses.length > 0) {
@@ -476,7 +480,8 @@ export default function Pathways() {
 
       // Load profile data for the generation input
       let profileData: Record<string, unknown> = {};
-      if (user?.id) {
+      // Avoid passing the "dev" bypass user id to Supabase's UUID column
+      if (user?.id && user.id !== "dev") {
         const sp = await getProfileForUser(user.id);
         if (sp) {
           profileData = {
