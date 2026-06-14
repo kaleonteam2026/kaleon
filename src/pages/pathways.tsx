@@ -669,6 +669,7 @@ export default function Pathways() {
             </div>
           )}
           <motion.div
+            key={activeGeneration ?? "all"}
             className="space-y-4 pb-12"
             initial={pwMotionOn ? "hidden" : false}
             whileInView={pwMotionOn ? "show" : undefined}
