@@ -444,6 +444,8 @@ export default function Onboarding() {
     } catch (e) {
       console.error(e);
       setSubmitting(false);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -558,7 +560,7 @@ export default function Onboarding() {
             ) : (
               <Button
                 onClick={() => void submit()}
-                disabled={submitting}
+                disabled={submitting || !user?.id}
                 className="ml-auto border-0 hover:opacity-90 disabled:opacity-40"
                 style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
               >
