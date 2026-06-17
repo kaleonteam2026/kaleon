@@ -126,7 +126,7 @@ export default function Nav({ profileId }: Props) {
           borderRadius: 6,
         }}
       />
-      <span>KALEON</span>
+      <span className="text-white">KALEON</span>
     </div>
   );
 

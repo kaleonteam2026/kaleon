@@ -24,6 +24,7 @@ export default function AuthPage() {
   const {
     isAuthenticated,
     isLoading,
+    user,
     signInWithEmail,
     verifyOtp,
     authVerifying,
@@ -71,7 +72,7 @@ export default function AuthPage() {
         }
       })();
     }
-  }, [isAuthenticated, isLoading, authVerifying, navigate, user?.id]);
+  }, [isAuthenticated, isLoading, authVerifying, navigate, user]);
 
   const switchMode = (next: AuthMode) => {
     setMode(next);
