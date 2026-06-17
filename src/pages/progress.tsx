@@ -14,7 +14,7 @@ import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
   TrendingUp, Plus, Loader2, Download, AlertTriangle,
   GraduationCap, Award, CheckCircle2, Sparkles, Activity,
-  BookOpen, Target, ArrowRight, BarChart3, Info,
+  BookOpen, Target, ArrowRight, BarChart3, Info, Calendar,
 } from "lucide-react";
 import { t } from "@/lib/copy";
 import { useToast } from "@/hooks/use-toast";
@@ -60,7 +60,7 @@ import type { TransferabilityResult, CourseTransferResult } from "@/components/c
 import { computeGpaSummary, graduationProgressPercent, transferProgressPercent } from "@/lib/course-progress";
 import type { StoredCourse } from "@/lib/course-progress";
 
-type Tab = "log" | "timeline" | "assessment" | "history";
+type Tab = "log" | "timeline" | "assessment" | "history" | "planned";
 
 export default function ProgressTracker() {
   const { enabled: prMotionOn, lift: prLift, itemVariants, containerVariants } = useBrutalistMotion();
@@ -305,6 +305,18 @@ export default function ProgressTracker() {
   const certCount = entries.filter(e => e.entryType === "certification").length;
   const oppCount = entries.filter(e => e.entryType === "opportunity").length;
   const achievementCount = entries.filter(e => e.entryType === "achievement").length;
+  const plannedCourses = profileCourses.filter(c => c.status === 'planned');
+  const plannedCount = plannedCourses.length;
+  const plannedCoursesByTerm = Object.entries(
+    plannedCourses.reduce((acc, course) => {
+      const term = course.term ?? 'Unknown Term';
+      if (!acc[term]) {
+        acc[term] = [];
+      }
+      acc[term].push(course);
+      return acc;
+    }, {} as Record<string, StoredCourse[]>)
+  ).sort(([termA], [termB]) => termA.localeCompare(termB));
 
   if (pathwayLoading) {
     return <PageLoadingState showNav profileId={pid} />;
@@ -356,7 +368,7 @@ export default function ProgressTracker() {
                   {typeof pathwayInfo.pathway.gpaTarget === "number" && (
                     <div className="text-center">
                       <div className="text-xl font-bold text-white">{Number(pathwayInfo.pathway.gpaTarget).toFixed(1)}</div>
-                      <div className="text-[10px] uppercase tracking-wider text-white/60">{t("pages.progress.gpaTarget")}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-white/60">TARGET GPA</div>
                     </div>
                   )}
                   {typeof pathwayInfo.pathway.requiredUnits === "number" && (
@@ -548,6 +560,7 @@ export default function ProgressTracker() {
                 { id: "log",        label: t("pages.progress.tab_log"),        icon: Plus,      badge: undefined as number | undefined },
                 { id: "timeline",   label: t("pages.progress.tab_timeline"),   icon: Activity,  badge: entries.length as number | undefined },
                 { id: "assessment", label: t("pages.progress.tab_assessment"), icon: Sparkles,  badge: analyses.length as number | undefined },
+                { id: "planned",    label: t("pages.progress.tab_planned"),    icon: Calendar,  badge: plannedCount as number | undefined },
                 { id: "history",    label: "History",           icon: BarChart3, badge: pathwaySnapshots.length as number | undefined },
               ]).map(tabCfg => (
                 <button
@@ -818,6 +831,41 @@ export default function ProgressTracker() {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* ── TAB: PLANNED COURSEWORK ──────────────────────────────────────── */}
+            {tab === "planned" && (
+              <div className="mb-12 space-y-4">
+                {plannedCourses.length === 0 ? (
+                  <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-10 text-center">
+                    <Calendar className="h-10 w-10 text-slate-200 mx-auto mb-3" />
+                    <p className="text-slate-600 font-medium">{t("pages.progress.noPlannedCourses")}</p>
+                    <p className="text-slate-600 text-sm mt-1">{t("pages.progress.addPlannedCoursesHint")}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {plannedCoursesByTerm.map(([term, courses]) => (
+                      <div key={term} className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">{term}</h3>
+                        <div className="space-y-3">
+                          {courses.map((course, index) => (
+                            <div key={index} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                              <div className="flex-shrink-0">
+                                <BookOpen className="h-5 w-5 text-indigo-600" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex justify-between items-start">
+                                  <h4 className="font-medium text-slate-900">{course.courseCode || course.courseName}</h4>
+                                  <p className="text-xs text-slate-500">{course.units} units</p>
+                                </div>
+                                <p className="mt-1 text-slate-600 line-clamp-2">{course.courseName}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 )}
               </div>

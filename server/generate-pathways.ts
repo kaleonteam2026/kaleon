@@ -1,5 +1,96 @@
 import { GRADUATION_UNITS } from "../src/lib/course-progress.ts";
 import { deepSeekChat } from "./deepseek-client.ts";
+import { createClient } from "@supabase/supabase-js";
+
+// Initialize Supabase client for server-side use
+const supabaseUrl = process.env.SUPABASE_URL ?? '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
+
+export const supabase = supabaseUrl && supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : (new Proxy(
+      {},
+      {
+        get(_, prop) {
+          return () =>
+            Promise.reject(
+              new Error("Supabase is not configured — missing SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY"),
+            );
+        },
+      },
+    ) as ReturnType<typeof createClient>);
+
+/**
+ * Normalize a school name for comparison purposes
+ * Converts to lowercase, removes extra spaces, and handles common variations
+ */
+function normalizeSchoolName(name: string): string {
+  if (!name) return "";
+
+  // Convert to lowercase and trim
+  let normalized = name.toLowerCase().trim();
+
+  // Replace multiple spaces with single space
+  normalized = normalized.replace(/\s+/g, " ");
+
+  // Handle common abbreviations and variations
+  // UC -> University of California
+  normalized = normalized.replace(/\buc\b/g, "university of california");
+  // Handle "University of California" variations
+  normalized = normalized.replace(/university\s+of\s+california/g, "university of california");
+
+  // CSU -> California State University
+  normalized = normalized.replace(/\bcsu\b/g, "california state university");
+  // Handle "California State University" variations
+  normalized = normalized.replace(/california\s+state\s+university/g, "california state university");
+
+  // Remove common words that don't affect identity for comparison
+  normalized = normalized.replace(/\b(of|the|and|of|in|for)\b/g, "");
+
+  // Remove punctuation that doesn't affect identity
+  normalized = normalized.replace(/[,\.\-]/g, "");
+
+  // Clean up extra spaces again
+  normalized = normalized.replace(/\s+/g, " ").trim();
+
+  return normalized;
+}
+
+/**
+ * Fetch existing pathways for a profile and extract normalized university names
+ */
+async function getExistingPathwayUniversals(profileId: number): Promise<Set<string>> {
+  try {
+    const { data, error } = await supabase
+      .from("pathways")
+      .select("report_json->university")
+      .eq("profile_id", profileId);
+
+    if (error) {
+      console.error("Error fetching existing pathways:", error);
+      // Return empty set to allow generation to proceed without avoidance
+      return new Set();
+    }
+
+    const universities = new Set<string>();
+
+    for (const row of (data ?? [])) {
+      const university = (row.report_json as any)?.university;
+      if (university && typeof university === 'string') {
+        const normalized = normalizeSchoolName(university);
+        if (normalized) {
+          universities.add(normalized);
+        }
+      }
+    }
+
+    return universities;
+  } catch (error) {
+    console.error("Error in getExistingPathwayUniversals:", error);
+    // Return empty set to allow generation to proceed without avoidance
+    return new Set();
+  }
+}
 
 export interface PathwayGenerationInput {
   profileId: number;
@@ -122,11 +213,13 @@ Rules:
 - Use real UC/CSU campuses
 - progressSummary must reflect the student's course list and unit totals
 - unitsRemaining = graduationRequirement - completedUnits (minimum 0)
+- CRITICAL: You MUST generate pathways for schools that are DIFFERENT from any previously shown to the student. Do not repeat schools even with slight naming variations (e.g., if "UC Berkeley" was shown before, do not generate "University of California, Berkeley").
+- Prioritize school diversity in your recommendations to give students a broad range of options.
 
 Financial & background context:
 - If the student's financial situation is "Limited" or "Very limited", prioritize affordable/accessible programs and include tuition information.
 - If the student is first-generation, prioritize programs and campusOpportunities that offer first-gen support services (EOP, Bridge programs, TRiO, etc.).
-- If financial situation is "Comfortable" or "Very comfortab\le", focus on merit-based scholarships and competitive programs.
+- If financial situation is "Comfortable" or "Very comfortable", focus on merit-based scholarships and competitive programs.
 - If the student is not first-gen, still include general scholarship and program recommendations.`;
 
 function extractJsonPayload(text: string): unknown {
@@ -279,10 +372,32 @@ export async function generatePathwaysWithDeepSeek(
   input: PathwayGenerationInput,
   apiKey: string,
 ): Promise<PathwayGenerationResult> {
+  // Fetch existing pathways to avoid generating duplicates
+  const existingUniversities = await getExistingPathwayUniversals(input.profileId);
+
+  // Log for debugging (in production, use proper logging)
+  if (existingUniversities.size > 0) {
+    console.log(`Avoiding ${existingUniversities.size} existing universities for profile ${input.profileId}: [${Array.from(existingUniversities).join(', ')}]`);
+  }
+
+  // Build the user prompt with information about existing universities
+  const userPromptWithAvoidance = [
+    buildUserPrompt(input),
+    "",
+    "IMPORTANT CONSTRAINT: The student has already seen pathways for the following schools:",
+    Array.from(existingUniversities)
+      .map(name => `- ${name}`)
+      .join("\n"),
+    "",
+    "Please generate pathways for DIFFERENT schools. Do NOT repeat any of the above schools.",
+    "If you would normally suggest a school that matches one of the above (even with slight variations like 'UC Berkeley' vs 'University of California, Berkeley'), please choose a different school instead.",
+    ""
+  ].join("\n");
+
   const content = await deepSeekChat({
     apiKey,
     system: SYSTEM_PROMPT,
-    user: buildUserPrompt(input),
+    user: userPromptWithAvoidance,
   });
 
   const parsed = extractJsonPayload(content);

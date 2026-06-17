@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { t } from "@/lib/copy";
+import { getProfileForUser } from "@/lib/supabase-profiles";
 
 type AuthMode = "signin" | "signup";
 
@@ -55,9 +56,22 @@ export default function AuthPage() {
   useEffect(() => {
     if (!isLoading && isAuthenticated && !authVerifying) {
       localStorage.removeItem("kaleon_auth_returnTo");
-      navigate(returnTo, { replace: true });
+      // If user has a profile, go to their courses; otherwise go to onboarding
+      (async () => {
+        try {
+          const profile = await getProfileForUser(user?.id ?? '');
+          if (profile?.id) {
+            navigate(`/courses/${profile.id}`, { replace: true });
+          } else {
+            navigate("/onboarding", { replace: true });
+          }
+        } catch (err) {
+          // On error, fallback to onboarding
+          navigate("/onboarding", { replace: true });
+        }
+      })();
     }
-  }, [isAuthenticated, isLoading, authVerifying, navigate, returnTo]);
+  }, [isAuthenticated, isLoading, authVerifying, navigate, user?.id]);
 
   const switchMode = (next: AuthMode) => {
     setMode(next);

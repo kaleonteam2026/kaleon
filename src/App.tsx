@@ -12,7 +12,6 @@ import { AuthProvider, useAuth } from "@/contexts/auth-context";
 import ProtectedRoute from "@/components/protected-route";
 
 const Landing = lazy(() => import("@/pages/landing"));
-const Profile = lazy(() => import("@/pages/profile"));
 const Courses = lazy(() => import("@/pages/courses"));
 const Matches = lazy(() => import("@/pages/matches"));
 const Pathways = lazy(() => import("@/pages/pathways"));
@@ -75,16 +74,6 @@ function Router() {
             </Route>
             <Route path="/terms" component={TermsPage} />
             <Route path="/privacy" component={PrivacyPage} />
-            <Route path="/profiles">
-              <Redirect to="/profile" />
-            </Route>
-            <Route path="/profile/:profileId?">
-              <ErrorBoundary>
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              </ErrorBoundary>
-            </Route>
             <Route path="/courses/:profileId">
               <ErrorBoundary>
                 <ProtectedRoute>
