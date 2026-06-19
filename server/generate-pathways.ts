@@ -11,7 +11,7 @@ export const supabase = supabaseUrl && supabaseServiceKey
   : (new Proxy(
       {},
       {
-        get(_, prop) {
+        get(_, _prop) {
           return () =>
             Promise.reject(
               new Error("Supabase is not configured — missing SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY"),
@@ -75,7 +75,7 @@ async function getExistingPathwayUniversals(profileId: number): Promise<Set<stri
     const universities = new Set<string>();
 
     for (const row of (data ?? [])) {
-      const university = (row.report_json as any)?.university;
+      const university = (row as any)?.university;
       if (university && typeof university === 'string') {
         const normalized = normalizeSchoolName(university);
         if (normalized) {
