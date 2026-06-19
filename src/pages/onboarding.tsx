@@ -148,6 +148,7 @@ export default function Onboarding() {
           // 3. Fallback to client-side regex parser
           const fallback = parseTranscriptText(text);
           result = { ...fallback, latestGpa: fallback.latestGpa ?? null, detectedMajor: null };
+
         }
 
         // Determine college name: use per-course college if detected, else the file's college
