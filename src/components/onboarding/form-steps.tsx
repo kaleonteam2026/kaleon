@@ -215,19 +215,6 @@ export function FormSteps({
                       {val ? "Yes" : "No"}
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => onSetMultipleColleges(null)}
-                    className={cn(
-                      "flex-1 text-xs py-1.5 rounded-lg border font-medium transition-all",
-                      hasMultipleColleges === null
-                        ? "border-transparent text-white"
-                        : "bg-[rgba(5,12,24,0.5)] border-[rgba(78,204,163,0.2)] text-slate-400 hover:border-[rgba(78,204,163,0.45)]",
-                    )}
-                    style={hasMultipleColleges === null ? { background: "rgba(78,204,163,0.15)", border: "1px solid rgba(78,204,163,0.35)" } : undefined}
-                  >
-                    Not sure
-                  </button>
                 </div>
               </div>
 
@@ -600,7 +587,6 @@ export function FormSteps({
                 {[
                   { v: "Yes", label: t("onboarding.yes") },
                   { v: "No", label: t("onboarding.no") },
-                  { v: "Not sure", label: t("onboarding.notSure") },
                 ].map(({ v, label }) => {
                   const selected = form.isFirstGen === v;
                   return (

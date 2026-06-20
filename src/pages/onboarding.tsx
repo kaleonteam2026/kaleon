@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ArrowLeft, CheckCircle2, Loader2, Upload } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle2, Loader2, Upload, LogOut } from "lucide-react";
 import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
 import { fetchWithTimeout } from "@/lib/api/client";
 import { useRequestCleanup } from "@/hooks/use-request-cleanup";
@@ -38,7 +38,7 @@ export default function Onboarding() {
     { title: "Timeline & Background", subtitle: "Help us personalize your pathway", icon: STEP_ICONS[2] },
   ];
 
-  const { user, updateProfileName } = useAuth();
+  const { user, updateProfileName, logout } = useAuth();
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -470,12 +470,24 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen pwc-font-sans flex items-center justify-center px-4 py-12" style={ONBOARDING_PAGE_BG}>
       <div className="w-full max-w-lg">
-        {/* Logo */}
-        <div className="flex items-center gap-2 justify-center mb-8">
-          <img src={KALEON_LOGO_SRC} alt="" width={28} height={28} className="shrink-0 object-contain" aria-hidden />
-          <span className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
-            Kaleon
-          </span>
+        {/* Logo + sign out */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-2">
+            <img src={KALEON_LOGO_SRC} alt="" width={28} height={28} className="shrink-0 object-contain" aria-hidden />
+            <span className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
+              Kaleon
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => logout()}
+            className="text-xs gap-1.5 hover:bg-[rgba(78,204,163,0.08)]"
+            style={{ color: "#94a3b8" }}
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
+          </Button>
         </div>
 
         {/* Progress bar */}
