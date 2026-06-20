@@ -400,24 +400,34 @@ export default function Pathways() {
         throw new Error(err.error ?? "Generation failed");
       }
 
-      // Server returns 202 with a jobId — poll until complete
-      const { jobId } = await r.json() as { jobId: number };
-      let result: unknown = null;
-      for (let attempt = 0; attempt < 120; attempt++) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        const pollR = await fetchWithTimeout(`/api/pathways/jobs/${jobId}`, {
-          credentials: "include",
-          timeout: 10_000,
-        }, getSignal());
-        if (!pollR.ok) throw new Error("Polling failed");
-        const job = await pollR.json() as { status: string; result?: unknown; error?: string };
-        if (job.status === "completed") { result = job.result; break; }
-        if (job.status === "failed") throw new Error(job.error ?? "Generation failed");
-        // else "pending" — keep polling
-      }
-      if (!result) throw new Error("Generation timed out after 6 minutes");
+      // Server may return either:
+      //   a) 202 { jobId } — async job/polling pattern (Express production)
+      //   b) 200 { pathways, progressSummary } — direct result (Vite dev plugin)
+      const body = await r.json() as Record<string, unknown>;
+      let data: Pathway[] | PathwayGenerationResponse;
 
-      const data = result as Pathway[] | PathwayGenerationResponse;
+      if ("jobId" in body && typeof body.jobId === "number") {
+        // Async pattern — poll until complete
+        const jobId = body.jobId as number;
+        let result: unknown = null;
+        for (let attempt = 0; attempt < 120; attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          const pollR = await fetchWithTimeout(`/api/pathways/jobs/${jobId}`, {
+            credentials: "include",
+            timeout: 10_000,
+          }, getSignal());
+          if (!pollR.ok) throw new Error("Polling failed");
+          const job = await pollR.json() as { status: string; result?: unknown; error?: string };
+          if (job.status === "completed") { result = job.result; break; }
+          if (job.status === "failed") throw new Error(job.error ?? "Generation failed");
+          // else "pending" — keep polling
+        }
+        if (!result) throw new Error("Generation timed out after 6 minutes");
+        data = result as Pathway[] | PathwayGenerationResponse;
+      } else {
+        // Direct response pattern (Vite dev plugin) — already complete
+        data = body as unknown as PathwayGenerationResponse;
+      }
       const p = Array.isArray(data) ? data : (data.pathways ?? []);
       if (!Array.isArray(data) && data.progressSummary?.completedUnits != null) {
         setTotalUnits(data.progressSummary.completedUnits);
