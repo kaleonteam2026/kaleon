@@ -25,6 +25,7 @@ const AuthPage = lazy(() => import("@/pages/auth"));
 const TermsPage = lazy(() => import("@/pages/terms"));
 const PrivacyPage = lazy(() => import("@/pages/privacy"));
 const Welcome = lazy(() => import("@/pages/welcome"));
+const ProfilesRedirect = lazy(() => import("@/pages/profiles-redirect"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -127,6 +128,13 @@ function Router() {
               <ErrorBoundary>
                 <ProtectedRoute>
                   <ExportsPage />
+                </ProtectedRoute>
+              </ErrorBoundary>
+            </Route>
+            <Route path="/profiles">
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <ProfilesRedirect />
                 </ProtectedRoute>
               </ErrorBoundary>
             </Route>
