@@ -185,7 +185,7 @@ export default function Landing() {
 
             {/* Stats */}
             <div className="flex gap-8 mt-10">
-              {[["10k+", t("landing.statStudents", { defaultValue: "Students" })], ["95%", t("landing.statSuccess", { defaultValue: "Match Rate" })], ["200+", t("landing.statColleges", { defaultValue: "Colleges" })]].map(([n, l]) => (
+              {[ ["95%", t("landing.statSuccess", { defaultValue: "Match Rate" })], ["200+", t("landing.statColleges", { defaultValue: "Colleges" })]].map(([n, l]) => (
                 <div key={l}>
                   <div className="text-xl font-extrabold" style={{ color: "#4ECCA3" }}>{n}</div>
                   <div className="text-xs pwc-font-mono uppercase tracking-wider mt-1" style={{ color: "#475569" }}>{l}</div>

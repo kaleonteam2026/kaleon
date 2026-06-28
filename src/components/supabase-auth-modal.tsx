@@ -125,7 +125,7 @@ export default function SupabaseAuthModal() {
               <Mail className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "#4ECCA3" }} />
               <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
                 {t("auth.sentBody", {
-                  defaultValue: "We sent a magic link to {{email}}. Open it on this device to continue.",
+                  defaultValue: "We sent a verification code to {{email}}. Enter it on this device to continue.",
                   email,
                 })}
               </p>
@@ -177,7 +177,7 @@ export default function SupabaseAuthModal() {
                     {t("auth.sending", { defaultValue: "Sending…" })}
                   </>
                 ) : (
-                  t("auth.sendLink", { defaultValue: "Send magic link" })
+                  t("auth.sendLink", { defaultValue: "Send verification code" })
                 )}
               </button>
             </form>
