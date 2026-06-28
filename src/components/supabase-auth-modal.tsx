@@ -10,14 +10,13 @@ export default function SupabaseAuthModal() {
     signInWithEmail,
     authError,
     clearAuthError,
-    authVerifying,
   } = useAuth();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  if (!isLoginOpen && !authVerifying && !authError) return null;
+  if (!isLoginOpen && !authError) return null;
 
   const resetAndClose = () => {
     setEmail("");
@@ -59,19 +58,17 @@ export default function SupabaseAuthModal() {
           boxShadow: "0 0 40px rgba(78,204,163,0.12)",
         }}
       >
-        {!authVerifying && (
-          <button
-            type="button"
-            onClick={resetAndClose}
-            aria-label={t("common.close")}
-            className="absolute top-4 right-4 p-1.5 transition-colors"
-            style={{ color: "#64748b" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#4ECCA3"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "#64748b"; }}
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={resetAndClose}
+          aria-label={t("common.close")}
+          className="absolute top-4 right-4 p-1.5 transition-colors"
+          style={{ color: "#64748b" }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#4ECCA3"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "#64748b"; }}
+        >
+          <X className="h-5 w-5" />
+        </button>
 
         <p
           className="text-xs pwc-font-mono uppercase tracking-widest font-bold mb-2"
@@ -84,23 +81,14 @@ export default function SupabaseAuthModal() {
           className="text-2xl font-bold uppercase tracking-tight mb-2"
           style={{ color: "#f8fafc" }}
         >
-          {authVerifying
-            ? t("auth.verifyingTitle", { defaultValue: "Confirming your link" })
-            : displayError
-              ? t("auth.errorTitle", { defaultValue: "Sign in failed" })
-              : emailSent
-                ? t("auth.sentTitle", { defaultValue: "Check your email" })
-                : t("auth.title", { defaultValue: "Get started free" })}
+          {displayError
+            ? t("auth.errorTitle", { defaultValue: "Sign in failed" })
+            : emailSent
+              ? t("auth.sentTitle", { defaultValue: "Check your email" })
+              : t("auth.title", { defaultValue: "Get started free" })}
         </h2>
 
-        {authVerifying ? (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#4ECCA3" }} />
-            <p className="text-sm text-center" style={{ color: "#94a3b8" }}>
-              {t("auth.verifyingBody", { defaultValue: "Confirming your magic link…" })}
-            </p>
-          </div>
-        ) : displayError ? (
+        {displayError ? (
           <div className="space-y-4">
             <p className="text-sm" style={{ color: "#fca5a5" }}>{displayError}</p>
             <button
@@ -142,7 +130,7 @@ export default function SupabaseAuthModal() {
         ) : (
           <>
             <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
-              {t("auth.subtitle", { defaultValue: "Enter your email and we'll send you a secure sign-in link." })}
+              {t("auth.subtitle", { defaultValue: "Enter your email and we'll send you a verification code." })}
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <label className="block">

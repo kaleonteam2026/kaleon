@@ -1,4 +1,4 @@
-import type { EmailOtpType, Session, User } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 import type { AuthUser } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
 
@@ -13,41 +13,9 @@ export function mapSupabaseUser(user: User): AuthUser {
   };
 }
 
-export function getAuthRedirectUrl(returnTo?: string): string {
-  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-  const origin = `${window.location.origin}${base || ""}`;
-  const path = `${origin}/auth`;
-  if (!returnTo) return path;
-  return `${path}?returnTo=${encodeURIComponent(returnTo)}`;
-}
-
-export async function verifyMagicLinkFromUrl(): Promise<{ error?: string }> {
-  const params = new URLSearchParams(window.location.search);
-  const tokenHash = params.get("token_hash");
-  const type = params.get("type");
-  const returnTo = params.get("returnTo");
-
-  if (!tokenHash) return {};
-
-  const { error } = await supabase.auth.verifyOtp({
-    token_hash: tokenHash,
-    type: (type as EmailOtpType) || "email",
-  });
-
-  if (!error) {
-    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-    const next = returnTo
-      ? `${base}/auth?returnTo=${encodeURIComponent(returnTo)}`
-      : `${base}/auth`;
-    window.history.replaceState({}, document.title, next);
-  }
-
-  return error ? { error: error.message } : {};
-}
-
-export async function signInWithMagicLink(
+export async function sendOtpCode(
   email: string,
-  options?: { firstName?: string; returnTo?: string },
+  options?: { firstName?: string },
 ): Promise<{ error?: string }> {
   const data = options?.firstName?.trim()
     ? { first_name: options.firstName.trim() }
@@ -57,14 +25,13 @@ export async function signInWithMagicLink(
   // When signing up (firstName provided), allow user creation.
   // Some Supabase projects block OTP sign-in when "Allow new users to sign up" is
   // disabled in the dashboard — as a workaround, try shouldCreateUser:true as a
-  // fallback so existing users can still receive OTP codes.
+  // fallback so existing users can still receive codes.
   const shouldCreateUser = Boolean(options?.firstName?.trim());
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
       shouldCreateUser,
-      emailRedirectTo: getAuthRedirectUrl(options?.returnTo),
       data,
     },
   });
@@ -72,20 +39,17 @@ export async function signInWithMagicLink(
   if (error) {
     const msg = error.message.toLowerCase();
 
-    // Detect Supabase's "signups disabled" error. Some project configurations
-    // block the OTP flow even for existing users when shouldCreateUser is false.
+    // Detect Supabase's "signups disabled" error.
     // Retry once with shouldCreateUser: true as a workaround.
     if (!shouldCreateUser && (msg.includes("signup") || msg.includes("not allowed") || msg.includes("otp"))) {
       const { error: retryError } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: getAuthRedirectUrl(options?.returnTo),
           data,
         },
       });
       if (!retryError) return {};
-      // If the retry also fails, surface a friendlier message
       return {
         error:
           "Unable to send a verification code. This usually means the Supabase project has sign-ups disabled. " +
@@ -102,8 +66,6 @@ export async function signInWithMagicLink(
 
 /**
  * Verify a one-time password (6-digit code) sent via email.
- * This lets the user enter the code on their original device instead of
- * relying on clicking the magic link (which opens wherever email is read).
  */
 export async function verifyOtpCode(
   email: string,

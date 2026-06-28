@@ -27,23 +27,11 @@ export default function AuthPage() {
     user,
     signInWithEmail,
     verifyOtp,
-    authVerifying,
     authError,
     clearAuthError,
   } = useAuth();
 
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
-
-  // Persist returnTo in localStorage so it survives Supabase's PKCE redirect cycle.
-  const returnTo = useMemo(() => {
-    const fromUrl = params.get("returnTo");
-    const fromStorage = localStorage.getItem("kaleon_auth_returnTo");
-    const resolved = fromUrl || fromStorage || "/courses";
-    if (resolved && resolved !== fromStorage) {
-      localStorage.setItem("kaleon_auth_returnTo", resolved);
-    }
-    return resolved;
-  }, [params]);
   const initialMode: AuthMode = params.get("mode") === "signup" ? "signup" : "signin";
 
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -55,7 +43,7 @@ export default function AuthPage() {
   const [otpCode, setOtpCode] = useState("");
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !authVerifying) {
+    if (!isLoading && isAuthenticated) {
       localStorage.removeItem("kaleon_auth_returnTo");
       // If user has a profile, go to their courses; otherwise go to onboarding
       (async () => {
@@ -72,7 +60,7 @@ export default function AuthPage() {
         }
       })();
     }
-  }, [isAuthenticated, isLoading, authVerifying, navigate, user]);
+  }, [isAuthenticated, isLoading, navigate, user]);
 
   const switchMode = (next: AuthMode) => {
     setMode(next);
@@ -100,7 +88,6 @@ export default function AuthPage() {
     setLoading(true);
     const result = await signInWithEmail(email.trim(), {
       firstName: mode === "signup" ? firstName.trim() : undefined,
-      returnTo,
     });
     if (result.error) {
       setLocalError(result.error);
@@ -173,17 +160,7 @@ export default function AuthPage() {
             boxShadow: "0 0 48px rgba(78,204,163,0.1)",
           }}
         >
-          {authVerifying ? (
-            <div className="flex flex-col items-center gap-4 py-6">
-              <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#4ECCA3" }} />
-              <h1 className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
-                {t("auth.verifyingTitle")}
-              </h1>
-              <p className="text-sm text-center" style={{ color: "#94a3b8" }}>
-                {t("auth.verifyingBody")}
-              </p>
-            </div>
-          ) : linkSent ? (
+          {linkSent ? (
             <>
               <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mb-2" style={{ color: "#f8fafc" }}>
                 Enter Code
@@ -241,7 +218,7 @@ export default function AuthPage() {
                     style={inputStyle}
                   />
                   <p className="text-xs mt-2 text-center" style={{ color: "#64748b" }}>
-                    The code is in the same email as the magic link
+                    Enter the 6-digit code sent to your email
                   </p>
                 </div>
 
