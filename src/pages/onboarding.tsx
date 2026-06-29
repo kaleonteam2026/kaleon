@@ -455,7 +455,7 @@ export default function Onboarding() {
   const motionOn = useMotionEnabled();
   const dir = useDirSign();
 
-  if (phase === "intro") return <IntroPhase />;
+  if (phase === "intro") return <IntroPhase firstName={user?.firstName} />;
   if (phase === "calculating") return <CalculatingPhase />;
   if (phase === "ready") return <ReadyPhase profileId={createdProfileIdRef.current ?? DEV_PROFILE_ID} />;
   if (phase === "schools") {

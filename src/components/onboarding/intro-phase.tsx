@@ -2,7 +2,7 @@ import { t } from "@/lib/copy";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { ONBOARDING_PAGE_BG, ONBOARDING_CARD } from "./onboarding-constants";
 
-export function IntroPhase() {
+export function IntroPhase({ firstName }: { firstName?: string | null }) {
   return (
     <main
       className="min-h-screen pwc-font-sans flex items-center justify-center px-4 py-12"
@@ -32,7 +32,7 @@ export function IntroPhase() {
                   color: "#f8fafc",
                 }}
               >
-                {t("onboarding.introHeading")}
+                {t("onboarding.introHeading", { firstName: firstName ?? t("common.student") })}
               </h1>
             </div>
           </div>
