@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { Loader2, Mail, X } from "lucide-react";
+import { Mail, X } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { useAuth } from "@/contexts/auth-context";
 import { t } from "@/lib/copy";
 
@@ -161,7 +162,7 @@ export default function SupabaseAuthModal() {
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <KaleonLoader />
                     {t("auth.sending", { defaultValue: "Sending…" })}
                   </>
                 ) : (

@@ -9,9 +9,10 @@ import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
 import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
-  CheckCircle2, Circle, Sparkles, Loader2, Info, ExternalLink, Save,
+  CheckCircle2, Circle, Sparkles, Info, ExternalLink, Save,
   BookOpen, AlertCircle, ChevronDown, ChevronUp,
 } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { t } from "@/lib/copy";
 
 // ─── IGETC Area definitions ───────────────────────────────────────────────────
@@ -202,11 +203,11 @@ export default function IgetcTracker() {
         {/* AI + Save bar */}
         <div className="flex flex-wrap gap-3 mb-6">
           <Button onClick={analyze} disabled={analyzing} variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50">
-            {analyzing ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("pages.igetc.analyzing")}</> : <><Sparkles className="h-4 w-4 mr-2" />{t("pages.igetc.aiAnalyze")}</>}
+            {analyzing ? <><KaleonLoader size={16} />{t("pages.igetc.analyzing")}</> : <><Sparkles className="h-4 w-4 mr-2" />{t("pages.igetc.aiAnalyze")}</>}
           </Button>
           {dirty && (
             <Button onClick={save} disabled={saving} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
-              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("pages.igetc.saving")}</> : <><Save className="h-4 w-4 mr-2" />{t("pages.igetc.saveProgress")}</>}
+              {saving ? <><KaleonLoader size={16} />{t("pages.igetc.saving")}</> : <><Save className="h-4 w-4 mr-2" />{t("pages.igetc.saveProgress")}</>}
             </Button>
           )}
         </div>

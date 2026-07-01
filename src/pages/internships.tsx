@@ -8,11 +8,12 @@ import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
 import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
-  Search, Loader2, ExternalLink, MapPin, Clock, DollarSign,
+  Search, ExternalLink, MapPin, Clock, DollarSign,
   ChevronDown, ChevronUp, Star, Shield, Beaker, Building2,
   Heart, Landmark, Info, Sparkles, GraduationCap, RefreshCcw,
   CalendarDays, BookOpen, CheckCircle2, AlertCircle, Bookmark,
 } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { t } from "@/lib/copy";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -369,7 +370,7 @@ export default function InternshipsPage() {
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <Button onClick={handleSearch} disabled={generating} className="bg-slate-900 hover:bg-slate-700 border-2 border-slate-900 rounded-none">
               {generating
-                ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("pages.internships.findingMatches")}</>
+                ? <><KaleonLoader size={16} />{t("pages.internships.findingMatches")}</>
                 : <><Search className="h-4 w-4 mr-2" />{searches.length > 0 ? t("pages.internships.refreshMatches") : t("pages.internships.findInternships")}</>
               }
             </Button>
@@ -377,7 +378,7 @@ export default function InternshipsPage() {
           </div>
           {generating && (
             <div className="mt-4 bg-white/70 rounded-xl p-4 flex items-center gap-3 border border-indigo-100">
-              <Loader2 className="h-5 w-5 animate-spin text-indigo-500 flex-shrink-0" />
+              <KaleonLoader size={20} />
               <div>
                 <p className="text-sm font-medium text-slate-700">{t("pages.internships.matchingProfile")}</p>
                 <p className="text-xs text-slate-600">{t("pages.internships.scanningSources")}</p>
@@ -388,7 +389,7 @@ export default function InternshipsPage() {
 
         {/* Main content */}
         {loadingSearches ? (
-          <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-slate-600" /></div>
+          <div className="flex justify-center py-16"><KaleonLoader size={28} /></div>
         ) : searches.length === 0 ? (
           <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center">
             <Search className="h-12 w-12 text-slate-200 mx-auto mb-4" />

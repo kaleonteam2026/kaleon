@@ -5,7 +5,8 @@ import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, FileSpreadsheet, Presentation, Loader2, Download, CheckCircle2, AlertCircle } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
+import { FileText, FileSpreadsheet, Presentation, Download, CheckCircle2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import type { ProfileSummary } from "@/types/profile";
@@ -135,7 +136,7 @@ function ExportGrid({
                   className="w-full bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none gap-2"
                 >
                   {isBusy ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
+                    <><KaleonLoader size={16} /> Generating…</>
                   ) : isDone ? (
                     <><CheckCircle2 className="h-4 w-4" /> Generate again</>
                   ) : (
@@ -231,7 +232,7 @@ export default function ExportsPage() {
     return (
       <PageShell title="Exports" profileId={profileId ?? undefined}>
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          <KaleonLoader size={32} />
         </div>
       </PageShell>
     );

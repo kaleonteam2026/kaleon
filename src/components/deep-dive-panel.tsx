@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, ChevronRight, Loader2, ExternalLink, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DeepDiveCitation { title?: string; url: string; snippet?: string }
@@ -110,7 +111,7 @@ export default function DeepDivePanel({ universityId, universityName, profileId 
                 title={data ? `Cached until ${new Date(data.expiresAt).toLocaleDateString()}` : undefined}
                 className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-60"
               >
-                {loading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                {loading ? <KaleonLoader size={12} /> : <Sparkles className="h-3 w-3 mr-1" />}
                 {loading ? "Researching…" : data ? "Cached for 30 days" : "Run Deep Dive"}
               </Button>
             </div>
@@ -127,7 +128,7 @@ export default function DeepDivePanel({ universityId, universityName, profileId 
 
           {loading && (
             <div className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-md p-3 flex items-center gap-2">
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <KaleonLoader size={12} />
               Searching public sources and synthesizing — this can take 20-40 seconds.
             </div>
           )}

@@ -597,6 +597,38 @@ html {
 
   .orbit-ring-1, .orbit-ring-2, .orbit-ring-3, .float-particle { animation: none !important; }
   .onboarding-intro-message { animation: none !important; opacity: 1 !important; }
+  .kaleon-loader, .kaleon-loader::before, .kaleon-loader::after { animation: none !important; opacity: 1 !important; }
+}
+
+/* ── Kaleon loader (bouncing dot animation) ── */
+.kaleon-loader {
+  width: 15px;
+  aspect-ratio: 1;
+  position: relative;
+  display: inline-block;
+}
+.kaleon-loader::before,
+.kaleon-loader::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #4ECCA3;
+}
+.kaleon-loader::before {
+  box-shadow: -25px 0 #38b2ac;
+  animation: kl8-1 1s infinite linear;
+}
+.kaleon-loader::after {
+  transform: rotate(0deg) translateX(25px);
+  animation: kl8-2 1s infinite linear;
+}
+
+@keyframes kl8-1 {
+  100% { transform: translateX(25px) }
+}
+@keyframes kl8-2 {
+  100% { transform: rotate(-180deg) translateX(25px) }
 }
 
 /* ── Custom scrollbar ── */

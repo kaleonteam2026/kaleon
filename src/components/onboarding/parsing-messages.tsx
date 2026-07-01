@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 
 export const PARSE_MESSAGES = [
   "Grab a cup of coffee",
@@ -130,7 +130,7 @@ export function ParsingMessages({ visible, title }: ParsingMessagesProps) {
 
   return (
     <div className="flex flex-col items-center gap-4 py-8 text-center">
-      <Loader2 className="h-10 w-10 animate-spin" style={{ color: "#4ECCA3" }} />
+      <KaleonLoader />
       <p className="text-sm font-medium" style={{ color: "#cbd5e1" }}>
         {title ?? "Scanning your transcript..."}
       </p>

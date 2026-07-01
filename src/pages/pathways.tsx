@@ -8,10 +8,11 @@ import { useToast } from "@/hooks/use-toast";
 import { fetchWithTimeout, TimeoutError } from "@/lib/api/client";
 import { useRequestCleanup } from "@/hooks/use-request-cleanup";
 import {
-  Loader2, Target, AlertTriangle, CheckCircle, ArrowRight,
+  Target, AlertTriangle, CheckCircle, ArrowRight,
   ChevronDown, ChevronUp, Sparkles, BookOpen, Award, Users, Briefcase,
   Star, GraduationCap, Building2
 } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { cn } from "@/lib/utils";
 import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
@@ -569,12 +570,22 @@ export default function Pathways() {
             className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 pwc-font-mono uppercase tracking-wider text-xs font-bold rounded-none"
           >
             {generating ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("pages.pathways.generating")}</>
+              <><KaleonLoader size={16} />{t("pages.pathways.generating")}</>
             ) : (
               <><Sparkles className="mr-2 h-4 w-4" />{generations.length > 0 ? "Generate New" : t("pages.pathways.generatePathways")}</>
             )}
           </Button>
         </header>
+
+        {/* Social proof context */}
+        {pathways.length === 0 && (
+          <div className="mb-6 p-4 rounded-xl" style={{ background: "rgba(78,204,163,0.05)", border: "1px solid rgba(78,204,163,0.15)" }}>
+            <p className="font-bold text-sm text-center" style={{ color: "#e2e8f0" }}>70% of students take 3+ years to transfer.</p>
+            <p className="text-xs mt-1 text-center leading-relaxed" style={{ color: "#94a3b8" }}>
+              Students who use Kaleon are more likely to transfer on-time by knowing exactly which courses to take and when.
+            </p>
+          </div>
+        )}
 
         {profileCourses.length > 0 && (
           <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-6">
@@ -949,7 +960,7 @@ export default function Pathways() {
                           : "border-slate-900 bg-slate-900 hover:bg-slate-700 text-white"
                       )}
                     >
-                      {selecting === pathway.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
+                      {selecting === pathway.id ? <KaleonLoader size={14} /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
                       {isSelected ? t("pages.pathways.primaryPathway") : t("pages.pathways.makePrimary")}
                     </Button>
                     {isSelected && (
@@ -960,7 +971,7 @@ export default function Pathways() {
                         className="bg-violet-600 hover:bg-violet-700 text-white"
                       >
                         {generatingRoadmap === pathway.id ? (
-                          <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />{t("pages.pathways.generating")}</>
+                          <><KaleonLoader size={14} />{t("pages.pathways.generating")}</>
                         ) : (
                           <><GraduationCap className="h-3.5 w-3.5 mr-1" />{t("pages.pathways.academicRoadmap")}</>
                         )}

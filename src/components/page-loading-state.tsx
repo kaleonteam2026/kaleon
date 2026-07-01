@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import Nav from "@/components/nav";
 import { cn } from "@/lib/utils";
 import type { AppLayoutVariant } from "@/components/app-page-layout";
@@ -36,12 +36,7 @@ export function PageLoadingState({
           showNav ? "min-h-screen pt-14" : "min-h-screen",
         )}
       >
-        <Loader2
-          className={cn(
-            "h-8 w-8 animate-spin",
-            isDark ? "text-[#4ECCA3]" : "text-slate-900",
-          )}
-        />
+        <KaleonLoader />
         {message && (
           <p className={cn("text-sm", isDark ? "text-slate-400" : "text-slate-500")}>
             {message}

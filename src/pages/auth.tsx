@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { t } from "@/lib/copy";
 import { getProfileForUser } from "@/lib/supabase-profiles";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 
 type AuthMode = "signin" | "signup";
 
@@ -105,7 +106,7 @@ export default function AuthPage() {
         className="min-h-screen flex items-center justify-center pwc-font-sans"
         style={{ background: "var(--app-page-bg)" }}
       >
-        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#4ECCA3" }} />
+        <KaleonLoader />
       </div>
     );
   }
@@ -229,7 +230,7 @@ export default function AuthPage() {
                   style={{ borderRadius: 8 }}
                 >
                   {loading ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Verifying…</>
+                    <><KaleonLoader /> Verifying…</>
                   ) : (
                     "Verify & " + (mode === "signin" ? "Sign In" : "Create Account")
                   )}
@@ -353,7 +354,7 @@ export default function AuthPage() {
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <KaleonLoader />
                       {t("auth.sending")}
                     </>
                   ) : (

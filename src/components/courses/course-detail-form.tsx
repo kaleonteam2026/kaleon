@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { t } from "@/lib/copy";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,7 +80,7 @@ export function CourseDetailForm({ course, onSave, onBack, saving }: CourseDetai
         disabled={saving}
         className="w-full bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none"
       >
-        {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+        {saving ? <KaleonLoader size={16} /> : <Plus className="h-4 w-4 mr-2" />}
         Add to My Courses
       </Button>
     </div>

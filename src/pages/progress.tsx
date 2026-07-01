@@ -12,7 +12,7 @@ import { PageMotion } from "@/components/page-motion";
 import { motion } from "framer-motion";
 import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
-  TrendingUp, Plus, Loader2, Download, AlertTriangle,
+  TrendingUp, Plus, Download, AlertTriangle,
   GraduationCap, Award, CheckCircle2, Sparkles, Activity,
   BookOpen, Target, ArrowRight, BarChart3, Info, Calendar,
 } from "lucide-react";

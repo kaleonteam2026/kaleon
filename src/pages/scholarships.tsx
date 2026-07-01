@@ -9,9 +9,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
   ExternalLink, Search, Award, Briefcase, GraduationCap, BookOpen,
-  Star, Loader2, Building2, Heart, Users, Stethoscope, Palette,
+  Star, Building2, Heart, Users, Stethoscope, Palette,
   MapPin, ChevronRight, Info, Sparkles, Globe, RefreshCcw, Mic,
 } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { cn } from "@/lib/utils";
 import { useLiveQuota } from "@/hooks/use-live-quota";
 import { t } from "@/lib/copy";
@@ -155,7 +156,7 @@ function LiveScholarshipSearch({ profileId }: { profileId?: number }) {
           disabled={disabled}
           className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60"
         >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+          {loading ? <KaleonLoader size={16} /> : <Search className="h-4 w-4" />}
           {loading ? t("pages.scholarships.searching") : t("pages.scholarships.searchBtn")}
         </button>
       </div>
@@ -470,7 +471,7 @@ export default function Scholarships() {
               </div>
             ) : ccLoading ? (
               <div className="text-center py-16">
-                <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mx-auto mb-3" />
+                <KaleonLoader size={40} />
                 <p className="text-slate-600 font-medium">{t("pages.scholarships.loadingPrograms")}</p>
                 <p className="text-slate-400 text-sm mt-1">
                   {t("pages.scholarships.compilingPrograms")}

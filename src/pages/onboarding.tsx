@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ArrowLeft, CheckCircle2, Loader2, Upload, LogOut } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle2, Upload, LogOut } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
 import { fetchWithTimeout } from "@/lib/api/client";
 import { useRequestCleanup } from "@/hooks/use-request-cleanup";
@@ -18,6 +19,7 @@ import { t } from "@/lib/copy";
 
 import { IntroPhase } from "@/components/onboarding/intro-phase";
 import { CalculatingPhase } from "@/components/onboarding/calculating-phase";
+import { CelebrationPhase } from "@/components/onboarding/celebration-phase";
 import { ReadyPhase } from "@/components/onboarding/ready-phase";
 import { SchoolPreviewPhase } from "@/components/onboarding/school-preview-phase";
 import { FormSteps } from "@/components/onboarding/form-steps";
@@ -42,7 +44,7 @@ export default function Onboarding() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [phase, setPhase] = useState<"intro" | "form" | "calculating" | "ready" | "schools">("intro");
+  const [phase, setPhase] = useState<"intro" | "form" | "calculating" | "celebration" | "ready" | "schools">("intro");
   const [isReupload, setIsReupload] = useState(false);
   const reuploadProfileIdRef = useRef<number | null>(null);
   const [pendingTranscripts, setPendingTranscripts] = useState<PendingTranscript[]>([]);
@@ -50,6 +52,7 @@ export default function Onboarding() {
   const [scanError, setScanError] = useState<string | null>(null);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [hasMultipleColleges, setHasMultipleColleges] = useState<boolean | null>(null);
+  const [skippingUpload, setSkippingUpload] = useState(false);
   const pendingIdRef = useRef(0);
   const [pathwaySchools, setPathwaySchools] = useState<{
     university: string;
@@ -86,6 +89,12 @@ export default function Onboarding() {
 
     if (phase !== "intro") return;
     const id = window.setTimeout(() => setPhase("form"), INTRO_DURATION_MS);
+    return () => window.clearTimeout(id);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "celebration") return;
+    const id = window.setTimeout(() => setPhase("ready"), INTRO_DURATION_MS);
     return () => window.clearTimeout(id);
   }, [phase]);
 
@@ -219,7 +228,7 @@ export default function Onboarding() {
   };
 
   const canProceed = () => {
-    if (step === 0) return !scanning;
+    if (step === 0) return !scanning && (scanResults.length > 0 || skippingUpload);
     if (step === 1) return form.communityCollege.trim().length > 0 && form.intendedMajor.trim().length > 0;
     return true;
   };
@@ -313,7 +322,7 @@ export default function Onboarding() {
         });
         createdProfileIdRef.current = DEV_PROFILE_ID;
         setPhase("calculating");
-        setTimeout(() => setPhase("ready"), 2800);
+        setTimeout(() => setPhase("celebration"), 1200);
         return;
       }
 
@@ -373,7 +382,7 @@ export default function Onboarding() {
         }
 
         setPhase("calculating");
-        setTimeout(() => setPhase("ready"), 2800);
+        setTimeout(() => setPhase("celebration"), 1200);
         return;
       }
 
@@ -441,7 +450,7 @@ export default function Onboarding() {
       } catch {
         // Non-fatal — fall through to ready phase
       }
-      setPhase("ready");
+      setPhase("celebration");
     } catch (e) {
       console.error(e);
       setSubmitting(false);
@@ -450,13 +459,14 @@ export default function Onboarding() {
     }
   };
 
-  const progress = ((step) / (STEPS.length - 1)) * 100;
+  const progress = Math.max(10, ((step) / (STEPS.length - 1)) * 100);
   const StepIcon = STEPS[step].icon;
   const motionOn = useMotionEnabled();
   const dir = useDirSign();
 
   if (phase === "intro") return <IntroPhase firstName={user?.firstName} />;
   if (phase === "calculating") return <CalculatingPhase />;
+  if (phase === "celebration") return <CelebrationPhase />;
   if (phase === "ready") return <ReadyPhase profileId={createdProfileIdRef.current ?? DEV_PROFILE_ID} />;
   if (phase === "schools") {
     return (
@@ -546,6 +556,8 @@ export default function Onboarding() {
               onClearAllTranscripts={handleClearAllTranscripts}
               hasMultipleColleges={hasMultipleColleges}
               onSetMultipleColleges={setHasMultipleColleges}
+              skippingUpload={skippingUpload}
+              onSetSkippingUpload={setSkippingUpload}
               motionOn={motionOn}
               dir={dir}
             />
@@ -578,7 +590,7 @@ export default function Onboarding() {
                 style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
               >
                 {submitting
-                  ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("onboarding.creating")}</>
+                  ? <><KaleonLoader size={16} />{t("onboarding.creating")}</>
                   : <><CheckCircle2 className="h-4 w-4 mr-2" />{t("onboarding.startJourney")}</>
                 }
               </Button>

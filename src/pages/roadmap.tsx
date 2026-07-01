@@ -10,10 +10,11 @@ import { PageLoadingState } from "@/components/page-loading-state";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, Download, Loader2, MapPin, AlertTriangle,
+  ArrowLeft, Download, MapPin, AlertTriangle,
   CheckSquare, Square, CheckCircle2, Image as ImageIcon, FileText, Sparkles,
   Link2, Copy, Check, X, RefreshCw,
 } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { MarkdownContent } from "@/components/markdown-renderer";
 import { PageMotion } from "@/components/page-motion";
 import { t } from "@/lib/copy";
@@ -272,7 +273,7 @@ export default function Roadmap() {
                     className="bg-amber-600 hover:bg-amber-700 text-white"
                   >
                     {infographicLoading ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Regenerating…</>
+                      <><KaleonLoader size={16} /> Regenerating…</>
                     ) : (
                       <><RefreshCw className="h-4 w-4 mr-2" /> Regenerate now</>
                     )}
@@ -316,7 +317,7 @@ export default function Roadmap() {
                 className="bg-white text-indigo-700 hover:bg-violet-50"
               >
                 {infographicLoading ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("common.generating")}</>
+                  <><KaleonLoader size={16} /> {t("common.generating")}</>
                 ) : (
                   <><Sparkles className="h-4 w-4 mr-2" /> {t("pages.roadmap.generateInfographic")}</>
                 )}
@@ -331,7 +332,7 @@ export default function Roadmap() {
                     <FileText className="h-4 w-4 mr-2" /> PDF
                   </Button>
                   <Button onClick={generateInfographic} disabled={infographicLoading} size="sm" variant="outline" className="border-white/40 text-white hover:bg-white/10 bg-transparent">
-                    {infographicLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.refresh")}
+                    {infographicLoading ? <KaleonLoader size={16} /> : t("common.refresh")}
                   </Button>
                 </div>
                 {status?.cached && (
@@ -370,7 +371,7 @@ export default function Roadmap() {
                   size="sm"
                   className="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
-                  {shareBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Link2 className="h-4 w-4 mr-2" />}
+                  {shareBusy ? <KaleonLoader size={16} /> : <Link2 className="h-4 w-4 mr-2" />}
                   Create share link
                 </Button>
               ) : (

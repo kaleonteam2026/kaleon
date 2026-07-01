@@ -1,14 +1,13 @@
-import { Loader2Icon } from "lucide-react"
-
 import { cn } from "@/lib/utils"
+import { KaleonLoader } from "./kaleon-loader"
 
-function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+function Spinner({ className, ...props }: React.ComponentProps<"span">) {
   return (
-    <Loader2Icon
+    <KaleonLoader
       role="status"
       aria-label="Loading"
-      className={cn("size-4 animate-spin", className)}
-      {...props}
+      className={cn("", className)}
+      {...(props as Record<string, unknown>)}
     />
   )
 }

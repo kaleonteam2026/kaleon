@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { FileText, Upload, X, Loader2, Info, Sparkles, Check, GraduationCap, ChevronDown, ChevronRight, Pencil, Plus } from "lucide-react";
+import { FileText, Upload, X, Info, Sparkles, Check, GraduationCap, ChevronDown, ChevronRight, Pencil, Plus } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/copy";
 import { AnimatePresence, motion } from "framer-motion";
@@ -43,6 +44,8 @@ interface FormStepsProps {
   onClearAllTranscripts: () => void;
   hasMultipleColleges: boolean | null;
   onSetMultipleColleges: (val: boolean | null) => void;
+  skippingUpload: boolean;
+  onSetSkippingUpload: (val: boolean) => void;
   motionOn: boolean;
   dir: number;
 }
@@ -53,40 +56,13 @@ export function FormSteps({
   scanning, scanError, scanResults, onScan,
   onRemoveCourseFromScan, onAddCourseToScan, onUpdateCourseInScan, onClearAllTranscripts,
   hasMultipleColleges, onSetMultipleColleges,
+  skippingUpload, onSetSkippingUpload,
   motionOn, dir,
 }: FormStepsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [consentProcessing, setConsentProcessing] = useState(false);
   const [consentOwnership, setConsentOwnership] = useState(false);
   const consentGiven = consentProcessing && consentOwnership;
-  const [expandedTerms, setExpandedTerms] = useState<Set<string>>(new Set());
-
-  /** Group courses by term and sort reverse-chronologically. */
-  const groupedByTerm = (courses: ScanResult["courses"]) => {
-    const groups = new Map<string, typeof courses>();
-    const noTerm: typeof courses = [];
-    for (const c of courses) {
-      if (c.term) {
-        const list = groups.get(c.term) ?? [];
-        list.push(c);
-        groups.set(c.term, list);
-      } else {
-        noTerm.push(c);
-      }
-    }
-    // Sort terms reverse-chronologically: higher year first, then Fall > Summer > Spring > Winter
-    const SEASON_RANK: Record<string, number> = { Fall: 0, Summer: 1, Spring: 2, Winter: 3 };
-    const sorted = [...groups.entries()].sort(([a], [b]) => {
-      const ay = parseInt(a.match(/\d{4}/)?.[0] ?? "0", 10);
-      const by = parseInt(b.match(/\d{4}/)?.[0] ?? "0", 10);
-      if (ay !== by) return by - ay;
-      const as = SEASON_RANK[a.split(/\s+/)[0]] ?? 99;
-      const bs = SEASON_RANK[b.split(/\s+/)[0]] ?? 99;
-      return as - bs;
-    });
-    if (noTerm.length) sorted.push(["Other", noTerm]);
-    return sorted;
-  };
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -216,6 +192,14 @@ export function FormSteps({
                     </button>
                   ))}
                 </div>
+                {hasMultipleColleges === true && (
+                  <div className="mt-2 flex items-start gap-2 p-2.5 rounded-lg" style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.15)" }}>
+                    <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "#4ECCA3" }} aria-hidden />
+                    <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+                      Some districts (like Los Rios) issue a single combined transcript. Select the primary college below — our AI will detect courses from all listed institutions.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* ------------------------------------------------- */}
@@ -305,7 +289,7 @@ export function FormSteps({
                       style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
                     >
                       {scanning ? (
-                        <><Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> Scanning…</>
+                        <><KaleonLoader size={14} /> Scanning…</>
                       ) : (
                         <>Scan {pendingTranscripts.length} {pendingTranscripts.length === 1 ? "File" : "Files"}</>
                       )}
@@ -323,7 +307,7 @@ export function FormSteps({
                         style={{ background: "rgba(78,204,163,0.15)", color: "#4ECCA3", border: "1px solid rgba(78,204,163,0.3)" }}
                       >
                         {scanning ? (
-                          <><Loader2 className="h-3 w-3 animate-spin" aria-hidden /> Retrying…</>
+                          <><KaleonLoader size={12} /> Retrying…</>
                         ) : (
                           <><Sparkles className="h-3 w-3" aria-hidden /> Retry with AI</>
                         )}
@@ -334,99 +318,32 @@ export function FormSteps({
               )}
 
               {/* ------------------------------------------------- */}
-              {/* STAGE C — Scanned results, grouped by college        */}
+              {/* STAGE C — Scanned results, compact summary         */}
               {/* ------------------------------------------------- */}
               {scanResults.length > 0 && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {scanResults.map((sr, si) => (
                     <div
                       key={`${sr.college}-${si}`}
                       className="rounded-xl p-3"
                       style={{ background: "rgba(5,12,24,0.5)", border: "1px solid rgba(78,204,163,0.2)" }}
                     >
-                      {/* College header */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <GraduationCap className="h-3.5 w-3.5" style={{ color: "#4ECCA3" }} aria-hidden />
+                      <div className="flex items-center gap-2 mb-1">
+                        <Check className="h-4 w-4" style={{ color: "#4ECCA3" }} aria-hidden />
                         <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
                           {sr.college}
                         </span>
                       </div>
-
-                      {/* Summary stats */}
-                      <div className="flex flex-wrap gap-3 mb-1.5 text-xs" style={{ color: "#94a3b8" }}>
+                      <div className="flex flex-wrap gap-3 text-xs" style={{ color: "#94a3b8" }}>
                         {sr.latestGpa != null && (
-                          <span>
-                            <span className="font-semibold" style={{ color: "#4ECCA3" }}>GPA</span>: {sr.latestGpa.toFixed(2)}
-                          </span>
+                          <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>GPA</span>: {sr.latestGpa.toFixed(2)}</span>
                         )}
-                        {sr.totalUnits > 0 && (
-                          <span>
-                            <span className="font-semibold" style={{ color: "#4ECCA3" }}>Total Units</span>: {sr.totalUnits}
-                          </span>
-                        )}
-                        <span>
-                          <span className="font-semibold" style={{ color: "#4ECCA3" }}>Courses</span>: {sr.courses.length}
-                        </span>
+                        <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>Total Units</span>: {sr.totalUnits}</span>
+                        <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>Courses</span>: {sr.courses.length}</span>
                       </div>
-
-                      {/* Courses grouped by term — collapsible */}
-                      {sr.courses.length > 0 ? (
-                        <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
-                          {groupedByTerm(sr.courses).map(([term, termCourses]) => {
-                            const openKey = `${sr.college}-${term}`;
-                            const open = expandedTerms.has(openKey);
-                            return (
-                              <div key={term}>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setExpandedTerms(prev => {
-                                      const next = new Set(prev);
-                                      if (next.has(openKey)) next.delete(openKey);
-                                      else next.add(openKey);
-                                      return next;
-                                    });
-                                  }}
-                                  className="flex items-center gap-1.5 w-full text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-[rgba(78,204,163,0.06)]"
-                                  style={{ color: "#94a3b8" }}
-                                >
-                                  {open
-                                    ? <ChevronDown className="h-3 w-3 shrink-0" aria-hidden />
-                                    : <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />
-                                  }
-                                  <span style={{ color: open ? "#e2e8f0" : "#94a3b8" }}>{term}</span>
-                                  <span className="ml-auto opacity-50">{termCourses.length} {termCourses.length === 1 ? "course" : "courses"}</span>
-                                </button>
-                                {open && (
-                                  <div className="flex flex-wrap gap-1.5 px-2 pb-2">
-                                    {termCourses.map(c => (
-                                      <span
-                                        key={c.code}
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                                        style={{ background: "rgba(78,204,163,0.12)", color: "#4ECCA3", border: "1px solid rgba(78,204,163,0.3)" }}
-                                      >
-                                        {c.code}
-                                        <span className="opacity-80">{c.units ?? "—"}u</span>
-                                        <button
-                                          type="button"
-                                          aria-label={`Remove ${c.code}`}
-                                          onClick={() => onRemoveCourseFromScan(sr.college, c.code)}
-                                          className="ml-0.5 opacity-70 hover:opacity-100"
-                                          style={{ color: "#4ECCA3" }}
-                                        >
-                                          <X className="h-2.5 w-2.5" />
-                                        </button>
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-xs" style={{ color: "#64748b" }}>No courses extracted.</p>
-                      )}
+                      <p className="text-xs mt-1.5" style={{ color: "#64748b" }}>
+                        View and edit full course details in the next step.
+                      </p>
                     </div>
                   ))}
 
@@ -443,15 +360,44 @@ export function FormSteps({
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-px" style={{ background: "rgba(78,204,163,0.2)" }} />
-              <span className="text-[10px] font-bold uppercase tracking-widest pwc-font-mono" style={{ color: "#64748b" }}>
-                Or skip & enter manually
-              </span>
-              <div className="flex-1 h-px" style={{ background: "rgba(78,204,163,0.2)" }} />
-            </div>
-
-            <p className="text-xs text-center" style={{ color: "#64748b" }}>{t("onboarding.timeNote")}</p>
+            {scanResults.length === 0 && !skippingUpload && (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px" style={{ background: "rgba(78,204,163,0.2)" }} />
+                  <button
+                    type="button"
+                    onClick={() => onSetSkippingUpload(true)}
+                    className="text-[10px] font-bold uppercase tracking-widest pwc-font-mono transition-colors hover:text-[#4ECCA3]"
+                    style={{ color: "#64748b" }}
+                  >
+                    Or skip &amp; enter manually
+                  </button>
+                  <div className="flex-1 h-px" style={{ background: "rgba(78,204,163,0.2)" }} />
+                </div>
+                <p className="text-xs text-center" style={{ color: "#64748b" }}>{t("onboarding.timeNote")}</p>
+              </>
+            )}
+            {skippingUpload && (
+              <div className="p-3 rounded-xl" style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.15)" }}>
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#4ECCA3" }} aria-hidden />
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: "#e2e8f0" }}>Skipping transcript upload</p>
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: "#94a3b8" }}>
+                      You can add your courses manually later in your dashboard. We'll still personalize your transfer plan based on your major and goals.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => onSetSkippingUpload(false)}
+                      className="mt-2 text-xs font-medium underline underline-offset-2 transition-colors"
+                      style={{ color: "#4ECCA3" }}
+                    >
+                      Go back to upload
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </fieldset>
         )}
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Trash2, Loader2, Clock } from "lucide-react";
+import { Trash2, Clock } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/copy";
 import { ENTRY_TYPES } from "./entry-types-config";
@@ -38,7 +39,7 @@ export function EntryCard({ entry, onDelete }: EntryCardProps) {
               className="text-slate-300 hover:text-rose-400 transition p-0.5"
               title={t("pages.progress.deleteEntry")}
             >
-              {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              {deleting ? <KaleonLoader size={14} /> : <Trash2 className="h-3.5 w-3.5" />}
             </button>
           </div>
         </div>

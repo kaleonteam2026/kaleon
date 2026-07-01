@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { t } from "@/lib/copy";
 import { Button } from "@/components/ui/button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
@@ -58,7 +59,7 @@ export function CatalogModal({
 
         {catalogLoading && (
           <div className="flex flex-col items-center justify-center py-16 px-6 gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+            <KaleonLoader size={32} />
             <p className="text-sm font-medium text-slate-700 text-center">
               Loading your college&apos;s course catalog…
             </p>

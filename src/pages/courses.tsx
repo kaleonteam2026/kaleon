@@ -20,9 +20,10 @@ import { saveDevCourses } from "@/lib/dev-courses";
 import {
   transferProgressPercent, transferUnitsRemaining,
 } from "@/lib/course-progress";
-import { Plus, Trash2, Loader2, ArrowRight, BookOpen, FlaskConical,
+import { Plus, Trash2, ArrowRight, BookOpen, FlaskConical,
   GraduationCap, ChevronDown, Upload, AlertTriangle,
 } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { CatalogModal } from "@/components/courses/catalog-modal";
 import { TransferabilityPanel } from "@/components/courses/transferability-panel";
 import type { Course, GpaSummary, CourseCatalog, CatalogCourse, TransferabilityResult } from "@/components/courses/course-types";
@@ -631,7 +632,7 @@ export default function Courses() {
                 </div>
                 <Button onClick={runAnalysis} disabled={analyzing} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none flex-shrink-0 min-w-[180px]">
                   {analyzing ? (
-                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Analyzing…</>
+                    <><KaleonLoader size={16} /> Analyzing…</>
                   ) : (
                     <><FlaskConical className="h-4 w-4 mr-2" /> Analyze My Courses</>
                   )}
@@ -639,7 +640,7 @@ export default function Courses() {
               </div>
               {analyzing && (
                 <div className="mt-4 bg-white/60 rounded-xl p-4 text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-teal-400 mx-auto mb-2" />
+                  <KaleonLoader size={32} />
                   <p className="text-sm font-medium text-teal-800">{t("pages.courses.checkingArticulation")}</p>
                   <p className="text-xs text-teal-500 mt-1">{t("pages.courses.crossReferencing")}</p>
                 </div>
@@ -653,6 +654,24 @@ export default function Courses() {
               </div>
             )}
           </>
+        )}
+
+        {/* Motivational context */}
+        {courses.length > 0 && (
+          <div className="mt-8 grid md:grid-cols-2 gap-4">
+            <div className="px-4 py-3 rounded-xl" style={{ background: "rgba(251,191,36,0.04)", border: "1px solid rgba(251,191,36,0.15)" }}>
+              <p className="font-bold text-sm" style={{ color: "#d97706" }}>One Wrong Class Can Ruin Everything</p>
+              <p className="text-xs mt-1 leading-relaxed" style={{ color: "#92400e", filter: "brightness(2)" }}>
+                Classes that don't transfer can prevent you from being admitted. Our AI cross-references every course against ASSIST.org to make sure you're on track.
+              </p>
+            </div>
+            <div className="px-4 py-3 rounded-xl" style={{ background: "rgba(78,204,163,0.04)", border: "1px solid rgba(78,204,163,0.15)" }}>
+              <p className="font-bold text-sm" style={{ color: "#059669" }}>Save Money</p>
+              <p className="text-xs mt-1 leading-relaxed" style={{ color: "#64748b" }}>
+                Save hundreds by avoiding private counselors and wasted tuition on courses that don't apply toward your transfer requirements.
+              </p>
+            </div>
+          </div>
         )}
 
         <div className="text-center py-6">

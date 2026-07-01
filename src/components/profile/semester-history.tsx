@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Loader2, Plus, Trash2, GraduationCap, BookOpen } from "lucide-react";
+import { Plus, Trash2, GraduationCap, BookOpen } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -179,7 +180,7 @@ export function SemesterHistory({ profileId }: SemesterHistoryProps) {
       <CardContent className="space-y-3">
         {loading ? (
           <div className="flex items-center justify-center py-6">
-            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+            <KaleonLoader size={20} />
           </div>
         ) : snapshots.length === 0 ? (
           <div className="text-center py-6">
@@ -242,7 +243,7 @@ export function SemesterHistory({ profileId }: SemesterHistoryProps) {
                     title="Delete semester"
                   >
                     {deleting.has(s.id) ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <KaleonLoader size={14} />
                     ) : (
                       <Trash2 className="h-3.5 w-3.5" />
                     )}
@@ -310,7 +311,7 @@ export function SemesterHistory({ profileId }: SemesterHistoryProps) {
                 disabled={saving || !newTerm.trim()}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
-                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
+                {saving ? <KaleonLoader size={14} /> : <Plus className="h-3.5 w-3.5 mr-1" />}
                 Add
               </Button>
             </div>

@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useReducedMotion } from "framer-motion";
 import { DUR, EASE_OUT } from "@/lib/motion";
-import { MessageCircle, X, Send, Loader2, Bot, User, MessagesSquare, Mic, Trophy, Sparkles, RotateCcw } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
+import { MessageCircle, X, Send, Bot, User, MessagesSquare, Mic, Trophy, Sparkles, RotateCcw } from "lucide-react";
 import { t } from "@/lib/copy";
 
 type Mode = "ask" | "interview";
@@ -397,7 +398,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                     className="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 border-2 border-slate-900 text-white text-[11px] uppercase tracking-wider font-bold hover:bg-slate-700 disabled:opacity-50"
                     data-testid="interview-start-btn"
                   >
-                    {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mic className="h-3.5 w-3.5" />}
+                    {loading ? <KaleonLoader size={14} /> : <Mic className="h-3.5 w-3.5" />}
                     {t("chat.startInterview")}
                   </button>
                 </div>
@@ -442,7 +443,7 @@ export default function ChatBubble({ userId }: { userId?: string }) {
                   <Bot className="h-3.5 w-3.5 text-slate-900" aria-hidden="true" />
                 </div>
                 <div className="bg-white border-2 border-slate-900 px-3 py-2.5">
-                  <Loader2 className="h-3.5 w-3.5 text-slate-900 animate-spin" aria-hidden="true" />
+                  <KaleonLoader size={14} />
                   <span className="sr-only">{t("chat.loadingResponse")}</span>
                 </div>
               </div>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, ExternalLink, Search, Loader2, GraduationCap, MapPin, TrendingUp } from "lucide-react";
+import { ArrowRight, ExternalLink, Search, GraduationCap, MapPin, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeepDivePanel from "@/components/deep-dive-panel";
 import { t } from "@/lib/copy";

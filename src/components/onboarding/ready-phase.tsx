@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 
 interface ReadyPhaseProps {
@@ -11,21 +11,26 @@ export function ReadyPhase({ profileId }: ReadyPhaseProps) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "#070d1a" }}>
       <img src={KALEON_LOGO_SRC} alt="Kaleon" style={{ width: 52, height: 52, borderRadius: 10, objectFit: "contain" }} />
-      <h1 className="mt-6 text-3xl font-bold text-white text-center leading-tight">Your Transfer Plan<br />is Ready.</h1>
-      <p className="mt-2 text-sm" style={{ color: "#64748b" }}>We've computed your transfer path.</p>
-      <div className="mt-8 w-full max-w-sm space-y-3">
-        {[
-          { title: "One Wrong Class Can Ruin Everything", body: "Classes that don't transfer can prevent you from being admitted." },
-          { title: "Save Money", body: "Save hundreds by avoiding private counselors and wasted tuition." },
-        ].map(card => (
-          <div key={card.title} className="p-4 rounded-xl" style={{ background: "rgba(13,26,46,0.85)", border: "1px solid rgba(78,204,163,0.18)" }}>
-            <p className="font-bold text-sm text-white">{card.title}</p>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>{card.body}</p>
+      <h1 className="mt-6 text-3xl font-bold text-white text-center leading-tight">You're All Set!</h1>
+      <p className="mt-2 text-sm" style={{ color: "#94a3b8" }}>Now let's build your transfer plan together.</p>
+      <div className="mt-8 w-full max-w-sm space-y-4">
+        <div className="pl-4" style={{ borderLeft: "2px solid rgba(78,204,163,0.3)" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle2 className="h-4 w-4" style={{ color: "#4ECCA3" }} aria-hidden />
+            <p className="font-bold text-sm text-white">Great First Step</p>
           </div>
-        ))}
-        <div className="p-4 rounded-xl text-center" style={{ background: "rgba(78,204,163,0.07)", border: "1px solid rgba(78,204,163,0.2)" }}>
-          <p className="font-bold text-sm text-white">70% of students take 3+ years to transfer.</p>
-          <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Students who use Kaleon are more likely to transfer on-time.</p>
+          <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+            Your courses and information are saved. Next, we'll analyze your credits and generate personalized pathways matched to your goals.
+          </p>
+        </div>
+        <div className="pl-4" style={{ borderLeft: "2px solid rgba(78,204,163,0.3)" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="h-4 w-4" style={{ color: "#4ECCA3" }} aria-hidden />
+            <p className="font-bold text-sm text-white">Personalized Pathways Ahead</p>
+          </div>
+          <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+            AI will match you to UC/CSU programs based on your courses, GPA, and goals — showing you exactly what's needed for each option.
+          </p>
         </div>
       </div>
       <button
@@ -35,7 +40,9 @@ export function ReadyPhase({ profileId }: ReadyPhaseProps) {
       >
         Add Your Courses <ArrowRight size={16} />
       </button>
-      <p className="mt-3 text-xs" style={{ color: "#475569" }}>Join students who secured their transfer plan this week</p>
+      <p className="mt-4 text-xs text-center max-w-xs leading-relaxed" style={{ color: "#475569" }}>
+        Add your courses to unlock AI pathways, track your progress, and see which UC/CSU programs fit you best.
+      </p>
     </div>
   );
 }

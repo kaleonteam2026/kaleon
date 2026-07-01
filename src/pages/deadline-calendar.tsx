@@ -10,8 +10,9 @@ import { fadeUp, useBrutalistMotion, DUR } from "@/lib/motion";
 import {
   CalendarDays, CheckCircle2, Clock, AlertCircle, ExternalLink,
   ChevronRight, Info, GraduationCap, DollarSign, FileText,
-  Globe, RefreshCcw, Loader2, Sparkles,
+  Globe, RefreshCcw, Sparkles,
 } from "lucide-react";
+import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { ANNUAL_DEADLINES, type DeadlineSource as Deadline } from "@/mocks/deadlines";
 
 const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; badge: string; bar: string }> = {
@@ -167,7 +168,7 @@ export default function DeadlineCalendar() {
               disabled={verifyDisabled}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 text-white text-xs font-semibold hover:bg-violet-700 transition-colors disabled:opacity-60 flex-shrink-0"
             >
-              {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
+              {verifying ? <KaleonLoader size={14} /> : <RefreshCcw className="h-3.5 w-3.5" />}
               {verifying ? "Verifying..." : "Verify"}
             </button>
           </div>

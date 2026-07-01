@@ -17,7 +17,7 @@ import {
   EASE_OUT,
   DUR,
 } from "@/lib/motion";
-import { KALEON_LOGO_SRC } from "@/lib/brand";
+import { KALEON_LOGO_SRC, staticAsset } from "@/lib/brand";
 import { CopyTrans } from "@/components/copy-trans";
 import BetaAgreementModal from "@/components/beta-agreement-modal";
 import { t } from "@/lib/copy";
@@ -135,14 +135,14 @@ export default function Landing() {
             </motion.div>
 
             <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 leading-[1.05] uppercase" style={{ color: "#f8fafc" }}>
-              Transfers Made<br />
+              Transfers<br />
               <motion.span
                 {...mountProps}
                 variants={stamp}
                 className="inline-block px-3 origin-left"
                 style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18", textShadow: "0 0 30px rgba(78,204,163,0.4)" }}
               >
-                Easy.
+                Made Easy.
               </motion.span>
             </h1>
 
@@ -185,40 +185,33 @@ export default function Landing() {
 
             {/* Stats */}
             <div className="flex gap-8 mt-10">
-              {[ ["95%", t("landing.statSuccess", { defaultValue: "Match Rate" })], ["200+", t("landing.statColleges", { defaultValue: "Colleges" })]].map(([n, l]) => (
+              {[
+                ["✓", t("landing.statSuccess", { defaultValue: "Built for CC Students" })],
+                ["✓", t("landing.statColleges", { defaultValue: "Every UC & CSU" })]
+              ].map(([n, l]) => (
                 <div key={l}>
                   <div className="text-xl font-extrabold" style={{ color: "#4ECCA3" }}>{n}</div>
-                  <div className="text-xs pwc-font-mono uppercase tracking-wider mt-1" style={{ color: "#475569" }}>{l}</div>
+                  <div className="text-xs pwc-font-mono uppercase tracking-wider mt-1" style={{ color: "#64748b" }}>{l}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Orbital graphic */}
+          {/* Product UI preview */}
           <div className="hidden md:flex flex-1 items-center justify-center" style={{ minHeight: 320 }}>
-            <div style={{ position: "relative", width: 320, height: 320 }}>
-              {/* Orbit rings (static circles) */}
-              {[140, 220, 300].map((size, i) => (
-                <div key={i} style={{ position: "absolute", top: "50%", left: "50%", width: size, height: size, marginTop: -size / 2, marginLeft: -size / 2, borderRadius: "50%", border: `1px solid rgba(78,204,163,${0.1 - i * 0.025})` }} />
-              ))}
-              {/* Center core */}
-              <div style={{ position: "absolute", top: "50%", left: "50%", width: 80, height: 80, marginTop: -40, marginLeft: -40, borderRadius: "50%", boxShadow: "0 0 40px rgba(78,204,163,0.5)", overflow: "hidden" }}>
-                <img src={KALEON_LOGO_SRC} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-              </div>
-              {/* Orbiting dots */}
-              <div className="orbit-ring-1" style={{ position: "absolute", top: "50%", left: "50%", marginTop: -5, marginLeft: -5 }}>
-                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4ECCA3", boxShadow: "0 0 12px #4ECCA3" }} />
-              </div>
-              <div className="orbit-ring-2" style={{ position: "absolute", top: "50%", left: "50%", marginTop: -6, marginLeft: -6 }}>
-                <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#38b2ac", boxShadow: "0 0 12px #38b2ac" }} />
-              </div>
-              <div className="orbit-ring-3" style={{ position: "absolute", top: "50%", left: "50%", marginTop: -4, marginLeft: -4 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ECCA3", opacity: 0.7, boxShadow: "0 0 8px #4ECCA3" }} />
-              </div>
-              {/* Floating particles */}
-              {[[-90, -60, "1s"], [100, -50, "2.5s"], [-80, 90, "0.5s"], [95, 85, "3.5s"]].map(([x, y, delay], i) => (
-                <div key={i} className="float-particle" style={{ position: "absolute", top: "50%", left: "50%", width: 5, height: 5, borderRadius: "50%", background: "#4ECCA3", marginLeft: Number(x), marginTop: Number(y), animationDelay: String(delay) }} />
-              ))}
+            <div className="relative w-full max-w-[480px]">
+              {/* Ambient glow behind preview */}
+              <div style={{
+                position: "absolute", top: "10%", left: "10%", width: "80%", height: "80%",
+                borderRadius: "50%", background: "radial-gradient(circle, rgba(78,204,163,0.08) 0%, transparent 70%)",
+                pointerEvents: "none",
+              }} />
+              <img
+                src={staticAsset("hero-ui-preview.svg")}
+                alt="Kaleon courses dashboard preview"
+                className="relative w-full h-auto"
+                style={{ borderRadius: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.5)", border: "1px solid rgba(78,204,163,0.15)" }}
+              />
             </div>
           </div>
         </div>
@@ -242,7 +235,7 @@ export default function Landing() {
           >
             {[
               { icon: Building2, title: t("landing.featureCcProgramsTitle"), description: t("landing.featureCcProgramsDesc") },
-              { icon: Target, title: t("landing.featurePathwaysTitle"), description: t("landing.featurePathwaysDesc") },
+              { icon: Target, title: t("landing.featurePathwaysTitle"), description: t("landing.featurePathwaysDesc"), flagship: true },
               { icon: Search, title: t("landing.featureInternshipsTitle"), description: t("landing.featureInternshipsDesc") },
               { icon: Award, title: t("landing.featureScholarshipsTitle"), description: t("landing.featureScholarshipsDesc") },
               { icon: TrendingUp, title: t("landing.featureProgressTitle"), description: t("landing.featureProgressDesc") },
@@ -262,9 +255,24 @@ export default function Landing() {
                 }
                 animate="rest"
                 transition={{ duration: 0.12, ease: EASE_OUT }}
-                className="kaleon-card p-5 group"
-                style={{ borderRadius: 12 }}
+                className={`kaleon-card p-5 group ${feature.flagship ? "md:col-span-2 md:row-span-1" : ""}`}
+                style={{
+                  borderRadius: 12,
+                  ...(feature.flagship ? {
+                    borderColor: "rgba(78,204,163,0.5)",
+                    boxShadow: "0 0 30px rgba(78,204,163,0.12)",
+                    background: "linear-gradient(135deg, rgba(78,204,163,0.08), rgba(5,12,24,0.4))",
+                  } : {}),
+                }}
               >
+                {feature.flagship && (
+                  <span
+                    className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-2"
+                    style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
+                  >
+                    Flagship
+                  </span>
+                )}
                 <motion.div
                   variants={motionOn ? { rest: { scale: 1 }, hover: { scale: 1.06 } } : undefined}
                   transition={{ duration: 0.09, ease: EASE_OUT }}
@@ -329,10 +337,9 @@ export default function Landing() {
           {...revealProps}
           variants={fadeUp(6, DUR.base)}
           className="p-4"
-          style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: 10 }}
+          style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.2)", borderRadius: 10 }}
         >
-          <p className="text-xs pwc-font-mono uppercase tracking-widest font-bold mb-1" style={{ color: "#fbbf24" }}>{t("landing.disclaimerEyebrow")}</p>
-          <p className="text-sm leading-relaxed" style={{ color: "#92400e", filter: "brightness(2.5)" }}>
+          <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
             {t("landing.disclaimerBody")}
           </p>
         </motion.div>
