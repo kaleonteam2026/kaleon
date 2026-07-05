@@ -1,13 +1,11 @@
 import { cn } from "@/lib/utils"
 import { KaleonLoader } from "./kaleon-loader"
 
-function Spinner({ className, ...props }: React.ComponentProps<"span">) {
+function Spinner({ className, size }: { className?: string; size?: number }) {
   return (
     <KaleonLoader
-      role="status"
-      aria-label="Loading"
       className={cn("", className)}
-      {...(props as Record<string, unknown>)}
+      size={size}
     />
   )
 }
