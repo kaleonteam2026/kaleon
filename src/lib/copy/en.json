@@ -544,7 +544,7 @@
       "percentMatch": "{{score}}% match",
       "coursesTransferRatio": "{{transferable}}/{{total}} courses transfer",
       "igetcQualifies": "IGETC completion qualifies you for any UC or CSU with GE satisfied.",
-      "tapRowDetails": "— tap any row for details",
+      "tapRowDetails": "— click any row for details",
       "nextStepsHeader": "Next Steps to Strengthen Your Transfer Application",
       "aiAnalysisDisclaimer": "Analysis is AI-generated based on typical ASSIST.org articulation patterns. Always verify at <0>assist.org</0> and with your counselor.",
       "unitsLabel": "{{count}} units",

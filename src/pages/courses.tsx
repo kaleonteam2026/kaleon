@@ -21,7 +21,7 @@ import {
   transferProgressPercent, transferUnitsRemaining,
 } from "@/lib/course-progress";
 import { Plus, Trash2, ArrowRight, BookOpen, FlaskConical,
-  GraduationCap, ChevronDown, Upload, AlertTriangle,
+  GraduationCap, ChevronDown, Upload, AlertTriangle, Info, CheckCircle2,
 } from "lucide-react";
 import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { CatalogModal } from "@/components/courses/catalog-modal";
@@ -85,9 +85,13 @@ export default function Courses() {
   const [manualGrade, setManualGrade] = useState("");
   const [manualTerm, setManualTerm] = useState("");
 
+  // Profile info
+  const [communityCollege, setCommunityCollege] = useState<string>("");
+
   // Analysis state
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<TransferabilityResult | null>(null);
+  const [hasPathways, setHasPathways] = useState(false);
 
   const pid = parseInt(profileId);
   const getSignal = useRequestCleanup();
@@ -108,6 +112,8 @@ export default function Courses() {
         setCourses(storedCourses);
         setGpa(computeGpaSummary(storedCourses, profile?.currentGpa ?? undefined));
         setSchoolOptions(savedPathways as unknown[]);
+        setCommunityCollege(profile?.communityCollege ?? "");
+        setHasPathways(Array.isArray(savedPathways) && savedPathways.length > 0);
       }).catch(console.error).finally(() => setLoading(false));
       return;
     }
@@ -119,11 +125,16 @@ export default function Courses() {
       fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" })
         .then(r => r.ok ? r.json() : [])
         .catch(() => []),
+      fetch(`/api/profiles/${pid}`, { credentials: "include" })
+        .then(r => r.ok ? r.json() : {})
+        .catch(() => ({})),
     ])
-      .then(([c, g, pathways]: [Course[], GpaSummary, unknown[]]) => {
+      .then(([c, g, pathways, prof]: [Course[], GpaSummary, unknown[], Record<string, unknown>]) => {
         setCourses(c);
         setGpa(g);
         setSchoolOptions(pathways);
+        setCommunityCollege((prof?.communityCollege as string) ?? "");
+        setHasPathways(Array.isArray(pathways) && pathways.length > 0);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -305,6 +316,7 @@ export default function Courses() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          communityCollege: communityCollege,
           courses: courses.map(c => ({
             courseCode: c.courseCode,
             courseName: c.courseName,
@@ -369,7 +381,11 @@ export default function Courses() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.courses.title")}</h1>
           <p className="text-slate-600 text-sm mt-1">
-            Select courses directly from your college&apos;s catalog to ensure accurate course codes and unit counts.
+            {courses.length === 0
+              ? "Select courses directly from your college&apos;s catalog to ensure accurate course codes and unit counts."
+              : analysis
+                ? "Transfer analysis complete. Your personalized pathway is ready below."
+                : "Your courses are loaded. Run a transferability analysis to see how they apply toward UC/CSU requirements."}
           </p>
         </div>
         <div className="flex gap-2">
@@ -385,7 +401,8 @@ export default function Courses() {
             <Button
               onClick={() => setShowManualAdd(true)}
               variant="outline"
-              className="border-slate-300 text-slate-600 rounded-none"
+              className="border-slate-300 text-slate-600 rounded-none group relative"
+              title="Add a single course manually — use this to fix a missing or incorrectly imported course"
             >
               <Plus className="h-4 w-4 mr-2" /> Manual
             </Button>
@@ -394,7 +411,8 @@ export default function Courses() {
           <Button
             onClick={() => setShowReuploadConfirm(true)}
             variant="outline"
-            className="border-amber-300 text-amber-700 hover:bg-amber-50 rounded-none"
+            className="border-amber-300 text-amber-700 hover:bg-amber-50 rounded-none group relative"
+            title="Replace all courses by uploading a new transcript PDF — use this to start over"
           >
             <Upload className="h-4 w-4 mr-2" /> Re-upload Transcript
           </Button>
@@ -562,17 +580,65 @@ export default function Courses() {
           </div>
         )}
 
+        {/* Prompt to run analysis when courses loaded but not yet analyzed */}
+        {!analysis && courses.length > 0 && (
+          <div className="mb-5 flex items-center gap-2 px-1">
+            <div className="h-1.5 w-1.5 rounded-full bg-teal-400" />
+            <p className="text-xs text-teal-600 font-medium">
+              {courses.length} course{courses.length !== 1 ? "s" : ""} loaded.{" "}
+              <button onClick={runAnalysis} className="underline font-semibold hover:text-teal-800 ml-1">
+                Run transfer analysis
+              </button>{" "}
+              to see which credits transfer.
+            </p>
+          </div>
+        )}
+
         {/* Empty state */}
         {courses.length === 0 ? (
-          <div className="text-center py-16">
-            <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-600 font-medium mb-1">{t("pages.courses.empty")}</p>
-            <p className="text-slate-600 text-sm mb-6">
-              Browse your college&apos;s actual course catalog and add the courses you&apos;ve completed or are taking.
-            </p>
-            <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
-              <Plus className="h-4 w-4 mr-2" /> Browse Course Catalog
-            </Button>
+          <div className="py-12">
+            <div className="text-center mb-8">
+              <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <h2 className="text-xl font-bold text-slate-800 mb-1">Welcome to Your Courses</h2>
+              <p className="text-slate-500 text-sm max-w-md mx-auto">
+                Start by importing your transcript or browsing your college&apos;s catalog to add courses.
+              </p>
+            </div>
+            <div className="max-w-md mx-auto space-y-4">
+              <div className="flex items-start gap-4 p-4 bg-white border border-slate-200 rounded-xl">
+                <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold flex-shrink-0">1</div>
+                <div>
+                  <h3 className="font-semibold text-slate-800 text-sm">Import your transcript</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Upload a PDF of your unofficial transcript to auto-populate your courses.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 p-4 bg-white border border-slate-200 rounded-xl">
+                <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold flex-shrink-0">2</div>
+                <div>
+                  <h3 className="font-semibold text-slate-800 text-sm">Browse the course catalog</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Select courses directly from your college&apos;s catalog.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 p-4 bg-white border border-slate-200 rounded-xl">
+                <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold flex-shrink-0">3</div>
+                <div>
+                  <h3 className="font-semibold text-slate-800 text-sm">Analyze transferability</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">See which courses transfer to UC/CSU and what&apos;s still needed.</p>
+                </div>
+              </div>
+            </div>
+            <div className="text-center mt-8">
+              <Button onClick={openCatalog} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
+                <Plus className="h-4 w-4 mr-2" /> Browse Course Catalog
+              </Button>
+              <p className="text-xs text-slate-500 mt-3">
+                or{" "}
+                <button onClick={() => navigate(`/onboarding?reupload=${pid}`)} className="underline font-medium text-indigo-600 hover:text-indigo-800">
+                  upload your transcript
+                </button>{" "}
+                to get started faster
+              </p>
+            </div>
           </div>
         ) : (
           <>
@@ -619,33 +685,53 @@ export default function Courses() {
             </div>
 
             {/* Transferability Analysis CTA */}
-            <div className="mt-8 bg-gradient-to-br from-teal-50 to-slate-50 border border-teal-200 rounded-2xl p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="flex-1">
-                  <h2 className="text-base font-bold text-teal-900 flex items-center gap-2">
-                    <FlaskConical className="h-5 w-5 text-teal-500" />
-                    Check Course Transferability
-                  </h2>
-                  <p className="text-sm text-teal-700 mt-1">
-                    AI will cross-reference your {courses.length} course{courses.length !== 1 ? "s" : ""} against ASSIST.org articulation agreements to identify which California universities best match your coursework and show your IGETC progress.
-                  </p>
+            {analysis ? (
+              <div className="mt-8 bg-gradient-to-br from-indigo-50 to-slate-50 border border-indigo-200 rounded-2xl p-5">
+                <div className="flex items-start sm:items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-indigo-500 flex-shrink-0 mt-0.5 sm:mt-0" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold text-indigo-900">Analysis Complete</h3>
+                    <p className="text-xs text-indigo-600">Last analyzed: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                  <Button onClick={runAnalysis} disabled={analyzing} variant="outline" size="sm" className="border-indigo-300 text-indigo-700 hover:bg-indigo-100 rounded-none flex-shrink-0">
+                    {analyzing ? <><KaleonLoader size={14} /> Re-analyzing…</> : "Re-analyze"}
+                  </Button>
                 </div>
-                <Button onClick={runAnalysis} disabled={analyzing} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none flex-shrink-0 min-w-[180px]">
-                  {analyzing ? (
-                    <><KaleonLoader size={16} /> Analyzing…</>
-                  ) : (
-                    <><FlaskConical className="h-4 w-4 mr-2" /> Analyze My Courses</>
-                  )}
-                </Button>
               </div>
-              {analyzing && (
-                <div className="mt-4 bg-white/60 rounded-xl p-4 text-center">
-                  <KaleonLoader size={32} />
-                  <p className="text-sm font-medium text-teal-800">{t("pages.courses.checkingArticulation")}</p>
-                  <p className="text-xs text-teal-500 mt-1">{t("pages.courses.crossReferencing")}</p>
+            ) : (
+              <div className="mt-8 bg-gradient-to-br from-teal-50 to-slate-50 border border-teal-200 rounded-2xl p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="flex-1">
+                    <h2 className="text-base font-bold text-teal-900 flex items-center gap-2">
+                      <FlaskConical className="h-5 w-5 text-teal-500" />
+                      Check Course Transferability
+                    </h2>
+                    <p className="text-sm text-teal-700 mt-1">
+                      AI will cross-reference your {courses.length} course{courses.length !== 1 ? "s" : ""} against{" "}
+                      <span className="relative group cursor-help" title="An articulation agreement is a formal agreement between two colleges specifying which courses transfer between them. ASSIST.org is California's official repository of these agreements.">
+                        ASSIST.org articulation agreements
+                        <Info className="inline h-3 w-3 ml-0.5 text-teal-400 align-middle" />
+                      </span>{" "}
+                      to identify which California universities best match your coursework and show your IGETC progress.
+                    </p>
+                  </div>
+                  <Button onClick={runAnalysis} disabled={analyzing} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none flex-shrink-0 min-w-[180px]">
+                    {analyzing ? (
+                      <><KaleonLoader size={16} /> Analyzing…</>
+                    ) : (
+                      <><FlaskConical className="h-4 w-4 mr-2" /> Analyze My Courses</>
+                    )}
+                  </Button>
                 </div>
-              )}
-            </div>
+                {analyzing && (
+                  <div className="mt-4 bg-white/60 rounded-xl p-4 text-center">
+                    <KaleonLoader size={32} />
+                    <p className="text-sm font-medium text-teal-800">{t("pages.courses.checkingArticulation")}</p>
+                    <p className="text-xs text-teal-500 mt-1">{t("pages.courses.crossReferencing")}</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Results */}
             {analysis && (
@@ -675,9 +761,15 @@ export default function Courses() {
         )}
 
         <div className="text-center py-6">
-          <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
-            View My Pathway <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          {hasPathways ? (
+            <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-emerald-600 hover:bg-emerald-700 text-white border-2 border-emerald-600 rounded-none">
+              View Your Pathway <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button onClick={() => navigate(`/pathways/${pid}`)} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none">
+              Generate Your Pathway <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
         </div>
       </PageMotion>
     </AppPageLayout>

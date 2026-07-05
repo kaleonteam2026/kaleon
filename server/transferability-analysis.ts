@@ -117,7 +117,7 @@ function buildUserPrompt(input: TransferabilityAnalysisInput): string {
   const inProgress = courses.filter((c) => c.status === "in_progress");
 
   return [
-    "Analyze the following California community college student's courses for transferability.",
+    "Analyze these courses for transferability. Address the student directly using \"you\" and \"your\" throughout the summary (e.g. \"You have completed...\" not \"The student has completed...\").",
     "",
     `**Community College**: ${communityCollege || "Not specified"}`,
     `**Intended Major**: ${intendedMajor || "Undecided"}`,
@@ -367,6 +367,21 @@ function normalizeResult(raw: unknown): TransferabilityResultOutput {
   };
 }
 
+/**
+ * Post-process the analysis result to replace remaining third-person references
+ * with second-person address, as a safety net when the model ignores the prompt.
+ */
+function rewriteToSecondPerson(text: string): string {
+  return text
+    .replace(/\bThe student has\b/g, "You have")
+    .replace(/\bthe student has\b/g, "you have")
+    .replace(/\bStudent has\b/g, "You have")
+    .replace(/\bThe student's\b/g, "Your")
+    .replace(/\bthe student's\b/g, "your")
+    .replace(/\bThis student\b/g, "You")
+    .replace(/\bthis student\b/g, "you");
+}
+
 export async function generateTransferabilityAnalysis(
   input: TransferabilityAnalysisInput,
   apiKey: string,
@@ -378,5 +393,11 @@ export async function generateTransferabilityAnalysis(
   });
 
   const parsed = extractJsonPayload(content);
-  return normalizeResult(parsed);
+  const result = normalizeResult(parsed);
+
+  // Post-process the summary to ensure second-person framing
+  result.summary = rewriteToSecondPerson(result.summary);
+  result.recommendations = result.recommendations.map(rewriteToSecondPerson);
+
+  return result;
 }

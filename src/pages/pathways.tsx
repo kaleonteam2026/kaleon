@@ -417,7 +417,14 @@ export default function Pathways() {
             credentials: "include",
             timeout: 10_000,
           }, getSignal());
-          if (!pollR.ok) throw new Error("Polling failed");
+          if (!pollR.ok) {
+            const status = pollR.status;
+            const errBody = await pollR.text().catch(() => "").then(t => { try { return JSON.parse(t) as { error?: string }; } catch { return null; } });
+            if (status === 429) throw new Error("Rate limit reached. Please wait a moment and try again.");
+            if (status >= 500) throw new Error("Pathway generation encountered a server error. We're looking into it — please try again.");
+            if (status === 404) throw new Error("Generation job not found. It may have expired. Please generate again.");
+            throw new Error(errBody?.error ?? `Generation failed (${status}). Please try again.`);
+          }
           const job = await pollR.json() as { status: string; result?: unknown; error?: string };
           if (job.status === "completed") { result = job.result; break; }
           if (job.status === "failed") throw new Error(job.error ?? "Generation failed");
@@ -666,6 +673,14 @@ export default function Pathways() {
             <p className="text-slate-500 text-sm mt-1 max-w-md mx-auto">
               {t("pages.pathways.noPathwaysBody")}
             </p>
+            <Button
+              onClick={generatePathways}
+              disabled={generating}
+              className="mt-6 bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              {t("pages.pathways.generatePathways")}
+            </Button>
           </div>
         )}
 
