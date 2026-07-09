@@ -46,7 +46,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       localStorage.removeItem("kaleon_auth_returnTo");
-      // If user has a profile, go to their courses; otherwise go to onboarding
+      // If user has a profile, go to their courses; otherwise go to onboarding.
       (async () => {
         try {
           const profile = await getProfileForUser(user?.id ?? '');

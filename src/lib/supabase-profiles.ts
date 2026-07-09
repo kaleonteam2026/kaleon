@@ -44,11 +44,15 @@ export async function getProfileForUser(
     .from("profiles")
     .select("*")
     .eq("user_id", userId)
+    .limit(1)
     .single();
 
   if (error || !data) {
     if (error?.code !== "PGRST116") {
-      // PGRST116 = "no rows returned" — not an error
+      // PGRST116 = "no rows returned" — not an error.
+      // Any other error code (e.g. multiple rows) is unexpected — log it so
+      // we can investigate, but treat it the same as "no profile" so the
+      // user can be routed to /courses properly above.
       console.error("Error fetching profile:", error);
     }
     return null;

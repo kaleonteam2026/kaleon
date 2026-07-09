@@ -23,9 +23,6 @@ export async function sendOtpCode(
 
   // When signing in (no firstName), avoid auto-creating a user if the email doesn't exist.
   // When signing up (firstName provided), allow user creation.
-  // Some Supabase projects block OTP sign-in when "Allow new users to sign up" is
-  // disabled in the dashboard — as a workaround, try shouldCreateUser:true as a
-  // fallback so existing users can still receive codes.
   const shouldCreateUser = Boolean(options?.firstName?.trim());
 
   const { error } = await supabase.auth.signInWithOtp({
@@ -39,22 +36,24 @@ export async function sendOtpCode(
   if (error) {
     const msg = error.message.toLowerCase();
 
-    // Detect Supabase's "signups disabled" error.
-    // Retry once with shouldCreateUser: true as a workaround.
-    if (!shouldCreateUser && (msg.includes("signup") || msg.includes("not allowed") || msg.includes("otp"))) {
-      const { error: retryError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          data,
-        },
-      });
-      if (!retryError) return {};
+    if (shouldCreateUser) {
+      // Sign-up flow — the email might already be registered, or there could be
+      // a server configuration issue. Show the raw error so the user knows what
+      // went wrong.
+      return { error: error.message };
+    }
+
+    // Sign-in flow — the email must already have an account.
+    // Distinguish "user not found" from other transient failures.
+    if (
+      msg.includes("not found") ||
+      msg.includes("does not exist") ||
+      (msg.includes("signup") || msg.includes("not allowed")) ||
+      msg.includes("otp")
+    ) {
       return {
         error:
-          "Unable to send a verification code. This usually means the Supabase project has sign-ups disabled. " +
-          "Please ask the admin to enable \"Allow new users to sign up\" in the Supabase dashboard " +
-          "(Authentication > Settings > General), or try again later.",
+          "No account associated with this email. Please create an account instead.",
       };
     }
 
