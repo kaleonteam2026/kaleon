@@ -50,6 +50,9 @@ app.post("/api/profiles/:id/generate-pathways", async (req, res) => {
   res.status(202).json({ jobId });
 
   // Run generation in background
+  process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason);
+  });
   try {
     const result = await generatePathwaysWithDeepSeek(
       { profileId: Number(req.params.id), ...req.body },
