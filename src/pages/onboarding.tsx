@@ -180,7 +180,17 @@ export default function Onboarding() {
       setPendingTranscripts([]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
-      setScanError(msg || "Could not read one or more PDFs. You can skip scanning and add courses manually later.");
+      // Provide a more helpful message on mobile where pdfjs workers often fail
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile && (!msg || msg.includes("undefined") || msg.includes("worker") || msg.includes("Worker"))) {
+        setScanError(
+          "Your mobile browser couldn't process this PDF directly. " +
+          "You can either try a smaller or text-based PDF, or skip scanning " +
+          "and add your courses manually in the next step."
+        );
+      } else {
+        setScanError(msg || "Could not read one or more PDFs. You can skip scanning and add courses manually later.");
+      }
     } finally {
       setScanning(false);
     }

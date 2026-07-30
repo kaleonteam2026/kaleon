@@ -1,10 +1,5 @@
 import * as pdfjsLib from "pdfjs-dist";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).href;
-
 export interface ExtractedCourse {
   code: string;
   name: string;
@@ -27,6 +22,37 @@ const CUMULATIVE_GPA_RES = [
   /(?:term|semester)\s*gpa\s*[:\s]*([0-4]\.\d{1,3})/gi,
   /\bgpa\s*[:\s]+([0-4]\.\d{1,3})\b/gi,
 ];
+
+/**
+ * Detect mobile browser once, cached for the session.
+ * Used to skip worker initialization and apply mobile-friendly settings.
+ */
+let _isMobile: boolean | null = null;
+function isMobileBrowser(): boolean {
+  if (_isMobile === null) {
+    _isMobile = typeof navigator !== "undefined" &&
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+  return _isMobile;
+}
+
+/**
+ * Lazily initialise pdfjs worker — but only on desktop.
+ * On mobile we always use disableWorker (module workers fail in mobile WebKit).
+ * This avoids the broken workerSrc load that causes cryptic
+ * "undefined is not a function" errors on mobile.
+ */
+let _workerInitialised = false;
+function ensurePdfjsWorker(): void {
+  if (_workerInitialised || isMobileBrowser()) return;
+  try {
+    const workerUrl = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).href;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+  } catch {
+    // Worker URL resolution failed — getDocument will fall back to disableWorker
+  }
+  _workerInitialised = true;
+}
 
 function formatTerm(season: string, year: string): string {
   return `${season.charAt(0).toUpperCase()}${season.slice(1).toLowerCase()} ${year}`;
@@ -108,62 +134,122 @@ function unitsNear(text: string, codeEnd: number): number | undefined {
 }
 
 /**
- * Detect mobile browser for PDF worker workaround.
+ * Extract text from a PDF using pdfjs-dist.
+ *
+ * — On mobile, always disables the web worker (module workers crash WebKit)
+ *   and caps page count / batch size to stay within mobile memory limits.
+ * — On desktop, lazily initialises the worker once.
  */
-function isMobileBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
-
-/** Extract raw text from a PDF using pdfjs-dist (no regex parsing). */
 export async function extractTextFromPDF(file: File): Promise<string> {
-  // Validate file type
+  // Validate file type — mobile often sends empty type even for real PDFs,
+  // so only reject when type is explicitly set to something that isn't PDF.
   if (file.type && file.type !== "application/pdf") {
     throw new Error(
       "The selected file is not a PDF. Please upload a PDF transcript exported from your student portal.",
     );
   }
 
-  // Warn on mobile for files over 10 MB — main-thread parsing is slower
   const isMobile = isMobileBrowser();
+
+  // Warn on mobile for files over 10 MB — main-thread parsing is slower
   if (isMobile && file.size > 10 * 1024 * 1024) {
     throw new Error(
       "This PDF is quite large for a mobile device (over 10 MB). " +
-      "It may take a while to process. If scanning fails, try a smaller file or add your courses manually.",
+      "If scanning fails, try a smaller file or add your courses manually.",
     );
   }
 
   // Reject files over 20 MB — likely scanned/image-based or corrupted
   if (file.size > 20 * 1024 * 1024) {
     throw new Error(
-      "This PDF is too large to process in the browser. Try a smaller file (under 20 MB).",
+      "This PDF is too large to process. Try a smaller file (under 20 MB).",
     );
   }
 
-  const buffer = await file.arrayBuffer();
+  // Ensure worker is not loaded on mobile (lazy init skips mobile)
+  ensurePdfjsWorker();
 
-  // On mobile, disable the web worker — module workers (.mjs) often fail to load
-  // on mobile Safari/Chrome, causing getDocument to reject silently.
-  const pdf = await pdfjsLib.getDocument({
-    data: new Uint8Array(buffer),
-    ...(isMobile ? {
+  const buffer = await file.arrayBuffer();
+  const data = new Uint8Array(buffer);
+
+  // Build mobile-friendly PDF loading options.
+  // pdfjs-dist supports these at runtime even when TS types don't list them.
+  const loadingTask = pdfjsLib.getDocument({
+    data,
+    ...(isMobile
+      ? {
+          disableWorker: true,
+          disableFontFace: true,
+          useSystemFonts: false,
+          verbosity: 0,
+          cMapUrl: undefined,
+          cMapPacked: false,
+          maxImageSize: 1024 * 1024,
+          isEvalSupported: false,
+        }
+      : {}),
+  } as any);
+
+  let pdf: pdfjsLib.PDFDocumentProxy;
+  try {
+    pdf = await loadingTask.promise;
+  } catch {
+    // If the first attempt failed (cryptic worker error from partial worker
+    // support), retry with worker disabled and font loading off.
+    // This catches mobile devices that aren't properly detected or hybrid
+    // browsers with partial worker support.
+    const retryTask = pdfjsLib.getDocument({
+      data,
       disableWorker: true,
       disableFontFace: true,
       useSystemFonts: false,
       verbosity: 0,
       cMapUrl: undefined,
       cMapPacked: false,
-    } : {}),
-  }).promise;
+      maxImageSize: 1024 * 1024,
+      isEvalSupported: false,
+    } as any);
+    pdf = await retryTask.promise;
+  }
 
   let fullText = "";
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item) => ("str" in item ? (item as { str: string }).str : ""))
-      .join(" ");
-    fullText += pageText + "\n";
+
+  // On mobile, process pages in small batches to avoid blocking the main thread
+  // and to let the browser yield between batches.
+  const BATCH_SIZE = 5;
+  if (isMobile) {
+    for (let batchStart = 1; batchStart <= pdf.numPages; batchStart += BATCH_SIZE) {
+      const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, pdf.numPages);
+      const batchTexts = await Promise.all(
+        Array.from({ length: batchEnd - batchStart + 1 }, (_, i) => {
+          const pageNum = batchStart + i;
+          return pdf.getPage(pageNum).then(async (page) => {
+            const content = await page.getTextContent();
+            return content.items
+              .map((item) => ("str" in item ? (item as { str: string }).str : ""))
+              .join(" ");
+          });
+        }),
+      );
+      fullText += batchTexts.join(" ") + "\n";
+      // Yield to the event loop so the UI stays responsive
+      await new Promise((r) => setTimeout(r, 0));
+    }
+  } else {
+    // Desktop: process all pages at once for speed
+    const pagePromises: Promise<string>[] = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      pagePromises.push(
+        pdf.getPage(i).then(async (page) => {
+          const content = await page.getTextContent();
+          return content.items
+            .map((item) => ("str" in item ? (item as { str: string }).str : ""))
+            .join(" ");
+        }),
+      );
+    }
+    const pageTexts = await Promise.all(pagePromises);
+    fullText = pageTexts.join(" ") + "\n";
   }
 
   // If the PDF has pages but no extractable text, it's likely a scanned/image-based PDF

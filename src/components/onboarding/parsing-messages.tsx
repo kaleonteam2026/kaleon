@@ -129,24 +129,24 @@ export function ParsingMessages({ visible, title }: ParsingMessagesProps) {
   if (!visible) return null;
 
   return (
-    <div className="flex flex-col items-center gap-4 py-8 text-center">
+    <div className="flex flex-col items-center gap-3 py-6 sm:py-8 text-center">
       <KaleonLoader />
       <p className="text-sm font-medium" style={{ color: "#cbd5e1" }}>
         {title ?? "Scanning your transcript..."}
       </p>
       <div
-        className="px-4 py-3 rounded-lg"
+        className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg max-w-[90vw] sm:max-w-none"
         style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.12)" }}
       >
         <p
-          className="text-[10px] pwc-font-mono uppercase tracking-wider mb-2"
+          className="text-[10px] pwc-font-mono uppercase tracking-wider mb-1.5 sm:mb-2"
           style={{ color: "#475569" }}
         >
           This should take a minute, meanwhile:
         </p>
         <p
           key={msgIndex}
-          className="text-sm italic leading-relaxed min-h-[2lh]"
+          className="text-xs sm:text-sm italic leading-relaxed min-h-[1.5lh] sm:min-h-[2lh]"
           style={{ color: "#4ECCA3" }}
         >
           {PARSE_MESSAGES[msgIndex]}

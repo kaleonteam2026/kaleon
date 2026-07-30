@@ -62,6 +62,7 @@ export function FormSteps({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [consentProcessing, setConsentProcessing] = useState(false);
   const [consentOwnership, setConsentOwnership] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const consentGiven = consentProcessing && consentOwnership;
 
   return (
@@ -102,15 +103,19 @@ export function FormSteps({
                 onChange={e => {
                   const f = e.target.files?.[0];
                   if (!f) return;
-                  // Validate MIME type
+                  // Clear any previous file-level error
+                  setFileError(null);
+                  // Validate MIME type — mobile often omits the type entirely,
+                  // so only reject when it's explicitly set to a non-PDF value
                   if (f.type && f.type !== "application/pdf") {
-                    alert("The selected file is not a PDF. Please upload a PDF transcript.");
+                    // Feeds into the scan error slot instead of using alert()
+                    setFileError("The selected file is not a PDF. Please upload a PDF transcript.");
                     e.target.value = "";
                     return;
                   }
-                  // Check size (20 MB max, 10 MB warning on mobile)
+                  // Check size (20 MB max)
                   if (f.size > 20 * 1024 * 1024) {
-                    alert("This file is too large (over 20 MB). Please choose a smaller file.");
+                    setFileError("This file is too large (over 20 MB). Please choose a smaller file.");
                     e.target.value = "";
                     return;
                   }
@@ -206,7 +211,11 @@ export function FormSteps({
               {/* STAGE A — Empty queue: show upload dashed zone       */}
               {/* ------------------------------------------------- */}
               {pendingTranscripts.length === 0 && scanResults.length === 0 && (
-                <button
+                <>
+                  {fileError && (
+                    <p className="text-xs text-amber-400 mb-2">{fileError}</p>
+                  )}
+                  <button
                   type="button"
                   disabled={!consentGiven}
                   onClick={() => fileInputRef.current?.click()}
@@ -234,6 +243,7 @@ export function FormSteps({
                     <Upload className="h-3.5 w-3.5" aria-hidden /> Choose PDF File
                   </span>
                 </button>
+                </>
               )}
 
               {/* ------------------------------------------------- */}
