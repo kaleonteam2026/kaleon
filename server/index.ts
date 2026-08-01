@@ -2,6 +2,8 @@ import express from "express";
 import path from "path";
 import { generatePathwaysWithDeepSeek } from "./generate-pathways.ts";
 import { parseTranscriptWithAI } from "./transcript-parse.ts";
+import { extractPdfText } from "./extract-pdf-text.ts";
+import { logDeepSeekConfig } from "./deepseek-client.ts";
 import { generateGuidebookWithDeepSeek } from "./generate-guidebook.ts";
 import { generateRoadmapWithDeepSeek } from "./generate-roadmap.ts";
 import { generateTransferabilityAnalysis } from "./transferability-analysis.ts";
@@ -9,6 +11,36 @@ import { generateTransferabilityAnalysis } from "./transferability-analysis.ts";
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const DIST = path.resolve(import.meta.dirname, "..", "dist");
+
+// ── Binary PDF upload endpoint — must be before express.json() ──
+// Reads the raw request body as a Buffer, extracts text server-side.
+// The file is processed entirely in memory and discarded after extraction.
+app.post("/api/transcript/extract-pdf-text", async (req, res) => {
+  try {
+    const chunks: Buffer[] = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    if (buffer.length === 0) {
+      res.status(400).json({ error: "Empty request body — send a PDF file as binary." });
+      return;
+    }
+
+    if (buffer.length > 20 * 1024 * 1024) {
+      res.status(413).json({ error: "PDF is too large (over 20 MB)." });
+      return;
+    }
+
+    const text = await extractPdfText(buffer.buffer as ArrayBuffer);
+    res.json({ text });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "PDF text extraction failed";
+    console.error("[extract-pdf-text]", message, e);
+    res.status(500).json({ error: message });
+  }
+});
 
 app.use(express.json());
 
@@ -160,4 +192,5 @@ app.use((_req, res) => {
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Kaleon server running on http://0.0.0.0:${PORT}`);
+  logDeepSeekConfig();
 });

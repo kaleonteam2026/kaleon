@@ -121,8 +121,30 @@ export default function Onboarding() {
     const results: ScanResult[] = [];
     try {
       for (const pt of pendingTranscripts) {
-        // 1. Extract raw text client-side with pdfjs-dist
-        const text = await extractTextFromPDF(pt.file);
+        // 1. Extract raw text — on mobile the PDF is uploaded to the server
+        //    (pdfjs-dist workers crash in mobile WebKit); on desktop we use
+        //    the fast client-side path.
+        let text: string;
+        const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobileBrowser) {
+          // Upload the PDF to the server where pdfjs-dist works reliably,
+          // and get the extracted text back. The file is never stored.
+          const uploadRes = await fetchWithTimeout("/api/transcript/extract-pdf-text", {
+            method: "POST",
+            headers: { "Content-Type": "application/pdf" },
+            body: pt.file,
+            timeout: 180_000,
+          }, getSignal());
+          if (!uploadRes.ok) {
+            const errBody = await uploadRes.json().catch(() => null) as { error?: string } | null;
+            throw new Error(errBody?.error ?? `Server extraction failed (${uploadRes.status})`);
+          }
+          const { text: extracted } = await uploadRes.json() as { text: string };
+          text = extracted;
+        } else {
+          text = await extractTextFromPDF(pt.file);
+        }
+
         if (!text.trim()) {
           results.push({
             college: pt.college.trim() || pt.file.name.replace(/\.pdf$/i, ""),
@@ -180,17 +202,7 @@ export default function Onboarding() {
       setPendingTranscripts([]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
-      // Provide a more helpful message on mobile where pdfjs workers often fail
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobile && (!msg || msg.includes("undefined") || msg.includes("worker") || msg.includes("Worker"))) {
-        setScanError(
-          "Your mobile browser couldn't process this PDF directly. " +
-          "You can either try a smaller or text-based PDF, or skip scanning " +
-          "and add your courses manually in the next step."
-        );
-      } else {
-        setScanError(msg || "Could not read one or more PDFs. You can skip scanning and add courses manually later.");
-      }
+      setScanError(msg || "Could not read one or more PDFs. You can skip scanning and add courses manually later.");
     } finally {
       setScanning(false);
     }
