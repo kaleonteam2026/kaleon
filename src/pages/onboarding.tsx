@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, CheckCircle2, Upload, LogOut } from "lucide-react";
 import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
-import { fetchWithTimeout } from "@/lib/api/client";
+import { fetchWithTimeout, withTimeout } from "@/lib/api/client";
 import { useRequestCleanup } from "@/hooks/use-request-cleanup";
 import { appendDevCourses, saveDevCourses } from "@/lib/dev-courses";
 import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
@@ -50,6 +50,9 @@ export default function Onboarding() {
   const [pendingTranscripts, setPendingTranscripts] = useState<PendingTranscript[]>([]);
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  // Surfaces a real error message if submit() fails, instead of silently
+  // reverting the button ("nothing happens"). Cleared on each new submit.
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [hasMultipleColleges, setHasMultipleColleges] = useState<boolean | null>(null);
   const [skippingUpload, setSkippingUpload] = useState(false);
@@ -286,6 +289,13 @@ export default function Onboarding() {
 
   const submit = async () => {
     if (!user?.id) return;
+    console.log("[onboarding] submit start", {
+      userId: user.id,
+      authBypass: isAuthBypass(),
+      supabaseConfigured: isSupabaseConfigured,
+      reupload: isReupload,
+    });
+    setSubmitError(null);
     setSubmitting(true);
     try {
       const payload = {
@@ -351,9 +361,10 @@ export default function Onboarding() {
       // Real Supabase path: get-or-create profile + insert courses via Supabase direct
       if (isSupabaseConfigured && !isAuthBypass()) {
         // Check if profile already exists for this user
-        let sp = await getProfileForUser(user.id);
+        let sp = await withTimeout(getProfileForUser(user.id), 20_000, "onboarding.getProfile");
+        console.log("[onboarding] submit profile lookup", sp ? `profile_id=${sp.id}` : "no profile");
         if (sp) {
-          sp = await updateProfile(sp.id, {
+          sp = await withTimeout(updateProfile(sp.id, {
             fullName: payload.fullName,
             communityCollege: payload.communityCollege,
             intendedMajor: payload.intendedMajor,
@@ -363,9 +374,9 @@ export default function Onboarding() {
             financialSituation: payload.financialSituation,
             isFirstGen: payload.isFirstGen,
             completionPercent: payload.completionPercent,
-          });
+          }), 20_000, "onboarding.updateProfile");
         } else {
-          sp = await createProfile(user.id, {
+          sp = await withTimeout(createProfile(user.id, {
             fullName: payload.fullName,
             communityCollege: payload.communityCollege,
             intendedMajor: payload.intendedMajor,
@@ -375,27 +386,28 @@ export default function Onboarding() {
             financialSituation: payload.financialSituation,
             isFirstGen: payload.isFirstGen,
             completionPercent: payload.completionPercent,
-          });
+          }), 20_000, "onboarding.createProfile");
         }
         if (!sp?.id) throw new Error("Failed to create profile");
+        console.log("[onboarding] submit profile ready", `profile_id=${sp.id}`);
         createdProfileIdRef.current = sp.id;
 
         if (flattenedCourses.length > 0) {
           // If this is a re-upload, clear old courses and associated data first
           // so new ones fully replace the stale state
           if (isReupload) {
-            await deleteAllCoursesForProfile(sp.id);
-            await deleteAllSnapshots(sp.id);
-            await deleteAllPathwaysForProfile(sp.id);
-            await deleteAllPathwaySnapshotsForProfile(sp.id);
+            await withTimeout(deleteAllCoursesForProfile(sp.id), 20_000, "onboarding.deleteAllCoursesForProfile");
+            await withTimeout(deleteAllSnapshots(sp.id), 20_000, "onboarding.deleteAllSnapshots");
+            await withTimeout(deleteAllPathwaysForProfile(sp.id), 20_000, "onboarding.deleteAllPathwaysForProfile");
+            await withTimeout(deleteAllPathwaySnapshotsForProfile(sp.id), 20_000, "onboarding.deleteAllPathwaySnapshotsForProfile");
           }
-          await insertCourses(sp.id, user.id, flattenedCourses.map(c => ({
+          await withTimeout(insertCourses(sp.id, user.id, flattenedCourses.map(c => ({
             courseCode: c.code,
             courseName: c.name,
             units: c.units,
             term: c.term,
             status: "completed",
-          })));
+          }))), 20_000, "onboarding.insertCourses");
         }
 
         if (!user.firstName?.trim()) {
@@ -409,6 +421,7 @@ export default function Onboarding() {
       }
 
       // Legacy / mock path (non-Supabase or auth bypass)
+      console.warn("[onboarding] submit using LEGACY /api/profiles path — no Supabase configured in this bundle");
       const r = await fetch("/api/profiles", {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -474,7 +487,8 @@ export default function Onboarding() {
       }
       setPhase("celebration");
     } catch (e) {
-      console.error(e);
+      console.error("[onboarding] submit failed", e);
+      setSubmitError(e instanceof Error ? e.message : String(e));
       setSubmitting(false);
     } finally {
       setSubmitting(false);
@@ -585,6 +599,23 @@ export default function Onboarding() {
             />
           </div>
 
+          {/* Inline submit error — makes a failed "Start My Journey" visible
+              instead of silently reverting the button */}
+          {submitError && (
+            <div
+              role="alert"
+              className="mx-8 mb-4 px-4 py-3 text-sm"
+              style={{
+                color: "#fca5a5",
+                background: "rgba(239,68,68,0.08)",
+                border: "1px solid rgba(239,68,68,0.25)",
+                borderRadius: 8,
+              }}
+            >
+              {submitError}
+            </div>
+          )}
+
           {/* Footer buttons */}
           <div className="px-8 pb-8 pt-4 flex items-end justify-between gap-3" style={{ borderTop: "1px solid rgba(78,204,163,0.15)" }}>
             {step > 0 ? (
@@ -606,6 +637,7 @@ export default function Onboarding() {
               </Button>
             ) : (
               <Button
+                type="button"
                 onClick={() => void submit()}
                 disabled={submitting || !user?.id}
                 className="ml-auto border-0 hover:opacity-90 disabled:opacity-40"

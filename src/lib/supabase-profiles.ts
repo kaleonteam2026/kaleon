@@ -36,34 +36,50 @@ function rowToCourse(row: Record<string, unknown>): StoredCourse {
 /**
  * Fetch the single profile for a given auth user ID.
  * RLS ensures the user can only see their own profile.
+ *
+ * Uses `.limit(1)` (array) instead of `.single()`/`.maybeSingle()`: both of
+ * those treat "more than one row" as an error (PGRST116), which would make a
+ * duplicate-profile row look like "no profile" and cause a second insert to
+ * fail on the unique(user_id) constraint. With an array query we always see
+ * the truth: 0 rows = no profile, 1 row = the profile, N rows = duplicates
+ * (first wins, but logged loudly).
  */
 export async function getProfileForUser(
   userId: string,
 ): Promise<StudentProfile | null> {
+  console.log(`[supabase-profiles] getProfileForUser user_id=${userId}`);
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("user_id", userId)
-    .limit(1)
-    .single();
+    .limit(1);
 
-  if (error || !data) {
-    if (error?.code !== "PGRST116") {
-      // PGRST116 = "no rows returned" — not an error.
-      // Any other error code (e.g. multiple rows) is unexpected — log it so
-      // we can investigate, but treat it the same as "no profile" so the
-      // user can be routed to /courses properly above.
-      console.error("Error fetching profile:", error);
-    }
+  if (error) {
+    console.warn(
+      `[supabase-profiles] getProfileForUser query failed code=${error.code} message=${error.message} details=${error.details}`,
+    );
     return null;
   }
 
-  return rowToProfile(data as Record<string, unknown>);
+  const rows = (data ?? []) as Record<string, unknown>[];
+  if (rows.length === 0) {
+    console.log("[supabase-profiles] getProfileForUser → no profile row");
+    return null;
+  }
+  if (rows.length > 1) {
+    console.warn(
+      `[supabase-profiles] getProfileForUser → ${rows.length} duplicate profile rows for user_id=${userId}; using the first`,
+    );
+  } else {
+    console.log("[supabase-profiles] getProfileForUser → 1 row");
+  }
+  return rowToProfile(rows[0]);
 }
 
 /**
  * Create a new profile for the authenticated user.
- * Returns the created profile, or null on error.
+ * Throws a descriptive error (with the PostgREST code) on failure so callers
+ * can surface the real cause instead of silently proceeding with a null.
  */
 export async function createProfile(
   userId: string,
@@ -78,7 +94,7 @@ export async function createProfile(
     isFirstGen?: string;
     completionPercent?: number;
   },
-): Promise<StudentProfile | null> {
+): Promise<StudentProfile> {
   const { data: row, error } = await supabase
     .from("profiles")
     .insert({
@@ -97,15 +113,20 @@ export async function createProfile(
     .single();
 
   if (error) {
-    console.error("Error creating profile:", error);
-    return null;
+    console.error(
+      `[supabase-profiles] createProfile failed code=${error.code} message=${error.message} details=${error.details}`,
+    );
+    throw new Error(`Failed to create profile: ${error.message} (${error.code})`);
   }
 
+  console.log(`[supabase-profiles] createProfile → profile_id=${(row as { id?: unknown }).id ?? "?"} user_id=${userId}`);
   return rowToProfile(row as Record<string, unknown>);
 }
 
 /**
  * Update an existing profile.
+ * Throws a descriptive error (with the PostgREST code) on failure so callers
+ * can surface the real cause instead of silently proceeding with a null.
  */
 export async function updateProfile(
   profileId: number,
@@ -120,7 +141,7 @@ export async function updateProfile(
     isFirstGen: string;
     completionPercent: number;
   }>,
-): Promise<StudentProfile | null> {
+): Promise<StudentProfile> {
   const updates: Record<string, unknown> = {};
   if (data.fullName !== undefined) updates.full_name = data.fullName;
   if (data.communityCollege !== undefined) updates.community_college = data.communityCollege;
@@ -140,10 +161,13 @@ export async function updateProfile(
     .single();
 
   if (error) {
-    console.error("Error updating profile:", error);
-    return null;
+    console.error(
+      `[supabase-profiles] updateProfile failed profile_id=${profileId} code=${error.code} message=${error.message} details=${error.details}`,
+    );
+    throw new Error(`Failed to update profile: ${error.message} (${error.code})`);
   }
 
+  console.log(`[supabase-profiles] updateProfile → profile_id=${(row as { id?: unknown }).id ?? "?"}`);
   return rowToProfile(row as Record<string, unknown>);
 }
 
@@ -241,11 +265,15 @@ export async function insertCourses(
   const { data, error } = await supabase.from("courses").insert(rows).select();
 
   if (error) {
-    console.error("Error inserting courses:", error);
-    return [];
+    console.error(
+      `[supabase-profiles] insertCourses failed profile_id=${profileId} code=${error.code} message=${error.message} details=${error.details}`,
+    );
+    throw new Error(`Failed to insert courses: ${error.message} (${error.code})`);
   }
 
-  return (data ?? []).map((row) => rowToCourse(row as Record<string, unknown>));
+  const stored = (data ?? []).map((row) => rowToCourse(row as Record<string, unknown>));
+  console.log(`[supabase-profiles] insertCourses → ${stored.length} rows profile_id=${profileId}`);
+  return stored;
 }
 
 /**

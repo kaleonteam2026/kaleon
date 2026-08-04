@@ -56,17 +56,25 @@ export default function Courses() {
     try {
       // Delete all existing courses before navigating to the upload flow
       if (isSupabaseConfigured && !isAuthBypass()) {
-        await deleteAllCoursesForProfile(pid);
-        await deleteAllSnapshots(pid);
-        await deleteAllPathwaysForProfile(pid);
-        await deleteAllPathwaySnapshotsForProfile(pid);
+        console.log("[courses] re-upload clearing existing data for profile_id=", pid);
+        const okCourses = await deleteAllCoursesForProfile(pid);
+        const okSnapshots = await deleteAllSnapshots(pid);
+        const okPathways = await deleteAllPathwaysForProfile(pid);
+        const okPathwaySnapshots = await deleteAllPathwaySnapshotsForProfile(pid);
+        if (!okCourses || !okSnapshots || !okPathways || !okPathwaySnapshots) {
+          console.warn(
+            "[courses] re-upload: some deletes reported failure — old data may persist",
+            { okCourses, okSnapshots, okPathways, okPathwaySnapshots },
+          );
+        }
       } else {
         saveDevCourses(pid, []);
         // Also hit the mock API to clear its in-memory store
         fetch(`/api/profiles/${pid}/courses`, { method: "DELETE" }).catch(() => {});
       }
-    } catch {
+    } catch (err) {
       // Non-fatal — if delete fails, the re-upload will still replace courses
+      console.warn("[courses] re-upload: delete step threw — re-upload will still replace courses", err);
     }
     navigate(`/onboarding?reupload=${pid}`);
   };
@@ -185,22 +193,31 @@ export default function Courses() {
     detail: { grade?: string; status: string; term: string }
   ) => {
     if (isSupabaseConfigured && !isAuthBypass() && user?.id) {
-      const created = await insertCourses(pid, user.id, [{
-        courseCode: catalogCourse.courseCode,
-        courseName: catalogCourse.courseName,
-        units: catalogCourse.units,
-        grade: detail.grade,
-        status: detail.status,
-        term: detail.term || undefined,
-      }]);
-      if (created.length === 0) throw new Error(t("pages.courses.failedAddCourse"));
-      setCourses(prev => {
-        const updated = [...prev, created[0]];
-        setGpa(computeGpaSummary(updated));
-        return updated;
-      });
-      setAnalysis(null);
-      toast({ title: t("pages.courses.toastAdded", { code: catalogCourse.courseCode }) });
+      try {
+        const created = await insertCourses(pid, user.id, [{
+          courseCode: catalogCourse.courseCode,
+          courseName: catalogCourse.courseName,
+          units: catalogCourse.units,
+          grade: detail.grade,
+          status: detail.status,
+          term: detail.term || undefined,
+        }]);
+        if (created.length === 0) throw new Error(t("pages.courses.failedAddCourse"));
+        setCourses(prev => {
+          const updated = [...prev, created[0]];
+          setGpa(computeGpaSummary(updated));
+          return updated;
+        });
+        setAnalysis(null);
+        toast({ title: t("pages.courses.toastAdded", { code: catalogCourse.courseCode }) });
+      } catch (err) {
+        // insertCourses now throws descriptive errors (with PostgREST code).
+        // Surface the real message instead of an unhandled rejection.
+        toast({
+          title: err instanceof Error ? err.message : t("pages.courses.failedAddCourse"),
+          variant: "destructive",
+        });
+      }
       return;
     }
 
@@ -274,8 +291,11 @@ export default function Courses() {
         });
         toast({ title: t("pages.courses.toastAdded", { code }) });
       }
-    } catch {
-      toast({ title: "Failed to add course", variant: "destructive" });
+    } catch (err) {
+      toast({
+        title: err instanceof Error ? err.message : "Failed to add course",
+        variant: "destructive",
+      });
     }
 
     setManualCode("");
