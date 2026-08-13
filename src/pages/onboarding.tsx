@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, CheckCircle2, Upload, LogOut } from "lucide-react";
 import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
-import { fetchWithTimeout } from "@/lib/api/client";
+import { fetchWithTimeout, withTimeout } from "@/lib/api/client";
 import { useRequestCleanup } from "@/hooks/use-request-cleanup";
-import { appendDevCourses, deleteDevCompletedCoursesByCodes, saveDevCourses } from "@/lib/dev-courses";
+import { appendDevCourses, deleteDevCompletedCoursesByCodes } from "@/lib/dev-courses";
 import { deleteAllDevPathways } from "@/lib/dev-pathways";
 import { DEV_PROFILE_ID, deleteAllDevSemesterSnapshots, getDevSemesterSnapshots, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -52,6 +52,7 @@ export default function Onboarding() {
   const [pendingTranscripts, setPendingTranscripts] = useState<PendingTranscript[]>([]);
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [hasMultipleColleges, setHasMultipleColleges] = useState<boolean | null>(null);
   const [skippingUpload, setSkippingUpload] = useState(false);
@@ -91,7 +92,7 @@ export default function Onboarding() {
         .map((course) => (course.course_code ?? "").trim().toUpperCase())
         .filter((code) => code.length > 0);
     } else if (isSupabaseConfigured) {
-      const snapshot = await getLatestSnapshot(profileId);
+      const snapshot = await withTimeout(getLatestSnapshot(profileId), 20_000, "onboarding.getLatestSnapshot");
       previousCodes = (snapshot?.courses ?? [])
         .map((course) => (course.course_code ?? "").trim().toUpperCase())
         .filter((code) => code.length > 0);
@@ -149,8 +150,27 @@ export default function Onboarding() {
     const results: ScanResult[] = [];
     try {
       for (const pt of pendingTranscripts) {
-        // 1. Extract raw text client-side with pdfjs-dist
-        const text = await extractTextFromPDF(pt.file);
+        // On mobile browsers, extract PDF text server-side because pdfjs workers
+        // are unreliable there. Desktop keeps the faster client-side path.
+        let text: string;
+        const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobileBrowser) {
+          const uploadRes = await fetchWithTimeout("/api/transcript/extract-pdf-text", {
+            method: "POST",
+            headers: { "Content-Type": "application/pdf" },
+            body: pt.file,
+            timeout: 180_000,
+          }, getSignal());
+          if (!uploadRes.ok) {
+            const errBody = await uploadRes.json().catch(() => null) as { error?: string } | null;
+            throw new Error(errBody?.error ?? `Server extraction failed (${uploadRes.status})`);
+          }
+          const { text: extracted } = await uploadRes.json() as { text: string };
+          text = extracted;
+        } else {
+          text = await extractTextFromPDF(pt.file);
+        }
+
         if (!text.trim()) {
           results.push({
             college: pt.college.trim() || pt.file.name.replace(/\.pdf$/i, ""),
@@ -197,7 +217,6 @@ export default function Onboarding() {
             latestGpa: fallback.latestGpa ?? null,
             detectedMajor: fallback.detectedMajor ?? null,
           };
-
         }
 
         // Determine college name: use per-course college if detected, else the file's college
@@ -222,7 +241,6 @@ export default function Onboarding() {
       setPendingTranscripts([]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
-      // Provide a more helpful message on mobile where pdfjs workers often fail
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       if (isMobile && (!msg || msg.includes("undefined") || msg.includes("worker") || msg.includes("Worker"))) {
         setScanError(
@@ -325,6 +343,7 @@ export default function Onboarding() {
   const submit = async () => {
     if (!user?.id || submitLockRef.current) return;
     submitLockRef.current = true;
+    setSubmitError(null);
     setSubmitting(true);
     try {
       if (!skippingUpload && scanResults.length > 0 && flattenedCourses.length === 0) {
@@ -409,10 +428,10 @@ export default function Onboarding() {
       if (isSupabaseConfigured && !isAuthBypass()) {
         const reuploadProfileId = reuploadProfileIdRef.current;
         let sp = reuploadProfileId
-          ? await getProfileById(reuploadProfileId)
-          : await getProfileForUser(user.id);
+          ? await withTimeout(getProfileById(reuploadProfileId), 20_000, "onboarding.getProfileById")
+          : await withTimeout(getProfileForUser(user.id), 20_000, "onboarding.getProfileForUser");
         if (sp) {
-          sp = await updateProfile(sp.id, {
+          sp = await withTimeout(updateProfile(sp.id, {
             fullName: payload.fullName,
             communityCollege: payload.communityCollege,
             intendedMajor: payload.intendedMajor,
@@ -422,9 +441,9 @@ export default function Onboarding() {
             financialSituation: payload.financialSituation,
             isFirstGen: payload.isFirstGen,
             completionPercent: payload.completionPercent,
-          });
+          }), 20_000, "onboarding.updateProfile");
         } else {
-          sp = await createProfile(user.id, {
+          sp = await withTimeout(createProfile(user.id, {
             fullName: payload.fullName,
             communityCollege: payload.communityCollege,
             intendedMajor: payload.intendedMajor,
@@ -434,27 +453,37 @@ export default function Onboarding() {
             financialSituation: payload.financialSituation,
             isFirstGen: payload.isFirstGen,
             completionPercent: payload.completionPercent,
-          });
+          }), 20_000, "onboarding.createProfile");
         }
         if (!sp?.id) throw new Error("Failed to create profile");
         createdProfileIdRef.current = sp.id;
 
         if (flattenedCourses.length > 0) {
           const replaceCodes = await transcriptReplacementCodes(sp.id);
-          await deleteCompletedCoursesForProfileByCodes(sp.id, replaceCodes);
-          if (isReupload) {
-            await deleteAllSnapshots(sp.id);
-            await deleteAllPathwaysForProfile(sp.id);
-            await deleteAllPathwaySnapshotsForProfile(sp.id);
+          const deletedCompleted = await withTimeout(
+            deleteCompletedCoursesForProfileByCodes(sp.id, replaceCodes),
+            20_000,
+            "onboarding.deleteCompletedCoursesForProfileByCodes",
+          );
+          if (!deletedCompleted) {
+            throw new Error("Failed to replace transcript-derived completed courses");
           }
-          await insertCourses(sp.id, user.id, flattenedCourses.map(c => ({
+          if (isReupload) {
+            const snapshotsDeleted = await withTimeout(deleteAllSnapshots(sp.id), 20_000, "onboarding.deleteAllSnapshots");
+            if (!snapshotsDeleted) throw new Error("Failed to clear stale semester snapshots");
+            const pathwaysDeleted = await withTimeout(deleteAllPathwaysForProfile(sp.id), 20_000, "onboarding.deleteAllPathwaysForProfile");
+            if (!pathwaysDeleted) throw new Error("Failed to clear stale pathways");
+            const pathwaySnapshotsDeleted = await withTimeout(deleteAllPathwaySnapshotsForProfile(sp.id), 20_000, "onboarding.deleteAllPathwaySnapshotsForProfile");
+            if (!pathwaySnapshotsDeleted) throw new Error("Failed to clear stale pathway snapshots");
+          }
+          await withTimeout(insertCourses(sp.id, user.id, flattenedCourses.map(c => ({
             courseCode: c.code,
             courseName: c.name,
             units: c.units,
             grade: c.grade,
             term: c.term,
             status: c.status ?? (typeof c.units === "number" && c.units > 0 ? "completed" : "planned"),
-          })));
+          }))), 20_000, "onboarding.insertCourses");
         }
 
         const snapshotInputs = scanResults
@@ -490,12 +519,18 @@ export default function Onboarding() {
           .filter((value): value is NonNullable<typeof value> => value !== null);
 
         if (snapshotInputs.length > 0) {
-          await Promise.all(snapshotInputs.map((input) => createSnapshot(input)));
+          await withTimeout(
+            Promise.all(snapshotInputs.map((input) => createSnapshot(input))),
+            20_000,
+            "onboarding.createSnapshots",
+          );
         }
 
         if (!user.firstName?.trim()) {
           const first = payload.fullName.trim().split(/\s+/)[0];
-          if (first) await updateProfileName(first);
+          if (first) {
+            await withTimeout(updateProfileName(first), 20_000, "onboarding.updateProfileName");
+          }
         }
 
         setPhase("calculating");
@@ -595,8 +630,8 @@ export default function Onboarding() {
       }
       setPhase("celebration");
     } catch (e) {
-      console.error(e);
-      setSubmitting(false);
+      console.error("[onboarding] submit failed", e);
+      setSubmitError(e instanceof Error ? e.message : String(e));
     } finally {
       submitLockRef.current = false;
       setSubmitting(false);
@@ -707,6 +742,21 @@ export default function Onboarding() {
             />
           </div>
 
+          {submitError && (
+            <div
+              role="alert"
+              className="mx-8 mb-4 px-4 py-3 text-sm"
+              style={{
+                color: "#fca5a5",
+                background: "rgba(239,68,68,0.08)",
+                border: "1px solid rgba(239,68,68,0.25)",
+                borderRadius: 8,
+              }}
+            >
+              {submitError}
+            </div>
+          )}
+
           {/* Footer buttons */}
           <div className="px-8 pb-8 pt-4 flex items-end justify-between gap-3" style={{ borderTop: "1px solid rgba(78,204,163,0.15)" }}>
             {step > 0 ? (
@@ -728,6 +778,7 @@ export default function Onboarding() {
               </Button>
             ) : (
               <Button
+                type="button"
                 onClick={() => void submit()}
                 disabled={submitting || !user?.id}
                 className="ml-auto border-0 hover:opacity-90 disabled:opacity-40"

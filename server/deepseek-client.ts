@@ -25,6 +25,17 @@ export function getDeepSeekModelWithOverride(model?: string): string {
   return model ?? process.env.DEEPSEEK_MODEL ?? DEFAULT_MODEL;
 }
 
+/**
+ * Print the effective DeepSeek configuration at startup so deployed logs
+ * show which base URL / model / thinking mode the running server is using.
+ * Call once during server boot.
+ */
+export function logDeepSeekConfig(): void {
+  const baseUrl = process.env.DEEPSEEK_BASE_URL ?? DEFAULT_BASE_URL;
+  const model = getDeepSeekModel();
+  console.log(`[deepseek] base_url=${baseUrl} model=${model} thinking=disabled`);
+}
+
 export interface DeepSeekChatOptions {
   system: string;
   user: string;
@@ -44,7 +55,7 @@ export async function deepSeekChat({
   model,
 }: DeepSeekChatOptions): Promise<string> {
   const client = getDeepSeekClientWithBaseUrl(apiKey, baseUrl);
-  const resolvedModel = model ?? getDeepSeekModel();
+  const resolvedModel = getDeepSeekModelWithOverride(model);
 
   const completion = await client.chat.completions.create(
     {
@@ -55,8 +66,17 @@ export async function deepSeekChat({
       model: resolvedModel,
       temperature: 0.1,
       response_format: responseFormat,
+      // Explicitly disable thinking mode. DeepSeek V4 enables it by default,
+      // which sends all output tokens to `reasoning_content` and leaves
+      // `content` empty — breaking these stateless single-turn calls.
+      //
+      // `thinking` is a DeepSeek-specific extension the OpenAI SDK types
+      // don't know about, so cast through an intersection.
+      ...({
+        thinking: { type: "disabled" },
+      } as Record<string, unknown>),
     },
-    { timeout: 180000 }, // 3 minutes — avoids socket hangup on slow DeepSeek responses
+    { timeout: 180000 },
   );
 
   const content = completion.choices[0]?.message?.content;

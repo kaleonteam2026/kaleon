@@ -15,6 +15,32 @@ export class TimeoutError extends Error {
   }
 }
 
+/**
+ * Race a promise against a wall-clock timeout. Rejects with `TimeoutError`
+ * after `ms` if the promise hasn't settled, ignoring a late result. This is a
+ * UI-level guard for promises that can't be aborted (e.g. supabase-js data
+ * calls — they don't take an AbortController).
+ */
+export async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => {
+          reject(new TimeoutError(`${label} timed out after ${ms}ms`));
+        }, ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has("Content-Type")) {
