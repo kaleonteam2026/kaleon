@@ -1,4 +1,4 @@
-import { GRADUATION_UNITS } from "./course-progress";
+import { GRADUATION_UNITS } from "./course-progress.ts";
 
 export interface PathwayGenerationInput {
   profileId: number;
