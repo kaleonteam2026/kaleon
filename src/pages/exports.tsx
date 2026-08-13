@@ -140,7 +140,7 @@ function ExportGrid({
                   ) : isDone ? (
                     <><CheckCircle2 className="h-4 w-4" /> Generate again</>
                   ) : (
-                    <><Download className="h-4 w-4" /> Generate &amp; download</>
+                    <><Download className="h-4 w-4" /> Generate and download</>
                   )}
                 </Button>
               </CardContent>

@@ -80,15 +80,19 @@ export async function parseTranscriptWithAI(
     detectedMajor?: string | null;
   };
 
-  // Validate and shape the result.
-  // Exclude courses with 0 or undefined units — these are failed/withdrawn courses
-  // that have 0.00 in the "Earned" column on the transcript.
+  // Validate and shape the result. Preserve recognizable courses even when the
+  // parser cannot confidently recover earned units so downstream pages still
+  // have real course records to work from.
   const courses = (parsed.courses ?? [])
-    .filter(c => typeof c.units === "number" && c.units > 0)
+    .filter((c) => {
+      const hasCode = typeof c.code === "string" && c.code.trim().length > 0;
+      const hasName = typeof c.name === "string" && c.name.trim().length > 0;
+      return (hasCode || hasName) && c.units !== 0;
+    })
     .map(c => ({
-      code: c.code ?? "UNKNOWN",
-      name: c.name ?? c.code ?? "Unknown Course",
-      units: c.units,
+      code: c.code?.trim() || c.name?.trim() || "UNKNOWN",
+      name: c.name?.trim() || c.code?.trim() || "Unknown Course",
+      units: typeof c.units === "number" && c.units > 0 ? c.units : undefined,
       term: typeof c.term === "string" && c.term.trim().length > 0 ? c.term.trim() : undefined,
       college: typeof c.college === "string" && c.college.trim().length > 0 ? c.college.trim() : undefined,
     }));

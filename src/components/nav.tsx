@@ -12,12 +12,13 @@ import { useFocusTrap } from "@/hooks/use-focus-trap";
 import NotificationBell from "@/components/notification-bell";
 import { KALEON_LOGO_SRC, NAV_LOGO_SIZE_PX } from "@/lib/brand";
 import { t } from "@/lib/copy";
+import { displayName } from "@/lib/display-name";
 import { buildProfileNavItems, type NavIconSrc, type NavItem } from "@/lib/nav-links";
 import { getStoredProfileId, storeProfileId } from "@/lib/profile-storage";
 
 export { storeProfileId } from "@/lib/profile-storage";
 
-const NAV_FONT_CLASS = "pwc-font-mono uppercase tracking-wider font-bold";
+const NAV_FONT_CLASS = "pwc-font-mono font-bold uppercase tracking-wider";
 const NAV_LINK_CLASS = `text-xs ${NAV_FONT_CLASS}`;
 
 const NAV_ICON_DIM = { sm: 16, md: 22, lg: 28 } as const;
@@ -100,6 +101,7 @@ export default function Nav({ profileId }: Props) {
 
   const profileLinks: NavItem[] = resolvedId ? buildProfileNavItems(resolvedId) : [];
   const allLinks = profileLinks;
+  const userLabel = displayName(user, null, t("common.student"));
 
   if (!isAuthenticated) return null;
 
@@ -111,7 +113,7 @@ export default function Nav({ profileId }: Props) {
   const bottomTabs: NavItem[] = profileLinks;
 
   const Brand = (
-    <div className="flex items-center gap-2 font-bold text-lg tracking-tight uppercase">
+    <div className="flex items-center gap-2 text-lg font-bold tracking-tight uppercase">
       <img
         src={KALEON_LOGO_SRC}
         alt="Logo"
@@ -135,7 +137,7 @@ export default function Nav({ profileId }: Props) {
       {/* Skip link */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:border-2 focus:outline-none focus:text-sm"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[100] focus:border-2 focus:px-4 focus:py-2 focus:text-sm focus:outline-none"
         style={{ background: "#4ECCA3", color: "#050c18", borderColor: "#4ECCA3" }}
       >
         {t("common.skipToMain")}
@@ -165,7 +167,7 @@ export default function Nav({ profileId }: Props) {
                   key={link.href}
                   link={link}
                   className={cn(
-                    "flex items-center gap-1.5 px-2 lg:px-3 py-1.5 whitespace-nowrap",
+                    "flex items-center gap-1.5 whitespace-nowrap px-2 lg:px-3 py-1.5",
                     NAV_LINK_CLASS,
                   )}
                 >
@@ -181,7 +183,7 @@ export default function Nav({ profileId }: Props) {
                 aria-label={link.label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-1.5 px-2 lg:px-3 py-1.5 transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-1",
+                  "flex items-center gap-1.5 whitespace-nowrap px-2 lg:px-3 py-1.5 transition-all focus:outline-none focus:ring-2 focus:ring-offset-1",
                   NAV_LINK_CLASS,
                   "focus:ring-[#4ECCA3]",
                 )}
@@ -202,7 +204,7 @@ export default function Nav({ profileId }: Props) {
         <div className="flex items-center gap-3">
           {resolvedId && <NotificationBell profileId={resolvedId} />}
           <span className="text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>
-            {user?.firstName ?? user?.email ?? t("common.student")}
+            {userLabel}
           </span>
           <button
             onClick={logout}
@@ -249,11 +251,11 @@ export default function Nav({ profileId }: Props) {
           aria-label={t("common.navMenu")}
           tabIndex={-1}
           className="md:hidden fixed inset-0 z-50 focus:outline-none"
-          style={{ background: "#070d1a" }}
+          style={{ background: "#050c18" }}
         >
           <div className="flex flex-col h-full overflow-y-auto">
-            <div className="h-14 px-4 flex items-center justify-between flex-shrink-0" style={{ borderBottom: "1px solid rgba(78,204,163,0.15)" }}>
-              <span className="text-xs pwc-font-mono font-bold uppercase tracking-widest" style={{ color: "#4ECCA3" }}>{t("common.menu")}</span>
+            <div className="h-14 px-4 flex items-center justify-between flex-shrink-0" style={{ borderBottom: "1px solid var(--app-border-subtle)" }}>
+              <span className={NAV_LINK_CLASS} style={{ color: "#4ECCA3" }}>{t("common.menu")}</span>
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label={t("common.close")}
@@ -264,7 +266,7 @@ export default function Nav({ profileId }: Props) {
               </button>
             </div>
             <div className="p-4 flex-1">
-              <p className="text-xs pwc-font-mono font-bold uppercase tracking-widest mb-3 px-1" style={{ color: "#4ECCA3", opacity: 0.6 }}>{t("common.navigation")}</p>
+              <p className="mb-3 px-1 text-xs pwc-font-mono font-bold uppercase tracking-wider" style={{ color: "#4ECCA3", opacity: 0.72 }}>{t("common.navigation")}</p>
               {allLinks.map((link) => {
                 const active = !link.locked && isActive(link.href);
                 const row = (
@@ -283,7 +285,7 @@ export default function Nav({ profileId }: Props) {
                       key={link.href}
                       link={link}
                       className={cn(
-                        "flex items-center justify-between px-4 py-3.5 mb-1 min-h-[44px]",
+                        "mb-1 flex min-h-[44px] items-center justify-between rounded-lg px-4 py-3.5",
                         NAV_LINK_CLASS,
                       )}
                     >
@@ -298,14 +300,13 @@ export default function Nav({ profileId }: Props) {
                     onClick={() => setMobileOpen(false)}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center justify-between px-4 py-3.5 mb-1 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#4ECCA3] transition-all",
+                      "mb-1 flex min-h-[44px] items-center justify-between rounded-lg px-4 py-3.5 transition-all focus:outline-none focus:ring-2 focus:ring-[#4ECCA3]",
                       NAV_LINK_CLASS,
                     )}
                     style={{
-                      borderRadius: 8,
-                      border: active ? "1px solid rgba(78,204,163,0.3)" : "1px solid transparent",
+                      border: active ? "1px solid rgba(78,204,163,0.2)" : "1px solid transparent",
                       background: active ? "rgba(78,204,163,0.1)" : "transparent",
-                      color: active ? "#4ECCA3" : "#94a3b8",
+                      color: active ? "#e2e8f0" : "#94a3b8",
                     }}
                   >
                     {row}
@@ -313,15 +314,15 @@ export default function Nav({ profileId }: Props) {
                 );
               })}
             </div>
-            <div className="p-4 space-y-3" style={{ borderTop: "1px solid rgba(78,204,163,0.1)" }}>
+            <div className="space-y-3 p-4" style={{ borderTop: "1px solid var(--app-border-subtle)" }}>
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs pwc-font-mono uppercase truncate" style={{ color: "#64748b" }}>{user?.firstName ?? user?.email ?? t("common.student")}</span>
+                <span className="truncate text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>{userLabel}</span>
               </div>
               <button
                 onClick={logout}
-                className="w-full flex items-center justify-center gap-2 text-xs pwc-font-mono uppercase px-3 py-2 min-h-[44px] transition-all"
-                style={{ border: "1px solid rgba(78,204,163,0.3)", borderRadius: 8, color: "#4ECCA3", background: "transparent" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(78,204,163,0.1)"; }}
+                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm transition-all"
+                style={{ border: "1px solid rgba(78,204,163,0.2)", color: "#e2e8f0", background: "transparent" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(78,204,163,0.08)"; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
               >
                 <LogOut className="h-4 w-4" aria-hidden="true" />{t("common.signOut")}
@@ -335,7 +336,7 @@ export default function Nav({ profileId }: Props) {
       <nav
         aria-label={t("common.quickNav")}
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex"
-        style={{ background: "rgba(5,12,24,0.97)", borderTop: "1px solid rgba(78,204,163,0.15)" }}
+        style={{ background: "rgba(5, 12, 24, 0.98)", borderTop: "1px solid var(--app-border-subtle)" }}
       >
         {bottomTabs.map((tab) => {
           const active = !tab.locked && isActive(tab.href);
@@ -357,7 +358,7 @@ export default function Nav({ profileId }: Props) {
                 <NavItemIcon iconSrc={tab.iconSrc} icon={tab.icon} active={active} size="sm" />
                 {tab.locked && <Lock className="h-2.5 w-2.5 opacity-70" aria-hidden />}
               </span>
-              <span className={cn("text-[10px] relative", NAV_FONT_CLASS)}>{tab.label}</span>
+                <span className={cn("relative text-[10px]", NAV_FONT_CLASS)}>{tab.label}</span>
             </>
           );
           if (tab.locked) {
@@ -368,7 +369,7 @@ export default function Nav({ profileId }: Props) {
                 aria-label={`${tab.label} — ${t("nav.scholarshipsLocked")}`}
                 aria-disabled="true"
                 className="relative flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[56px] py-2 px-1"
-                style={{ borderRight: "1px solid rgba(78,204,163,0.08)", ...LOCKED_NAV_STYLE }}
+                style={{ borderRight: "1px solid rgba(154, 172, 195, 0.08)", ...LOCKED_NAV_STYLE }}
               >
                 {content}
               </span>
@@ -384,7 +385,7 @@ export default function Nav({ profileId }: Props) {
               className={cn(
                 "relative flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[56px] py-2 px-1 focus:outline-none transition-colors",
               )}
-              style={{ borderRight: "1px solid rgba(78,204,163,0.08)", color: active ? "#4ECCA3" : "#475569" }}
+              style={{ borderRight: "1px solid rgba(78, 204, 163, 0.08)", color: active ? "#e2e8f0" : "#94a3b8" }}
             >
               {content}
             </Link>

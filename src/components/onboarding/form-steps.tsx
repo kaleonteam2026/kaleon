@@ -83,13 +83,10 @@ export function FormSteps({
 
             {/* Transcript Upload */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="mb-3 flex items-center gap-2">
                 <Upload className="h-4 w-4" style={{ color: "#4ECCA3" }} aria-hidden />
                 <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
                   Upload your transcript
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded" style={{ background: "rgba(78,204,163,0.12)", color: "#4ECCA3" }}>
-                  Recommended
                 </span>
               </div>
 
@@ -146,7 +143,7 @@ export function FormSteps({
                     className="text-xs leading-relaxed cursor-pointer select-none"
                     style={{ color: "#cbd5e1" }}
                   >
-                    I understand that Kaleon will process my transcript information to generate academic planning recommendations.
+                    I agree to let Kaleon use my transcript to build my academic plan.
                   </label>
                 </div>
                 <div className="flex items-start gap-2.5">
@@ -169,15 +166,15 @@ export function FormSteps({
                     className="text-xs leading-relaxed cursor-pointer select-none"
                     style={{ color: "#cbd5e1" }}
                   >
-                    I confirm that the transcript I am uploading belongs to me or that I am authorized to provide it.
+                    I confirm this transcript is mine or I have permission to upload it.
                   </label>
                 </div>
               </div>
 
               {/* Multi-college question — ask if the transcript might have courses from multiple schools */}
               <div className="mb-3 p-3 rounded-xl" style={{ background: "rgba(78,204,163,0.05)", border: "1px solid rgba(78,204,163,0.15)" }}>
-                <p className="text-xs font-medium mb-2" style={{ color: "#cbd5e1" }}>
-                  Does this transcript include courses from multiple colleges?
+                <p className="mb-2 text-xs font-medium" style={{ color: "#cbd5e1" }}>
+                  Does this transcript include courses from more than one college?
                 </p>
                 <div className="flex gap-2">
                   {[true, false].map((val) => (
@@ -201,7 +198,7 @@ export function FormSteps({
                   <div className="mt-2 flex items-start gap-2 p-2.5 rounded-lg" style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.15)" }}>
                     <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "#4ECCA3" }} aria-hidden />
                     <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
-                      Some districts (like Los Rios) issue a single combined transcript. Select the primary college below — our AI will detect courses from all listed institutions.
+                      Some districts, like Los Rios, use one combined transcript. Choose the main college below and Kaleon will still look for courses from the others.
                     </p>
                   </div>
                 )}
@@ -258,7 +255,7 @@ export function FormSteps({
                       style={{ background: "rgba(5,12,24,0.5)", border: "1px solid rgba(78,204,163,0.2)" }}
                     >
                       <FileText className="h-4 w-4 shrink-0" style={{ color: "#4ECCA3" }} aria-hidden />
-                      <span className="text-xs font-medium truncate min-w-0 shrink-0" style={{ color: "#e2e8f0", maxWidth: 120 }}>
+                      <span className="min-w-0 shrink truncate text-xs font-medium" style={{ color: "#e2e8f0", maxWidth: 180 }}>
                         {pt.file.name}
                       </span>
                       <div className="flex-1 min-w-0">
@@ -344,16 +341,24 @@ export function FormSteps({
                           {sr.college}
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-3 text-xs" style={{ color: "#94a3b8" }}>
-                        {sr.latestGpa != null && (
-                          <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>GPA</span>: {sr.latestGpa.toFixed(2)}</span>
-                        )}
-                        <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>Total Units</span>: {sr.totalUnits}</span>
-                        <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>Courses</span>: {sr.courses.length}</span>
-                      </div>
-                      <p className="text-xs mt-1.5" style={{ color: "#64748b" }}>
-                        View and edit full course details in the next step.
-                      </p>
+                      {sr.courses.length > 0 ? (
+                        <>
+                          <div className="flex flex-wrap gap-3 text-xs" style={{ color: "#94a3b8" }}>
+                            {sr.latestGpa != null && (
+                              <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>GPA</span>: {sr.latestGpa.toFixed(2)}</span>
+                            )}
+                            <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>Units</span>: {sr.totalUnits}</span>
+                            <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>Courses</span>: {sr.courses.length}</span>
+                          </div>
+                          <p className="mt-1.5 text-xs" style={{ color: "#64748b" }}>
+                            Review and edit the full course list in the next step.
+                          </p>
+                        </>
+                      ) : (
+                        <p className="mt-1.5 text-xs leading-relaxed" style={{ color: "#fbbf24" }}>
+                          We couldn't detect any courses from this file yet. You can keep going and add them manually, or try another PDF.
+                        </p>
+                      )}
                     </div>
                   ))}
 
@@ -377,14 +382,14 @@ export function FormSteps({
                   <button
                     type="button"
                     onClick={() => onSetSkippingUpload(true)}
-                    className="text-[10px] font-bold uppercase tracking-widest pwc-font-mono transition-colors hover:text-[#4ECCA3]"
-                    style={{ color: "#64748b" }}
+                    className="text-xs font-medium transition-colors hover:text-[#4ECCA3]"
+                    style={{ color: "#94a3b8" }}
                   >
-                    Or skip &amp; enter manually
+                    Or skip and enter courses manually
                   </button>
                   <div className="flex-1 h-px" style={{ background: "rgba(78,204,163,0.2)" }} />
                 </div>
-                <p className="text-xs text-center" style={{ color: "#64748b" }}>{t("onboarding.timeNote")}</p>
+                <p className="text-center text-sm" style={{ color: "#64748b" }}>{t("onboarding.timeNote")}</p>
               </>
             )}
             {skippingUpload && (
@@ -394,7 +399,7 @@ export function FormSteps({
                   <div>
                     <p className="text-sm font-medium" style={{ color: "#e2e8f0" }}>Skipping transcript upload</p>
                     <p className="text-xs mt-1 leading-relaxed" style={{ color: "#94a3b8" }}>
-                      You can add your courses manually later in your dashboard. We'll still personalize your transfer plan based on your major and goals.
+                      You can add your courses later. We'll still personalize your plan around your major and goals.
                     </p>
                     <button
                       type="button"

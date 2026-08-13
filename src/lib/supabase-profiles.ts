@@ -62,6 +62,30 @@ export async function getProfileForUser(
 }
 
 /**
+ * Fetch a profile by its numeric ID.
+ * RLS ensures the user can only see their own profile.
+ */
+export async function getProfileById(
+  profileId: number,
+): Promise<StudentProfile | null> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", profileId)
+    .limit(1)
+    .single();
+
+  if (error || !data) {
+    if (error?.code !== "PGRST116") {
+      console.error("Error fetching profile by id:", error);
+    }
+    return null;
+  }
+
+  return rowToProfile(data as Record<string, unknown>);
+}
+
+/**
  * Create a new profile for the authenticated user.
  * Returns the created profile, or null on error.
  */
@@ -273,5 +297,36 @@ export async function deleteAllCoursesForProfile(profileId: number): Promise<boo
     console.error("Error deleting all courses for profile:", error);
     return false;
   }
+  return true;
+}
+
+/**
+ * Delete completed course rows for a profile by course code.
+ * Used to replace transcript-derived imports without touching planned/manual work.
+ */
+export async function deleteCompletedCoursesForProfileByCodes(
+  profileId: number,
+  courseCodes: string[],
+): Promise<boolean> {
+  const normalized = [...new Set(
+    courseCodes
+      .map((code) => code.trim().toUpperCase())
+      .filter((code) => code.length > 0),
+  )];
+
+  if (normalized.length === 0) return true;
+
+  const { error } = await supabase
+    .from("courses")
+    .delete()
+    .eq("profile_id", profileId)
+    .eq("status", "completed")
+    .in("course_code", normalized);
+
+  if (error) {
+    console.error("Error deleting completed courses by code:", error);
+    return false;
+  }
+
   return true;
 }

@@ -8,7 +8,7 @@ import { IGETC_AREAS, CSU_GE_AREAS } from "./course-types";
 import type { TransferabilityResult } from "./course-types";
 
 const SYSTEM_COLOR: Record<string, string> = {
-  UC: "bg-blue-100 text-blue-700", CSU: "bg-green-100 text-green-700", Private: "bg-purple-100 text-purple-700",
+  UC: "bg-slate-100 text-slate-700", CSU: "bg-emerald-100 text-emerald-700", Private: "bg-slate-100 text-slate-700",
 };
 
 export function TransferabilityPanel({ result }: { result: TransferabilityResult }) {
@@ -19,26 +19,26 @@ export function TransferabilityPanel({ result }: { result: TransferabilityResult
   const completedCount = IGETC_AREAS.filter(a => igetc[a.key as keyof typeof igetc]).length;
   return (
     <div className="space-y-6 mt-6 pb-8">
-      <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
         <div className="flex items-start gap-3">
-          <FlaskConical className="h-5 w-5 text-indigo-500 flex-shrink-0 mt-0.5" />
+          <FlaskConical className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
           <div>
-            <p className="text-sm font-semibold text-indigo-900 mb-1">
+            <p className="mb-1 text-sm font-semibold text-emerald-900">
               {t("pages.courses.transferableUnitsFrom", { units: result.totalTransferableUnits, college: result.communityCollege })}
             </p>
-            <p className="text-sm text-indigo-700 leading-relaxed">{result.summary}</p>
+            <p className="text-sm leading-relaxed text-emerald-800">{result.summary}</p>
           </div>
         </div>
       </div>
 
       <div>
         <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-          <School className="h-4 w-4 text-indigo-500" />
+          <School className="h-4 w-4 text-emerald-600" />
           {t("pages.courses.bestUniMatches")}
         </h2>
         <div className="space-y-3">
           {result.bestMatches.map((m, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl shadow-sm transition-all hover:border-indigo-300 hover:shadow-md cursor-pointer" onClick={() => setExpandedCard(expandedCard === i ? null : i)}>
+            <div key={i} className="cursor-pointer rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:border-emerald-300 hover:shadow-md" onClick={() => setExpandedCard(expandedCard === i ? null : i)}>
               <div className="p-4">
                 <div className="flex items-start gap-3">
                   {i === 0 && <Star className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />}
@@ -67,8 +67,8 @@ export function TransferabilityPanel({ result }: { result: TransferabilityResult
                     <strong>Why this match:</strong> {m.matchReason}
                   </p>
                   <p className="text-xs text-slate-500 mt-2">
-                    Compare this university&apos;s transfer requirements on{" "}
-                    <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline" onClick={(e) => e.stopPropagation()}>
+                    Compare this university's transfer requirements on{" "}
+                    <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:underline" onClick={(e) => e.stopPropagation()}>
                       assist.org
                     </a>
                     {" "}or discuss with your counselor.
@@ -109,7 +109,7 @@ export function TransferabilityPanel({ result }: { result: TransferabilityResult
         </div>
         <p className="text-xs text-slate-600 mt-2">
           {t("pages.courses.igetcQualifies")}{" "}
-          <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">{t("pages.courses.verifyAssist")}</a>
+          <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:underline">{t("pages.courses.verifyAssist")}</a>
         </p>
       </div>
 
@@ -143,7 +143,7 @@ export function TransferabilityPanel({ result }: { result: TransferabilityResult
         </div>
         <p className="text-xs text-slate-600 mt-2">
           CSU GE Breadth (CalGETC) requirements for CSU transfer.{" "}
-          <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">{t("pages.courses.verifyAssist")}</a>
+          <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:underline">{t("pages.courses.verifyAssist")}</a>
         </p>
       </div>
       )}
@@ -160,15 +160,15 @@ export function TransferabilityPanel({ result }: { result: TransferabilityResult
       </div>
 
       {result.recommendations.length > 0 && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-          <h2 className="text-sm font-bold text-indigo-900 mb-3 flex items-center gap-2">
-            <Star className="h-4 w-4 text-indigo-500" />
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
+            <Star className="h-4 w-4 text-emerald-600" />
             {t("pages.courses.nextStepsHeader")}
           </h2>
           <ul className="space-y-2">
             {result.recommendations.map((r, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-indigo-800">
-                <span className="text-indigo-400 font-bold mt-0.5">{i + 1}.</span>
+              <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                <span className="mt-0.5 font-bold text-emerald-600">{i + 1}.</span>
                 {r}
               </li>
             ))}
@@ -178,7 +178,7 @@ export function TransferabilityPanel({ result }: { result: TransferabilityResult
 
       <p className="text-xs text-slate-600 text-center">
         {t("pages.courses.aiDisclaimerPrefix")}
-        <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline">assist.org</a>
+        <a href="https://assist.org" target="_blank" rel="noopener noreferrer" className="text-emerald-700 underline">assist.org</a>
         {t("pages.courses.aiDisclaimerSuffix")}
       </p>
     </div>

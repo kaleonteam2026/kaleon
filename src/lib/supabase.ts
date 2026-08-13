@@ -3,11 +3,21 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
+function hasConfiguredUrl(value?: string): boolean {
+  if (!value?.trim()) return false;
+  return value.trim() !== "https://your-project.supabase.co";
+}
+
+function hasConfiguredKey(value?: string): boolean {
+  if (!value?.trim()) return false;
+  return value.trim() !== "your_publishable_key";
+}
+
+export const isSupabaseConfigured = hasConfiguredUrl(supabaseUrl) && hasConfiguredKey(supabaseKey);
 
 if (!isSupabaseConfigured) {
   console.error(
-    "Supabase not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY",
+    "Supabase not configured: set real VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY values",
   );
 }
 

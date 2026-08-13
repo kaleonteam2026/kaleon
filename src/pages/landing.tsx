@@ -1,50 +1,99 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
-import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  GraduationCap, Target, BookOpen, Award, ArrowRight,
-  TrendingUp, Search, Building2, Users, Compass,
+  ArrowRight,
+  GraduationCap,
 } from "lucide-react";
 import {
-  useMotionEnabled,
-  fadeUp,
-  fadeIn,
-  stamp,
-  staggerContainer,
-  arrowShimmer,
-  ctaShadowPulse,
-  EASE_OUT,
   DUR,
+  fadeUp,
+  staggerContainer,
+  useMotionEnabled,
 } from "@/lib/motion";
 import { KALEON_LOGO_SRC, staticAsset } from "@/lib/brand";
-import { CopyTrans } from "@/components/copy-trans";
 import BetaAgreementModal from "@/components/beta-agreement-modal";
-import { t } from "@/lib/copy";
 
 const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
+
+const PHOTO_SLOTS = {
+  hero: {
+    file: "landing-hero-students.jpg",
+    label: "Students planning between classes",
+    note: "Supply a campus photo with two students reviewing transfer plans together.",
+  },
+  advising: {
+    file: "landing-advising-session.jpg",
+    label: "Student and advisor conversation",
+    note: "Supply a candid advising or peer-support moment.",
+  },
+  graduation: {
+    file: "landing-graduation-walk.jpg",
+    label: "Student heading toward graduation",
+    note: "Supply a celebratory campus or graduation-path image.",
+  },
+} as const;
+
+function PhotoSlot({
+  file,
+  label,
+  className,
+}: {
+  file: string;
+  label: string;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!failed) {
+    return (
+      <img
+        src={staticAsset(file)}
+        alt={label}
+        onError={() => setFailed(true)}
+        className={className}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={[
+        "student-panel-muted relative min-h-[280px] overflow-hidden",
+        className ?? "",
+      ].join(" ")}
+      role="img"
+      aria-label={label}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at top left, rgba(78,204,163,0.16), transparent 42%), linear-gradient(160deg, rgba(13,26,46,0.96), rgba(7,17,31,0.96))",
+        }}
+      />
+      <div className="absolute -left-10 top-8 h-32 w-32 rounded-full border border-[rgba(78,204,163,0.18)]" />
+      <div className="absolute bottom-8 right-8 h-24 w-24 rounded-full bg-[rgba(78,204,163,0.08)]" />
+      <div className="absolute inset-x-8 bottom-8 h-px bg-[rgba(78,204,163,0.18)]" />
+      <div className="absolute inset-x-8 top-8 h-px bg-[rgba(255,255,255,0.08)]" />
+      <div className="absolute left-8 top-12 h-16 w-16 rounded-2xl border border-[rgba(255,255,255,0.08)]" />
+      <div className="absolute right-12 top-16 h-12 w-24 rounded-full border border-[rgba(78,204,163,0.16)]" />
+      <div className="absolute bottom-14 left-10 h-10 w-10 rounded-full bg-[rgba(255,255,255,0.06)]" />
+      <div className="sr-only">
+        {label}
+      </div>
+    </div>
+  );
+}
 
 export default function Landing() {
   const { isAuthenticated, isLoading, login } = useAuth();
   const [, navigate] = useLocation();
   const motionOn = useMotionEnabled();
   const [scrolled, setScrolled] = useState(false);
-  const [ctaHover, setCtaHover] = useState(false);
   const [betaModalOpen, setBetaModalOpen] = useState(false);
-  const dirSign = 1;
 
-  const { scrollY } = useScroll();
-  useMotionValueEvent(scrollY, "change", (v) => {
-    const next = v > 24;
-    if (next !== scrolled) setScrolled(next);
-  });
-
-  // Authenticated users skip the beta modal
-  const startOnboarding = () => {
-    setBetaModalOpen(true);
-  };
-
-  // With auth bypass, stay on landing so local UI changes are visible at /.
   useEffect(() => {
     if (!isLoading && isAuthenticated && !AUTH_BYPASS) {
       navigate("/profiles", { replace: true });
@@ -52,8 +101,16 @@ export default function Landing() {
   }, [isAuthenticated, isLoading, navigate]);
 
   useEffect(() => {
-    const title = t("landing.seoTitle");
-    const desc = t("landing.seoDescription");
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const title = "Kaleon | Understand your transfer path with more confidence";
+    const desc =
+      "Kaleon helps community college students see what counts, what is left, and what to plan next on the road to transfer.";
     document.title = title;
 
     const ensure = (selector: string, attrs: Record<string, string>) => {
@@ -69,12 +126,12 @@ export default function Landing() {
     ensure(`meta[name="description"]`, { name: "description" }).content = desc;
     ensure(`meta[property="og:title"]`, { property: "og:title" }).content = title;
     ensure(`meta[property="og:description"]`, { property: "og:description" }).content = desc;
-
     ensure(`meta[property="og:locale"]`, { property: "og:locale" }).content = "en_US";
   }, []);
 
+  const startOnboarding = () => setBetaModalOpen(true);
   const revealProps = motionOn
-    ? { initial: "hidden" as const, whileInView: "show" as const, viewport: { once: true, margin: "-10% 0px" } }
+    ? { initial: "hidden" as const, whileInView: "show" as const, viewport: { once: true, margin: "-8% 0px" } }
     : {};
   const mountProps = motionOn
     ? { initial: "hidden" as const, animate: "show" as const }
@@ -82,309 +139,190 @@ export default function Landing() {
 
   return (
     <div
-      className="min-h-screen pwc-font-sans"
-      style={{ background: "linear-gradient(160deg, #050c18 0%, #0a1628 50%, #061020 100%)", color: "#e2e8f0" }}
+      className="dark min-h-screen pwc-font-sans"
+      style={{ background: "var(--app-page-bg)", color: "var(--app-text)" }}
     >
-
-      {/* Ambient glow blobs */}
-      <div style={{ position: "fixed", top: "-10%", right: "5%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(78,204,163,0.07) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
-      <div style={{ position: "fixed", bottom: "5%", left: "-5%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(56,178,172,0.05) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
-
-      {/* Header */}
       <header
-        className={`sticky top-0 z-50 px-6 md:px-12 flex items-center justify-between transition-all duration-200 ease-out ${
-          scrolled && motionOn ? "h-12" : "h-14"
-        }`}
+        className="sticky top-0 z-50 border-b px-5 py-4 md:px-10"
         style={{
-          background: "rgba(5,12,24,0.85)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(78,204,163,0.12)",
+          background: scrolled ? "var(--app-nav-bg)" : "rgba(5, 12, 24, 0.86)",
+          borderBottomColor: "var(--app-border-subtle)",
+          backdropFilter: "blur(16px)",
         }}
       >
-        <div className="flex items-center gap-2 font-bold text-lg uppercase tracking-tight">
-          <img
-            src={KALEON_LOGO_SRC}
-            alt="Logo"
-            style={{ width: 30, height: 30, borderRadius: 6, objectFit: "contain" }}
-          />
-          <span style={{ color: "#f8fafc" }}>{t("brand.name")}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={login}
-            className="kaleon-btn-primary px-4 py-1.5 text-xs pwc-font-mono uppercase tracking-wider font-bold"
-            style={{ borderRadius: 6 }}
-          >
-            {t("common.signIn")}
-          </button>
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <img
+              src={KALEON_LOGO_SRC}
+              alt="Kaleon"
+              className="h-10 w-10 rounded-lg border p-1"
+              style={{ borderColor: "rgba(78, 204, 163, 0.2)", background: "rgba(13, 26, 46, 0.72)" }}
+            />
+            <div>
+              <div className="text-lg font-bold tracking-tight text-white">KALEON</div>
+              <div className="text-xs font-medium tracking-wide text-slate-400">Student transfer planning</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={login}
+              className="kaleon-btn-outline rounded-lg px-4 py-2 text-sm font-medium"
+            >
+              Sign in
+            </button>
+            <button
+              onClick={startOnboarding}
+              className="kaleon-btn-primary rounded-lg px-5 py-2.5 text-sm font-semibold"
+            >
+              Start your plan
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="px-6 md:px-12 pt-16 pb-20 max-w-6xl mx-auto relative" style={{ zIndex: 1 }}>
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-12">
-          <div className="flex-1 max-w-xl">
-            <motion.div
-              {...mountProps}
-              variants={fadeUp(-6, DUR.med)}
-              className="kaleon-badge inline-flex items-center gap-2 px-3 py-1.5 mb-8 pwc-font-mono text-xs uppercase tracking-wider font-bold"
-              style={{ borderRadius: 20 }}
-            >
-              <GraduationCap className="h-4 w-4" aria-hidden="true" />
-              <span>{t("landing.badge")}</span>
+      <main>
+        <section className="px-5 pb-20 pt-12 md:px-10 md:pb-28 md:pt-16">
+          <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+            <motion.div {...mountProps} variants={staggerContainer(0.08)} className="max-w-xl">
+              <motion.h1
+                variants={fadeUp(12, DUR.slow)}
+                className="text-4xl font-bold leading-[1.03] tracking-tight text-white md:text-6xl"
+              >
+                Know what counts toward transfer, what is left, and what comes next.
+              </motion.h1>
+              <motion.p
+                variants={fadeUp(12, DUR.med)}
+                className="mt-5 max-w-lg text-lg leading-8 text-slate-300"
+              >
+                Kaleon helps community college students move through each semester with fewer surprises.
+              </motion.p>
+
+              <motion.div variants={fadeUp(12, DUR.med)} className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={startOnboarding}
+                  className="kaleon-btn-primary inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold"
+                >
+                  Start your plan
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={login}
+                  className="kaleon-btn-outline inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-medium"
+                >
+                  Sign in
+                </button>
+              </motion.div>
             </motion.div>
 
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 leading-[1.05] uppercase" style={{ color: "#f8fafc" }}>
-              Transfers<br />
-              <motion.span
-                {...mountProps}
-                variants={stamp}
-                className="inline-block px-3 origin-left"
-                style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18", textShadow: "0 0 30px rgba(78,204,163,0.4)" }}
-              >
-                Made Easy.
-              </motion.span>
-            </h1>
+            <motion.div {...mountProps} variants={fadeUp(16, DUR.slow)}>
+              <PhotoSlot
+                file={PHOTO_SLOTS.hero.file}
+                label={PHOTO_SLOTS.hero.label}
+                className="h-full w-full rounded-[20px] border object-cover"
+              />
+            </motion.div>
+          </div>
+        </section>
 
-            <motion.p
-              initial={motionOn ? { y: 4 } : false}
-              animate={motionOn ? { y: 0 } : undefined}
-              transition={motionOn ? { duration: DUR.slow, ease: EASE_OUT, delay: 0.08 } : undefined}
-              className="text-lg md:text-xl mb-8 max-w-2xl leading-relaxed"
-              style={{ color: "#94a3b8" }}
-            >
-              <CopyTrans i18nKey="landing.heroSubtitle" components={{ strong: <strong style={{ color: "#4ECCA3" }} /> }} />
-            </motion.p>
-
-            <motion.div
-              initial={motionOn ? { y: 2 } : false}
-              animate={motionOn ? { y: 0 } : undefined}
-              transition={motionOn ? { duration: DUR.med, ease: EASE_OUT, delay: 0.12 } : undefined}
-              className="flex flex-col sm:flex-row gap-4 items-start"
-            >
-              <button
-                onClick={startOnboarding}
-                onMouseEnter={() => setCtaHover(true)}
-                onMouseLeave={() => setCtaHover(false)}
-                className="kaleon-btn-primary px-6 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold flex items-center gap-2"
-                style={{ borderRadius: 8 }}
-              >
-                {t("landing.heroCta")}
-                <motion.span
-                  animate={motionOn && !ctaHover ? { x: [0, 3 * dirSign, 0] } : false}
-                  transition={motionOn && !ctaHover ? arrowShimmer : undefined}
-                  className="inline-flex"
-                >
-                  <ArrowRight className="h-4 w-4" />
-                </motion.span>
-              </button>
-              <p className="text-xs pwc-font-mono uppercase tracking-wider self-center" style={{ color: "#4ECCA3", opacity: 0.6 }}>
-                {t("landing.heroNote")}
+        <section className="px-5 py-18 md:px-10">
+          <div className="mx-auto max-w-6xl">
+            <motion.div {...revealProps} variants={fadeUp(12, DUR.med)} className="max-w-2xl">
+              <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                More clarity before registration. More confidence before advising.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-slate-300">
+                Kaleon keeps the next decision easier to understand.
               </p>
             </motion.div>
 
-            {/* Stats */}
-            <div className="flex gap-8 mt-10">
-              {[
-                ["✓", t("landing.statSuccess", { defaultValue: "Built for CC Students" })],
-                ["✓", t("landing.statColleges", { defaultValue: "Every UC & CSU" })]
-              ].map(([n, l]) => (
-                <div key={l}>
-                  <div className="text-xl font-extrabold" style={{ color: "#4ECCA3" }}>{n}</div>
-                  <div className="text-xs pwc-font-mono uppercase tracking-wider mt-1" style={{ color: "#64748b" }}>{l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Product UI preview */}
-          <div className="hidden md:flex flex-1 items-center justify-center" style={{ minHeight: 320 }}>
-            <div className="relative w-full max-w-[480px]">
-              {/* Ambient glow behind preview */}
-              <div style={{
-                position: "absolute", top: "10%", left: "10%", width: "80%", height: "80%",
-                borderRadius: "50%", background: "radial-gradient(circle, rgba(78,204,163,0.08) 0%, transparent 70%)",
-                pointerEvents: "none",
-              }} />
-              <img
-                src={staticAsset("hero-ui-preview.svg")}
-                alt="Kaleon courses dashboard preview"
-                className="relative w-full h-auto"
-                style={{ borderRadius: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.5)", border: "1px solid rgba(78,204,163,0.15)" }}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="px-6 md:px-12 py-16 relative" style={{ zIndex: 1, borderTop: "1px solid rgba(78,204,163,0.1)", borderBottom: "1px solid rgba(78,204,163,0.1)" }}>
-        <div className="max-w-6xl mx-auto">
-          <motion.div {...revealProps} variants={fadeUp(8, DUR.med)} className="mb-12">
-            <p className="text-xs pwc-font-mono uppercase tracking-widest font-bold mb-2" style={{ color: "#4ECCA3", opacity: 0.7 }}>
-              {t("landing.modulesEyebrow")}
-            </p>
-            <h2 className="text-3xl md:text-4xl font-bold uppercase" style={{ color: "#f8fafc" }}>
-              {t("landing.modulesTitle")}
-            </h2>
-          </motion.div>
-          <motion.div
-            {...revealProps}
-            variants={staggerContainer(0.06)}
-            className="grid md:grid-cols-3 gap-5"
-          >
-            {[
-              { icon: Building2, title: t("landing.featureCcProgramsTitle"), description: t("landing.featureCcProgramsDesc") },
-              { icon: Target, title: t("landing.featurePathwaysTitle"), description: t("landing.featurePathwaysDesc"), flagship: true },
-              { icon: Search, title: t("landing.featureInternshipsTitle"), description: t("landing.featureInternshipsDesc") },
-              { icon: Award, title: t("landing.featureScholarshipsTitle"), description: t("landing.featureScholarshipsDesc") },
-              { icon: TrendingUp, title: t("landing.featureProgressTitle"), description: t("landing.featureProgressDesc") },
-              { icon: GraduationCap, title: t("landing.featureLikelihoodTitle"), description: t("landing.featureLikelihoodDesc") },
-              { icon: BookOpen, title: t("landing.featureCoursesTitle"), description: t("landing.featureCoursesDesc") },
-              { icon: Compass, title: t("landing.featureRoadmapTitle"), description: t("landing.featureRoadmapDesc") },
-              { icon: Users, title: t("landing.featureGuidebookTitle"), description: t("landing.featureGuidebookDesc") },
-            ].map((feature) => (
-              <motion.div
-                key={feature.title}
-                variants={fadeUp(12, DUR.med)}
-                initial="rest"
-                whileHover={
-                  motionOn
-                    ? { x: -1 * dirSign, y: -2 }
-                    : undefined
-                }
-                animate="rest"
-                transition={{ duration: 0.12, ease: EASE_OUT }}
-                className={`kaleon-card p-5 group ${feature.flagship ? "md:col-span-2 md:row-span-1" : ""}`}
-                style={{
-                  borderRadius: 12,
-                  ...(feature.flagship ? {
-                    borderColor: "rgba(78,204,163,0.5)",
-                    boxShadow: "0 0 30px rgba(78,204,163,0.12)",
-                    background: "linear-gradient(135deg, rgba(78,204,163,0.08), rgba(5,12,24,0.4))",
-                  } : {}),
-                }}
-              >
-                {feature.flagship && (
-                  <span
-                    className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-2"
-                    style={{ background: "linear-gradient(135deg, #4ECCA3, #38b2ac)", color: "#050c18" }}
-                  >
-                    Flagship
-                  </span>
-                )}
-                <motion.div
-                  variants={motionOn ? { rest: { scale: 1 }, hover: { scale: 1.06 } } : undefined}
-                  transition={{ duration: 0.09, ease: EASE_OUT }}
-                  className="inline-block transition-transform duration-[90ms] ease-out group-hover:scale-[1.06]"
-                >
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(78,204,163,0.1)", border: "1px solid rgba(78,204,163,0.3)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-                    <feature.icon className="h-5 w-5" style={{ color: "#4ECCA3" }} aria-hidden="true" />
-                  </div>
-                </motion.div>
-                <h3 className="font-bold uppercase tracking-tight text-base mb-1.5" style={{ color: "#f1f5f9" }}>{feature.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: "#64748b" }}>{feature.description}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="px-6 md:px-12 py-16 max-w-3xl mx-auto relative" style={{ zIndex: 1 }}>
-        <motion.div {...revealProps} variants={fadeUp(8, DUR.med)} className="mb-10">
-          <p className="text-xs pwc-font-mono uppercase tracking-widest font-bold mb-2" style={{ color: "#4ECCA3", opacity: 0.7 }}>{t("landing.howItWorksEyebrow")}</p>
-          <h2 className="text-3xl md:text-4xl font-bold uppercase" style={{ color: "#f8fafc" }}>{t("landing.howItWorksTitle")}</h2>
-        </motion.div>
-        <motion.div {...revealProps} variants={staggerContainer(0.07)} className="space-y-3">
-          {[
-            { step: "01", title: t("landing.step1Title"), desc: t("landing.step1Desc") },
-            { step: "02", title: t("landing.step2Title"), desc: t("landing.step2Desc") },
-            { step: "03", title: t("landing.step3Title"), desc: t("landing.step3Desc") },
-            { step: "04", title: t("landing.step4Title"), desc: t("landing.step4Desc") },
-            { step: "05", title: t("landing.step5Title"), desc: t("landing.step5Desc") },
-          ].map((item) => (
             <motion.div
-              key={item.step}
-              variants={{
-                hidden: { opacity: 0, x: -8 * dirSign },
-                show: { opacity: 1, x: 0, transition: { duration: DUR.med, ease: EASE_OUT } },
-              }}
-              className="kaleon-step flex gap-4 p-4"
-              style={{ borderRadius: 10 }}
+              {...revealProps}
+              variants={staggerContainer(0.08)}
+              className="mt-10 grid gap-6 border-y border-[var(--student-border)] py-6 md:grid-cols-3"
             >
-              <motion.div
-                initial={motionOn ? { color: "#1e3a5f" } : false}
-                whileInView={motionOn ? { color: "#4ECCA3" } : undefined}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, ease: EASE_OUT, delay: 0.15 }}
-                className="pwc-font-mono font-bold text-2xl leading-none"
-              >
-                {item.step}
-              </motion.div>
-              <div className="flex-1 pt-0.5">
-                <h3 className="font-bold uppercase text-sm tracking-tight" style={{ color: "#f1f5f9" }}>{item.title}</h3>
-                <p className="text-sm mt-0.5 leading-relaxed" style={{ color: "#64748b" }}>{item.desc}</p>
+              {[
+                {
+                  title: "Know where you stand",
+                  body: "Completed work, current courses, and planned semesters stay visible in one place.",
+                },
+                {
+                  title: "Know what is still missing",
+                  body: "Remaining requirements stay short enough to scan and specific enough to act on.",
+                },
+                {
+                  title: "Know what to do next",
+                  body: "Semester planning stays connected to real prerequisites, counselor follow-up, and transfer goals.",
+                },
+              ].map((item) => (
+                <motion.div key={item.title} variants={fadeUp(12, DUR.med)} className="pr-4 md:pr-8">
+                  <h3 className="text-2xl font-semibold tracking-tight text-white">
+                    {item.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-[var(--student-text-secondary)]">{item.body}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        <section className="px-5 py-18 md:px-10">
+          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.92fr_1.08fr]">
+            <motion.div {...revealProps} variants={fadeUp(12, DUR.med)}>
+              <PhotoSlot
+                file={PHOTO_SLOTS.advising.file}
+                label={PHOTO_SLOTS.advising.label}
+                className="h-full w-full rounded-[20px] border object-cover"
+              />
+            </motion.div>
+
+            <motion.div {...revealProps} variants={fadeUp(12, DUR.med)} className="student-panel p-7 md:p-9">
+              <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                Be better prepared for advising.
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--student-text-secondary)]">
+                See what you've completed, what you still need, and what to ask about before your next meeting.
+              </p>
+            </motion.div>
+          </div>
+        </section>
+
+        <section className="px-5 pb-24 pt-18 md:px-10">
+          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
+            <motion.div {...revealProps} variants={fadeUp(12, DUR.med)} className="student-panel p-7 md:p-9">
+              <h2 className="text-3xl font-semibold tracking-tight text-[var(--student-text-primary)] md:text-4xl">
+                Stay on track now, and head toward transfer with more confidence later.
+              </h2>
+              <p className="mt-4 max-w-xl text-base leading-7 text-[var(--student-text-secondary)]">
+                Kaleon is here to help students feel steadier about what counts, what is left, and what comes next.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={startOnboarding}
+                  className="student-button-primary inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold"
+                >
+                  Start your plan
+                  <GraduationCap className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={login}
+                  className="student-button-secondary inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-medium"
+                >
+                  Return to your account
+                </button>
               </div>
             </motion.div>
-          ))}
-        </motion.div>
-      </section>
 
-      {/* Disclaimer */}
-      <section className="px-6 md:px-12 py-8 max-w-3xl mx-auto relative" style={{ zIndex: 1 }}>
-        <motion.div
-          {...revealProps}
-          variants={fadeUp(6, DUR.base)}
-          className="p-4"
-          style={{ background: "rgba(78,204,163,0.06)", border: "1px solid rgba(78,204,163,0.2)", borderRadius: 10 }}
-        >
-          <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
-            {t("landing.disclaimerBody")}
-          </p>
-        </motion.div>
-      </section>
-
-      {/* CTA */}
-      <section className="px-6 md:px-12 py-20 relative" style={{ zIndex: 1, borderTop: "1px solid rgba(78,204,163,0.12)" }}>
-        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 600, height: 300, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(78,204,163,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div className="max-w-3xl mx-auto text-center relative">
-          <motion.h2
-            {...revealProps}
-            variants={stamp}
-            className="text-3xl md:text-5xl font-extrabold uppercase mb-4 tracking-tight inline-block origin-center"
-            style={{ color: "#f8fafc" }}
-          >
-            {t("landing.ctaTitle")}
-          </motion.h2>
-          <motion.p
-            {...revealProps}
-            variants={fadeIn(DUR.med)}
-            className="mb-8 text-base md:text-lg"
-            style={{ color: "#94a3b8" }}
-          >
-            {t("landing.ctaBody")}
-          </motion.p>
-          <motion.button
-            {...revealProps}
-            variants={fadeUp(4, DUR.med)}
-            onClick={startOnboarding}
-            onMouseEnter={() => setCtaHover(true)}
-            onMouseLeave={() => setCtaHover(false)}
-            animate={
-              motionOn && !ctaHover
-                ? { boxShadow: ["0 0 20px rgba(78,204,163,0.3)", "0 0 40px rgba(78,204,163,0.6)"] }
-                : false
-            }
-            transition={motionOn && !ctaHover ? ctaShadowPulse : undefined}
-            className="kaleon-btn-primary px-6 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold inline-flex items-center gap-2"
-            style={{ borderRadius: 8, ...(!motionOn || ctaHover ? { boxShadow: "0 0 20px rgba(78,204,163,0.3)" } : {}) }}
-          >
-            {t("landing.heroCta")}
-            <ArrowRight className="h-4 w-4" />
-          </motion.button>
-        </div>
-      </section>
+            <motion.div {...revealProps} variants={fadeUp(12, DUR.med)}>
+              <PhotoSlot
+                file={PHOTO_SLOTS.graduation.file}
+                label={PHOTO_SLOTS.graduation.label}
+                className="h-full w-full rounded-[20px] border object-cover"
+              />
+            </motion.div>
+          </div>
+        </section>
+      </main>
 
       <BetaAgreementModal open={betaModalOpen} onOpenChange={setBetaModalOpen} />
     </div>
