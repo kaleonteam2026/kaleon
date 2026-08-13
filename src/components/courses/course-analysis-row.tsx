@@ -25,7 +25,11 @@ export function CourseAnalysisRow({ c }: { c: CourseTransferResult }) {
           <div className="flex flex-wrap items-center gap-2">
             {c.courseCode && <span className="text-xs font-mono bg-white/70 border border-slate-200 px-1.5 py-0.5 rounded text-slate-600">{c.courseCode}</span>}
             <span className="text-sm font-semibold text-slate-800">{c.courseName}</span>
-            <span className="text-xs text-slate-600">{t("pages.courses.unitsLabel", { count: c.units })}</span>
+            <span className="text-xs text-slate-600">
+              {typeof c.units === "number"
+                ? t("pages.courses.unitsLabel", { count: c.units })
+                : "Units not confirmed"}
+            </span>
           </div>
           <div className="flex flex-wrap gap-2 mt-1">
             <StatusBadge status={c.status} />

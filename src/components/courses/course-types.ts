@@ -37,7 +37,7 @@ export interface CourseCatalog {
 export interface CourseTransferResult {
   courseCode?: string;
   courseName: string;
-  units: number;
+  units?: number;
   status: "transferable" | "likely" | "uncertain" | "unlikely";
   igetcArea?: string;
   csuGEArea?: string;

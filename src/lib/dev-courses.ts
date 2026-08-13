@@ -32,6 +32,27 @@ export function saveDevCourses(profileId: number, courses: StoredCourse[]): void
   writeAll(all);
 }
 
+export function deleteDevCompletedCoursesByCodes(
+  profileId: number,
+  courseCodes: string[],
+): StoredCourse[] {
+  const normalized = new Set(
+    courseCodes
+      .map((code) => code.trim().toUpperCase())
+      .filter((code) => code.length > 0),
+  );
+
+  if (normalized.size === 0) return getDevCourses(profileId);
+
+  const kept = getDevCourses(profileId).filter((course) => {
+    const code = (course.courseCode ?? "").trim().toUpperCase();
+    return !(course.status === "completed" && code && normalized.has(code));
+  });
+
+  saveDevCourses(profileId, kept);
+  return kept;
+}
+
 export function appendDevCourses(
   profileId: number,
   incoming: Omit<StoredCourse, "id">[],

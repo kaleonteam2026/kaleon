@@ -70,20 +70,20 @@ export function AppPageLayout({
           <div className={cn("mx-auto p-4 md:p-6", widthClass)}>
             {(title || subtitle || action) && (
               <header
-                className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 pb-4 mb-6"
-                style={{ borderBottom: "1px solid rgba(78,204,163,0.2)" }}
+                className="mb-6 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between"
+                style={{ borderBottomColor: "var(--app-border-subtle)" }}
               >
                 <div>
                   {title && (
                     <h1
-                      className="text-2xl md:text-3xl font-bold tracking-tight uppercase"
+                      className="text-2xl font-bold tracking-tight md:text-3xl"
                       style={{ color: "#f8fafc" }}
                     >
                       {title}
                     </h1>
                   )}
                   {subtitle && (
-                    <p className="text-sm md:text-base mt-1" style={{ color: "#64748b" }}>
+                    <p className="mt-1 max-w-2xl text-sm leading-6 md:text-base" style={{ color: "#64748b" }}>
                       {subtitle}
                     </p>
                   )}

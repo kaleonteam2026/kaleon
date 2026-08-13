@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { AppPageLayout } from "@/components/app-page-layout";
@@ -100,6 +100,7 @@ export default function Courses() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<TransferabilityResult | null>(null);
   const [hasPathways, setHasPathways] = useState(false);
+  const analysisLockRef = useRef(false);
 
   const pid = parseInt(profileId);
   const getSignal = useRequestCleanup();
@@ -328,6 +329,10 @@ export default function Courses() {
   };
 
   const runAnalysis = async () => {
+    if (analysisLockRef.current) {
+      return;
+    }
+    analysisLockRef.current = true;
     setAnalyzing(true);
     setAnalysis(null);
     try {
@@ -353,19 +358,36 @@ export default function Courses() {
       }
       if (!r.ok) {
         const errText = await r.text().catch(() => "");
-        try {
-          const err = JSON.parse(errText) as { error?: string };
-          throw new Error(err.error ?? t("pages.courses.analysisFailed"));
-        } catch {
-          throw new Error(`Server error (${r.status}): ${errText.slice(0, 200)}`);
+        const err = (() => {
+          try {
+            return JSON.parse(errText) as { error?: string };
+          } catch {
+            return null;
+          }
+        })();
+
+        if (r.status === 408 || r.status === 504 || /timed out|timeout/i.test(errText)) {
+          throw new Error("Course review took too long. Please try again.");
         }
+
+        if (typeof err?.error === "string" && err.error.trim().length > 0 && !/select is not a function|stack|exception|syntaxerror|referenceerror/i.test(err.error)) {
+          throw new Error(err.error.trim());
+        }
+
+        throw new Error("We couldn't review those courses right now. Please try again.");
       }
       const data = await r.json() as TransferabilityResult;
       setAnalysis(data);
       setTimeout(() => document.getElementById("transfer-results")?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch (err) {
-      toast({ title: err instanceof Error ? err.message : t("pages.courses.analysisFailed"), variant: "destructive" });
+      const message = err instanceof Error
+        ? (/Server error|select is not a function|stack|exception/i.test(err.message)
+            ? "We couldn't review those courses right now. Please try again."
+            : err.message)
+        : t("pages.courses.analysisFailed");
+      toast({ title: message, variant: "destructive" });
     } finally {
+      analysisLockRef.current = false;
       setAnalyzing(false);
     }
   };
@@ -399,13 +421,13 @@ export default function Courses() {
       {/* Header */}
       <div className="py-6 border-b-2 border-slate-900 mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase tracking-tight">{t("pages.courses.title")}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{t("pages.courses.title")}</h1>
           <p className="text-slate-600 text-sm mt-1">
             {courses.length === 0
-              ? "Select courses directly from your college&apos;s catalog to ensure accurate course codes and unit counts."
+              ? "Select courses directly from your college's catalog to keep course codes and units accurate."
               : analysis
-                ? "Transfer analysis complete. Your personalized pathway is ready below."
-                : "Your courses are loaded. Run a transferability analysis to see how they apply toward UC/CSU requirements."}
+                ? "Your transfer analysis is ready below."
+                : "Your courses are loaded. Run transfer analysis to see how they apply toward UC and CSU requirements."}
           </p>
         </div>
         <div className="flex gap-2">
@@ -431,10 +453,10 @@ export default function Courses() {
           <Button
             onClick={() => setShowReuploadConfirm(true)}
             variant="outline"
-            className="border-amber-300 text-amber-700 hover:bg-amber-50 rounded-none group relative"
-            title="Replace all courses by uploading a new transcript PDF — use this to start over"
+            className="border-slate-300 text-slate-700 hover:bg-slate-50 rounded-none group relative"
+            title="Upload a new transcript and replace your current course list"
           >
-            <Upload className="h-4 w-4 mr-2" /> Re-upload Transcript
+            <Upload className="h-4 w-4 mr-2" /> Upload new transcript
           </Button>
         </div>
       </div>
@@ -474,10 +496,10 @@ export default function Courses() {
       {/* Manual Add Course Form */}
       {showManualAdd && (
         <div className="mb-6 p-4 border-2 border-slate-200 bg-slate-50 rounded-none">
-          <h3 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-tight">Add a Course Manually</h3>
+          <h3 className="mb-3 text-sm font-semibold text-slate-900">Add a course manually</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
             <div>
-              <label className="block text-[10px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Code *</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Code *</label>
               <input
                 value={manualCode}
                 onChange={e => setManualCode(e.target.value)}
@@ -486,7 +508,7 @@ export default function Courses() {
               />
             </div>
             <div>
-              <label className="block text-[10px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Name</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Name</label>
               <input
                 value={manualName}
                 onChange={e => setManualName(e.target.value)}
@@ -495,7 +517,7 @@ export default function Courses() {
               />
             </div>
             <div>
-              <label className="block text-[10px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Units</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Units</label>
               <input
                 value={manualUnits}
                 onChange={e => setManualUnits(e.target.value)}
@@ -507,7 +529,7 @@ export default function Courses() {
               />
             </div>
             <div>
-              <label className="block text-[10px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Grade</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Grade</label>
               <input
                 value={manualGrade}
                 onChange={e => setManualGrade(e.target.value)}
@@ -516,7 +538,7 @@ export default function Courses() {
               />
             </div>
             <div>
-              <label className="block text-[10px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Term</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Term</label>
               <input
                 value={manualTerm}
                 onChange={e => setManualTerm(e.target.value)}
@@ -593,7 +615,7 @@ export default function Courses() {
               <span>
                 {gpa.totalUnits >= schoolUnits
                   ? t("pages.courses.transferComplete", { school: activeSchool.name })
-                  : t("pages.courses.transferRemaining", { units: transferUnitsRemaining(gpa.totalUnits, schoolUnits).toFixed(1) })}
+                  : t("pages.courses.transferRemaining", { units: transferUnitsRemaining(gpa.totalUnits, schoolUnits) })}
               </span>
               <span>{t("pages.courses.schoolRequires", { school: activeSchool.name, units: schoolUnits })}</span>
             </p>
@@ -619,16 +641,16 @@ export default function Courses() {
           <div className="py-12">
             <div className="text-center mb-8">
               <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <h2 className="text-xl font-bold text-slate-800 mb-1">Welcome to Your Courses</h2>
+              <h2 className="text-xl font-semibold text-slate-800 mb-1">Add your courses</h2>
               <p className="text-slate-500 text-sm max-w-md mx-auto">
-                Start by importing your transcript or browsing your college&apos;s catalog to add courses.
+                Start by uploading your transcript or browsing your college's catalog.
               </p>
             </div>
             <div className="max-w-md mx-auto space-y-4">
               <div className="flex items-start gap-4 p-4 bg-white border border-slate-200 rounded-xl">
                 <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold flex-shrink-0">1</div>
                 <div>
-                  <h3 className="font-semibold text-slate-800 text-sm">Import your transcript</h3>
+                  <h3 className="font-semibold text-slate-800 text-sm">Upload your transcript</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Upload a PDF of your unofficial transcript to auto-populate your courses.</p>
                 </div>
               </div>
@@ -636,14 +658,14 @@ export default function Courses() {
                 <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold flex-shrink-0">2</div>
                 <div>
                   <h3 className="font-semibold text-slate-800 text-sm">Browse the course catalog</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Select courses directly from your college&apos;s catalog.</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Select courses directly from your college's catalog.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4 p-4 bg-white border border-slate-200 rounded-xl">
                 <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold flex-shrink-0">3</div>
                 <div>
                   <h3 className="font-semibold text-slate-800 text-sm">Analyze transferability</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">See which courses transfer to UC/CSU and what&apos;s still needed.</p>
+                  <p className="text-xs text-slate-500 mt-0.5">See which courses transfer to UC and CSU campuses and what is still left.</p>
                 </div>
               </div>
             </div>
@@ -653,7 +675,7 @@ export default function Courses() {
               </Button>
               <p className="text-xs text-slate-500 mt-3">
                 or{" "}
-                <button onClick={() => navigate(`/onboarding?reupload=${pid}`)} className="underline font-medium text-indigo-600 hover:text-indigo-800">
+                <button onClick={() => navigate(`/onboarding?reupload=${pid}`)} className="underline font-medium text-emerald-700 hover:text-emerald-800">
                   upload your transcript
                 </button>{" "}
                 to get started faster
@@ -669,8 +691,8 @@ export default function Courses() {
                 { label: t("pages.courses.sectionInProgress"), items: inProgress, statusClass: "bg-blue-100 text-blue-700" },
                 { label: t("pages.courses.sectionPlanned"),     items: planned,    statusClass: "bg-slate-100 text-slate-600" },
               ].filter(g => g.items.length > 0).map(group => (
-                <Card key={group.label}>
-                  <CardHeader className="pb-2">
+                <Card key={group.label} className="rounded-xl border-slate-200 bg-white text-slate-900 shadow-none">
+                  <CardHeader className="rounded-t-xl border-b border-slate-200 bg-slate-50/80 pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${group.statusClass}`}>{group.label}</span>
                       <span className="text-slate-600 font-normal">{group.items.length} course{group.items.length !== 1 ? "s" : ""}</span>
@@ -706,33 +728,33 @@ export default function Courses() {
 
             {/* Transferability Analysis CTA */}
             {analysis ? (
-              <div className="mt-8 bg-gradient-to-br from-indigo-50 to-slate-50 border border-indigo-200 rounded-2xl p-5">
+              <div className="mt-8 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-slate-50 p-5">
                 <div className="flex items-start sm:items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-indigo-500 flex-shrink-0 mt-0.5 sm:mt-0" />
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600 sm:mt-0" />
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-indigo-900">Analysis Complete</h3>
-                    <p className="text-xs text-indigo-600">Last analyzed: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    <h3 className="text-sm font-bold text-emerald-900">Analysis complete</h3>
+                    <p className="text-xs text-emerald-700">Last analyzed: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
-                  <Button onClick={runAnalysis} disabled={analyzing} variant="outline" size="sm" className="border-indigo-300 text-indigo-700 hover:bg-indigo-100 rounded-none flex-shrink-0">
+                  <Button onClick={runAnalysis} disabled={analyzing} variant="outline" size="sm" className="flex-shrink-0 rounded-none border-slate-300 text-slate-700 hover:bg-slate-100">
                     {analyzing ? <><KaleonLoader size={14} /> Re-analyzing…</> : "Re-analyze"}
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="mt-8 bg-gradient-to-br from-teal-50 to-slate-50 border border-teal-200 rounded-2xl p-6">
+              <div className="mt-8 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <div className="flex-1">
-                    <h2 className="text-base font-bold text-teal-900 flex items-center gap-2">
-                      <FlaskConical className="h-5 w-5 text-teal-500" />
+                    <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
+                      <FlaskConical className="h-5 w-5 text-emerald-600" />
                       Check Course Transferability
                     </h2>
-                    <p className="text-sm text-teal-700 mt-1">
-                      AI will cross-reference your {courses.length} course{courses.length !== 1 ? "s" : ""} against{" "}
+                    <p className="mt-1 text-sm text-slate-600">
+                      We'll compare your {courses.length} course{courses.length !== 1 ? "s" : ""} with{" "}
                       <span className="relative group cursor-help" title="An articulation agreement is a formal agreement between two colleges specifying which courses transfer between them. ASSIST.org is California's official repository of these agreements.">
-                        ASSIST.org articulation agreements
-                        <Info className="inline h-3 w-3 ml-0.5 text-teal-400 align-middle" />
+                        ASSIST.org transfer and articulation guidance
+                        <Info className="ml-0.5 inline h-3 w-3 align-middle text-slate-400" />
                       </span>{" "}
-                      to identify which California universities best match your coursework and show your IGETC progress.
+                      to show where your credits may apply and what to review next.
                     </p>
                   </div>
                   <Button onClick={runAnalysis} disabled={analyzing} className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 rounded-none flex-shrink-0 min-w-[180px]">
@@ -744,10 +766,10 @@ export default function Courses() {
                   </Button>
                 </div>
                 {analyzing && (
-                  <div className="mt-4 bg-white/60 rounded-xl p-4 text-center">
+                  <div className="mt-4 rounded-xl bg-white p-4 text-center">
                     <KaleonLoader size={32} />
-                    <p className="text-sm font-medium text-teal-800">{t("pages.courses.checkingArticulation")}</p>
-                    <p className="text-xs text-teal-500 mt-1">{t("pages.courses.crossReferencing")}</p>
+                    <p className="text-sm font-medium text-slate-800">{t("pages.courses.checkingArticulation")}</p>
+                    <p className="mt-1 text-xs text-slate-500">{t("pages.courses.crossReferencing")}</p>
                   </div>
                 )}
               </div>
@@ -765,16 +787,16 @@ export default function Courses() {
         {/* Motivational context */}
         {courses.length > 0 && (
           <div className="mt-8 grid md:grid-cols-2 gap-4">
-            <div className="px-4 py-3 rounded-xl" style={{ background: "rgba(251,191,36,0.04)", border: "1px solid rgba(251,191,36,0.15)" }}>
-              <p className="font-bold text-sm" style={{ color: "#d97706" }}>One Wrong Class Can Ruin Everything</p>
-              <p className="text-xs mt-1 leading-relaxed" style={{ color: "#92400e", filter: "brightness(2)" }}>
-                Classes that don't transfer can prevent you from being admitted. Our AI cross-references every course against ASSIST.org to make sure you're on track.
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+              <p className="text-sm font-bold text-slate-900">See what counts before registration</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                Compare your saved courses with transfer requirements so you can catch questions early.
               </p>
             </div>
-            <div className="px-4 py-3 rounded-xl" style={{ background: "rgba(78,204,163,0.04)", border: "1px solid rgba(78,204,163,0.15)" }}>
-              <p className="font-bold text-sm" style={{ color: "#059669" }}>Save Money</p>
-              <p className="text-xs mt-1 leading-relaxed" style={{ color: "#64748b" }}>
-                Save hundreds by avoiding private counselors and wasted tuition on courses that don't apply toward your transfer requirements.
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+              <p className="text-sm font-bold text-slate-900">Bring better questions to advising</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                Use this page to see likely transfer credit, remaining gaps, and what to verify with your counselor.
               </p>
             </div>
           </div>

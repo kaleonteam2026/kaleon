@@ -21,11 +21,12 @@ describe("Mock API", () => {
     expect(data.user.firstName).toBe("Dev");
   });
 
-  it("returns a hardcoded profile", async () => {
+  it("returns a neutral dev profile shell", async () => {
     const res = await fetch("/api/profiles/1");
     const data = await res.json();
     expect(data.fullName).toBe("Dev User");
-    expect(data.communityCollege).toBe("Pasadena City College");
+    expect(data.communityCollege).toBe("");
+    expect(data.currentGpa).toBeUndefined();
   });
 
 });

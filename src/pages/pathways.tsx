@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { AppPageLayout } from "@/components/app-page-layout";
 import { PageLoadingState } from "@/components/page-loading-state";
@@ -21,12 +21,14 @@ import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { CopyTrans } from "@/components/copy-trans";
 import { t } from "@/lib/copy";
 import { useAuth } from "@/contexts/auth-context";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import {
   getProfileForUser,
   getCoursesForProfile,
 } from "@/lib/supabase-profiles";
 import { GRADUATION_UNITS, graduationProgressPercent, computeGpaSummary } from "@/lib/course-progress";
 import type { StoredCourse } from "@/lib/course-progress";
+import { isAuthBypass } from "@/lib/dev-profile";
 import {
   savePathways,
   loadPathwaysFromDb,
@@ -103,9 +105,9 @@ interface Pathway {
 }
 
 const TYPE_LABELS: Record<string, { labelKey: string; color: string; bg: string }> = {
-  least_compatible:      { labelKey: "pages.pathways.type_stretch", color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
-  moderately_compatible: { labelKey: "pages.pathways.type_match",   color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
-  most_compatible:       { labelKey: "pages.pathways.type_safety",  color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
+  least_compatible:      { labelKey: "pages.pathways.type_stretch", color: "text-slate-700", bg: "bg-slate-100 border-slate-200" },
+  moderately_compatible: { labelKey: "pages.pathways.type_match",   color: "text-slate-700", bg: "bg-slate-100 border-slate-200" },
+  most_compatible:       { labelKey: "pages.pathways.type_safety",  color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200" },
 };
 
 const OPP_ICONS: Record<string, React.ElementType> = {
@@ -121,15 +123,15 @@ const OPP_ICONS: Record<string, React.ElementType> = {
 };
 
 const OPP_COLORS: Record<string, string> = {
-  club: "bg-rose-100 text-rose-700",
-  research: "bg-purple-100 text-purple-700",
-  internship: "bg-blue-100 text-blue-700",
-  honor_society: "bg-amber-100 text-amber-700",
-  program: "bg-teal-100 text-teal-700",
-  leadership: "bg-indigo-100 text-indigo-700",
-  community: "bg-green-100 text-green-700",
-  honors_program: "bg-amber-100 text-amber-700",
-  career_prep: "bg-emerald-100 text-emerald-700",
+  club: "bg-slate-100 text-slate-700",
+  research: "bg-slate-100 text-slate-700",
+  internship: "bg-slate-100 text-slate-700",
+  honor_society: "bg-slate-100 text-slate-700",
+  program: "bg-slate-100 text-slate-700",
+  leadership: "bg-slate-100 text-slate-700",
+  community: "bg-slate-100 text-slate-700",
+  honors_program: "bg-slate-100 text-slate-700",
+  career_prep: "bg-slate-100 text-slate-700",
 };
 
 // ─── Collapsible section accordion ────────────────────────────────
@@ -201,13 +203,37 @@ export default function Pathways() {
   };
   const [selecting, setSelecting] = useState<number | null>(null);
   const [generatingRoadmap, setGeneratingRoadmap] = useState<number | null>(null);
+  const generateLockRef = useRef(false);
   const pid = parseInt(profileId);
   const getSignal = useRequestCleanup();
   const { enabled: pwMotionOn, lift: pwLift, itemVariants, containerVariants } = useBrutalistMotion();
+  const useSupabaseData = isSupabaseConfigured && !isAuthBypass();
 
   const loadPathways = () => {
-    // Try API first (mock/dev mode), fall back to Supabase on any failure
-    const apiPromise = Promise.all([
+    if (useSupabaseData && user?.id) {
+      Promise.all([
+        getProfileForUser(user.id),
+        getCoursesForProfile(pid),
+        loadPathwaysFromDb(pid),
+      ]).then(([profile, storedCourses, savedPathways]) => {
+        const gpaSummary = computeGpaSummary(
+          storedCourses,
+          profile?.currentGpa ?? undefined,
+        );
+        setProfileCourses(storedCourses as ProfileCourse[]);
+        setProfileGpa(gpaSummary.estimatedGpa > 0 ? gpaSummary.estimatedGpa : null);
+        setTotalUnits(gpaSummary.totalUnits ?? 0);
+        setPathways(savedPathways as Pathway[]);
+      }).catch(() => {
+        setPathways([]);
+        setProfileCourses([]);
+        setProfileGpa(null);
+        setTotalUnits(0);
+      }).finally(() => setLoading(false));
+      return;
+    }
+
+    Promise.all([
       fetch(`/api/profiles/${pid}/pathways`, { credentials: "include" }).then(
         (r) => (r.ok ? r.json() : []) as Promise<Pathway[]>,
       ).catch(() => [] as Pathway[]),
@@ -217,70 +243,17 @@ export default function Pathways() {
       fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }).then(
         (r) => (r.ok ? r.json() : {}) as Promise<{ estimatedGpa?: number; totalUnits?: number }>,
       ).catch(() => ({}) as { estimatedGpa?: number; totalUnits?: number }),
-    ]);
-
-    apiPromise
-      .then(([pathwayData, courseData, gpaData]) => {
-        if (pathwayData.length > 0 || courseData.length > 0) {
-          // API returned data
-          setPathways(pathwayData);
-          setProfileCourses(courseData);
-          setProfileGpa(gpaData.estimatedGpa && gpaData.estimatedGpa > 0 ? gpaData.estimatedGpa : null);
-          setTotalUnits(gpaData.totalUnits ?? 0);
-          setLoading(false);
-        } else if (user?.id) {
-          // API returned empty or errored — try Supabase directly for courses + saved pathways
-          Promise.all([
-            getProfileForUser(user.id),
-            getCoursesForProfile(pid),
-            loadPathwaysFromDb(pid),
-          ]).then(([profile, storedCourses, savedPathways]) => {
-            let gpaSummary = { estimatedGpa: 0, totalUnits: 0 };
-            if (storedCourses.length > 0) {
-              setProfileCourses(storedCourses as ProfileCourse[]);
-              gpaSummary = computeGpaSummary(
-                storedCourses,
-                profile?.currentGpa ?? undefined,
-              );
-              setProfileGpa(gpaSummary.estimatedGpa > 0 ? gpaSummary.estimatedGpa : null);
-              setTotalUnits(gpaSummary.totalUnits ?? 0);
-            }
-            if (savedPathways.length > 0) {
-              setPathways(savedPathways as Pathway[]);
-            }
-            setLoading(false);
-          }).catch(() => setLoading(false));
-        } else {
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        // API fetch itself failed — try Supabase if user is available
-        if (user?.id) {
-          Promise.all([
-            getProfileForUser(user.id),
-            getCoursesForProfile(pid),
-            loadPathwaysFromDb(pid),
-          ]).then(([profile, storedCourses, savedPathways]) => {
-            let gpaSummary = { estimatedGpa: 0, totalUnits: 0 };
-            if (storedCourses.length > 0) {
-              setProfileCourses(storedCourses as ProfileCourse[]);
-              gpaSummary = computeGpaSummary(
-                storedCourses,
-                profile?.currentGpa ?? undefined,
-              );
-              setProfileGpa(gpaSummary.estimatedGpa > 0 ? gpaSummary.estimatedGpa : null);
-              setTotalUnits(gpaSummary.totalUnits ?? 0);
-            }
-            if (savedPathways.length > 0) {
-              setPathways(savedPathways as Pathway[]);
-            }
-            setLoading(false);
-          }).catch(() => setLoading(false));
-        } else {
-          setLoading(false);
-        }
-      });
+    ]).then(([pathwayData, courseData, gpaData]) => {
+      setPathways(pathwayData);
+      setProfileCourses(courseData);
+      setProfileGpa(gpaData.estimatedGpa && gpaData.estimatedGpa > 0 ? gpaData.estimatedGpa : null);
+      setTotalUnits(gpaData.totalUnits ?? 0);
+    }).catch(() => {
+      setPathways([]);
+      setProfileCourses([]);
+      setProfileGpa(null);
+      setTotalUnits(0);
+    }).finally(() => setLoading(false));
   };
 
   useEffect(() => { loadPathways(); }, [pid, user?.id]);
@@ -319,29 +292,29 @@ export default function Pathways() {
   );
 
   const generatePathways = async () => {
+    if (generateLockRef.current) {
+      return;
+    }
+    generateLockRef.current = true;
     setGenerating(true);
     try {
-      // Load profile and courses from Supabase directly
       let profile: Record<string, unknown> = {};
       let courses: ProfileCourse[] = [];
       let totalUnits = 0;
-      if (user?.id) {
-        // Only load profile via user_id when using real auth UUIDs,
-        // not the "dev" bypass user (which would cause a UUID type error on Supabase)
-        if (user.id !== "dev") {
-          const sp = await getProfileForUser(user.id);
-          if (sp) {
-            profile = {
-              fullName: sp.fullName,
-              communityCollege: sp.communityCollege,
-              intendedMajor: sp.intendedMajor,
-              careerGoal: sp.careerGoal,
-              currentGpa: sp.currentGpa,
-              transferTimeline: sp.transferTimeline,
-              financialSituation: sp.financialSituation,
-              isFirstGen: sp.isFirstGen,
-            };
-          }
+      let requestGpa: number | undefined;
+      if (useSupabaseData && user?.id) {
+        const sp = user.id !== "dev" ? await getProfileForUser(user.id) : null;
+        if (sp) {
+          profile = {
+            fullName: sp.fullName,
+            communityCollege: sp.communityCollege,
+            intendedMajor: sp.intendedMajor,
+            careerGoal: sp.careerGoal,
+            currentGpa: sp.currentGpa,
+            transferTimeline: sp.transferTimeline,
+            financialSituation: sp.financialSituation,
+            isFirstGen: sp.isFirstGen,
+          };
         }
         const storedCourses = await getCoursesForProfile(pid);
         if (storedCourses.length > 0) {
@@ -351,10 +324,29 @@ export default function Pathways() {
             profile.currentGpa as number | undefined,
           );
           totalUnits = gpaSummary.totalUnits ?? 0;
+          requestGpa = gpaSummary.estimatedGpa > 0
+            ? gpaSummary.estimatedGpa
+            : (profile.currentGpa as number | undefined);
           setProfileCourses(courses);
           setProfileGpa(gpaSummary.estimatedGpa > 0 ? gpaSummary.estimatedGpa : null);
           setTotalUnits(totalUnits);
         }
+      } else {
+        const [profileResponse, courseResponse, gpaResponse] = await Promise.all([
+          fetch(`/api/profiles/${pid}`, { credentials: "include" }).then((r) => (r.ok ? r.json() : {})),
+          fetch(`/api/profiles/${pid}/courses`, { credentials: "include" }).then((r) => (r.ok ? r.json() : [])),
+          fetch(`/api/profiles/${pid}/gpa-summary`, { credentials: "include" }).then((r) => (r.ok ? r.json() : {})),
+        ]);
+        profile = (profileResponse as Record<string, unknown>) ?? {};
+        courses = (courseResponse as ProfileCourse[]) ?? [];
+        totalUnits = Number((gpaResponse as { totalUnits?: number }).totalUnits ?? 0);
+        const estimatedGpa = Number((gpaResponse as { estimatedGpa?: number }).estimatedGpa ?? 0);
+        requestGpa = estimatedGpa > 0
+          ? estimatedGpa
+          : (typeof profile.currentGpa === "number" ? profile.currentGpa : undefined);
+        setProfileCourses(courses);
+        setProfileGpa(estimatedGpa > 0 ? estimatedGpa : null);
+        setTotalUnits(totalUnits);
       }
 
       // Auto-retry once on network / timeout errors
@@ -371,7 +363,7 @@ export default function Pathways() {
                 communityCollege: profile.communityCollege,
                 intendedMajor: profile.intendedMajor,
                 careerGoal: profile.careerGoal,
-                currentGpa: profile.currentGpa,
+                currentGpa: requestGpa,
                 transferTimeline: profile.transferTimeline,
                 financialSituation: profile.financialSituation,
                 isFirstGen: profile.isFirstGen,
@@ -444,7 +436,7 @@ export default function Pathways() {
         setCourseAnalysis(data.progressSummary.courseAnalysis);
       }
       // Persist to Supabase so pathways survive page reload
-      if (user?.id) {
+      if (useSupabaseData && user?.id) {
         try {
           await savePathways(pid, user.id, p);
           // Reload from DB to replace Date.now() IDs with real SERIAL IDs
@@ -472,6 +464,7 @@ export default function Pathways() {
       const msg = e instanceof Error ? e.message : t("pages.pathways.toast_genErrorDesc");
       toast({ title: t("pages.pathways.toast_genError"), description: msg, variant: "destructive" });
     } finally {
+      generateLockRef.current = false;
       setGenerating(false);
     }
   };
@@ -479,7 +472,17 @@ export default function Pathways() {
   const selectPathway = async (pathwayId: number) => {
     setSelecting(pathwayId);
     try {
-      const ok = await selectPathwayInDb(pid, pathwayId);
+      const ok = useSupabaseData
+        ? await selectPathwayInDb(pid, pathwayId)
+        : await fetch(`/api/profiles/${pid}/pathways/${pathwayId}/select`, {
+            method: "POST",
+            credentials: "include",
+          })
+            .then(async (response) => {
+              if (!response.ok) return false;
+              const body = await response.json().catch(() => ({ ok: response.ok })) as { ok?: boolean };
+              return body.ok !== false;
+            });
       if (!ok) throw new Error();
       setPathways(prev => prev.map(p => ({ ...p, isSelected: p.id === pathwayId ? "true" : "false" })));
       toast({ title: t("pages.pathways.toast_selected") });
@@ -574,32 +577,22 @@ export default function Pathways() {
           <Button
             onClick={generatePathways}
             disabled={generating}
-            className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 pwc-font-mono uppercase tracking-wider text-xs font-bold rounded-none"
+            className="bg-slate-900 hover:bg-slate-700 text-white border-2 border-slate-900 text-sm font-semibold rounded-lg"
           >
             {generating ? (
               <><KaleonLoader size={16} />{t("pages.pathways.generating")}</>
             ) : (
-              <><Sparkles className="mr-2 h-4 w-4" />{generations.length > 0 ? "Generate New" : t("pages.pathways.generatePathways")}</>
+              <><Sparkles className="mr-2 h-4 w-4" />{generations.length > 0 ? "Compare new options" : t("pages.pathways.generatePathways")}</>
             )}
           </Button>
         </header>
-
-        {/* Social proof context */}
-        {pathways.length === 0 && (
-          <div className="mb-6 p-4 rounded-xl" style={{ background: "rgba(78,204,163,0.05)", border: "1px solid rgba(78,204,163,0.15)" }}>
-            <p className="font-bold text-sm text-center" style={{ color: "#e2e8f0" }}>70% of students take 3+ years to transfer.</p>
-            <p className="text-xs mt-1 text-center leading-relaxed" style={{ color: "#94a3b8" }}>
-              Students who use Kaleon are more likely to transfer on-time by knowing exactly which courses to take and when.
-            </p>
-          </div>
-        )}
 
         {profileCourses.length > 0 && (
           <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-indigo-600" />
+                  <BookOpen className="h-4 w-4 text-emerald-600" />
                   {t("pages.pathways.completedCoursesTitle")}
                 </h2>
                 <p className="text-xs text-slate-600 mt-1">{t("pages.pathways.completedCoursesBody")}</p>
@@ -607,19 +600,19 @@ export default function Pathways() {
               <div className="flex flex-wrap gap-4 text-sm">
                 {profileGpa != null && (
                   <div className="text-center">
-                    <div className="font-bold text-indigo-600">{profileGpa.toFixed(2)}</div>
+                    <div className="font-bold text-emerald-600">{profileGpa.toFixed(2)}</div>
                     <div className="text-[10px] uppercase tracking-wide text-slate-500">{t("pages.courses.estimatedGpa")}</div>
                   </div>
                 )}
                 <div className="text-center">
-                  <div className="font-bold text-indigo-600">{totalUnits} / {GRADUATION_UNITS}</div>
+                  <div className="font-bold text-emerald-600">{totalUnits} / {GRADUATION_UNITS}</div>
                   <div className="text-[10px] uppercase tracking-wide text-slate-500">{t("pages.courses.totalUnits")}</div>
                 </div>
               </div>
             </div>
             <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
               <div
-                className="h-full bg-indigo-500 rounded-full transition-all duration-700"
+                className="h-full bg-emerald-500 rounded-full transition-all duration-700"
                 style={{ width: `${graduationProgressPercent(totalUnits)}%` }}
               />
             </div>
@@ -651,18 +644,6 @@ export default function Pathways() {
             <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
             <h2 className="text-lg font-semibold text-center" style={{ color: "#f1f5f9" }}>{t("pages.pathways.generatingTitle")}</h2>
             <p className="text-sm mt-1 text-center max-w-sm" style={{ color: "#64748b" }}>{t("pages.pathways.generatingBody")}</p>
-            <div className="mt-8 w-full max-w-md rounded-2xl p-6" style={{ background: "rgba(13,26,46,0.9)", border: "1px solid rgba(78,204,163,0.2)" }}>
-              <p className="text-xs font-bold uppercase tracking-widest mb-3 pwc-font-mono" style={{ color: "#4ECCA3" }}>Loved by Transfer Students</p>
-              <p className="text-3xl mb-1" style={{ color: "#4ECCA3", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</p>
-              <p className="font-bold -mt-1" style={{ color: "#f1f5f9" }}>"Took me 2 minutes to get a plan that would've taken me 3 appointments to figure out."</p>
-              <div className="flex items-center gap-3 mt-5">
-                <div className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: "rgba(78,204,163,0.15)", color: "#4ECCA3" }}>M</div>
-                <div>
-                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Maria Hernandez</p>
-                  <p className="text-xs" style={{ color: "#64748b" }}>Student @ East Los Angeles College</p>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
@@ -737,12 +718,12 @@ export default function Pathways() {
                             {t(meta.labelKey)} {t("pages.pathways.schoolSuffix")}
                           </span>
                           {pathway.generationLabel && (
-                            <span className="text-[11px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200 font-medium">
+                            <span className="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200 font-medium">
                               {pathway.generationLabel}
                             </span>
                           )}
                           {isSelected && (
-                            <span className="text-xs bg-slate-900 text-white px-2 py-0.5 border-2 border-slate-900 flex items-center gap-1 pwc-font-mono uppercase tracking-wider font-bold">
+                            <span className="text-xs bg-slate-900 text-white px-2 py-0.5 rounded-full border border-slate-900 flex items-center gap-1 font-semibold">
                               <CheckCircle className="h-3 w-3" /> {t("pages.pathways.primaryBadge")}
                             </span>
                           )}
@@ -807,7 +788,7 @@ export default function Pathways() {
                           sectionKey="risks"
                           openSections={openSections}
                           onToggle={toggleSection}
-                          color="#e11d48"
+                          color="#d97706"
                         >
                           <p className="text-sm text-slate-600">{report.riskAnalysis}</p>
                         </CollapsibleSection>
@@ -927,10 +908,10 @@ export default function Pathways() {
                           sectionKey="riskAlerts"
                           openSections={openSections}
                           onToggle={toggleSection}
-                          color="#e11d48"
+                          color="#d97706"
                         >
-                          <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">
-                            <ul className="text-sm text-rose-700 space-y-0.5">
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <ul className="text-sm text-amber-800 space-y-0.5">
                               {report.risks.map((risk, i) => <li key={i}>• {risk}</li>)}
                             </ul>
                           </div>
@@ -946,12 +927,12 @@ export default function Pathways() {
                           sectionKey="nextSteps"
                           openSections={openSections}
                           onToggle={toggleSection}
-                          color="#6366f1"
+                          color="#0f766e"
                         >
                           <ol className="space-y-1">
                             {report.nextSteps.map((step, i) => (
                               <li key={i} className="flex gap-2 text-sm">
-                                <span className="text-indigo-500 font-bold flex-shrink-0">{i + 1}.</span>
+                                <span className="text-emerald-600 font-bold flex-shrink-0">{i + 1}.</span>
                                 <span className="text-slate-600">{step}</span>
                               </li>
                             ))}
@@ -969,7 +950,7 @@ export default function Pathways() {
                       onClick={() => selectPathway(pathway.id)}
                       disabled={selecting === pathway.id || isSelected}
                       className={cn(
-                        "border-2 rounded-none pwc-font-mono uppercase tracking-wider text-xs font-bold",
+                        "border-2 rounded-lg text-sm font-semibold",
                         isSelected
                           ? "border-slate-900 text-slate-900 bg-white"
                           : "border-slate-900 bg-slate-900 hover:bg-slate-700 text-white"
@@ -983,7 +964,7 @@ export default function Pathways() {
                         size="sm"
                         onClick={() => generateRoadmap(pathway.id)}
                         disabled={generatingRoadmap === pathway.id}
-                        className="bg-violet-600 hover:bg-violet-700 text-white"
+                        className="border-2 border-slate-900 bg-slate-900 text-white hover:bg-slate-700 rounded-lg text-sm font-semibold"
                       >
                         {generatingRoadmap === pathway.id ? (
                           <><KaleonLoader size={14} />{t("pages.pathways.generating")}</>

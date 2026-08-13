@@ -70,11 +70,17 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), serveDistStatic(), pathwaysApiPlugin(), transcriptParsePlugin(), guidebookPlugin(), roadmapPlugin(), transferabilityPlugin(), chunkSplitPlugin()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      "@": path.resolve(import.meta.dirname, "src"),
     },
   },
   optimizeDeps: {
-    include: ["react", "react-dom/client", "@tanstack/react-query"],
+    include: [
+      "react",
+      "react-dom/client",
+      "@tanstack/react-query",
+      "@radix-ui/react-slot",
+      "class-variance-authority",
+    ],
   },
   test: {
     

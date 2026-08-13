@@ -7,15 +7,17 @@ import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { extractTextFromPDF, parseTranscriptText } from "@/lib/parse-transcript";
 import { fetchWithTimeout, withTimeout } from "@/lib/api/client";
 import { useRequestCleanup } from "@/hooks/use-request-cleanup";
-import { appendDevCourses, saveDevCourses } from "@/lib/dev-courses";
-import { DEV_PROFILE_ID, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
+import { appendDevCourses, deleteDevCompletedCoursesByCodes } from "@/lib/dev-courses";
+import { deleteAllDevPathways } from "@/lib/dev-pathways";
+import { DEV_PROFILE_ID, deleteAllDevSemesterSnapshots, getDevSemesterSnapshots, isAuthBypass, saveDevProfile, saveDevSemesterSnapshot } from "@/lib/dev-profile";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { createProfile, getProfileForUser, insertCourses, updateProfile, deleteAllCoursesForProfile } from "@/lib/supabase-profiles";
-import { deleteAllSnapshots } from "@/lib/supabase-semesters";
+import { createProfile, deleteCompletedCoursesForProfileByCodes, getProfileById, getProfileForUser, insertCourses, updateProfile } from "@/lib/supabase-profiles";
+import { createSnapshot, deleteAllSnapshots, getLatestSnapshot } from "@/lib/supabase-semesters";
 import { deleteAllPathwaysForProfile, deleteAllPathwaySnapshotsForProfile } from "@/lib/supabase-pathways";
 import { useMotionEnabled, useDirSign } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { t } from "@/lib/copy";
+import { displayName, isDebugAuthUser } from "@/lib/display-name";
 
 import { IntroPhase } from "@/components/onboarding/intro-phase";
 import { CalculatingPhase } from "@/components/onboarding/calculating-phase";
@@ -50,8 +52,6 @@ export default function Onboarding() {
   const [pendingTranscripts, setPendingTranscripts] = useState<PendingTranscript[]>([]);
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
-  // Surfaces a real error message if submit() fails, instead of silently
-  // reverting the button ("nothing happens"). Cleared on each new submit.
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [hasMultipleColleges, setHasMultipleColleges] = useState<boolean | null>(null);
@@ -63,9 +63,12 @@ export default function Onboarding() {
     compatibilityScore: number;
   }[]>([]);
   const createdProfileIdRef = useRef<number | null>(null);
+  const submitLockRef = useRef(false);
   const getSignal = useRequestCleanup();
   const [form, setForm] = useState<FormData>({
-    fullName: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.firstName ?? ""),
+    fullName: user && !isDebugAuthUser(user)
+      ? (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : (user.firstName ?? ""))
+      : "",
     communityCollege: "",
     intendedMajor: "",
     careerGoal: "",
@@ -75,6 +78,29 @@ export default function Onboarding() {
   });
 
   const set = (k: keyof FormData, v: string) => setForm(prev => ({ ...prev, [k]: v }));
+
+  const transcriptReplacementCodes = async (profileId: number): Promise<string[]> => {
+    const incomingCodes = flattenedCourses
+      .map((course) => course.code.trim().toUpperCase())
+      .filter((code) => code.length > 0);
+
+    let previousCodes: string[] = [];
+    if (isAuthBypass()) {
+      const snapshots = getDevSemesterSnapshots(profileId);
+      const latest = snapshots[snapshots.length - 1];
+      previousCodes = (latest?.courses ?? [])
+        .map((course) => (course.course_code ?? "").trim().toUpperCase())
+        .filter((code) => code.length > 0);
+    } else if (isSupabaseConfigured) {
+      const snapshot = await withTimeout(getLatestSnapshot(profileId), 20_000, "onboarding.getLatestSnapshot");
+      previousCodes = (snapshot?.courses ?? [])
+        .map((course) => (course.course_code ?? "").trim().toUpperCase())
+        .filter((code) => code.length > 0);
+    }
+
+    const combined = [...incomingCodes, ...previousCodes];
+    return [...new Set(combined)];
+  };
 
   useEffect(() => {
     // Check if this is a re-upload from the courses page
@@ -124,14 +150,11 @@ export default function Onboarding() {
     const results: ScanResult[] = [];
     try {
       for (const pt of pendingTranscripts) {
-        // 1. Extract raw text — on mobile the PDF is uploaded to the server
-        //    (pdfjs-dist workers crash in mobile WebKit); on desktop we use
-        //    the fast client-side path.
+        // On mobile browsers, extract PDF text server-side because pdfjs workers
+        // are unreliable there. Desktop keeps the faster client-side path.
         let text: string;
         const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobileBrowser) {
-          // Upload the PDF to the server where pdfjs-dist works reliably,
-          // and get the extracted text back. The file is never stored.
           const uploadRes = await fetchWithTimeout("/api/transcript/extract-pdf-text", {
             method: "POST",
             headers: { "Content-Type": "application/pdf" },
@@ -161,7 +184,15 @@ export default function Onboarding() {
 
         // 2. Try AI-powered parsing via server endpoint
         let result: {
-          courses: { code: string; name: string; units?: number; term?: string; college?: string }[];
+          courses: {
+            code: string;
+            name: string;
+            units?: number;
+            term?: string;
+            college?: string;
+            grade?: string;
+            status?: "completed" | "in_progress" | "planned";
+          }[];
           latestGpa: number | null;
           totalUnits: number;
           detectedMajor?: string | null;
@@ -181,8 +212,11 @@ export default function Onboarding() {
         } catch {
           // 3. Fallback to client-side regex parser
           const fallback = parseTranscriptText(text);
-          result = { ...fallback, latestGpa: fallback.latestGpa ?? null, detectedMajor: null };
-
+          result = {
+            ...fallback,
+            latestGpa: fallback.latestGpa ?? null,
+            detectedMajor: fallback.detectedMajor ?? null,
+          };
         }
 
         // Determine college name: use per-course college if detected, else the file's college
@@ -195,6 +229,8 @@ export default function Onboarding() {
             units: c.units,
             term: c.term,
             college: c.college,
+            grade: c.grade,
+            status: c.status,
           })),
           latestGpa: result.latestGpa,
           totalUnits: result.totalUnits,
@@ -205,7 +241,16 @@ export default function Onboarding() {
       setPendingTranscripts([]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
-      setScanError(msg || "Could not read one or more PDFs. You can skip scanning and add courses manually later.");
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile && (!msg || msg.includes("undefined") || msg.includes("worker") || msg.includes("Worker"))) {
+        setScanError(
+          "Your mobile browser couldn't process this PDF directly. " +
+          "You can either try a smaller or text-based PDF, or skip scanning " +
+          "and add your courses manually in the next step."
+        );
+      } else {
+        setScanError(msg || "Could not read one or more PDFs. You can skip scanning and add courses manually later.");
+      }
     } finally {
       setScanning(false);
     }
@@ -258,18 +303,26 @@ export default function Onboarding() {
     return true;
   };
 
-  const flattenedCourses = scanResults.flatMap(r =>
-    r.courses.filter(c => c.units !== undefined && c.units > 0),
+  const flattenedCourses = scanResults.flatMap((result) =>
+    result.courses
+      .map((course) => {
+        const code = course.code.trim();
+        const name = course.name.trim() || code;
+        return { ...course, code, name };
+      })
+      .filter((course) => course.code.length > 0 || course.name.length > 0),
   );
-  const flattenedGpa = scanResults.reduce(
-    (best, r) => (r.latestGpa !== null && r.latestGpa > best ? r.latestGpa : best),
-    0,
-  );
-  const flattenedTotalUnits = flattenedCourses.reduce((sum, c) => sum + (c.units ?? 0), 0);
+  const flattenedGpa = scanResults.reduce<number | null>((best, result) => {
+    if (result.latestGpa === null) return best;
+    return best === null || result.latestGpa > best ? result.latestGpa : best;
+  }, null);
+  const flattenedTotalUnits = flattenedCourses.reduce((sum, course) => sum + (course.units ?? 0), 0);
 
   // Determine the best term label from parsed courses, or use a fallback
-  const detectedTermLabel = (): string => {
-    const terms = flattenedCourses
+  const detectedTermLabel = (
+    courses: Array<{ term?: string }>,
+  ): string => {
+    const terms = courses
       .map((c) => c.term)
       .filter((t): t is string => Boolean(t && t.trim()));
     if (terms.length === 0) return "Initial Transcript";
@@ -285,26 +338,31 @@ export default function Onboarding() {
     }
     return best || "Initial Transcript";
   };
-  const termLabel = detectedTermLabel();
+  const termLabel = detectedTermLabel(flattenedCourses);
 
   const submit = async () => {
-    if (!user?.id) return;
-    console.log("[onboarding] submit start", {
-      userId: user.id,
-      authBypass: isAuthBypass(),
-      supabaseConfigured: isSupabaseConfigured,
-      reupload: isReupload,
-    });
+    if (!user?.id || submitLockRef.current) return;
+    submitLockRef.current = true;
     setSubmitError(null);
     setSubmitting(true);
     try {
+      if (!skippingUpload && scanResults.length > 0 && flattenedCourses.length === 0) {
+        setScanError(
+          "Kaleon read this transcript but could not recover any courses to save yet. " +
+          "Please review the scan, add at least one course manually, or skip transcript upload " +
+          "and enter courses from the Courses page."
+        );
+        setStep(0);
+        return;
+      }
+
       const payload = {
         userId: user.id,
         fullName: form.fullName || user.firstName || t("common.student"),
         communityCollege: form.communityCollege,
         intendedMajor: form.intendedMajor,
         careerGoal: form.careerGoal,
-        currentGpa: flattenedGpa,
+        currentGpa: flattenedGpa ?? undefined,
         transferTimeline: form.transferTimeline,
         financialSituation: form.financialSituation,
         isFirstGen: form.isFirstGen,
@@ -312,9 +370,10 @@ export default function Onboarding() {
       };
 
       if (isAuthBypass()) {
-        // If re-uploading, clear all existing dev courses first
-        if (isReupload) {
-          saveDevCourses(DEV_PROFILE_ID, []);
+        const activeProfileId = reuploadProfileIdRef.current ?? DEV_PROFILE_ID;
+        if (flattenedCourses.length > 0) {
+          const replaceCodes = await transcriptReplacementCodes(activeProfileId);
+          deleteDevCompletedCoursesByCodes(activeProfileId, replaceCodes);
         }
         saveDevProfile({
           fullName: payload.fullName,
@@ -328,31 +387,38 @@ export default function Onboarding() {
           completionPercent: payload.completionPercent,
         });
         if (flattenedCourses.length > 0) {
-          appendDevCourses(DEV_PROFILE_ID, flattenedCourses.map(c => ({
+          appendDevCourses(activeProfileId, flattenedCourses.map(c => ({
             courseCode: c.code,
             courseName: c.name,
             units: c.units,
+            grade: c.grade,
             term: c.term,
-            status: "completed",
+            status: c.status ?? (typeof c.units === "number" && c.units > 0 ? "completed" : "planned"),
           })));
         }
-        saveDevSemesterSnapshot(DEV_PROFILE_ID, {
-          user_id: user.id,
-          profile_id: DEV_PROFILE_ID,
-          term_label: termLabel,
-          college: form.communityCollege || "Unknown",
-          cumulative_gpa: flattenedGpa || null,
-          cumulative_units: flattenedTotalUnits || null,
-          term_gpa: flattenedGpa || null,
-          term_units: flattenedTotalUnits || null,
-          courses: flattenedCourses.map(c => ({
-            course_code: c.code,
-            course_name: c.name,
-            units: c.units ?? null,
-            grade: null,
-          })),
-        });
-        createdProfileIdRef.current = DEV_PROFILE_ID;
+        if (flattenedCourses.length > 0 || flattenedGpa !== null) {
+          if (isReupload) {
+            deleteAllDevSemesterSnapshots(activeProfileId);
+            deleteAllDevPathways(activeProfileId);
+          }
+          saveDevSemesterSnapshot(activeProfileId, {
+            user_id: user.id,
+            profile_id: activeProfileId,
+            term_label: termLabel,
+            college: form.communityCollege || "Unknown",
+            cumulative_gpa: flattenedGpa ?? null,
+            cumulative_units: flattenedTotalUnits || null,
+            term_gpa: flattenedGpa ?? null,
+            term_units: flattenedTotalUnits || null,
+            courses: flattenedCourses.map(c => ({
+              course_code: c.code,
+              course_name: c.name,
+              units: c.units ?? null,
+              grade: c.grade ?? null,
+            })),
+          });
+        }
+        createdProfileIdRef.current = activeProfileId;
         setPhase("calculating");
         setTimeout(() => setPhase("celebration"), 1200);
         return;
@@ -360,9 +426,10 @@ export default function Onboarding() {
 
       // Real Supabase path: get-or-create profile + insert courses via Supabase direct
       if (isSupabaseConfigured && !isAuthBypass()) {
-        // Check if profile already exists for this user
-        let sp = await withTimeout(getProfileForUser(user.id), 20_000, "onboarding.getProfile");
-        console.log("[onboarding] submit profile lookup", sp ? `profile_id=${sp.id}` : "no profile");
+        const reuploadProfileId = reuploadProfileIdRef.current;
+        let sp = reuploadProfileId
+          ? await withTimeout(getProfileById(reuploadProfileId), 20_000, "onboarding.getProfileById")
+          : await withTimeout(getProfileForUser(user.id), 20_000, "onboarding.getProfileForUser");
         if (sp) {
           sp = await withTimeout(updateProfile(sp.id, {
             fullName: payload.fullName,
@@ -389,30 +456,81 @@ export default function Onboarding() {
           }), 20_000, "onboarding.createProfile");
         }
         if (!sp?.id) throw new Error("Failed to create profile");
-        console.log("[onboarding] submit profile ready", `profile_id=${sp.id}`);
         createdProfileIdRef.current = sp.id;
 
         if (flattenedCourses.length > 0) {
-          // If this is a re-upload, clear old courses and associated data first
-          // so new ones fully replace the stale state
+          const replaceCodes = await transcriptReplacementCodes(sp.id);
+          const deletedCompleted = await withTimeout(
+            deleteCompletedCoursesForProfileByCodes(sp.id, replaceCodes),
+            20_000,
+            "onboarding.deleteCompletedCoursesForProfileByCodes",
+          );
+          if (!deletedCompleted) {
+            throw new Error("Failed to replace transcript-derived completed courses");
+          }
           if (isReupload) {
-            await withTimeout(deleteAllCoursesForProfile(sp.id), 20_000, "onboarding.deleteAllCoursesForProfile");
-            await withTimeout(deleteAllSnapshots(sp.id), 20_000, "onboarding.deleteAllSnapshots");
-            await withTimeout(deleteAllPathwaysForProfile(sp.id), 20_000, "onboarding.deleteAllPathwaysForProfile");
-            await withTimeout(deleteAllPathwaySnapshotsForProfile(sp.id), 20_000, "onboarding.deleteAllPathwaySnapshotsForProfile");
+            const snapshotsDeleted = await withTimeout(deleteAllSnapshots(sp.id), 20_000, "onboarding.deleteAllSnapshots");
+            if (!snapshotsDeleted) throw new Error("Failed to clear stale semester snapshots");
+            const pathwaysDeleted = await withTimeout(deleteAllPathwaysForProfile(sp.id), 20_000, "onboarding.deleteAllPathwaysForProfile");
+            if (!pathwaysDeleted) throw new Error("Failed to clear stale pathways");
+            const pathwaySnapshotsDeleted = await withTimeout(deleteAllPathwaySnapshotsForProfile(sp.id), 20_000, "onboarding.deleteAllPathwaySnapshotsForProfile");
+            if (!pathwaySnapshotsDeleted) throw new Error("Failed to clear stale pathway snapshots");
           }
           await withTimeout(insertCourses(sp.id, user.id, flattenedCourses.map(c => ({
             courseCode: c.code,
             courseName: c.name,
             units: c.units,
+            grade: c.grade,
             term: c.term,
-            status: "completed",
+            status: c.status ?? (typeof c.units === "number" && c.units > 0 ? "completed" : "planned"),
           }))), 20_000, "onboarding.insertCourses");
+        }
+
+        const snapshotInputs = scanResults
+          .map((result) => {
+            const snapshotCourses = result.courses
+              .map((course) => {
+                const code = course.code.trim();
+                const name = course.name.trim() || code;
+                return { ...course, code, name };
+              })
+              .filter((course) => course.code.length > 0 || course.name.length > 0);
+            const snapshotUnits = snapshotCourses.reduce((sum, course) => sum + (course.units ?? 0), 0);
+            if (snapshotCourses.length === 0 && result.latestGpa === null) {
+              return null;
+            }
+            return {
+              user_id: user.id,
+              profile_id: sp.id,
+              term_label: detectedTermLabel(snapshotCourses),
+              college: result.college || form.communityCollege || "Unknown",
+              cumulative_gpa: result.latestGpa ?? null,
+              cumulative_units: snapshotUnits || null,
+              term_gpa: result.latestGpa ?? null,
+              term_units: snapshotUnits || null,
+              courses: snapshotCourses.map((course) => ({
+                course_code: course.code,
+                course_name: course.name,
+                units: course.units ?? null,
+                grade: course.grade ?? null,
+              })),
+            };
+          })
+          .filter((value): value is NonNullable<typeof value> => value !== null);
+
+        if (snapshotInputs.length > 0) {
+          await withTimeout(
+            Promise.all(snapshotInputs.map((input) => createSnapshot(input))),
+            20_000,
+            "onboarding.createSnapshots",
+          );
         }
 
         if (!user.firstName?.trim()) {
           const first = payload.fullName.trim().split(/\s+/)[0];
-          if (first) await updateProfileName(first);
+          if (first) {
+            await withTimeout(updateProfileName(first), 20_000, "onboarding.updateProfileName");
+          }
         }
 
         setPhase("calculating");
@@ -421,7 +539,6 @@ export default function Onboarding() {
       }
 
       // Legacy / mock path (non-Supabase or auth bypass)
-      console.warn("[onboarding] submit using LEGACY /api/profiles path — no Supabase configured in this bundle");
       const r = await fetch("/api/profiles", {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -430,6 +547,31 @@ export default function Onboarding() {
       if (!r.ok) throw new Error("Failed to create profile");
       const created = (await r.json()) as { id: number };
       createdProfileIdRef.current = created.id;
+
+      if (flattenedCourses.length > 0) {
+        const replaceCodes = await transcriptReplacementCodes(created.id);
+        const saveRes = await fetch(`/api/profiles/${created.id}/courses/bulk`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            latestGpa: flattenedGpa ?? undefined,
+            replaceCodes,
+            courses: flattenedCourses.map((c) => ({
+              courseCode: c.code,
+              courseName: c.name,
+              units: c.units,
+              grade: c.grade,
+              term: c.term,
+              status: c.status ?? (typeof c.units === "number" && c.units > 0 ? "completed" : "planned"),
+            })),
+          }),
+        });
+        if (!saveRes.ok) {
+          throw new Error("Failed to save transcript courses");
+        }
+      }
+
       setPhase("calculating");
 
       // Try to generate pathways in the background
@@ -443,7 +585,7 @@ export default function Onboarding() {
             communityCollege: payload.communityCollege,
             intendedMajor: payload.intendedMajor,
             careerGoal: payload.careerGoal,
-            currentGpa: flattenedGpa || undefined,
+            currentGpa: flattenedGpa ?? undefined,
             transferTimeline: form.transferTimeline,
             financialSituation: form.financialSituation,
             isFirstGen: form.isFirstGen,
@@ -451,8 +593,9 @@ export default function Onboarding() {
               courseCode: c.code,
               courseName: c.name,
               units: c.units,
+              grade: c.grade,
               term: c.term,
-              status: "completed",
+              status: c.status ?? (typeof c.units === "number" && c.units > 0 ? "completed" : "planned"),
             })),
             totalUnits: flattenedTotalUnits || undefined,
           }),
@@ -489,8 +632,8 @@ export default function Onboarding() {
     } catch (e) {
       console.error("[onboarding] submit failed", e);
       setSubmitError(e instanceof Error ? e.message : String(e));
-      setSubmitting(false);
     } finally {
+      submitLockRef.current = false;
       setSubmitting(false);
     }
   };
@@ -500,7 +643,7 @@ export default function Onboarding() {
   const motionOn = useMotionEnabled();
   const dir = useDirSign();
 
-  if (phase === "intro") return <IntroPhase firstName={user?.firstName} />;
+  if (phase === "intro") return <IntroPhase firstName={displayName(user, null, t("common.student"))} />;
   if (phase === "calculating") return <CalculatingPhase />;
   if (phase === "celebration") return <CelebrationPhase />;
   if (phase === "ready") return <ReadyPhase profileId={createdProfileIdRef.current ?? DEV_PROFILE_ID} />;
@@ -520,7 +663,7 @@ export default function Onboarding() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
             <img src={KALEON_LOGO_SRC} alt="" width={28} height={28} className="shrink-0 object-contain" aria-hidden />
-            <span className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
+            <span className="text-xl font-semibold tracking-tight" style={{ color: "#f8fafc" }}>
               Kaleon
             </span>
           </div>
@@ -538,7 +681,7 @@ export default function Onboarding() {
 
         {/* Progress bar */}
         <div className="mb-6">
-          <div className="flex justify-between text-xs mb-1.5 pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>
+          <div className="mb-1.5 flex justify-between text-sm" style={{ color: "#94a3b8" }}>
             <span>{t("onboarding.stepOf", { current: step + 1, total: STEPS.length })}</span>
             <span>{Math.round(progress)}%</span>
           </div>
@@ -559,7 +702,7 @@ export default function Onboarding() {
               ) : (
                 StepIcon && <StepIcon className="h-5 w-5" style={{ color: "#4ECCA3" }} aria-hidden />
               )}
-              <h1 className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
+              <h1 className="text-xl font-semibold tracking-tight" style={{ color: "#f8fafc" }}>
                 {STEPS[step].title}
               </h1>
             </div>
@@ -599,8 +742,6 @@ export default function Onboarding() {
             />
           </div>
 
-          {/* Inline submit error — makes a failed "Start My Journey" visible
-              instead of silently reverting the button */}
           {submitError && (
             <div
               role="alert"
@@ -652,7 +793,7 @@ export default function Onboarding() {
           </div>
         </div>
 
-        <p className="text-center text-xs mt-6 pwc-font-mono" style={{ color: "#475569" }}>
+        <p className="mt-6 text-center text-sm" style={{ color: "#64748b" }}>
           {t("onboarding.updateLater")}
         </p>
       </div>

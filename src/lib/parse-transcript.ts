@@ -6,6 +6,8 @@ export interface ExtractedCourse {
   units?: number;
   term?: string;
   college?: string;
+  grade?: string;
+  status?: "completed" | "in_progress" | "planned";
 }
 
 export interface TranscriptParseResult {
@@ -16,6 +18,10 @@ export interface TranscriptParseResult {
 }
 
 const COURSE_CODE_RE = /\b([A-Z]{2,6})\s+(\d{1,3}[A-Z]{0,2})\b/g;
+const TRANSCRIPT_COURSE_ROW_RE =
+  /\b([A-Z]{2,6})\s+(\d{1,3}[A-Z]{0,2})\s+(.+?)\s+(\d{1,2}\.\d{3})\s+(\d{1,2}\.\d{3})\s+(A-|A\+?|B\+?|B-|C\+?|C-|D\+?|D-|F|CR|NC|NP|P|IP|RP|SP|RD|AU|W|WU|WF|I|IC|IN|AF|AW|U)\s+(\d{1,3}\.\d{3})(?=\s+(?:Repeated:|Attempted\s+Earned\s+Points|Term GPA:|CSUEB GPA:|Cum GPA:|Academic Standing:|[A-Z]{2,6}\s+\d{1,3}[A-Z]{0,2}\s+[A-Z]|OFFICIAL Page|CALIFORNIA STATE UNIVERSITY|$))/g;
+const TERM_HEADER_RE = /\b(FALL|SPRING|SUMMER|WINTER)\s+(?:SEMESTER|SESSION|QUARTER|TERM)?\s*(\d{4})\b/gi;
+const IN_PROGRESS_GRADES = new Set(["IP", "RP", "SP", "RD", "I", "IC", "IN"]);
 
 const CUMULATIVE_GPA_RES = [
   /(?:cumulative|overall|total|cum(?:ulative)?)\s*gpa\s*[:\s]*([0-4]\.\d{1,3})/gi,
@@ -60,8 +66,8 @@ function formatTerm(season: string, year: string): string {
 
 /** Nearest term header before a course row (e.g. "Fall 2023"). */
 export function termNear(text: string, codeStart: number): string | undefined {
-  const before = text.slice(Math.max(0, codeStart - 500), codeStart);
-  const re = /\b(FALL|SPRING|SUMMER|WINTER)\s+(\d{4})\b/gi;
+  const before = text.slice(Math.max(0, codeStart - 1200), codeStart);
+  const re = new RegExp(TERM_HEADER_RE.source, "gi");
   let match: RegExpExecArray | null;
   let last: string | undefined;
   while ((match = re.exec(before)) !== null) {
@@ -93,12 +99,13 @@ export function parseLatestGpa(text: string): number | undefined {
 const SKIP = new Set([
   "GE","UC","CSU","AP","SAT","ACT","CCC","CC","AB","CA","USA","TOTAL","UNITS","GRADE",
   "PAGE","THE","AND","FOR","NOT","YES","NO","NEW","AA","AS","BA","BS",
-  "MS","PHD","GED","HSD","ID","IGETC","DE","CR","NC","MW","EW","IP",
-  "TR","SP","HD","LA","SF","SD","SB","SC","SM","SJ","OC","VC",
+  "MS","PHD","GED","HSD","ID","IGETC","GPA","DE","CR","NC","MW","EW","IP",
+  "TR","SP","HD","LA","SF","SD","SB","SC","SM","SJ","OC","VC","INFO3","RT3",
 ]);
 
 function isValidCode(dept: string, num: string): boolean {
-  if (SKIP.has(dept) || SKIP.has(dept + num)) return false;
+  const deptUpper = dept.toUpperCase();
+  if (SKIP.has(deptUpper) || SKIP.has(`${deptUpper}${num}`)) return false;
   if (dept.length < 2 || dept.length > 6) return false;
   if (!/^\d/.test(num)) return false;
   const n = parseInt(num, 10);
@@ -108,29 +115,95 @@ function isValidCode(dept: string, num: string): boolean {
 
 function unitsNear(text: string, codeEnd: number): number | undefined {
   const window = text.slice(codeEnd, codeEnd + 120);
+  const decimal = String.raw`\d{1,2}(?:\.\d{1,3})?`;
 
   // Pattern 1: "3.0 UNITS", "3 units", "4.0 unit", "4 U"
-  const m = window.match(/\b([1-9]\d?(?:\.\d)?)\s*(?:units?|unit|u\b|credit\s*(?:s|hours?)?)/i);
+  const m = window.match(new RegExp(String.raw`\b(${decimal})\s*(?:units?|unit|u\b|credit\s*(?:s|hours?)?)`, "i"));
   if (m) return parseFloat(m[1]);
 
   // Pattern 2: "(3)" or "(3.0)" — common transcript display
-  const mParen = window.match(/\(([1-5](?:\.0)?)\)/);
+  const mParen = window.match(new RegExp(String.raw`\(((${decimal}))\)`));
   if (mParen) return parseFloat(mParen[1]);
 
   // Pattern 3: "UNITS: 3" or "CREDITS: 4"
-  const mLabel = window.match(/(?:units?|credit|credits)\s*[:\s]\s*([1-9]\d?(?:\.\d)?)/i);
+  const mLabel = window.match(new RegExp(String.raw`(?:units?|credit|credits)\s*[:\s]\s*(${decimal})`, "i"));
   if (mLabel) return parseFloat(mLabel[1]);
 
   // Pattern 4: "3.0 4.0" — some CC transcripts print units then grade side-by-side
   // e.g. "3.0 A" or "3.0 4.0" where the first number is units (1-5), second is grade (0-4)
-  const mGradeNum = window.match(/\b([1-5](?:\.\d)?)\s+(?:[0-9A-Z.+-]+\s+){0,3}(?:CR|GR|NC|[ABCDF][+-]?)\b/);
+  const mGradeNum = window.match(new RegExp(String.raw`\b(${decimal})\s+(?:[0-9A-Z.+-]+\s+){0,3}(?:CR|GR|NC|[ABCDF][+-]?)\b`));
   if (mGradeNum) return parseFloat(mGradeNum[1]);
 
   // Pattern 5: "3.0 4.0" where first = units, second = grade on 0-4 scale
-  const mSideBySide = window.match(/\b([1-5](?:\.\d))\s+([0-4](?:\.\d)?)\b/);
+  const mSideBySide = window.match(new RegExp(String.raw`\b(${decimal})\s+([0-4](?:\.\d{1,3})?)\b`));
   if (mSideBySide) return parseFloat(mSideBySide[1]);
 
   return undefined;
+}
+
+function cleanCourseName(name: string): string {
+  return name.replace(/\s+/g, " ").trim().replace(/[.,;:]$/, "");
+}
+
+function deriveCourseStatus(
+  grade: string | undefined,
+  units: number | undefined,
+): "completed" | "in_progress" | "planned" {
+  if (typeof units === "number" && units > 0) return "completed";
+  if (grade && IN_PROGRESS_GRADES.has(grade)) return "in_progress";
+  return "planned";
+}
+
+function parseDetectedMajor(text: string): string | null {
+  const patterns = [
+    /\bPlan:\s+(.+?)\s+Academic Program History\b/i,
+    /\bProgram:\s+(.+?)(?=\s+(?:Academic Program History|Attempted\s+Earned\s+Points|Transfer Credits|Beginning of Undergraduate Record|Cum GPA:|OFFICIAL Page|FALL|SPRING|SUMMER|WINTER|$))/i,
+    /\b(?:Major Program|Intended Major|Academic Program|Degree Objective|Curriculum|Program|Goal):\s+(.+?)(?=\s+(?:Program:|Transfer Credits|Beginning of Undergraduate Record|Cum GPA:|OFFICIAL Page|$))/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    const value = match?.[1]?.replace(/\s+/g, " ").trim();
+    if (value && value.length >= 3 && value.length <= 80) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function parseStructuredCourses(text: string): ExtractedCourse[] {
+  const courses: ExtractedCourse[] = [];
+  const seen = new Set<string>();
+
+  TRANSCRIPT_COURSE_ROW_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = TRANSCRIPT_COURSE_ROW_RE.exec(text)) !== null) {
+    const dept = match[1];
+    const num = match[2];
+    if (!isValidCode(dept, num)) continue;
+
+    const code = `${dept} ${num}`;
+    const name = cleanCourseName(match[3]);
+    const units = parseFloat(match[5]);
+    const grade = match[6].trim();
+    const term = termNear(text, match.index);
+    const status = deriveCourseStatus(grade, units);
+    const key = [code, name, term ?? "", grade, units.toFixed(3)].join("|");
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    courses.push({
+      code,
+      name,
+      units,
+      term,
+      grade,
+      status,
+    });
+  }
+
+  return courses;
 }
 
 /**
@@ -269,6 +342,15 @@ export async function extractTextFromPDF(file: File): Promise<string> {
  * Used as a fallback when the AI endpoint is unavailable.
  */
 export function parseTranscriptText(text: string): TranscriptParseResult {
+  const latestGpa = parseLatestGpa(text);
+  const detectedMajor = parseDetectedMajor(text);
+  const structured = parseStructuredCourses(text);
+  if (structured.length > 0) {
+    const earned = structured.filter((course) => typeof course.units !== "number" || course.units > 0);
+    const totalUnits = earned.reduce((sum, course) => sum + (course.units ?? 0), 0);
+    return { courses: earned, latestGpa, totalUnits, detectedMajor };
+  }
+
   const seen = new Set<string>();
   const courses: ExtractedCourse[] = [];
 
@@ -284,16 +366,23 @@ export function parseTranscriptText(text: string): TranscriptParseResult {
     const codeEnd = match.index + match[0].length;
     const units = unitsNear(text, codeEnd);
     const term = termNear(text, match.index);
-    courses.push({ code, name: code, units, term });
+    courses.push({
+      code,
+      name: code,
+      units,
+      term,
+      status: deriveCourseStatus(undefined, units),
+    });
   }
 
-  // Filter out courses with 0 or undefined units — these represent failed/withdrawn
-  // courses where the "Earned" column was 0.00 on the transcript.
-  const earned = courses.filter(c => c.units !== undefined && c.units > 0);
+  // Keep recognizable courses even when unit extraction fails so the rest of
+  // the student pipeline can still retain the transcript's actual coursework.
+  // Explicit zero-earned-unit rows are still excluded because they are usually
+  // failed, withdrawn, or otherwise not completed for credit.
+  const earned = courses.filter(c => c.units === undefined || c.units > 0);
   const totalUnits = earned.reduce((sum, c) => sum + (c.units ?? 0), 0);
-  const latestGpa = parseLatestGpa(text);
 
-  return { courses: earned, latestGpa, totalUnits };
+  return { courses: earned, latestGpa, totalUnits, detectedMajor };
 }
 
 export async function parseTranscriptPDF(file: File): Promise<TranscriptParseResult> {

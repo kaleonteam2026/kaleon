@@ -7,6 +7,11 @@ import { logDeepSeekConfig } from "./deepseek-client.ts";
 import { generateGuidebookWithDeepSeek } from "./generate-guidebook.ts";
 import { generateRoadmapWithDeepSeek } from "./generate-roadmap.ts";
 import { generateTransferabilityAnalysis } from "./transferability-analysis.ts";
+import {
+  assertDeepSeekConfigured,
+  getDeepSeekRuntimeConfig,
+  normalizePathwayError,
+} from "./pathway-provider.ts";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -61,6 +66,7 @@ interface Job {
   status: "pending" | "completed" | "failed";
   result?: unknown;
   error?: string;
+  code?: string;
 }
 
 const jobs = new Map<number, Job>();
@@ -69,9 +75,17 @@ let nextJobId = 1;
 // ── DeepSeek-powered AI endpoints ──────────────────────────────────────
 
 app.post("/api/profiles/:id/generate-pathways", async (req, res) => {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
-    res.status(503).json({ error: "DeepSeek API key not configured" });
+  let apiKey: string;
+  try {
+    apiKey = assertDeepSeekConfigured(getDeepSeekRuntimeConfig(process.env));
+  } catch (error) {
+    const normalized = normalizePathwayError(error);
+    console.error("[generate-pathways]", {
+      code: normalized.code,
+      detail: normalized.detail ?? normalized.message,
+      cause: error,
+    });
+    res.status(normalized.status).json({ error: normalized.message, code: normalized.code });
     return;
   }
 
@@ -89,10 +103,20 @@ app.post("/api/profiles/:id/generate-pathways", async (req, res) => {
     const result = await generatePathwaysWithDeepSeek(
       { profileId: Number(req.params.id), ...req.body },
       apiKey,
+      {
+        baseUrl: getDeepSeekRuntimeConfig(process.env).baseUrl,
+        model: getDeepSeekRuntimeConfig(process.env).model,
+      },
     );
     jobs.set(jobId, { status: "completed", result });
   } catch (e) {
-    jobs.set(jobId, { status: "failed", error: String(e) });
+    const error = normalizePathwayError(e);
+    console.error("[generate-pathways-job]", {
+      code: error.code,
+      detail: error.detail ?? error.message,
+      cause: e,
+    });
+    jobs.set(jobId, { status: "failed", error: error.message, code: error.code });
   }
 });
 
@@ -106,7 +130,7 @@ app.get("/api/pathways/jobs/:jobId", (req, res) => {
   if (job.status === "pending") {
     res.json({ status: "pending" });
   } else if (job.status === "failed") {
-    res.json({ status: "failed", error: job.error });
+    res.json({ status: "failed", error: job.error, code: job.code });
   } else {
     res.json({ status: "completed", result: job.result });
     // Clean up completed jobs after delivering

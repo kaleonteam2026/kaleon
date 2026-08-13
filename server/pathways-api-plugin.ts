@@ -2,6 +2,11 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Plugin } from "vite";
 import { loadEnv } from "vite";
 import { generatePathwaysWithDeepSeek, type PathwayGenerationInput } from "./generate-pathways.ts";
+import {
+  assertDeepSeekConfigured,
+  getDeepSeekRuntimeConfig,
+  normalizePathwayError,
+} from "./pathway-provider.ts";
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -24,9 +29,6 @@ export function pathwaysApiPlugin(): Plugin {
   return {
     name: "pathways-deepseek-api",
     configureServer(server) {
-      const env = loadEnv(server.config.mode, process.cwd(), "");
-      const apiKey = env.DEEPSEEK_API_KEY ?? process.env.DEEPSEEK_API_KEY;
-
       server.middlewares.use(async (req, res, next) => {
         if (req.method !== "POST" || !req.url) return next();
 
@@ -34,14 +36,10 @@ export function pathwaysApiPlugin(): Plugin {
         const match = pathname.match(GENERATE_PATHWAYS_RE);
         if (!match) return next();
 
-        if (!apiKey?.trim()) {
-          sendJson(res, 503, {
-            error: "DEEPSEEK_API_KEY is not configured. Add it to your .env file.",
-          });
-          return;
-        }
-
         try {
+          const env = loadEnv(server.config.mode, process.cwd(), "");
+          const config = getDeepSeekRuntimeConfig({ ...env, ...process.env });
+          const apiKey = assertDeepSeekConfigured(config);
           const profileId = parseInt(match[1], 10);
           let body: Partial<PathwayGenerationInput> = {};
           const raw = await readBody(req);
@@ -64,13 +62,21 @@ export function pathwaysApiPlugin(): Plugin {
               totalUnits: body.totalUnits,
             },
             apiKey.trim(),
+            {
+              baseUrl: config.baseUrl,
+              model: config.model,
+            },
           );
 
           sendJson(res, 200, pathways);
         } catch (err) {
-          const message = err instanceof Error ? err.message : "Pathway generation failed";
-          console.error("[pathways-api]", message, err);
-          sendJson(res, 500, { error: message });
+          const error = normalizePathwayError(err);
+          console.error("[pathways-api]", {
+            code: error.code,
+            detail: error.detail ?? error.message,
+            cause: err,
+          });
+          sendJson(res, error.status, { error: error.message, code: error.code });
         }
       });
     },

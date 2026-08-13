@@ -27,7 +27,7 @@ export interface IgetcSummaryOutput {
 export interface CourseTransferOutput {
   courseCode?: string;
   courseName: string;
-  units: number;
+  units?: number;
   status: "transferable" | "likely" | "uncertain" | "unlikely";
   igetcArea?: string;
   csuGEArea?: string;
@@ -288,21 +288,24 @@ function normalizeResult(raw: unknown): TransferabilityResultOutput {
 
   const coursesRaw = obj.courseAnalysis ?? obj.courseResults ?? [];
   const courseAnalysis: CourseTransferOutput[] = (Array.isArray(coursesRaw) ? coursesRaw : []).map(
-    (c: Record<string, unknown>) => ({
-      courseCode: String(c.courseCode ?? c.code ?? ""),
-      courseName: String(c.courseName ?? c.name ?? ""),
-      units: Number(c.units) || 3,
-      status: (
-        ["transferable", "likely", "uncertain", "unlikely"].includes(
-          String(c.status),
-        )
-          ? String(c.status)
-          : "uncertain"
-      ) as CourseTransferOutput["status"],
-      igetcArea: c.igetcArea ? String(c.igetcArea) : undefined,
-      csuGEArea: c.csuGEArea ? String(c.csuGEArea) : undefined,
-      assistNote: String(c.assistNote ?? ""),
-    }),
+    (c: Record<string, unknown>) => {
+      const parsedUnits = Number(c.units);
+      return {
+        courseCode: String(c.courseCode ?? c.code ?? "") || undefined,
+        courseName: String(c.courseName ?? c.name ?? ""),
+        units: Number.isFinite(parsedUnits) && parsedUnits > 0 ? parsedUnits : undefined,
+        status: (
+          ["transferable", "likely", "uncertain", "unlikely"].includes(
+            String(c.status),
+          )
+            ? String(c.status)
+            : "uncertain"
+        ) as CourseTransferOutput["status"],
+        igetcArea: c.igetcArea ? String(c.igetcArea) : undefined,
+        csuGEArea: c.csuGEArea ? String(c.csuGEArea) : undefined,
+        assistNote: String(c.assistNote ?? ""),
+      };
+    },
   );
 
   const matchesRaw = obj.bestMatches ?? obj.universityMatches ?? [];
@@ -319,6 +322,13 @@ function normalizeResult(raw: unknown): TransferabilityResultOutput {
 
   const igetcRaw = (obj.igetcSummary ?? {}) as Record<string, unknown>;
   const calgetcRaw = (obj.calgetcSummary ?? {}) as Record<string, unknown>;
+
+  const computedTransferableUnits = courseAnalysis.reduce((sum, course) => (
+    course.status === "transferable" || course.status === "likely"
+      ? sum + (course.units ?? 0)
+      : sum
+  ), 0);
+  const totalTransferableUnitsRaw = Number(obj.totalTransferableUnits);
 
   return {
     communityCollege: String(obj.communityCollege ?? ""),
@@ -360,7 +370,9 @@ function normalizeResult(raw: unknown): TransferabilityResultOutput {
         ? (calgetcRaw.missingAreas as string[])
         : [],
     },
-    totalTransferableUnits: Number(obj.totalTransferableUnits) || 0,
+    totalTransferableUnits: Number.isFinite(totalTransferableUnitsRaw) && totalTransferableUnitsRaw >= 0
+      ? totalTransferableUnitsRaw
+      : computedTransferableUnits,
     recommendations: Array.isArray(obj.recommendations)
       ? (obj.recommendations as string[])
       : [],

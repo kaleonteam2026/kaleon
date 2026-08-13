@@ -91,69 +91,42 @@ html {
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: red; /*replace with H S L */
+  --background: 42 33% 97%;
+  --foreground: 220 30% 16%;
+  --border: 210 24% 86%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 30% 16%;
+  --card-border: 210 24% 86%;
+  --sidebar: 42 33% 97%;
+  --sidebar-foreground: 220 30% 16%;
+  --sidebar-border: 210 24% 86%;
+  --sidebar-primary: 164 46% 42%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 164 32% 93%;
+  --sidebar-accent-foreground: 220 30% 16%;
+  --sidebar-ring: 164 46% 42%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 30% 16%;
+  --popover-border: 210 24% 86%;
+  --primary: 164 46% 42%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 42 25% 92%;
+  --secondary-foreground: 220 30% 16%;
+  --muted: 42 20% 94%;
+  --muted-foreground: 215 16% 41%;
+  --accent: 164 32% 93%;
+  --accent-foreground: 220 30% 16%;
+  --destructive: 3 72% 54%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 210 24% 86%;
+  --ring: 164 46% 42%;
+  --chart-1: 164 46% 42%;
+  --chart-2: 206 67% 52%;
+  --chart-3: 39 89% 56%;
+  --chart-4: 266 48% 56%;
+  --chart-5: 8 72% 58%;
 
-  --foreground: red; /*replace with H S L */
-
-  --border: red; /*replace with H S L */
-
-  --card: red; /*replace with H S L */
-
-  --card-foreground: red; /*replace with H S L */
-
-  --card-border: red; /*replace with H S L */
-
-  --sidebar: red; /*replace with H S L */
-
-  --sidebar-foreground: red; /*replace with H S L */
-
-  --sidebar-border: red; /*replace with H S L */
-
-  --sidebar-primary: red; /*replace with H S L */
-
-  --sidebar-primary-foreground: red; /*replace with H S L */
-
-  --sidebar-accent: red; /*replace with H S L */
-
-  --sidebar-accent-foreground: red; /*replace with H S L */
-
-  --sidebar-ring: red; /*replace with H S L */
-
-  --popover: red; /*replace with H S L */
-
-  --popover-foreground: red; /*replace with H S L */
-
-  --popover-border: red; /*replace with H S L */
-
-  --primary: red; /*replace with H S L */
-
-  --primary-foreground: red; /*replace with H S L */
-
-  --secondary: red; /*replace with H S L */
-
-  --secondary-foreground: red; /*replace with H S L */
-
-  --muted: red; /*replace with H S L */
-
-  --muted-foreground: red; /*replace with H S L */
-
-  --accent: red; /*replace with H S L */
-
-  --accent-foreground: red; /*replace with H S L */
-
-  --destructive: red; /*replace with H S L */
-
-  --destructive-foreground: red; /*replace with H S L */
-
-  --input: red; /*replace with H S L */
-  --ring: red; /*replace with H S L */
-  --chart-1: red; /*replace with H S L */
-  --chart-2: red; /*replace with H S L */
-  --chart-3: red; /*replace with H S L */
-  --chart-4: red; /*replace with H S L */
-  --chart-5: red; /*replace with H S L */
-
-  --app-font-sans: 'Inter', sans-serif;
+  --app-font-sans: 'Inter', 'Inter Variable', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --radius: .5rem; /* 8px */
@@ -209,68 +182,40 @@ html {
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: red; /*replace with H S L */
-
-  --foreground: red; /*replace with H S L */
-
-  --border: red; /*replace with H S L */
-
-  --card: red; /*replace with H S L */
-
-  --card-foreground: red; /*replace with H S L */
-
-  --card-border: red; /*replace with H S L */
-
-  --sidebar: red; /*replace with H S L */
-
-  --sidebar-foreground: red; /*replace with H S L */
-
-  --sidebar-border: red; /*replace with H S L */
-
-  --sidebar-primary: red; /*replace with H S L */
-
-  --sidebar-primary-foreground: red; /*replace with H S L */
-
-  --sidebar-accent: red; /*replace with H S L */
-
-  --sidebar-accent-foreground: red; /*replace with H S L */
-
-  --sidebar-ring: red; /*replace with H S L */
-
-  --popover: red; /*replace with H S L */
-
-  --popover-foreground: red; /*replace with H S L */
-
-  --popover-border: red; /*replace with H S L */
-
-  --primary: red; /*replace with H S L */
-
-  --primary-foreground: red; /*replace with H S L */
-
-  --secondary: red; /*replace with H S L */
-
-  --secondary-foreground: red; /*replace with H S L */
-
-  --muted: red; /*replace with H S L */
-
-  --muted-foreground: red; /*replace with H S L */
-
-  --accent: red; /*replace with H S L */
-
-  --accent-foreground: red; /*replace with H S L */
-
-  --destructive: red; /*replace with H S L */
-
-  --destructive-foreground: red; /*replace with H S L */
-
-  /* Used as the border around inputs. Dark mode: Should be a border that is light enough to have high contrast when rendered on a --card background. More contrast than standard --border */
-  --input: red; /*replace with H S L */
-  --ring: red; /*replace with H S L */
-  --chart-1: red; /*replace with H S L */
-  --chart-2: red; /*replace with H S L */
-  --chart-3: red; /*replace with H S L */
-  --chart-4: red; /*replace with H S L */
-  --chart-5: red; /*replace with H S L */
+  --background: 221 50% 10%;
+  --foreground: 210 33% 96%;
+  --border: 215 29% 22%;
+  --card: 219 39% 14%;
+  --card-foreground: 210 33% 96%;
+  --card-border: 215 29% 22%;
+  --sidebar: 221 50% 10%;
+  --sidebar-foreground: 210 33% 96%;
+  --sidebar-border: 215 29% 22%;
+  --sidebar-primary: 164 58% 55%;
+  --sidebar-primary-foreground: 221 50% 10%;
+  --sidebar-accent: 217 33% 18%;
+  --sidebar-accent-foreground: 210 33% 96%;
+  --sidebar-ring: 164 58% 55%;
+  --popover: 219 39% 14%;
+  --popover-foreground: 210 33% 96%;
+  --popover-border: 215 29% 22%;
+  --primary: 164 58% 55%;
+  --primary-foreground: 221 50% 10%;
+  --secondary: 217 33% 18%;
+  --secondary-foreground: 210 33% 96%;
+  --muted: 217 33% 18%;
+  --muted-foreground: 215 16% 70%;
+  --accent: 217 33% 20%;
+  --accent-foreground: 210 33% 96%;
+  --destructive: 2 77% 60%;
+  --destructive-foreground: 210 33% 96%;
+  --input: 216 28% 28%;
+  --ring: 164 58% 55%;
+  --chart-1: 164 58% 55%;
+  --chart-2: 200 75% 60%;
+  --chart-3: 42 92% 60%;
+  --chart-4: 271 72% 67%;
+  --chart-5: 7 82% 64%;
 
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
@@ -420,6 +365,17 @@ html {
   --app-input-bg: rgba(255, 255, 255, 0.85);
   --app-input-text: #0f172a;
   --app-input-placeholder: #64748b;
+  --student-surface: rgba(255, 255, 255, 0.9);
+  --student-surface-muted: rgba(248, 250, 252, 0.94);
+  --student-text-primary: #0f172a;
+  --student-text-secondary: #475569;
+  --student-border: rgba(15, 23, 42, 0.12);
+  --student-primary: #0f766e;
+  --student-primary-hover: #115e59;
+  --student-success: #047857;
+  --student-warning: #b45309;
+  --student-danger: #b91c1c;
+  --student-info: #0369a1;
 }
 
 .dark {
@@ -433,6 +389,17 @@ html {
   --app-input-bg: rgba(5, 12, 24, 0.65);
   --app-input-text: #f8fafc;
   --app-input-placeholder: #64748b;
+  --student-surface: rgba(13, 26, 46, 0.82);
+  --student-surface-muted: rgba(7, 17, 31, 0.82);
+  --student-text-primary: #e2e8f0;
+  --student-text-secondary: #94a3b8;
+  --student-border: rgba(78, 204, 163, 0.15);
+  --student-primary: #4ECCA3;
+  --student-primary-hover: #38b2ac;
+  --student-success: #6fd19e;
+  --student-warning: #fbbf24;
+  --student-danger: #f87171;
+  --student-info: #7dd3fc;
 }
 /* WCAG 2.3.3 — Honor OS-level prefers-reduced-motion.
    Disables transforms/animations and shortens transitions to a near-instant
@@ -444,6 +411,69 @@ html {
 
 .pwc-font-mono {
   font-family: var(--app-font-mono);
+}
+
+.student-panel {
+  background: var(--student-surface);
+  border: 1px solid var(--student-border);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.01);
+}
+
+.student-panel-muted {
+  background: var(--student-surface-muted);
+  border: 1px solid var(--student-border);
+  border-radius: 10px;
+}
+
+.student-section-kicker {
+  color: var(--student-primary);
+  font-family: var(--app-font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.student-button-primary {
+  background: linear-gradient(135deg, #4ECCA3, #38b2ac);
+  border: 1px solid rgba(78, 204, 163, 0.25);
+  color: #041016;
+  border-radius: 10px;
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.student-button-primary:hover {
+  box-shadow: 0 0 24px rgba(78, 204, 163, 0.28);
+  transform: translateY(-1px);
+}
+
+.student-button-secondary {
+  background: transparent;
+  color: var(--student-text-primary);
+  border: 1px solid rgba(78, 204, 163, 0.22);
+  border-radius: 10px;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.student-button-secondary:hover {
+  background: rgba(78, 204, 163, 0.06);
+  border-color: rgba(78, 204, 163, 0.45);
+  color: #f8fafc;
+}
+
+.student-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 8px;
+  padding: 0.32rem 0.56rem;
+  font-family: var(--app-font-mono);
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 /* ── Landing page ── */

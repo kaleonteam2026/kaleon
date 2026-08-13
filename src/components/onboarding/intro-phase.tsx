@@ -12,7 +12,7 @@ export function IntroPhase({ firstName }: { firstName?: string | null }) {
       <div className="w-full max-w-lg">
         <div className="flex items-center gap-2 justify-center mb-8">
           <img src={KALEON_LOGO_SRC} alt="" width={28} height={28} className="shrink-0 object-contain" aria-hidden />
-          <span className="text-xl font-bold uppercase tracking-tight" style={{ color: "#f8fafc" }}>
+          <span className="text-xl font-semibold tracking-tight" style={{ color: "#f8fafc" }}>
             Kaleon
           </span>
         </div>

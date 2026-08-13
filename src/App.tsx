@@ -18,6 +18,7 @@ const Pathways = lazy(() => import("@/pages/pathways"));
 const Guidebook = lazy(() => import("@/pages/guidebook"));
 const Roadmap = lazy(() => import("@/pages/roadmap"));
 const Progress = lazy(() => import("@/pages/progress"));
+const Plan = lazy(() => import("@/pages/plan"));
 const DeadlineCalendar = lazy(() => import("@/pages/deadline-calendar"));
 const ExportsPage = lazy(() => import("@/pages/exports"));
 const Onboarding = lazy(() => import("@/pages/onboarding"));
@@ -114,6 +115,13 @@ function Router() {
               <ErrorBoundary>
                 <ProtectedRoute>
                   <Progress />
+                </ProtectedRoute>
+              </ErrorBoundary>
+            </Route>
+            <Route path="/plan/:profileId">
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <Plan />
                 </ProtectedRoute>
               </ErrorBoundary>
             </Route>

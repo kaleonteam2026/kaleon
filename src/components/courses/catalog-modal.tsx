@@ -61,7 +61,7 @@ export function CatalogModal({
           <div className="flex flex-col items-center justify-center py-16 px-6 gap-4">
             <KaleonLoader size={32} />
             <p className="text-sm font-medium text-slate-700 text-center">
-              Loading your college&apos;s course catalog…
+              Loading your college's course catalog…
             </p>
             <p className="text-xs text-slate-600 text-center">
               Fetching courses specific to your college and major. This takes about 15 seconds.

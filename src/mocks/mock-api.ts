@@ -1,25 +1,82 @@
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { computeGpaSummary, type StoredCourse } from "@/lib/course-progress";
-import { appendDevCourses, getDevCourses } from "@/lib/dev-courses";
-import { isAuthBypass } from "@/lib/dev-profile";
+import { appendDevCourses, deleteDevCompletedCoursesByCodes, getDevCourses } from "@/lib/dev-courses";
+import { deleteAllDevPathways, getDevPathways, saveDevPathways, selectDevPathway, type DevPathway } from "@/lib/dev-pathways";
+import { getDevProfiles, isAuthBypass, saveDevProfile } from "@/lib/dev-profile";
+import {
+  deriveCalgetcAreaStates,
+  deriveCalgetcSummary,
+  deriveIgetcAreaStates,
+  deriveIgetcSummary,
+  mapCourseToCalgetcArea,
+  mapCourseToIgetcArea,
+} from "@/lib/ge-requirements";
 type Json = Record<string, unknown> | unknown[] | string | number | boolean | null;
 
-const profile = {
+type MockProfile = {
+  id: number;
+  userId: string;
+  fullName: string;
+  communityCollege: string;
+  intendedMajor: string;
+  careerGoal: string;
+  currentGpa?: number;
+  transferTimeline: string;
+  financialSituation: string;
+  isFirstGen: string;
+  completionPercent: number;
+};
+
+const profile: MockProfile = {
   id: 1,
   userId: "dev",
   fullName: "Dev User",
-  communityCollege: "Pasadena City College",
-  intendedMajor: "Computer Science",
-  careerGoal: "Software Engineer",
-  currentGpa: 3.7,
-  transferTimeline: "Fall 2027",
-  financialSituation: "Middle-income (no Pell)",
-  isFirstGen: "Yes",
-  completionPercent: 72,
+  communityCollege: "",
+  intendedMajor: "",
+  careerGoal: "",
+  transferTimeline: "",
+  financialSituation: "",
+  isFirstGen: "",
+  completionPercent: 0,
 };
 
 let profileCourses: StoredCourse[] = [
 ];
+
+function getActiveProfile(profileId: number) {
+  if (isAuthBypass()) {
+    const dev = getDevProfiles().find((item) => item.id === profileId) ?? getDevProfiles()[0];
+    if (dev) {
+      return {
+        ...profile,
+        ...dev,
+        id: profileId,
+      };
+    }
+  }
+  return profile;
+}
+
+function persistProfileUpdate(profileId: number, updates: Record<string, unknown>) {
+  if (isAuthBypass()) {
+    const current = getActiveProfile(profileId);
+    saveDevProfile({
+      fullName: (updates.fullName as string | undefined) ?? current.fullName,
+      communityCollege: (updates.communityCollege as string | undefined) ?? current.communityCollege,
+      intendedMajor: (updates.intendedMajor as string | undefined) ?? current.intendedMajor,
+      careerGoal: (updates.careerGoal as string | undefined) ?? current.careerGoal,
+      currentGpa: (updates.currentGpa as number | undefined) ?? current.currentGpa,
+      transferTimeline: (updates.transferTimeline as string | undefined) ?? current.transferTimeline,
+      financialSituation: (updates.financialSituation as string | undefined) ?? current.financialSituation,
+      isFirstGen: (updates.isFirstGen as string | undefined) ?? current.isFirstGen,
+      completionPercent: (updates.completionPercent as number | undefined) ?? current.completionPercent,
+    });
+    return getActiveProfile(profileId);
+  }
+
+  Object.assign(profile, updates);
+  return profile;
+}
 
 function getCoursesForProfile(profileId: number): StoredCourse[] {
   if (isAuthBypass()) return getDevCourses(profileId);
@@ -30,9 +87,14 @@ function nextCourseId(courses: StoredCourse[]): number {
   return courses.reduce((max, c) => Math.max(max, c.id ?? 0), 0) + 1;
 }
 
+function persistLatestGpa(profileId: number, latestGpa?: number): void {
+  if (!(latestGpa && latestGpa > 0)) return;
+  persistProfileUpdate(profileId, { currentGpa: latestGpa });
+}
+
 function appendCourses(profileId: number, incoming: Omit<StoredCourse, "id">[], latestGpa?: number): StoredCourse[] {
   if (isAuthBypass()) {
-    if (latestGpa && latestGpa > 0) profile.currentGpa = latestGpa;
+    persistLatestGpa(profileId, latestGpa);
     return appendDevCourses(profileId, incoming);
   }
 
@@ -44,38 +106,54 @@ function appendCourses(profileId: number, incoming: Omit<StoredCourse, "id">[], 
     seen.add(code);
     profileCourses.push({ ...course, id: nextId++ });
   }
-  if (latestGpa && latestGpa > 0) profile.currentGpa = latestGpa;
+  persistLatestGpa(profileId, latestGpa);
   return profileCourses;
 }
 
-const pathways = [
-  {
-    id: 101,
-    profileId: 1,
-    targetUniversity: "UCLA",
-    targetMajor: "Computer Science",
-    confidenceScore: 82,
-    estimatedAdmissionChance: "Moderate",
-    rationale: "Strong GPA and aligned prerequisites.",
-    reportJson: {
-      type: "moderately_compatible",
-      university: "UCLA",
-      compatibilityScore: 82,
-      whyItFits: "Strong GPA and aligned prerequisites.",
-      concerns: "Complete remaining major prep courses.",
-      gpaTarget: 3.5,
-      requiredUnits: 60,
-      courseGaps: ["MATH 280", "PHYS 210", "CS 250"],
-      transferTimeline: "Fall 2027",
-      scholarshipOptions: ["Cal Grant"],
-      internshipRecommendations: ["Tech internship"],
-      extracurricularRecommendations: ["CS club"],
-      campusOpportunities: [],
-      risks: [],
-      nextSteps: ["Finish calculus sequence"],
-    },
-  },
-];
+function createCourse(
+  profileId: number,
+  incoming: Omit<StoredCourse, "id">,
+): StoredCourse | null {
+  const before = getCoursesForProfile(profileId);
+  const merged = appendCourses(profileId, [incoming]);
+  const after = isAuthBypass() ? merged : getCoursesForProfile(profileId);
+
+  if (after.length <= before.length) {
+    return null;
+  }
+
+  return after[after.length - 1] ?? null;
+}
+
+function replaceCompletedCoursesByCodes(
+  profileId: number,
+  incoming: Omit<StoredCourse, "id">[],
+  replaceCodes: string[],
+  latestGpa?: number,
+): StoredCourse[] {
+  if (isAuthBypass()) {
+    persistLatestGpa(profileId, latestGpa);
+    deleteDevCompletedCoursesByCodes(profileId, replaceCodes);
+    return appendDevCourses(profileId, incoming);
+  }
+
+  const normalized = new Set(
+    replaceCodes
+      .map((code) => code.trim().toUpperCase())
+      .filter((code) => code.length > 0),
+  );
+
+  if (normalized.size > 0) {
+    profileCourses = profileCourses.filter((course) => {
+      const code = (course.courseCode ?? "").trim().toUpperCase();
+      return !(course.status === "completed" && code && normalized.has(code));
+    });
+  }
+
+  return appendCourses(profileId, incoming, latestGpa);
+}
+
+const pathways: DevPathway[] = [];
 
 const progressEntries = [
   { id: 11, profileId: 1, note: "Met with counselor and confirmed major prep.", createdAt: new Date().toISOString() },
@@ -90,39 +168,72 @@ let lastAnalysisResult: Record<string, unknown> = {
   summary: "",
   bestMatches: [],
   courseAnalysis: [],
-  igetcSummary: { area1AEnglish: false, area1BCriticalThinking: false, area2Math: false, area3Arts: false, area4Social: false, area5Science: false, area6Language: false, completedAreas: [], missingAreas: [] },
+  igetcSummary: deriveIgetcSummary([]),
+  calgetcSummary: deriveCalgetcSummary([]),
   totalTransferableUnits: 0,
   recommendations: [],
 };
 
-function mapCourseToIgetc(code: string): string | undefined {
-  const u = code.toUpperCase().replace(/\s+/g, " ");
-  if (/^ENGL\s+1(?:A|01A?)/.test(u)) return "area1AEnglish";
-  if (/^(ENGL\s+(?:1[BC]|2|02)|PHIL\s+(?:4|04|6|06)|COMM\s+(?:2|4))/.test(u)) return "area1BCriticalThinking";
-  if (/^(MATH|STAT)\s/.test(u)) return "area2Math";
-  if (/^(ART|MUS|DANC|THEA|FILM|PHOT)\s/.test(u)) return "area3Arts";
-  if (/^(HIST|POLS|PSYC|SOC|ECON|ANTH|GEOG)\s/.test(u)) return "area4Social";
-  if (/^(BIOL|CHEM|PHYS|ASTR|GEOL|OCEA|PHS)\s/.test(u)) return "area5Science";
-  if (/^SPAN|FREN|GERM|ITAL|CHIN|JAPN|KOR|LATN|GREK/.test(u)) return "area6Language";
-  return undefined;
+function normalizeUnits(units: unknown): number | undefined {
+  return typeof units === "number" && units > 0 ? units : undefined;
 }
 
-function mapCourseToCsuge(code: string): string | undefined {
-  const u = code.toUpperCase().replace(/\s+/g, " ");
-  if (/^(COMM|ENGL)\s+(?:1|01)\b/.test(u)) return "areaA1Oral";
-  if (/^ENGL\s+1A/.test(u)) return "areaA2Written";
-  if (/^(ENGL\s+1[BC]|PHIL\s+[46])/.test(u)) return "areaA3Critical";
-  if (/^(PHYS|CHEM|ASTR|GEOL)\s/.test(u)) return "areaB1Physical";
-  if (/^(BIOL|BIO)\s/.test(u)) return "areaB2Life";
-  if (/\b(LAB|L)\s*\d/.test(u)) return "areaB3Lab";
-  if (/^(MATH|STAT)\s/.test(u)) return "areaB4Math";
-  if (/^(ART|MUS|DANC|THEA|FILM)\s/.test(u)) return "areaC1Arts";
-  if (/^(HIST|ENGL\s+(?:2|02)|PHIL|HUM)\s/.test(u)) return "areaC2Humanities";
-  if (/^(HIST|POLS|PSYC|SOC|ECON|ANTH|GEOG)\s/.test(u)) return "areaDSocial";
-  return undefined;
+function inferTransferStatus(course: Omit<StoredCourse, "id">): "likely" | "uncertain" | "unlikely" {
+  const label = (course.courseCode ?? course.courseName).toUpperCase().replace(/\s+/g, " ").trim();
+  if (!normalizeUnits(course.units)) return "uncertain";
+  if (/^(RDG|READ|BASIC|DEV|REMED|ESL|VOC|AUTO|COSM|CUL)\s/.test(label)) return "unlikely";
+  if (/^(ENGL|COMM|PHIL|MATH|STAT|ART|MUS|DANC|THEA|FILM|PHOT|HIST|POLS|PSYC|SOC|ECON|ANTH|GEOG|BIOL|BIO|CHEM|PHYS|ASTR|GEOL|OCEA|PHS|SPAN|FREN|GERM|ITAL|CHIN|JAPN|KOR|CS|CIS|ENGR)\s/.test(label)) {
+    return "likely";
+  }
+  return "uncertain";
+}
+
+function buildPreviewAnalysis(profileCoursesInput: Omit<StoredCourse, "id">[]) {
+  const activeProfile = getActiveProfile(profile.id);
+  const courseAnalysis = profileCoursesInput.map((course) => {
+    const label = course.courseCode ?? course.courseName;
+    const units = normalizeUnits(course.units);
+    const status = inferTransferStatus(course);
+    return {
+      courseCode: course.courseCode ?? course.courseName,
+      courseName: course.courseName,
+      units,
+      status,
+      igetcArea: mapCourseToIgetcArea(label),
+      csuGEArea: mapCourseToCalgetcArea(label),
+      assistNote: status === "likely"
+        ? "Looks like standard transfer-level coursework, but Kaleon still needs ASSIST.org or advisor review to confirm articulation."
+        : status === "unlikely"
+          ? "This course may not count as UC or CSU transfer credit and should be reviewed against ASSIST.org."
+          : "Kaleon cannot confirm transferability from the saved course record alone. Review units and articulation before relying on this result.",
+    };
+  });
+
+  const likelyTransferable = courseAnalysis.filter((course) => course.status === "likely");
+  const missingUnitCount = courseAnalysis.filter((course) => course.units == null).length;
+
+  return {
+    communityCollege: activeProfile.communityCollege,
+    summary: likelyTransferable.length > 0
+      ? "Kaleon found some courses that look transfer-oriented, but this preview still needs ASSIST.org or counselor verification before you treat them as confirmed."
+      : "Kaleon saved your course list, but this preview cannot confirm transfer credit from the available record yet.",
+    bestMatches: [],
+    courseAnalysis,
+    igetcSummary: deriveIgetcSummary(profileCoursesInput),
+    calgetcSummary: deriveCalgetcSummary(profileCoursesInput),
+    totalTransferableUnits: likelyTransferable.reduce((sum, course) => sum + (course.units ?? 0), 0),
+    recommendations: [
+      ...(missingUnitCount > 0 ? ["Review earned units for imported courses before relying on unit totals."] : []),
+      "Verify transferability on ASSIST.org before treating any course as confirmed.",
+      "Use your advisor review to confirm GE areas and major-prep articulation.",
+    ],
+  };
 }
 
 function getPathwaysForProfile(_profileId: number) {
+  if (isAuthBypass()) {
+    return getDevPathways(_profileId) as typeof pathways;
+  }
   return generatedPathways.length > 0 ? generatedPathways : pathways;
 }
 
@@ -159,8 +270,9 @@ export function installMockApi(): void {
     const { pathname } = url;
     const profileIdMatch = pathname.match(/\/api\/profiles\/(\d+)/);
     const profileId = profileIdMatch ? parseInt(profileIdMatch[1], 10) : profile.id;
+    const activeProfile = getActiveProfile(profileId);
     const courses = getCoursesForProfile(profileId);
-    const gpaSummary = computeGpaSummary(courses, profile.currentGpa);
+    const gpaSummary = computeGpaSummary(courses, activeProfile.currentGpa);
 
     if (pathname === "/api/auth/user") {
       if (isAuthBypass()) return json({ user: { id: "dev", email: "dev@local", firstName: "Dev", lastName: "User" } });
@@ -170,44 +282,68 @@ export function installMockApi(): void {
     if (pathname === "/api/login") return json({ ok: true });
     if (pathname === "/api/logout") return json({ ok: true });
 
-    if (pathname === "/api/profiles" && method === "POST") return json(profile, 201);
-    if (pathname.startsWith("/api/profiles/user/")) return json([profile]);
-    if (pathname === `/api/profiles/${profile.id}` && method === "PATCH") return json({ ...profile });
-    if (pathname === `/api/profiles/${profile.id}`) return json(profile);
+    if (pathname === "/api/profiles" && method === "POST") {
+      const body = await readJsonBody(init);
+      const saved = persistProfileUpdate(profileId, body);
+      return json(saved, 201);
+    }
+    if (pathname.startsWith("/api/profiles/user/")) return json([activeProfile]);
+    if (pathname === `/api/profiles/${profile.id}` && method === "PATCH") {
+      const body = await readJsonBody(init);
+      const saved = persistProfileUpdate(profileId, body);
+      return json({ ...saved });
+    }
+    if (pathname === `/api/profiles/${profile.id}`) return json(activeProfile);
 
     if (pathname.endsWith("/courses/bulk") && method === "POST") {
       const body = await readJsonBody(init);
       const incoming = Array.isArray(body.courses) ? body.courses as Omit<StoredCourse, "id">[] : [];
       const latestGpa = typeof body.latestGpa === "number" ? body.latestGpa : undefined;
-      const merged = appendCourses(profileId, incoming, latestGpa);
+      const replaceCodes = Array.isArray(body.replaceCodes)
+        ? body.replaceCodes.filter((value): value is string => typeof value === "string")
+        : [];
+      const merged = replaceCodes.length > 0
+        ? replaceCompletedCoursesByCodes(profileId, incoming, replaceCodes, latestGpa)
+        : appendCourses(profileId, incoming, latestGpa);
       return json({ inserted: incoming.length, courses: merged });
     }
     if (pathname.endsWith("/courses") && method === "GET") return json(courses);
-    if (pathname.endsWith("/courses") && method === "POST") return json({ id: Date.now(), ...courses[0] }, 201);
+    if (pathname.endsWith("/courses") && method === "POST") {
+      const body = await readJsonBody(init);
+      const created = createCourse(profileId, {
+        courseCode: typeof body.courseCode === "string" ? body.courseCode : undefined,
+        courseName: typeof body.courseName === "string" ? body.courseName : "Planned course",
+        units: typeof body.units === "number" ? body.units : undefined,
+        grade: typeof body.grade === "string" ? body.grade : undefined,
+        status: typeof body.status === "string" ? body.status : "planned",
+        term: typeof body.term === "string" ? body.term : undefined,
+      });
+
+      if (!created) {
+        return json({ error: "Course already exists" }, 409);
+      }
+
+      return json(created as unknown as Json, 201);
+    }
     if (pathname.includes("/gpa-summary")) return json(gpaSummary as unknown as Json);
-    if (pathname.includes("/course-catalog")) return json({ college: profile.communityCollege, major: profile.intendedMajor, categories: ["Core"], courses });
+    if (pathname.includes("/course-catalog")) return json({ college: activeProfile.communityCollege, major: activeProfile.intendedMajor, categories: ["Core"], courses });
+    if (pathname.match(/\/api\/profiles\/\d+\/igetc$/) && method === "GET") {
+      return json({ areas: deriveIgetcAreaStates(courses) });
+    }
+    if (pathname.match(/\/api\/profiles\/\d+\/calgetc$/) && method === "GET") {
+      return json({ areas: deriveCalgetcAreaStates(courses) });
+    }
+    if (pathname.match(/\/api\/profiles\/\d+\/igetc\/analyze$/) && method === "POST") {
+      return json({
+        areas: deriveIgetcAreaStates(courses),
+        note: "Derived from saved courses. Verify these matches on ASSIST.org or with a counselor.",
+      });
+    }
     if (pathname.includes("/transferability-analysis")) {
-      // Store last analysis result so progress page can load it
       if (method === "POST") {
         const body = await readJsonBody(init);
         const incoming = Array.isArray(body.courses) ? body.courses as Omit<StoredCourse, "id">[] : [];
-        lastAnalysisResult = {
-          communityCollege: profile.communityCollege,
-          summary: "Most courses are likely transferable.",
-          bestMatches: [{ university: "UCLA", system: "UC", matchScore: 84, matchReason: "Strong prep", transferableCount: courses.length, totalCourses: courses.length }],
-          courseAnalysis: incoming.map((c) => ({
-            courseCode: c.courseCode ?? c.courseName,
-            courseName: c.courseName,
-            units: c.units ?? 3,
-            status: "transferable" as const,
-            igetcArea: mapCourseToIgetc(c.courseCode ?? c.courseName),
-            csuGEArea: mapCourseToCsuge(c.courseCode ?? c.courseName),
-            assistNote: "Matches lower-division prep.",
-          })),
-          igetcSummary: { area1AEnglish: false, area1BCriticalThinking: false, area2Math: false, area3Arts: false, area4Social: false, area5Science: false, area6Language: false, completedAreas: [], missingAreas: ["area1AEnglish", "area1BCriticalThinking", "area2Math", "area3Arts", "area4Social", "area5Science", "area6Language"] },
-          totalTransferableUnits: incoming.reduce((s, c) => s + (c.units ?? 0), 0),
-          recommendations: ["Complete remaining GE courses"],
-        };
+        lastAnalysisResult = buildPreviewAnalysis(incoming);
       }
       return json(lastAnalysisResult as unknown as Json);
     }
@@ -216,6 +352,7 @@ export function installMockApi(): void {
       if (isAuthBypass()) {
         const { saveDevCourses } = await import("@/lib/dev-courses");
         saveDevCourses(profileId, []);
+        deleteAllDevPathways(profileId);
       } else {
         profileCourses = [];
       }
@@ -226,16 +363,27 @@ export function installMockApi(): void {
     if (pathname.includes("/generate-pathways") && method === "POST") {
       const res = await originalFetch(input, init);
       if (res.ok) {
-        const data = await res.json() as { pathways?: typeof pathways } | typeof pathways;
+        const data = await res.clone().json() as { pathways?: typeof pathways } | typeof pathways;
         if (Array.isArray(data)) generatedPathways = data;
         else if (data && typeof data === "object" && Array.isArray(data.pathways)) {
           generatedPathways = data.pathways;
+        }
+        if (isAuthBypass()) {
+          saveDevPathways(profileId, generatedPathways as typeof pathways);
         }
       }
       return res;
     }
     if (pathname.includes("/pathways") && method === "GET") return json(getPathwaysForProfile(profileId));
-    if (pathname.includes("/select")) return json({ ok: true });
+    if (pathname.match(/\/api\/profiles\/\d+\/pathways\/\d+\/select$/) && method === "POST") {
+      const match = pathname.match(/\/api\/profiles\/(\d+)\/pathways\/(\d+)\/select$/);
+      const selectedProfileId = match ? parseInt(match[1], 10) : profileId;
+      const pathwayId = match ? parseInt(match[2], 10) : 0;
+      const ok = isAuthBypass()
+        ? selectDevPathway(selectedProfileId, pathwayId)
+        : true;
+      return json({ ok }, ok ? 200 : 404);
+    }
     if (pathname.includes("/generate-guidebook")) return json({ guidebookId: 501 });
     if (pathname.includes("/generate-roadmap")) return json({ roadmapId: 601 });
 
@@ -266,7 +414,10 @@ export function installMockApi(): void {
       });
     }
 
-    if (pathname.includes("/progress/selected-pathway")) return json(getPathwaysForProfile(profileId)[0] ?? pathways[0]);
+    if (pathname.includes("/progress/selected-pathway")) {
+      const savedPathways = getPathwaysForProfile(profileId);
+      return json((savedPathways.find((row) => row.isSelected === "true") ?? savedPathways[0] ?? null) as unknown as Json);
+    }
     if (pathname.includes("/progress/analyses")) return json([]);
     if (pathname.includes("/progress/entry-feedback")) return json({ ok: true });
     if (pathname.includes("/progress/analyze")) return json({ ok: true, analysisId: 1 });
