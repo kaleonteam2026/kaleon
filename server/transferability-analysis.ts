@@ -407,6 +407,9 @@ export async function generateTransferabilityAnalysis(
   const parsed = extractJsonPayload(content);
   const result = normalizeResult(parsed);
 
+  // The server already knows the real community college — don't trust the AI's echo of it
+  result.communityCollege = input.communityCollege || result.communityCollege;
+
   // Post-process the summary to ensure second-person framing
   result.summary = rewriteToSecondPerson(result.summary);
   result.recommendations = result.recommendations.map(rewriteToSecondPerson);
