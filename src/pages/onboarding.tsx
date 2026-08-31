@@ -103,7 +103,11 @@ export default function Onboarding() {
   };
 
   useEffect(() => {
-    // Check if this is a re-upload from the courses page
+    // Check if this is a re-upload from the courses page.
+    // Runs once on mount only — this must NOT depend on `phase`, otherwise it
+    // re-fires on every phase change (including the post-submit transition to
+    // "calculating"/"celebration") and unconditionally snaps phase back to
+    // "form" every time, since the URL still carries ?reupload=<id>.
     const params = new URLSearchParams(window.location.search);
     const reuploadVal = params.get("reupload");
     if (reuploadVal) {
@@ -112,10 +116,11 @@ export default function Onboarding() {
         reuploadProfileIdRef.current = pid;
         setIsReupload(true);
         setPhase("form");
-        return;
       }
     }
+  }, []);
 
+  useEffect(() => {
     if (phase !== "intro") return;
     const id = window.setTimeout(() => setPhase("form"), INTRO_DURATION_MS);
     return () => window.clearTimeout(id);
