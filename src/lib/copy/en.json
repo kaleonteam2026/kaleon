@@ -192,7 +192,8 @@
     "finAb540": "AB 540 eligible",
     "finMiddle": "Middle-income (no Pell)",
     "finFullPay": "Full pay",
-    "finNotSure": "Not sure"
+    "finNotSure": "Not sure",
+    "reuploadBanner": "Re-uploading transcript — your current courses will be replaced"
   },
   "chat": {
     "title": "Kaleon Advisor",
@@ -226,8 +227,7 @@
     "defaultError": "Sorry, I couldn't respond.",
     "somethingWentWrong": "Something went wrong. Please try again.",
     "kickoffPrompt": "Please begin the mock interview. Target: {{target}}.",
-    "loadingResponse": "Loading response…",
-    "reuploadBanner": "Re-uploading transcript — your current courses will be replaced"
+    "loadingResponse": "Loading response…"
   },
   "notifications": {
     "label": "Notifications",
