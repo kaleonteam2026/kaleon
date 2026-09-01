@@ -80,9 +80,9 @@ export async function verifyOtpCode(
 
 export async function updateUserMetadata(
   metadata: { first_name?: string; last_name?: string },
-): Promise<{ error?: string }> {
-  const { error } = await supabase.auth.updateUser({ data: metadata });
-  return error ? { error: error.message } : {};
+): Promise<{ error?: string; user?: User }> {
+  const { data, error } = await supabase.auth.updateUser({ data: metadata });
+  return error ? { error: error.message } : { user: data.user };
 }
 
 export async function getCurrentSession(): Promise<Session | null> {

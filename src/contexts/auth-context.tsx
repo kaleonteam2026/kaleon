@@ -163,12 +163,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const trimmed = firstName.trim();
     if (!trimmed) return { error: "Name is required" };
     const result = await updateUserMetadata({ first_name: trimmed });
-    if (!result.error) {
-      const session = await getCurrentSession();
-      await applySession(session);
+    if (!result.error && result.user) {
+      // Apply the fresh user from the update response instead of re-reading
+      // the session, which may be cached/stale.
+      setUser(mapSupabaseUser(result.user));
     }
     return result;
-  }, [applySession]);
+  }, []);
 
   const logout = useCallback(async () => {
     if (AUTH_BYPASS) {
