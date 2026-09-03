@@ -68,7 +68,7 @@ export default function Footer({ variant = "compact" }: { variant?: FooterVarian
                   KALEON
                 </span>
               </div>
-              <p className="text-sm max-w-sm mx-auto md:mx-0" style={{ color: "#64748b" }}>
+              <p className="text-sm max-w-sm mx-auto md:mx-0" style={{ color: "var(--app-text-muted)" }}>
                 {t("footer.tagline")}
               </p>
             </div>
@@ -98,7 +98,7 @@ export default function Footer({ variant = "compact" }: { variant?: FooterVarian
           </div>
 
           {/* Bottom row */}
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 text-xs" style={{ color: "#64748b" }}>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 text-xs" style={{ color: "var(--app-text-muted)" }}>
             <p>{t("footer.copyright")}</p>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
               <span>{t("footer.betaVersion")}</span>
@@ -117,7 +117,7 @@ export default function Footer({ variant = "compact" }: { variant?: FooterVarian
       style={{
         background: "var(--app-nav-bg, #050c18)",
         borderTop: "1px solid rgba(78,204,163,0.15)",
-        color: "#64748b",
+        color: "var(--app-text-muted)",
       }}
     >
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">

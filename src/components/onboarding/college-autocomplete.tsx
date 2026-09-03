@@ -144,7 +144,7 @@ export function CollegeAutocomplete({ value, onChange, placeholder, className, c
           }}
         >
           {filtered.length === 0 ? (
-            <li className="px-4 py-3 text-xs text-center" style={{ color: "#64748b" }}>
+            <li className="px-4 py-3 text-xs text-center" style={{ color: "var(--app-text-muted)" }}>
               No colleges match — you can type your college name
             </li>
           ) : (

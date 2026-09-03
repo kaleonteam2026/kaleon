@@ -135,7 +135,7 @@ export function MajorAutocomplete({ value, onChange, placeholder, className, id 
           }}
         >
           {filtered.length === 0 ? (
-            <li className="px-4 py-3 text-xs text-center" style={{ color: "#64748b" }}>
+            <li className="px-4 py-3 text-xs text-center" style={{ color: "var(--app-text-muted)" }}>
               No majors match — you can type your major name
             </li>
           ) : (

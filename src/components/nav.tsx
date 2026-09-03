@@ -56,7 +56,7 @@ function NavItemIcon({
 }
 
 const LOCKED_NAV_STYLE = {
-  color: "#64748b",
+  color: "var(--app-text-muted)",
   cursor: "not-allowed" as const,
   opacity: 0.55,
 };
@@ -203,16 +203,16 @@ export default function Nav({ profileId }: Props) {
         </div>
         <div className="flex items-center gap-3">
           {resolvedId && <NotificationBell profileId={resolvedId} />}
-          <span className="text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>
+          <span className="text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "var(--app-text-muted)" }}>
             {userLabel}
           </span>
           <button
             onClick={logout}
             aria-label={t("common.signOut")}
             className="p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-colors"
-            style={{ color: "#64748b" }}
+            style={{ color: "var(--app-text-muted)" }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#4ECCA3"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#64748b"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--app-text-muted)"; }}
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -316,7 +316,7 @@ export default function Nav({ profileId }: Props) {
             </div>
             <div className="space-y-3 p-4" style={{ borderTop: "1px solid var(--app-border-subtle)" }}>
               <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>{userLabel}</span>
+                <span className="truncate text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "var(--app-text-muted)" }}>{userLabel}</span>
               </div>
               <button
                 onClick={logout}

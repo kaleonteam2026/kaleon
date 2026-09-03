@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Mail, X } from "lucide-react";
 import { KaleonLoader } from "@/components/ui/kaleon-loader";
 import { useAuth } from "@/contexts/auth-context";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { t } from "@/lib/copy";
 
 export default function SupabaseAuthModal() {
@@ -16,8 +17,8 @@ export default function SupabaseAuthModal() {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-
-  if (!isLoginOpen && !authError) return null;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogOpen = isLoginOpen || Boolean(authError);
 
   const resetAndClose = () => {
     setEmail("");
@@ -26,6 +27,10 @@ export default function SupabaseAuthModal() {
     clearAuthError();
     closeLogin();
   };
+
+  useFocusTrap(dialogRef, dialogOpen, resetAndClose);
+
+  if (!dialogOpen) return null;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -41,14 +46,21 @@ export default function SupabaseAuthModal() {
   };
 
   const displayError = authError ?? localError;
+  const descriptionId = displayError
+    ? "auth-modal-error"
+    : emailSent
+      ? "auth-modal-sent-description"
+      : "auth-modal-description";
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 pwc-font-sans"
       style={{ background: "rgba(5, 12, 24, 0.88)", backdropFilter: "blur(8px)" }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
+      aria-describedby={descriptionId}
     >
       <div
         className="relative w-full max-w-md p-6 md:p-8"
@@ -64,9 +76,9 @@ export default function SupabaseAuthModal() {
           onClick={resetAndClose}
           aria-label={t("common.close")}
           className="absolute top-4 right-4 p-1.5 transition-colors"
-          style={{ color: "#64748b" }}
+          style={{ color: "var(--app-text-muted)" }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#4ECCA3"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "#64748b"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--app-text-muted)"; }}
         >
           <X className="h-5 w-5" />
         </button>
@@ -91,7 +103,7 @@ export default function SupabaseAuthModal() {
 
         {displayError ? (
           <div className="space-y-4">
-            <p className="text-sm" style={{ color: "#fca5a5" }}>{displayError}</p>
+            <p id="auth-modal-error" className="text-sm" style={{ color: "#fca5a5" }}>{displayError}</p>
             <button
               type="button"
               onClick={() => { clearAuthError(); setLocalError(null); setEmailSent(false); }}
@@ -112,7 +124,7 @@ export default function SupabaseAuthModal() {
               }}
             >
               <Mail className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "#4ECCA3" }} />
-              <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
+              <p id="auth-modal-sent-description" className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
                 {t("auth.sentBody", {
                   defaultValue: "We sent a verification code to {{email}}. Enter it on this device to continue.",
                   email,
@@ -130,12 +142,12 @@ export default function SupabaseAuthModal() {
           </div>
         ) : (
           <>
-            <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
+            <p id="auth-modal-description" className="text-sm mb-6" style={{ color: "#94a3b8" }}>
               {t("auth.subtitle", { defaultValue: "Enter your email and we'll send you a verification code." })}
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <label className="block">
-                <span className="text-xs pwc-font-mono uppercase tracking-wider font-bold mb-2 block" style={{ color: "#64748b" }}>
+                <span className="text-xs pwc-font-mono uppercase tracking-wider font-bold mb-2 block" style={{ color: "var(--app-text-muted)" }}>
                   {t("auth.emailLabel", { defaultValue: "Email" })}
                 </span>
                 <input
