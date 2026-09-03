@@ -403,7 +403,7 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <p className="pt-4 text-xs" style={{ color: "#64748b" }}>
+          <p className="pt-4 text-xs" style={{ color: "var(--app-text-muted)" }}>
             &copy; 2026 Kaleon LLC. All rights reserved.
           </p>
         </div>
