@@ -798,7 +798,7 @@ export default function Onboarding() {
           </div>
         </div>
 
-        <p className="mt-6 text-center text-sm" style={{ color: "#64748b" }}>
+        <p className="mt-6 text-center text-sm" style={{ color: "var(--app-text-muted)" }}>
           {t("onboarding.updateLater")}
         </p>
       </div>

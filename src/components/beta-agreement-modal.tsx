@@ -171,9 +171,12 @@ export default function BetaAgreementModal({
         {/* Scrollable agreement content */}
         <div className="px-6 overflow-hidden min-h-0 flex-1">
           <div
-            className="h-full overflow-y-auto pr-4 text-sm leading-relaxed whitespace-pre-line scrollbar-custom"
+            className="h-full overflow-y-auto pr-4 text-sm leading-relaxed whitespace-pre-line scrollbar-custom focus:outline-none focus:ring-2 focus:ring-[#4ECCA3] focus:ring-inset"
             style={{ color: "#cbd5e1" }}
             onScroll={handleScroll}
+            tabIndex={0}
+            role="region"
+            aria-label="Beta participation agreement text"
           >
             {AGREEMENT_TEXT}
           </div>
@@ -216,7 +219,7 @@ export default function BetaAgreementModal({
               htmlFor="beta-agree"
               className="text-xs leading-relaxed select-none cursor-pointer"
               style={{
-                color: scrolledToBottom ? "#cbd5e1" : "#64748b",
+                color: scrolledToBottom ? "#cbd5e1" : "var(--app-text-muted)",
               }}
             >
               I have read and agree to the{" "}

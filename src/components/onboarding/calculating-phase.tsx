@@ -9,7 +9,7 @@ export function CalculatingPhase() {
         <KaleonLoader />
       </div>
       <h1 className="mt-4 text-2xl font-bold text-white text-center">Calculating your transfer path...</h1>
-      <p className="mt-2 text-sm text-center max-w-xs" style={{ color: "#64748b" }}>This usually takes a few seconds, feel free to leave the page and come back in a bit!</p>
+      <p className="mt-2 text-sm text-center max-w-xs" style={{ color: "var(--app-text-muted)" }}>This usually takes a few seconds, feel free to leave the page and come back in a bit!</p>
     </div>
   );
 }

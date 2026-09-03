@@ -38,7 +38,21 @@ export function TransferabilityPanel({ result }: { result: TransferabilityResult
         </h2>
         <div className="space-y-3">
           {result.bestMatches.map((m, i) => (
-            <div key={i} className="cursor-pointer rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:border-emerald-300 hover:shadow-md" onClick={() => setExpandedCard(expandedCard === i ? null : i)}>
+            <div
+              key={i}
+              className="cursor-pointer rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:border-emerald-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+              role="button"
+              tabIndex={0}
+              aria-expanded={expandedCard === i}
+              aria-controls={`transfer-match-${i}`}
+              onClick={() => setExpandedCard(expandedCard === i ? null : i)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setExpandedCard(expandedCard === i ? null : i);
+                }
+              }}
+            >
               <div className="p-4">
                 <div className="flex items-start gap-3">
                   {i === 0 && <Star className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />}
@@ -62,7 +76,7 @@ export function TransferabilityPanel({ result }: { result: TransferabilityResult
                 </div>
               </div>
               {expandedCard === i && (
-                <div className="border-t border-slate-100 px-4 py-3 bg-slate-50 rounded-b-xl">
+                <div id={`transfer-match-${i}`} className="border-t border-slate-100 px-4 py-3 bg-slate-50 rounded-b-xl">
                   <p className="text-xs text-slate-600 leading-relaxed">
                     <strong>Why this match:</strong> {m.matchReason}
                   </p>

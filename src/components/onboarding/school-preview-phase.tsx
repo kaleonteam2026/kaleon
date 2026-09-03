@@ -127,7 +127,7 @@ export function SchoolPreviewPhase({ pathways, profileId }: SchoolPreviewPhasePr
                   <span className="text-2xl pwc-font-mono font-bold" style={{ color: cfg.color }}>
                     {pw.compatibilityScore}
                   </span>
-                  <span className="text-[10px] pwc-font-mono block" style={{ color: "#64748b" }}>
+                  <span className="text-[10px] pwc-font-mono block" style={{ color: "var(--app-text-muted)" }}>
                     score
                   </span>
                 </div>

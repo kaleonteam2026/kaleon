@@ -232,10 +232,10 @@ export function FormSteps({
                 >
                   <FileText className="h-8 w-8 mx-auto mb-2" style={{ color: "#4ECCA3" }} aria-hidden />
                   <p className="text-sm font-medium" style={{ color: "#e2e8f0" }}>Upload your transcript PDF</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>and we'll extract your courses automatically</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--app-text-muted)" }}>and we'll extract your courses automatically</p>
                   <span
                     className="inline-flex items-center gap-1.5 mt-3 px-4 py-1.5 rounded-lg text-xs font-semibold"
-                    style={{ border: "1px solid rgba(78,204,163,0.35)", color: consentGiven ? "#4ECCA3" : "#64748b", background: "rgba(78,204,163,0.08)" }}
+                    style={{ border: "1px solid rgba(78,204,163,0.35)", color: consentGiven ? "#4ECCA3" : "var(--app-text-muted)", background: "rgba(78,204,163,0.08)" }}
                   >
                     <Upload className="h-3.5 w-3.5" aria-hidden /> Choose PDF File
                   </span>
@@ -271,7 +271,7 @@ export function FormSteps({
                         aria-label={`Remove ${pt.file.name}`}
                         onClick={() => onRemovePendingFile(pt.id)}
                         className="shrink-0 transition-colors"
-                        style={{ color: "#64748b" }}
+                        style={{ color: "var(--app-text-muted)" }}
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -350,7 +350,7 @@ export function FormSteps({
                             <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>Units</span>: {sr.totalUnits}</span>
                             <span><span className="font-semibold" style={{ color: "#4ECCA3" }}>Courses</span>: {sr.courses.length}</span>
                           </div>
-                          <p className="mt-1.5 text-xs" style={{ color: "#64748b" }}>
+                          <p className="mt-1.5 text-xs" style={{ color: "var(--app-text-muted)" }}>
                             Review and edit the full course list in the next step.
                           </p>
                         </>
@@ -389,7 +389,7 @@ export function FormSteps({
                   </button>
                   <div className="flex-1 h-px" style={{ background: "rgba(78,204,163,0.2)" }} />
                 </div>
-                <p className="text-center text-sm" style={{ color: "#64748b" }}>{t("onboarding.timeNote")}</p>
+                <p className="text-center text-sm" style={{ color: "var(--app-text-muted)" }}>{t("onboarding.timeNote")}</p>
               </>
             )}
             {skippingUpload && (
@@ -429,7 +429,7 @@ export function FormSteps({
                 onChange={(val) => onSet("communityCollege", val)}
                 placeholder={t("onboarding.ccPlaceholder")}
               />
-              <p className="text-xs mt-1" style={{ color: "#64748b" }}>{t("onboarding.ccHelp")}</p>
+              <p className="text-xs mt-1" style={{ color: "var(--app-text-muted)" }}>{t("onboarding.ccHelp")}</p>
             </div>
             <div>
               <label htmlFor="ob-major" className="block text-sm font-medium mb-1.5" style={{ color: "#cbd5e1" }}>
@@ -445,7 +445,7 @@ export function FormSteps({
             <div>
               <label htmlFor="ob-career" className="block text-sm font-medium mb-1.5" style={{ color: "#cbd5e1" }}>
                 {t("onboarding.careerLabel")}{" "}
-                <span className="font-normal" style={{ color: "#64748b" }}>{t("onboarding.careerOptional")}</span>
+                <span className="font-normal" style={{ color: "var(--app-text-muted)" }}>{t("onboarding.careerOptional")}</span>
               </label>
               <input
                 id="ob-career"
@@ -476,7 +476,7 @@ export function FormSteps({
             ))}
 
             {scanResults.length === 0 && (
-              <p className="text-sm text-center" style={{ color: "#64748b" }}>
+              <p className="text-sm text-center" style={{ color: "var(--app-text-muted)" }}>
                 No transcript scan results yet. Go back to upload and scan a transcript.
               </p>
             )}
@@ -513,7 +513,7 @@ export function FormSteps({
               <legend className="block text-sm font-medium mb-1" style={{ color: "#cbd5e1" }}>
                 {t("onboarding.financialSituation")}
               </legend>
-              <p className="text-xs mb-3 flex items-center gap-1.5" style={{ color: "#64748b" }}>
+              <p className="text-xs mb-3 flex items-center gap-1.5" style={{ color: "var(--app-text-muted)" }}>
                 <Sparkles className="h-3 w-3" style={{ color: "#4ECCA3" }} />
                 This helps us match you with scholarships and financial aid programs you may qualify for.
               </p>
@@ -540,7 +540,7 @@ export function FormSteps({
               <legend className="block text-sm font-medium mb-1" style={{ color: "#cbd5e1" }}>
                 {t("onboarding.firstGen")}
               </legend>
-              <p className="text-xs mb-3 flex items-center gap-1.5" style={{ color: "#64748b" }}>
+              <p className="text-xs mb-3 flex items-center gap-1.5" style={{ color: "var(--app-text-muted)" }}>
                 <Info className="h-3 w-3" style={{ color: "#4ECCA3" }} />
                 First-gen students often qualify for additional grants, scholarships, and support programs.
               </p>
@@ -906,7 +906,7 @@ function ReviewCollegeCard({
           })}
         </div>
       ) : (
-        <p className="text-xs" style={{ color: "#64748b" }}>No courses extracted.</p>
+        <p className="text-xs" style={{ color: "var(--app-text-muted)" }}>No courses extracted.</p>
       )}
 
       {/* Add course button / form */}

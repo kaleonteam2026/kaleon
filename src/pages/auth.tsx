@@ -203,7 +203,7 @@ export default function AuthPage() {
                 <div>
                   <label
                     className="text-xs pwc-font-mono uppercase tracking-wider font-bold mb-2 block"
-                    style={{ color: "#64748b" }}
+                    style={{ color: "var(--app-text-muted)" }}
                   >
                     Verification Code
                   </label>
@@ -218,7 +218,7 @@ export default function AuthPage() {
                     className="w-full px-4 py-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-[#4ECCA3] text-center text-2xl font-bold tracking-widest"
                     style={inputStyle}
                   />
-                  <p className="text-xs mt-2 text-center" style={{ color: "#64748b" }}>
+                  <p className="text-xs mt-2 text-center" style={{ color: "var(--app-text-muted)" }}>
                     Enter the 6-digit code sent to your email
                   </p>
                 </div>
@@ -281,7 +281,7 @@ export default function AuthPage() {
                     style={{
                       borderRadius: 6,
                       background: mode === tab ? "rgba(78,204,163,0.15)" : "transparent",
-                      color: mode === tab ? "#4ECCA3" : "#64748b",
+                      color: mode === tab ? "#4ECCA3" : "var(--app-text-muted)",
                       border: mode === tab ? "1px solid rgba(78,204,163,0.35)" : "1px solid transparent",
                     }}
                   >
@@ -309,7 +309,7 @@ export default function AuthPage() {
                   <label className="block">
                     <span
                       className="text-xs pwc-font-mono uppercase tracking-wider font-bold mb-2 block"
-                      style={{ color: "#64748b" }}
+                      style={{ color: "var(--app-text-muted)" }}
                     >
                       {t("auth.firstNameLabel")} <span style={{ color: "#ef4444" }}>*</span>
                     </span>
@@ -329,7 +329,7 @@ export default function AuthPage() {
                 <label className="block">
                   <span
                     className="text-xs pwc-font-mono uppercase tracking-wider font-bold mb-2 block"
-                    style={{ color: "#64748b" }}
+                    style={{ color: "var(--app-text-muted)" }}
                   >
                     {t("auth.emailLabel")} <span style={{ color: "#ef4444" }}>*</span>
                   </span>
