@@ -17,7 +17,7 @@ import { deleteAllPathwaysForProfile, deleteAllPathwaySnapshotsForProfile } from
 import { useMotionEnabled, useDirSign } from "@/lib/motion";
 import { KALEON_LOGO_SRC } from "@/lib/brand";
 import { t } from "@/lib/copy";
-import { displayName, isDebugAuthUser } from "@/lib/display-name";
+import { displayName } from "@/lib/display-name";
 
 import { IntroPhase } from "@/components/onboarding/intro-phase";
 import { CalculatingPhase } from "@/components/onboarding/calculating-phase";
@@ -66,7 +66,7 @@ export default function Onboarding() {
   const submitLockRef = useRef(false);
   const getSignal = useRequestCleanup();
   const [form, setForm] = useState<FormData>({
-    fullName: user && !isDebugAuthUser(user)
+    fullName: user
       ? (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : (user.firstName ?? ""))
       : "",
     communityCollege: "",
@@ -103,7 +103,11 @@ export default function Onboarding() {
   };
 
   useEffect(() => {
-    // Check if this is a re-upload from the courses page
+    // Check if this is a re-upload from the courses page.
+    // Runs once on mount only — this must NOT depend on `phase`, otherwise it
+    // re-fires on every phase change (including the post-submit transition to
+    // "calculating"/"celebration") and unconditionally snaps phase back to
+    // "form" every time, since the URL still carries ?reupload=<id>.
     const params = new URLSearchParams(window.location.search);
     const reuploadVal = params.get("reupload");
     if (reuploadVal) {
@@ -112,10 +116,11 @@ export default function Onboarding() {
         reuploadProfileIdRef.current = pid;
         setIsReupload(true);
         setPhase("form");
-        return;
       }
     }
+  }, []);
 
+  useEffect(() => {
     if (phase !== "intro") return;
     const id = window.setTimeout(() => setPhase("form"), INTRO_DURATION_MS);
     return () => window.clearTimeout(id);
@@ -358,7 +363,7 @@ export default function Onboarding() {
 
       const payload = {
         userId: user.id,
-        fullName: form.fullName || user.firstName || t("common.student"),
+        fullName: form.fullName || user.firstName || "",
         communityCollege: form.communityCollege,
         intendedMajor: form.intendedMajor,
         careerGoal: form.careerGoal,
@@ -643,7 +648,7 @@ export default function Onboarding() {
   const motionOn = useMotionEnabled();
   const dir = useDirSign();
 
-  if (phase === "intro") return <IntroPhase firstName={displayName(user, null, t("common.student"))} />;
+  if (phase === "intro") return <IntroPhase firstName={displayName(user, form.fullName || null)} />;
   if (phase === "calculating") return <CalculatingPhase />;
   if (phase === "celebration") return <CelebrationPhase />;
   if (phase === "ready") return <ReadyPhase profileId={createdProfileIdRef.current ?? DEV_PROFILE_ID} />;

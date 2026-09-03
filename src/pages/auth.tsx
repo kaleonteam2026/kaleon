@@ -311,7 +311,7 @@ export default function AuthPage() {
                       className="text-xs pwc-font-mono uppercase tracking-wider font-bold mb-2 block"
                       style={{ color: "var(--app-text-muted)" }}
                     >
-                      {t("auth.firstNameLabel")}
+                      {t("auth.firstNameLabel")} <span style={{ color: "#ef4444" }}>*</span>
                     </span>
                     <input
                       type="text"
@@ -331,7 +331,7 @@ export default function AuthPage() {
                     className="text-xs pwc-font-mono uppercase tracking-wider font-bold mb-2 block"
                     style={{ color: "var(--app-text-muted)" }}
                   >
-                    {t("auth.emailLabel")}
+                    {t("auth.emailLabel")} <span style={{ color: "#ef4444" }}>*</span>
                   </span>
                   <input
                     type="email"
@@ -348,7 +348,7 @@ export default function AuthPage() {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || (mode === "signup" && !firstName.trim())}
                   className="kaleon-btn-primary w-full px-4 py-3 text-sm pwc-font-mono uppercase tracking-wider font-bold flex items-center justify-center gap-2 disabled:opacity-60 mt-2"
                   style={{ borderRadius: 8 }}
                 >
