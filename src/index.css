@@ -364,7 +364,7 @@ html {
   --app-border-strong: rgba(15, 23, 42, 0.22);
   --app-input-bg: rgba(255, 255, 255, 0.85);
   --app-input-text: #0f172a;
-  --app-input-placeholder: #64748b;
+  --app-input-placeholder: var(--app-text-muted);
   --student-surface: rgba(255, 255, 255, 0.9);
   --student-surface-muted: rgba(248, 250, 252, 0.94);
   --student-text-primary: #0f172a;
@@ -381,14 +381,14 @@ html {
 .dark {
   --app-page-bg: linear-gradient(160deg, #050c18 0%, #0a1628 50%, #061020 100%);
   --app-text: #e2e8f0;
-  --app-text-muted: #64748b;
+  --app-text-muted: #94a3b8;
   --app-nav-bg: rgba(5, 12, 24, 0.95);
   --app-card-bg: rgba(13, 26, 46, 0.9);
   --app-border-subtle: rgba(78, 204, 163, 0.15);
   --app-border-strong: rgba(78, 204, 163, 0.22);
   --app-input-bg: rgba(5, 12, 24, 0.65);
   --app-input-text: #f8fafc;
-  --app-input-placeholder: #64748b;
+  --app-input-placeholder: var(--app-text-muted);
   --student-surface: rgba(13, 26, 46, 0.82);
   --student-surface-muted: rgba(7, 17, 31, 0.82);
   --student-text-primary: #e2e8f0;

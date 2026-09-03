@@ -83,7 +83,7 @@ export function AppPageLayout({
                     </h1>
                   )}
                   {subtitle && (
-                    <p className="mt-1 max-w-2xl text-sm leading-6 md:text-base" style={{ color: "#64748b" }}>
+                    <p className="mt-1 max-w-2xl text-sm leading-6 md:text-base" style={{ color: "var(--app-text-muted)" }}>
                       {subtitle}
                     </p>
                   )}

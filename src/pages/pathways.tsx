@@ -643,7 +643,7 @@ export default function Pathways() {
             <div className="mb-5" style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid rgba(78,204,163,0.2)", borderTopColor: "#4ECCA3", animation: "spin 0.9s linear infinite" }} />
             <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
             <h2 className="text-lg font-semibold text-center" style={{ color: "#f1f5f9" }}>{t("pages.pathways.generatingTitle")}</h2>
-            <p className="text-sm mt-1 text-center max-w-sm" style={{ color: "#64748b" }}>{t("pages.pathways.generatingBody")}</p>
+            <p className="text-sm mt-1 text-center max-w-sm" style={{ color: "var(--app-text-muted)" }}>{t("pages.pathways.generatingBody")}</p>
           </div>
         )}
 

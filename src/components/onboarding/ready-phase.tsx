@@ -40,7 +40,7 @@ export function ReadyPhase({ profileId }: ReadyPhaseProps) {
       >
         Go to My Courses <ArrowRight size={16} />
       </button>
-      <p className="mt-4 text-xs text-center max-w-xs leading-relaxed" style={{ color: "#64748b" }}>
+      <p className="mt-4 text-xs text-center max-w-xs leading-relaxed" style={{ color: "var(--app-text-muted)" }}>
         Head to your courses dashboard to analyze your credits and see which UC/CSU programs fit you best.
       </p>
     </div>

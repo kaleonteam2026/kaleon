@@ -10,7 +10,7 @@ export default function TermsPage() {
         </p>
 
         <div className="space-y-6 text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
-          <div className="text-xs pwc-font-mono uppercase tracking-wider mb-4" style={{ color: "#64748b" }}>
+          <div className="text-xs pwc-font-mono uppercase tracking-wider mb-4" style={{ color: "var(--app-text-muted)" }}>
             Company: Kaleon LLC &nbsp;|&nbsp; Platform: Kaleon &nbsp;|&nbsp; Governing Law: State of California
           </div>
 
@@ -271,7 +271,7 @@ export default function TermsPage() {
           </Section>
 
           <div className="pt-4 border-t" style={{ borderColor: "rgba(78,204,163,0.15)" }}>
-            <p className="text-xs" style={{ color: "#64748b" }}>
+            <p className="text-xs" style={{ color: "var(--app-text-muted)" }}>
               These Terms, together with the Privacy Policy, constitute the entire agreement between you
               and Kaleon with respect to the Services.
             </p>
