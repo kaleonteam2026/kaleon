@@ -15,6 +15,7 @@ import { t } from "@/lib/copy";
 import { displayName } from "@/lib/display-name";
 import { buildProfileNavItems, type NavIconSrc, type NavItem } from "@/lib/nav-links";
 import { getStoredProfileId, storeProfileId } from "@/lib/profile-storage";
+import { useProfile } from "@/hooks/use-profile";
 
 export { storeProfileId } from "@/lib/profile-storage";
 
@@ -101,7 +102,8 @@ export default function Nav({ profileId }: Props) {
 
   const profileLinks: NavItem[] = resolvedId ? buildProfileNavItems(resolvedId) : [];
   const allLinks = profileLinks;
-  const userLabel = displayName(user, null, t("common.student"));
+  const { data: activeProfile } = useProfile(resolvedId);
+  const userLabel = displayName(user, activeProfile?.fullName ?? null);
 
   if (!isAuthenticated) return null;
 
@@ -203,9 +205,11 @@ export default function Nav({ profileId }: Props) {
         </div>
         <div className="flex items-center gap-3">
           {resolvedId && <NotificationBell profileId={resolvedId} />}
-          <span className="text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>
-            {userLabel}
-          </span>
+          {userLabel && (
+            <span className="text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>
+              {userLabel}
+            </span>
+          )}
           <button
             onClick={logout}
             aria-label={t("common.signOut")}
@@ -316,7 +320,9 @@ export default function Nav({ profileId }: Props) {
             </div>
             <div className="space-y-3 p-4" style={{ borderTop: "1px solid var(--app-border-subtle)" }}>
               <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>{userLabel}</span>
+                {userLabel && (
+                  <span className="truncate text-xs pwc-font-mono uppercase tracking-wider" style={{ color: "#64748b" }}>{userLabel}</span>
+                )}
               </div>
               <button
                 onClick={logout}

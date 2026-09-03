@@ -32,7 +32,7 @@ export function IntroPhase({ firstName }: { firstName?: string | null }) {
                   color: "#f8fafc",
                 }}
               >
-                {t("onboarding.introHeading", { firstName: firstName ?? t("common.student") })}
+                {t("onboarding.introHeading", { firstName: firstName || "there" })}
               </h1>
             </div>
           </div>
