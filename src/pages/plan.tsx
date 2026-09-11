@@ -387,7 +387,7 @@ export default function Plan() {
 
     if (typeof profileId !== "number") {
     return (
-      <AppPageLayout variant="dark" title="Plan">
+      <AppPageLayout variant="light" title="Plan">
         <div className="student-panel p-6 text-sm text-[var(--student-text-secondary)]">
           This plan view could not find a valid profile.
         </div>
@@ -396,12 +396,12 @@ export default function Plan() {
   }
 
   if (loading) {
-    return <PageLoadingState variant="dark" message="Loading plan…" />;
+    return <PageLoadingState variant="light" message="Loading plan…" />;
   }
 
   return (
     <AppPageLayout
-      variant="dark"
+      variant="light"
       maxWidth="wide"
       profileId={profileId}
       title="Plan"

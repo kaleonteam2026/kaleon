@@ -23,11 +23,11 @@ export default function ProtectedRoute({ children }: Props) {
   }
 
   if (isLoading) {
-    return <PageLoadingState variant="dark" message="Loading…" />;
+    return <PageLoadingState variant="light" message="Loading…" />;
   }
 
   if (!isAuthenticated) {
-    return <PageLoadingState variant="dark" message="Redirecting…" />;
+    return <PageLoadingState variant="light" message="Redirecting…" />;
   }
 
   return <>{children}</>;

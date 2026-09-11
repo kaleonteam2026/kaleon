@@ -322,7 +322,7 @@ export default function ProgressPage() {
 
   if (!Number.isFinite(pid)) {
     return (
-      <AppPageLayout variant="dark" title="Progress">
+      <AppPageLayout variant="light" title="Progress">
         <div className="student-panel p-6 text-sm text-[var(--student-text-secondary)]">
           This progress view could not find a valid profile.
         </div>
@@ -331,12 +331,12 @@ export default function ProgressPage() {
   }
 
   if (loading) {
-    return <PageLoadingState variant="dark" message="Loading progress…" />;
+    return <PageLoadingState variant="light" message="Loading progress…" />;
   }
 
   return (
     <AppPageLayout
-      variant="dark"
+      variant="light"
       profileId={pid}
       maxWidth="wide"
       title="Progress"
