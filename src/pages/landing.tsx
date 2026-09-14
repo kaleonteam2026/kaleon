@@ -216,10 +216,10 @@ export default function Landing() {
             </motion.div>
 
             <motion.div {...mountProps} variants={fadeUp(16, DUR.slow)}>
-              <PhotoSlot
-                file={PHOTO_SLOTS.hero.file}
-                label={PHOTO_SLOTS.hero.label}
-                className="h-full w-full rounded-[20px] border object-cover"
+              <img
+                src="/hero-ui-preview.svg"
+                alt="Kaleon My Courses view — imported courses tagged with IGETC and CSU GE areas, with links to AI pathways, progress, and scholarships"
+                className="h-full w-full"
               />
             </motion.div>
           </div>

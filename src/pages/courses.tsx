@@ -35,6 +35,19 @@ interface SchoolOption {
   requiredUnits: number;
 }
 
+// Higher value = more recent term. Same ordering as progress.tsx's termSortValue.
+function termSortValue(term?: string): number {
+  if (!term) return -1;
+  const match = term.match(/(Spring|Summer|Fall|Winter)\s+(\d{4})/i);
+  if (!match) return -1;
+  const seasonOrder: Record<string, number> = { Winter: 0, Spring: 1, Summer: 2, Fall: 3 };
+  return Number(match[2]) * 10 + (seasonOrder[match[1]] ?? 9);
+}
+
+function sortByTermDesc(courses: Course[]): Course[] {
+  return [...courses].sort((a, b) => termSortValue(b.term) - termSortValue(a.term));
+}
+
 export default function Courses() {
   const { profileId } = useParams<{ profileId: string }>();
   const [, navigate] = useLocation();
@@ -392,9 +405,9 @@ export default function Courses() {
     }
   };
 
-  const completed  = courses.filter(c => c.status === "completed");
-  const inProgress = courses.filter(c => c.status === "in_progress");
-  const planned    = courses.filter(c => c.status === "planned");
+  const completed  = sortByTermDesc(courses.filter(c => c.status === "completed"));
+  const inProgress = sortByTermDesc(courses.filter(c => c.status === "in_progress"));
+  const planned    = sortByTermDesc(courses.filter(c => c.status === "planned"));
 
   // Current school target
   const activeSchool = schools[selectedSchoolIdx] ?? schools[schools.length - 1] ??

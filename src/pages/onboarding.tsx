@@ -662,7 +662,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen pwc-font-sans flex items-center justify-center px-4 py-12" style={ONBOARDING_PAGE_BG}>
+    <div className="dark min-h-screen pwc-font-sans flex items-center justify-center px-4 py-12" style={ONBOARDING_PAGE_BG}>
       <div className="w-full max-w-lg">
         {/* Logo + sign out */}
         <div className="flex items-center justify-between mb-8">
