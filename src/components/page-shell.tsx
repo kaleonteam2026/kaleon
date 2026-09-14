@@ -29,7 +29,7 @@ export function PageShell({
 }: PageShellProps) {
   return (
     <AppPageLayout
-      variant="dark"
+      variant="light"
       profileId={profileId}
       maxWidth={SHELL_MAX_WIDTH[maxWidth]}
       title={title}
@@ -42,5 +42,5 @@ export function PageShell({
 }
 
 export function LoadingShell() {
-  return <PageLoadingState variant="dark" />;
+  return <PageLoadingState variant="light" />;
 }

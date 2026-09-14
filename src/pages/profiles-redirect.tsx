@@ -42,5 +42,5 @@ export default function ProfilesRedirect() {
     };
   }, [user, navigate]);
 
-  return <PageLoadingState variant="dark" message="Loading…" />;
+  return <PageLoadingState variant="light" message="Loading…" />;
 }
