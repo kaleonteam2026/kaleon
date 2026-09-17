@@ -64,7 +64,7 @@ export default function Footer({ variant = "compact" }: { variant?: FooterVarian
                   height={28}
                   style={{ width: 28, height: 28, maxWidth: 28, maxHeight: 28, borderRadius: 6 }}
                 />
-                <span className="font-bold text-lg tracking-tight uppercase" style={{ color: "#f8fafc" }}>
+                <span className="font-bold text-lg tracking-tight uppercase" style={{ color: "var(--app-text)" }}>
                   KALEON
                 </span>
               </div>
